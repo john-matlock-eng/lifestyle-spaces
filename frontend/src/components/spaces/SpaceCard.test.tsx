@@ -212,6 +212,7 @@ describe('SpaceCard', () => {
 
   it('handles missing onClick prop gracefully', () => {
     const { onClick, ...propsWithoutOnClick } = defaultProps;
+    void onClick; // Acknowledge that onClick is intentionally unused in this test
     expect(() => {
       render(<SpaceCard {...propsWithoutOnClick} />);
     }).not.toThrow();

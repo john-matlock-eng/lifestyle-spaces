@@ -41,7 +41,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     try {
       await onSubmit(signUpData);
       reset();
-    } catch (error) {
+    } catch {
       // Error is handled by parent component
     }
   };

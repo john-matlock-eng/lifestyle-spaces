@@ -1,10 +1,15 @@
 import React, { useState, useCallback } from 'react';
-import { SpaceMember, Space, Invitation, SpaceMemberRole } from '../../types';
+import { SpaceMember, Invitation, SpaceMemberRole } from '../../types';
 import './spaces.css';
+
+interface ExtendedSpaceMember extends SpaceMember {
+  avatarUrl?: string;
+  isOnline?: boolean;
+  lastSeen?: string;
+}
 
 interface MembersListProps {
   members: SpaceMember[];
-  space: Space;
   currentUserId: string;
   isLoading?: boolean;
   error?: string | null;
@@ -35,7 +40,6 @@ interface MembersListProps {
 
 export const MembersList: React.FC<MembersListProps> = ({
   members,
-  space,
   currentUserId,
   isLoading = false,
   error = null,
@@ -108,7 +112,8 @@ export const MembersList: React.FC<MembersListProps> = ({
   };
 
   const renderMemberAvatar = (member: SpaceMember) => {
-    const avatarUrl = (member as any).avatarUrl;
+    const extendedMember = member as ExtendedSpaceMember;
+    const avatarUrl = extendedMember.avatarUrl;
     
     if (avatarUrl) {
       return (
@@ -130,8 +135,9 @@ export const MembersList: React.FC<MembersListProps> = ({
   const renderOnlineStatus = (member: SpaceMember) => {
     if (!showOnlineStatus) return null;
     
-    const isOnline = (member as any).isOnline;
-    const lastSeen = (member as any).lastSeen;
+    const extendedMember = member as ExtendedSpaceMember;
+    const isOnline = extendedMember.isOnline;
+    const lastSeen = extendedMember.lastSeen;
 
     if (isOnline) {
       return (

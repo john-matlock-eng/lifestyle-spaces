@@ -13,7 +13,12 @@ vi.mock('./api', () => ({
   },
 }));
 
-const mockApiService = apiService as any;
+const mockApiService = apiService as typeof apiService & {
+  get: ReturnType<typeof vi.fn>;
+  post: ReturnType<typeof vi.fn>;
+  put: ReturnType<typeof vi.fn>;
+  delete: ReturnType<typeof vi.fn>;
+};
 
 describe('Spaces Service', () => {
   beforeEach(() => {
@@ -244,7 +249,7 @@ describe('Spaces Service', () => {
       const invalidData = {
         email: 'test@example.com',
         spaceId: 'space-123',
-        role: 'invalid-role' as any,
+        role: 'invalid-role' as 'admin',
       };
 
       await expect(inviteMember(invalidData)).rejects.toThrow('Invalid role. Must be one of: owner, admin, member');

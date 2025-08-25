@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthLayout } from '../components/auth/AuthLayout';
 import { SignInForm } from '../components/auth/SignInForm';
@@ -8,13 +8,12 @@ import { SignInData } from '../types';
 export const SignIn: React.FC = () => {
   const navigate = useNavigate();
   const { signIn, isLoading, error } = useAuth();
-  const [switchToSignUp, setSwitchToSignUp] = useState(false);
 
   const handleSignIn = async (data: SignInData & { rememberMe?: boolean }) => {
     try {
       await signIn({ email: data.email, password: data.password });
       navigate('/dashboard');
-    } catch (error) {
+    } catch {
       // Error is handled by auth store
     }
   };

@@ -16,12 +16,12 @@ vi.mock('../services/spaces', () => ({
 }));
 
 const mockSpacesService = {
-  createSpace: createSpace as any,
-  listSpaces: listSpaces as any,
-  getSpace: getSpace as any,
-  inviteMember: inviteMember as any,
-  acceptInvitation: acceptInvitation as any,
-  getSpaceMembers: getSpaceMembers as any,
+  createSpace: createSpace as ReturnType<typeof vi.fn>,
+  listSpaces: listSpaces as ReturnType<typeof vi.fn>,
+  getSpace: getSpace as ReturnType<typeof vi.fn>,
+  inviteMember: inviteMember as ReturnType<typeof vi.fn>,
+  acceptInvitation: acceptInvitation as ReturnType<typeof vi.fn>,
+  getSpaceMembers: getSpaceMembers as ReturnType<typeof vi.fn>,
 };
 
 describe('SpaceStore', () => {
@@ -155,7 +155,7 @@ describe('SpaceStore', () => {
     });
 
     it('should set loading state during fetch', async () => {
-      let resolvePromise: (value: any) => void;
+      let resolvePromise: (value: unknown) => void;
       const promise = new Promise((resolve) => {
         resolvePromise = resolve;
       });
@@ -318,7 +318,7 @@ describe('SpaceStore', () => {
 
       // Set initial invitation
       act(() => {
-        (result.current as any)._setInvitations([{ ...mockInvitation, status: 'pending' }]);
+        (result.current as { _setInvitations: (invitations: Invitation[]) => void })._setInvitations([{ ...mockInvitation, status: 'pending' }]);
       });
 
       await act(async () => {
@@ -356,7 +356,7 @@ describe('SpaceStore', () => {
 
       // Set an error
       act(() => {
-        (result.current as any)._setError('Test error');
+        (result.current as { _setError: (error: string) => void })._setError('Test error');
       });
 
       expect(result.current.error).toBe('Test error');
@@ -387,7 +387,7 @@ describe('SpaceStore', () => {
 
       // Set initial error
       act(() => {
-        (result.current as any)._setError('Previous error');
+        (result.current as { _setError: (error: string) => void })._setError('Previous error');
       });
 
       expect(result.current.error).toBe('Previous error');

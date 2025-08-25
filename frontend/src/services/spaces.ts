@@ -7,7 +7,8 @@ import {
   SpaceListResponse, 
   SpaceFilters, 
   PaginationParams,
-  SpaceMemberRole
+  SpaceMemberRole,
+  MembersListResponse
 } from '../types';
 
 /**
@@ -45,17 +46,13 @@ export const createSpace = async (spaceData: CreateSpaceData): Promise<Space> =>
     throw new Error('Space description must be 500 characters or less');
   }
 
-  try {
-    const response = await apiService.post('/spaces', {
-      name: name.trim(),
-      description: description?.trim() || '',
-      isPublic: isPublic || false,
-    });
+  const response = await apiService.post('/spaces', {
+    name: name.trim(),
+    description: description?.trim() || '',
+    isPublic: isPublic || false,
+  });
 
-    return response;
-  } catch (error) {
-    throw error;
-  }
+  return response;
 };
 
 /**
@@ -65,20 +62,16 @@ export const listSpaces = async (
   filters: SpaceFilters = {}, 
   pagination: PaginationParams = {}
 ): Promise<SpaceListResponse> => {
-  try {
-    const params = {
-      ...filters,
-      ...pagination,
-    };
+  const params = {
+    ...filters,
+    ...pagination,
+  };
 
-    const response = await apiService.get('/spaces', 
+  const response = await apiService.get('/spaces', 
       Object.keys(params).length > 0 ? { params } : undefined
-    );
+  );
 
-    return response;
-  } catch (error) {
-    throw error;
-  }
+  return response;
 };
 
 /**
@@ -89,12 +82,8 @@ export const getSpace = async (spaceId: string): Promise<Space> => {
     throw new Error('Space ID is required');
   }
 
-  try {
-    const response = await apiService.get(`/spaces/${spaceId}`);
-    return response;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiService.get(`/spaces/${spaceId}`);
+  return response;
 };
 
 /**
@@ -118,17 +107,13 @@ export const inviteMember = async (invitationData: InvitationData): Promise<Invi
     throw new Error('Invalid role. Must be one of: owner, admin, member');
   }
 
-  try {
-    const response = await apiService.post('/invitations', {
-      email: email.trim().toLowerCase(),
-      spaceId: spaceId.trim(),
-      role: role || 'member',
-    });
+  const response = await apiService.post('/invitations', {
+    email: email.trim().toLowerCase(),
+    spaceId: spaceId.trim(),
+    role: role || 'member',
+  });
 
-    return response;
-  } catch (error) {
-    throw error;
-  }
+  return response;
 };
 
 /**
@@ -139,12 +124,8 @@ export const acceptInvitation = async (invitationId: string): Promise<Invitation
     throw new Error('Invitation ID is required');
   }
 
-  try {
-    const response = await apiService.put(`/invitations/${invitationId}/accept`);
-    return response;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiService.put(`/invitations/${invitationId}/accept`);
+  return response;
 };
 
 /**
@@ -155,38 +136,26 @@ export const declineInvitation = async (invitationId: string): Promise<Invitatio
     throw new Error('Invitation ID is required');
   }
 
-  try {
-    const response = await apiService.put(`/invitations/${invitationId}/decline`);
-    return response;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiService.put(`/invitations/${invitationId}/decline`);
+  return response;
 };
 
 /**
  * Get pending invitations for the current user
  */
 export const getPendingInvitations = async (): Promise<Invitation[]> => {
-  try {
-    const response = await apiService.get('/invitations/pending');
-    return response.invitations || [];
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiService.get('/invitations/pending');
+  return response.invitations || [];
 };
 
 /**
  * Get members of a space
  */
-export const getSpaceMembers = async (spaceId: string): Promise<any> => {
+export const getSpaceMembers = async (spaceId: string): Promise<MembersListResponse> => {
   if (!spaceId || spaceId.trim() === '') {
     throw new Error('Space ID is required');
   }
 
-  try {
-    const response = await apiService.get(`/spaces/${spaceId}/members`);
-    return response;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiService.get(`/spaces/${spaceId}/members`);
+  return response;
 };

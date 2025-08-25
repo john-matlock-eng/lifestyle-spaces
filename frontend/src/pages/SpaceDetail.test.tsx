@@ -6,7 +6,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 // Mock components
 vi.mock('../components/spaces/MembersList', () => ({
-  MembersList: ({ members, onInviteClick }: any) => (
+  MembersList: ({ members, onInviteClick }: { members: unknown[]; onInviteClick: () => void }) => (
     <div data-testid="members-list">
       <div>Members: {members.length}</div>
       <button onClick={onInviteClick}>Invite Members</button>
@@ -15,7 +15,7 @@ vi.mock('../components/spaces/MembersList', () => ({
 }));
 
 vi.mock('../components/spaces/InviteMemberModal', () => ({
-  InviteMemberModal: ({ isOpen, onClose }: any) => 
+  InviteMemberModal: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => 
     isOpen ? (
       <div data-testid="invite-modal">
         <button onClick={onClose}>Close Modal</button>

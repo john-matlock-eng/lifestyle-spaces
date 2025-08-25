@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { InviteMemberModal } from './InviteMemberModal';
-import { SpaceMemberRole, Invitation } from '../../types';
+import { Invitation } from '../../types';
 
 // Mock the space store hook
 const mockInviteMember = vi.fn();

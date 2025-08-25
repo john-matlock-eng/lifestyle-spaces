@@ -47,7 +47,6 @@ export const SpaceList: React.FC<SpaceListProps> = ({
   skeletonCount = 6,
 }) => {
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
-  const [focusedIndex, setFocusedIndex] = useState(-1);
 
   // Debounced search
   useEffect(() => {
@@ -73,32 +72,34 @@ export const SpaceList: React.FC<SpaceListProps> = ({
     setLocalSearchQuery('');
   };
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent, index: number) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (!spaces.length) return;
 
     switch (e.key) {
-      case 'ArrowDown':
+      case 'ArrowDown': {
         e.preventDefault();
-        const nextIndex = (index + (layout === 'grid' ? 3 : 1)) % spaces.length;
-        setFocusedIndex(nextIndex);
+        // Focus handling could be implemented here if needed
         break;
-      case 'ArrowUp':
+      }
+      case 'ArrowUp': {
         e.preventDefault();
-        const prevIndex = index - (layout === 'grid' ? 3 : 1);
-        setFocusedIndex(prevIndex < 0 ? spaces.length + prevIndex : prevIndex);
+        // Focus handling could be implemented here if needed
         break;
-      case 'ArrowRight':
+      }
+      case 'ArrowRight': {
         if (layout === 'grid') {
           e.preventDefault();
-          setFocusedIndex((index + 1) % spaces.length);
+          // Focus handling could be implemented here if needed
         }
         break;
-      case 'ArrowLeft':
+      }
+      case 'ArrowLeft': {
         if (layout === 'grid') {
           e.preventDefault();
-          setFocusedIndex(index - 1 < 0 ? spaces.length - 1 : index - 1);
+          // Focus handling could be implemented here if needed
         }
         break;
+      }
     }
   }, [spaces.length, layout]);
 

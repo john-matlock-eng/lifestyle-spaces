@@ -47,6 +47,12 @@ interface SpaceContextType extends SpaceState {
   clearError: () => void;
 }
 
+// Extended interface for testing
+interface SpaceContextTypeWithTestMethods extends SpaceContextType {
+  _setError: (error: string | null) => void;
+  _setInvitations: (invitations: Invitation[]) => void;
+}
+
 // Initial state
 const initialState: SpaceState = {
   spaces: [],
@@ -290,10 +296,11 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
 
   // Add internal methods for testing
   if (process.env.NODE_ENV === 'test') {
-    (contextValue as any)._setError = (error: string | null) => {
+    const testContextValue = contextValue as SpaceContextTypeWithTestMethods;
+    testContextValue._setError = (error: string | null) => {
       dispatch({ type: 'SET_ERROR', payload: error });
     };
-    (contextValue as any)._setInvitations = (invitations: Invitation[]) => {
+    testContextValue._setInvitations = (invitations: Invitation[]) => {
       dispatch({ type: 'SET_INVITATIONS', payload: invitations });
     };
   }
@@ -302,6 +309,7 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
 };
 
 // Custom hook to use space context
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSpace = (): SpaceContextType => {
   const context = useContext(SpaceContext);
   if (!context) {

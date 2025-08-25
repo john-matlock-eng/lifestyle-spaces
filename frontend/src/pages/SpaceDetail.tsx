@@ -4,7 +4,7 @@ import { useSpace } from '../stores/spaceStore';
 import { useAuth } from '../stores/authStore';
 import { MembersList } from '../components/spaces/MembersList';
 import { InviteMemberModal } from '../components/spaces/InviteMemberModal';
-import { SpaceMemberRole } from '../types';
+import { SpaceMemberRole, SpaceMember } from '../types';
 import './SpaceDetail.css';
 
 export const SpaceDetail: React.FC = () => {
@@ -59,18 +59,20 @@ export const SpaceDetail: React.FC = () => {
     const currentIndex = tabs.indexOf(activeTab);
     
     switch (e.key) {
-      case 'ArrowRight':
+      case 'ArrowRight': {
         e.preventDefault();
         const nextIndex = (currentIndex + 1) % tabs.length;
-        setActiveTab(tabs[nextIndex] as any);
+        setActiveTab(tabs[nextIndex]);
         (e.target as HTMLElement).nextElementSibling?.focus();
         break;
-      case 'ArrowLeft':
+      }
+      case 'ArrowLeft': {
         e.preventDefault();
         const prevIndex = currentIndex - 1 < 0 ? tabs.length - 1 : currentIndex - 1;
-        setActiveTab(tabs[prevIndex] as any);
+        setActiveTab(tabs[prevIndex]);
         (e.target as HTMLElement).previousElementSibling?.focus();
         break;
+      }
       case 'Enter':
       case ' ':
         e.preventDefault();
@@ -100,7 +102,7 @@ export const SpaceDetail: React.FC = () => {
     console.log('Remove member:', userId);
   };
 
-  const handleMemberClick = (member: any) => {
+  const handleMemberClick = (member: SpaceMember) => {
     // Navigate to member profile or show member details
     console.log('Member clicked:', member);
   };

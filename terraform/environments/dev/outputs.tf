@@ -126,9 +126,9 @@ output "deployment_info" {
     api_stage      = module.backend.api_gateway_stage_name
 
     # Authentication
-    cognito_user_pool_id     = module.cognito.user_pool_id
-    cognito_client_id        = module.cognito.user_pool_client_id
-    cognito_config           = module.cognito.cognito_config
+    cognito_user_pool_id = module.cognito.user_pool_id
+    cognito_client_id    = module.cognito.user_pool_client_id
+    cognito_config       = module.cognito.cognito_config
 
     # Resource Names for Deployment
     s3_bucket_name       = module.frontend.s3_bucket_name

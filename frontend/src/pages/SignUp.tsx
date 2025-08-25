@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthLayout } from '../components/auth/AuthLayout';
 import { SignUpForm } from '../components/auth/SignUpForm';
@@ -15,7 +15,7 @@ export const SignUp: React.FC = () => {
       if (response.isSignUpComplete) {
         navigate('/signin');
       }
-    } catch (error) {
+    } catch {
       // Error is handled by auth store
     }
   };

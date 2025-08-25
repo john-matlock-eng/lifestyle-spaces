@@ -44,10 +44,10 @@ output "user_pool_domain_cloudfront_distribution" {
 output "cognito_config" {
   description = "Complete Cognito configuration for frontend use"
   value = {
-    region        = data.aws_region.current.name
-    userPoolId    = aws_cognito_user_pool.main.id
+    region           = data.aws_region.current.name
+    userPoolId       = aws_cognito_user_pool.main.id
     userPoolClientId = aws_cognito_user_pool_client.web.id
-    domain        = var.create_domain ? aws_cognito_user_pool_domain.main[0].domain : null
+    domain           = var.create_domain ? aws_cognito_user_pool_domain.main[0].domain : null
   }
   sensitive = false
 }

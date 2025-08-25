@@ -12,10 +12,16 @@ type AuthAction =
 // Auth context interface
 interface AuthContextType extends AuthState {
   signIn: (data: SignInData) => Promise<void>;
-  signUp: (data: SignUpData) => Promise<any>;
+  signUp: (data: SignUpData) => Promise<{ isSignUpComplete: boolean; nextStep: { signUpStep: string } }>;
   signOut: () => Promise<void>;
   clearError: () => void;
   refreshTokens: () => Promise<void>;
+}
+
+// Extended interface for testing
+interface AuthContextTypeWithTestMethods extends AuthContextType {
+  _setUser: (user: User | null) => void;
+  _setError: (error: string | null) => void;
 }
 
 // Initial state
@@ -59,7 +65,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 };
 
 // Create context
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Auth provider props
 interface AuthProviderProps {
@@ -92,7 +98,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'SET_LOADING', payload: true });
       const user = await getCurrentUser();
       dispatch({ type: 'SET_USER', payload: user });
-    } catch (error) {
+    } catch {
       dispatch({ type: 'SET_USER', payload: null });
     }
   };
@@ -111,7 +117,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const handleSignUp = async (data: SignUpData): Promise<any> => {
+  const handleSignUp = async (data: SignUpData): Promise<{ isSignUpComplete: boolean; nextStep: { signUpStep: string } }> => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
@@ -164,10 +170,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Add internal methods for testing
   if (process.env.NODE_ENV === 'test') {
-    (contextValue as any)._setUser = (user: User | null) => {
+    const testContextValue = contextValue as AuthContextTypeWithTestMethods;
+    testContextValue._setUser = (user: User | null) => {
       dispatch({ type: 'SET_USER', payload: user });
     };
-    (contextValue as any)._setError = (error: string | null) => {
+    testContextValue._setError = (error: string | null) => {
       dispatch({ type: 'SET_ERROR', payload: error });
     };
   }
@@ -176,6 +183,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 };
 
 // Custom hook to use auth context
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {

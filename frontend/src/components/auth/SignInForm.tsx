@@ -35,7 +35,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
         rememberMe: data.rememberMe,
       });
       reset();
-    } catch (error) {
+    } catch {
       // Error is handled by parent component
     }
   };

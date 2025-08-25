@@ -1,5 +1,5 @@
 import { signUp as amplifySignUp, signIn as amplifySignIn, signOut as amplifySignOut, getCurrentUser as amplifyGetCurrentUser, fetchAuthSession, configure } from '@aws-amplify/auth';
-import { SignUpData, SignInData, AuthResponse, TokenRefreshResponse, User, AuthError } from '../types';
+import { SignUpData, SignInData, AuthResponse, TokenRefreshResponse, User } from '../types';
 
 /**
  * Configure AWS Amplify Auth with Cognito settings
@@ -34,7 +34,7 @@ const isValidPassword = (password: string): boolean => {
 /**
  * Sign up a new user
  */
-export const signUp = async (signUpData: SignUpData): Promise<any> => {
+export const signUp = async (signUpData: SignUpData): Promise<{ isSignUpComplete: boolean; nextStep: { signUpStep: string } }> => {
   const { email, password, username, displayName } = signUpData;
 
   // Validate required fields
@@ -52,23 +52,19 @@ export const signUp = async (signUpData: SignUpData): Promise<any> => {
     throw new Error('Password must be at least 8 characters long');
   }
 
-  try {
-    const response = await amplifySignUp({
-      username: email,
-      password,
-      options: {
-        userAttributes: {
-          email,
-          preferred_username: username,
-          name: displayName,
-        },
+  const response = await amplifySignUp({
+    username: email,
+    password,
+    options: {
+      userAttributes: {
+        email,
+        preferred_username: username,
+        name: displayName,
       },
-    });
+    },
+  });
 
-    return response;
-  } catch (error) {
-    throw error;
-  }
+  return response;
 };
 
 /**
@@ -82,37 +78,33 @@ export const signIn = async (signInData: SignInData): Promise<AuthResponse> => {
     throw new Error('Email and password are required');
   }
 
-  try {
-    const signInResponse = await amplifySignIn({
-      username: email,
-      password,
-    });
+  const signInResponse = await amplifySignIn({
+    username: email,
+    password,
+  });
 
-    if (signInResponse.isSignedIn) {
-      // Get auth session for tokens
-      const session = await fetchAuthSession();
-      const currentUser = await amplifyGetCurrentUser();
+  if (signInResponse.isSignedIn) {
+    // Get auth session for tokens
+    const session = await fetchAuthSession();
+    const currentUser = await amplifyGetCurrentUser();
 
-      const user: User = {
-        userId: currentUser.userId,
-        email,
-        username: currentUser.username,
-        displayName: currentUser.username, // Will be updated from user attributes if available
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+    const user: User = {
+      userId: currentUser.userId,
+      email,
+      username: currentUser.username,
+      displayName: currentUser.username, // Will be updated from user attributes if available
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
 
-      return {
-        user,
-        accessToken: session.tokens?.accessToken?.toString() || '',
-        idToken: session.tokens?.idToken?.toString() || '',
-        refreshToken: '', // Refresh token is handled automatically by Amplify
-      };
-    } else {
-      throw new Error('Sign in incomplete');
-    }
-  } catch (error) {
-    throw error;
+    return {
+      user,
+      accessToken: session.tokens?.accessToken?.toString() || '',
+      idToken: session.tokens?.idToken?.toString() || '',
+      refreshToken: '', // Refresh token is handled automatically by Amplify
+    };
+  } else {
+    throw new Error('Sign in incomplete');
   }
 };
 
@@ -120,11 +112,7 @@ export const signIn = async (signInData: SignInData): Promise<AuthResponse> => {
  * Sign out the current user
  */
 export const signOut = async (): Promise<void> => {
-  try {
-    await amplifySignOut();
-  } catch (error) {
-    throw error;
-  }
+  await amplifySignOut();
 };
 
 /**
@@ -142,7 +130,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -151,14 +139,10 @@ export const getCurrentUser = async (): Promise<User | null> => {
  * Refresh authentication tokens
  */
 export const refreshToken = async (): Promise<TokenRefreshResponse> => {
-  try {
-    const session = await fetchAuthSession();
-    
-    return {
-      accessToken: session.tokens?.accessToken?.toString() || '',
-      idToken: session.tokens?.idToken?.toString() || '',
-    };
-  } catch (error) {
-    throw error;
-  }
+  const session = await fetchAuthSession();
+  
+  return {
+    accessToken: session.tokens?.accessToken?.toString() || '',
+    idToken: session.tokens?.idToken?.toString() || '',
+  };
 };

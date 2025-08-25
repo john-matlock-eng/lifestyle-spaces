@@ -16,11 +16,11 @@ vi.mock('../services/auth', () => ({
 }));
 
 const mockAuthService = {
-  signIn: signIn as any,
-  signOut: signOut as any,
-  getCurrentUser: getCurrentUser as any,
-  signUp: signUp as any,
-  refreshToken: refreshToken as any,
+  signIn: signIn as ReturnType<typeof vi.fn>,
+  signOut: signOut as ReturnType<typeof vi.fn>,
+  getCurrentUser: getCurrentUser as ReturnType<typeof vi.fn>,
+  signUp: signUp as ReturnType<typeof vi.fn>,
+  refreshToken: refreshToken as ReturnType<typeof vi.fn>,
 };
 
 describe('AuthStore', () => {
@@ -175,7 +175,7 @@ describe('AuthStore', () => {
 
       // First set a user
       act(() => {
-        (result.current as any)._setUser({
+        (result.current as { _setUser: (user: User) => void })._setUser({
           userId: 'test-user-id',
           email: 'test@example.com',
           username: 'testuser',
@@ -296,7 +296,7 @@ describe('AuthStore', () => {
 
       // Set an error
       act(() => {
-        (result.current as any)._setError('Test error');
+        (result.current as { _setError: (error: string) => void })._setError('Test error');
       });
 
       expect(result.current.error).toBe('Test error');

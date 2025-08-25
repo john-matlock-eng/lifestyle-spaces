@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { signUp, signIn, signOut, refreshToken, getCurrentUser, configureAmplify } from './auth';
-import { SignUpData, SignInData, AuthResponse, TokenRefreshResponse, User } from '../types';
+import { SignUpData, SignInData } from '../types';
 import * as AmplifyAuth from '@aws-amplify/auth';
 
 // Mock AWS Amplify Auth
@@ -13,7 +13,14 @@ vi.mock('@aws-amplify/auth', () => ({
   configure: vi.fn(),
 }));
 
-const mockAmplifyAuth = AmplifyAuth as any;
+const mockAmplifyAuth = AmplifyAuth as typeof AmplifyAuth & {
+  signUp: ReturnType<typeof vi.fn>;
+  signIn: ReturnType<typeof vi.fn>;
+  signOut: ReturnType<typeof vi.fn>;
+  getCurrentUser: ReturnType<typeof vi.fn>;
+  fetchAuthSession: ReturnType<typeof vi.fn>;
+  configure: ReturnType<typeof vi.fn>;
+};
 
 describe('Authentication Service', () => {
   beforeEach(() => {
