@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Generator
 import pytest
 from fastapi.testclient import TestClient
-from moto import mock_aws
+from moto import mock_dynamodb
 import boto3
 
 # Add the app directory to the path
@@ -26,7 +26,7 @@ def test_client() -> Generator:
 @pytest.fixture
 def mock_dynamodb_table():
     """Create a mock DynamoDB table for testing."""
-    with mock_aws():
+    with mock_dynamodb():
         # Create DynamoDB client
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         

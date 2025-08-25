@@ -2,7 +2,7 @@
 Edge case tests to achieve 100% code coverage.
 """
 import pytest
-from moto import mock_aws
+from moto import mock_dynamodb
 import boto3
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
@@ -43,7 +43,7 @@ class TestEdgeCases:
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Invalid or expired token"
     
-    @mock_aws
+    @mock_dynamodb
     def test_database_query_with_gsi(self):
         """Test database query with GSI."""
         # Create mock table with GSI

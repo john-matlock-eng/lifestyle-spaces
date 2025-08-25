@@ -2,7 +2,7 @@
 Integration tests for API endpoints.
 """
 import pytest
-from moto import mock_aws
+from moto import mock_dynamodb
 
 
 class TestAPIIntegration:
@@ -25,7 +25,7 @@ class TestAPIIntegration:
         assert data["version"] == "1.0.0"
         assert data["environment"] == "test"
     
-    @mock_aws
+    @mock_dynamodb
     def test_api_with_dynamodb_available(self, test_client, mock_dynamodb_table):
         """Test that API works when DynamoDB is available."""
         # This test ensures the app starts correctly with DynamoDB

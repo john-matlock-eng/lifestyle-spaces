@@ -64,8 +64,9 @@ export function getValidatedConfig(): AppConfig {
   const config = getConfig()
   
   if (!validateConfig(config)) {
+    const displayUrl = config.apiUrl || 'undefined'
     throw new Error(
-      `Invalid configuration: API URL "${(config as { apiUrl?: string }).apiUrl || 'undefined'}" is not a valid URL. ` +
+      `Invalid configuration: API URL "${displayUrl}" is not a valid URL. ` +
       'Please check your VITE_API_URL environment variable.'
     )
   }

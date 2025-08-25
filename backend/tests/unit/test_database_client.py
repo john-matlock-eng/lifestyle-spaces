@@ -2,14 +2,14 @@
 Unit tests for DynamoDB client.
 """
 import pytest
-from moto import mock_aws
+from moto import mock_dynamodb
 import boto3
 
 
 class TestDynamoDBClient:
     """Test cases for DynamoDB client operations."""
     
-    @mock_aws
+    @mock_dynamodb
     def test_db_client_operations(self):
         """Test DynamoDB client CRUD operations."""
         # Create mock table
@@ -78,7 +78,7 @@ class TestDynamoDBClient:
         deleted = client.get_item('USER#123', 'PROFILE')
         assert deleted is None
     
-    @mock_aws
+    @mock_dynamodb
     def test_batch_write_items(self):
         """Test batch write operation."""
         # Create mock table
@@ -115,7 +115,7 @@ class TestDynamoDBClient:
             assert item is not None
             assert item['name'] == f'User {i}'
     
-    @mock_aws
+    @mock_dynamodb
     def test_get_db_singleton(self):
         """Test that get_db returns singleton instance."""
         from app.core.database import get_db

@@ -2,14 +2,14 @@
 Unit tests for database module.
 """
 import pytest
-from moto import mock_aws
+from moto import mock_dynamodb
 import boto3
 
 
 class TestDatabase:
     """Test cases for DynamoDB database utilities."""
     
-    @mock_aws
+    @mock_dynamodb
     def test_get_dynamodb_table(self):
         """Test getting DynamoDB table."""
         # Create mock table first
@@ -33,7 +33,7 @@ class TestDatabase:
         assert table is not None
         assert table.table_name == 'lifestyle-spaces-test'
     
-    @mock_aws
+    @mock_dynamodb
     def test_database_client_singleton(self):
         """Test that database resource is cached."""
         from app.core.database import get_dynamodb_resource
