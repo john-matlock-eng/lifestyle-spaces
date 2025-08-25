@@ -4,6 +4,10 @@ import { vi, afterEach } from 'vitest'
 // Global test setup for Vitest + React Testing Library
 // This file is imported before all test files
 
+// Set test environment variable
+vi.stubEnv('VITE_TEST_ENV', 'true')
+vi.stubEnv('NODE_ENV', 'test')
+
 // Mock window.matchMedia for tests
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

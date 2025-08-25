@@ -30,6 +30,8 @@ jobs:
       website_url: ${{ steps.tf-outputs.outputs.website_url }}
       lambda_function_name: ${{ steps.tf-outputs.outputs.lambda_function_name }}
       dynamodb_table_name: ${{ steps.tf-outputs.outputs.dynamodb_table_name }}
+      cognito_user_pool_id: ${{ steps.tf-outputs.outputs.cognito_user_pool_id }}
+      cognito_user_pool_client_id: ${{ steps.tf-outputs.outputs.cognito_user_pool_client_id }}
     
     steps:
       - uses: actions/checkout@v4
@@ -130,6 +132,8 @@ jobs:
           echo "website_url=$(terraform output -raw website_url)" >> $GITHUB_OUTPUT
           echo "lambda_function_name=$(terraform output -raw lambda_function_name)" >> $GITHUB_OUTPUT
           echo "dynamodb_table_name=$(terraform output -raw dynamodb_table_name)" >> $GITHUB_OUTPUT
+          echo "cognito_user_pool_id=$(terraform output -raw cognito_user_pool_id)" >> $GITHUB_OUTPUT
+          echo "cognito_user_pool_client_id=$(terraform output -raw cognito_user_pool_client_id)" >> $GITHUB_OUTPUT
     
   deploy-frontend:
     needs: [test, deploy-infrastructure]
@@ -160,6 +164,9 @@ jobs:
         env:
           VITE_API_URL: ${{ needs.deploy-infrastructure.outputs.api_gateway_url }}
           VITE_ENVIRONMENT: production
+          VITE_COGNITO_USER_POOL_ID: ${{ needs.deploy-infrastructure.outputs.cognito_user_pool_id }}
+          VITE_COGNITO_USER_POOL_CLIENT_ID: ${{ needs.deploy-infrastructure.outputs.cognito_user_pool_client_id }}
+          VITE_AWS_REGION: ${{ env.AWS_REGION }}
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -255,7 +262,9 @@ jobs:
             --environment Variables="{
               ENVIRONMENT=production,
               CORS_ORIGINS=${{ needs.deploy-infrastructure.outputs.website_url }},
-              DYNAMODB_TABLE=${{ needs.deploy-infrastructure.outputs.dynamodb_table_name }}
+              DYNAMODB_TABLE=${{ needs.deploy-infrastructure.outputs.dynamodb_table_name }},
+              COGNITO_USER_POOL_ID=${{ needs.deploy-infrastructure.outputs.cognito_user_pool_id }},
+              AWS_REGION=${{ env.AWS_REGION }}
             }"
           
           # Wait for configuration update to complete
@@ -281,3 +290,5 @@ jobs:
           echo "🚀 Production Deployment Complete!"
           echo "Website URL: ${{ needs.deploy-infrastructure.outputs.website_url }}"
           echo "API URL: ${{ needs.deploy-infrastructure.outputs.api_gateway_url }}"
+          echo "Cognito User Pool ID: ${{ needs.deploy-infrastructure.outputs.cognito_user_pool_id }}"
+          echo "Cognito User Pool Client ID: ${{ needs.deploy-infrastructure.outputs.cognito_user_pool_client_id }}"

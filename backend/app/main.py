@@ -43,5 +43,11 @@ app.add_middleware(
 # Include routers
 app.include_router(health.router)
 
-# API v1 routers will be added here under the prefix
-# app.include_router(api_router, prefix=settings.api_v1_prefix)
+# Import API routes
+from app.api.routes import auth, users, spaces, invitations
+
+# Include API routers
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(spaces.router)
+app.include_router(invitations.router)

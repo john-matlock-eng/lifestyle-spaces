@@ -1,0 +1,167 @@
+"""
+Unit tests for authentication endpoints.
+"""
+import pytest
+from unittest.mock import Mock, patch, MagicMock
+from fastapi.testclient import TestClient
+
+
+class TestAuthEndpoints:
+    """Test authentication endpoints."""
+    
+    def test_signup_success(self):
+        """Test successful user signup."""
+        from app.main import app
+        
+        client = TestClient(app)
+        
+        with patch('app.api.routes.auth.CognitoService') as mock_cognito:
+            mock_service = Mock()
+            mock_service.sign_up.return_value = {
+                'user_sub': 'sub123',
+                'username': 'testuser',
+                'email': 'test@example.com'
+            }
+            mock_cognito.return_value = mock_service
+            
+            response = client.post(
+                "/api/auth/signup",
+                json={
+                    "email": "test@example.com",
+                    "username": "testuser",
+                    "password": "Test123!@#",
+                    "full_name": "Test User"
+                }
+            )
+            
+            assert response.status_code == 201
+            assert response.json()["email"] == "test@example.com"
+            assert response.json()["username"] == "testuser"
+    
+    def test_signup_duplicate_user(self):
+        """Test signup with existing user."""
+        from app.main import app
+        from app.services.exceptions import UserAlreadyExistsError
+        
+        client = TestClient(app)
+        
+        with patch('app.api.routes.auth.CognitoService') as mock_cognito:
+            mock_service = Mock()
+            mock_service.sign_up.side_effect = UserAlreadyExistsError("User exists")
+            mock_cognito.return_value = mock_service
+            
+            response = client.post(
+                "/api/auth/signup",
+                json={
+                    "email": "test@example.com",
+                    "username": "testuser",
+                    "password": "Test123!@#"
+                }
+            )
+            
+            assert response.status_code == 400
+            assert "already exists" in response.json()["detail"]
+    
+    def test_signin_success(self):
+        """Test successful signin."""
+        from app.main import app
+        
+        client = TestClient(app)
+        
+        with patch('app.api.routes.auth.CognitoService') as mock_cognito:
+            mock_service = Mock()
+            mock_service.sign_in.return_value = {
+                'access_token': 'access123',
+                'id_token': 'id123',
+                'refresh_token': 'refresh123',
+                'expires_in': 3600
+            }
+            mock_cognito.return_value = mock_service
+            
+            response = client.post(
+                "/api/auth/signin",
+                json={
+                    "email": "test@example.com",
+                    "password": "Test123!@#"
+                }
+            )
+            
+            assert response.status_code == 200
+            assert "access_token" in response.json()
+            assert response.json()["token_type"] == "bearer"
+    
+    def test_signin_invalid_credentials(self):
+        """Test signin with invalid credentials."""
+        from app.main import app
+        from app.services.exceptions import InvalidCredentialsError
+        
+        client = TestClient(app)
+        
+        with patch('app.api.routes.auth.CognitoService') as mock_cognito:
+            mock_service = Mock()
+            mock_service.sign_in.side_effect = InvalidCredentialsError("Invalid")
+            mock_cognito.return_value = mock_service
+            
+            response = client.post(
+                "/api/auth/signin",
+                json={
+                    "email": "test@example.com",
+                    "password": "wrong"
+                }
+            )
+            
+            assert response.status_code == 401
+            assert "Invalid" in response.json()["detail"]
+    
+    def test_refresh_token_success(self):
+        """Test refreshing access token."""
+        from app.main import app
+        
+        client = TestClient(app)
+        
+        with patch('app.api.routes.auth.CognitoService') as mock_cognito:
+            mock_service = Mock()
+            mock_service.refresh_token.return_value = {
+                'access_token': 'new_access123',
+                'id_token': 'new_id123',
+                'expires_in': 3600
+            }
+            mock_cognito.return_value = mock_service
+            
+            response = client.post(
+                "/api/auth/refresh",
+                json={
+                    "refresh_token": "refresh123"
+                }
+            )
+            
+            assert response.status_code == 200
+            assert "access_token" in response.json()
+    
+    def test_signout_success(self):
+        """Test user signout."""
+        from app.main import app
+        
+        client = TestClient(app)
+        
+        with patch('app.api.routes.auth.CognitoService') as mock_cognito:
+            mock_service = Mock()
+            mock_cognito.return_value = mock_service
+            
+            response = client.post(
+                "/api/auth/signout",
+                headers={"Authorization": "Bearer access123"}
+            )
+            
+            assert response.status_code == 200
+            assert response.json()["message"] == "Successfully signed out"
+    
+    def test_signout_without_token(self):
+        """Test signout without token."""
+        from app.main import app
+        
+        client = TestClient(app)
+        
+        response = client.post("/api/auth/signout")
+        
+        assert response.status_code == 401

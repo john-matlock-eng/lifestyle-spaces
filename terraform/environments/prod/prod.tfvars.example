@@ -1,0 +1,40 @@
+# Production Environment Example Variables
+# Copy this file to prod.tfvars and customize for your environment
+
+# Basic Configuration
+aws_region        = "us-east-1"
+project_name      = "lifestyle-spaces"
+environment       = "prod"
+github_repository = "your-org/lifestyle-spaces"
+
+# Database Configuration (Production-optimized for data protection)
+enable_point_in_time_recovery = true
+enable_deletion_protection    = true
+create_health_check_item      = true
+
+# Backend Configuration
+cors_origins       = "https://your-production-domain.com"   # Restrictive for security
+log_retention_days = 30                                    # Longer retention for production
+
+# Frontend Configuration (Production-optimized for performance)
+enable_s3_versioning      = true
+cloudfront_price_class    = "PriceClass_All"              # Best performance
+
+# Security Configuration (Production-hardened)
+create_lambda_security_policy = true
+create_waf                    = true                       # Enabled for production
+waf_rate_limit                = 2000                       # Lower limit for protection
+
+# Cognito Configuration (Production-secured)
+cognito_password_minimum_length          = 12              # More secure length
+cognito_password_require_lowercase       = true
+cognito_password_require_numbers         = true
+cognito_password_require_symbols         = true            # Enabled for security
+cognito_password_require_uppercase       = true
+cognito_temporary_password_validity_days = 1               # Short validity for security
+cognito_access_token_validity_minutes    = 30              # Shorter for security
+cognito_id_token_validity_minutes        = 30              # Shorter for security
+cognito_refresh_token_validity_days      = 30              # Standard for production
+cognito_callback_urls                    = ["https://your-production-domain.com"]
+cognito_logout_urls                      = ["https://your-production-domain.com"]
+cognito_create_domain                    = true            # Enabled for hosted UI

@@ -69,6 +69,32 @@ output "waf_web_acl_id" {
   value       = module.security.waf_web_acl_id
 }
 
+# Cognito Outputs
+output "cognito_user_pool_id" {
+  description = "ID of the Cognito User Pool"
+  value       = module.cognito.user_pool_id
+}
+
+output "cognito_user_pool_client_id" {
+  description = "ID of the Cognito User Pool Client"
+  value       = module.cognito.user_pool_client_id
+}
+
+output "cognito_user_pool_arn" {
+  description = "ARN of the Cognito User Pool"
+  value       = module.cognito.user_pool_arn
+}
+
+output "cognito_config" {
+  description = "Complete Cognito configuration for frontend use"
+  value       = module.cognito.cognito_config
+}
+
+output "cognito_domain" {
+  description = "Cognito hosted UI domain (if created)"
+  value       = module.cognito.user_pool_domain
+}
+
 # Useful Information for Developers
 # Additional API Gateway Outputs
 output "api_gateway_stage_name" {
@@ -103,6 +129,12 @@ output "deployment_info" {
     api_url        = module.backend.api_gateway_url
     api_invoke_url = module.backend.api_gateway_invoke_url
     api_stage      = module.backend.api_gateway_stage_name
+
+    # Authentication
+    cognito_user_pool_id     = module.cognito.user_pool_id
+    cognito_client_id        = module.cognito.user_pool_client_id
+    cognito_config           = module.cognito.cognito_config
+    cognito_domain           = module.cognito.user_pool_domain
 
     # Resource Names for Deployment
     s3_bucket_name       = module.frontend.s3_bucket_name

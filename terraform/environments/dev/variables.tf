@@ -95,3 +95,76 @@ variable "waf_rate_limit" {
   type        = number
   default     = 10000
 }
+
+# Cognito Configuration
+variable "cognito_password_minimum_length" {
+  description = "Minimum length of passwords for Cognito"
+  type        = number
+  default     = 8
+}
+
+variable "cognito_password_require_lowercase" {
+  description = "Require lowercase characters in Cognito passwords"
+  type        = bool
+  default     = true
+}
+
+variable "cognito_password_require_numbers" {
+  description = "Require numbers in Cognito passwords"
+  type        = bool
+  default     = true
+}
+
+variable "cognito_password_require_symbols" {
+  description = "Require symbols in Cognito passwords"
+  type        = bool
+  default     = false # Disabled for better UX in POC
+}
+
+variable "cognito_password_require_uppercase" {
+  description = "Require uppercase characters in Cognito passwords"
+  type        = bool
+  default     = true
+}
+
+variable "cognito_temporary_password_validity_days" {
+  description = "Number of days temporary passwords are valid in Cognito"
+  type        = number
+  default     = 7
+}
+
+variable "cognito_access_token_validity_minutes" {
+  description = "Access token validity in minutes for Cognito"
+  type        = number
+  default     = 60 # 1 hour for dev
+}
+
+variable "cognito_id_token_validity_minutes" {
+  description = "ID token validity in minutes for Cognito"
+  type        = number
+  default     = 60 # 1 hour for dev
+}
+
+variable "cognito_refresh_token_validity_days" {
+  description = "Refresh token validity in days for Cognito"
+  type        = number
+  default     = 30 # 30 days for dev
+}
+
+variable "cognito_callback_urls" {
+  description = "List of allowed callback URLs for Cognito OAuth"
+  type        = list(string)
+  default     = ["http://localhost:3000", "https://localhost:3000"] # Dev-friendly defaults
+}
+
+variable "cognito_logout_urls" {
+  description = "List of allowed logout URLs for Cognito OAuth"
+  type        = list(string)
+  default     = ["http://localhost:3000", "https://localhost:3000"] # Dev-friendly defaults
+}
+
+variable "cognito_create_domain" {
+  description = "Create a Cognito domain for hosted UI"
+  type        = bool
+  default     = false # Disabled for POC to reduce complexity
+}

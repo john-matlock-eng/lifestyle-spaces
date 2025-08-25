@@ -5,6 +5,11 @@ export interface AppConfig {
   apiUrl: string
   isAWS: boolean
   isLocal: boolean
+  cognito: {
+    userPoolId?: string
+    userPoolClientId?: string
+    region?: string
+  }
 }
 
 /**
@@ -33,6 +38,11 @@ export function getConfig(): AppConfig {
     apiUrl,
     isAWS,
     isLocal,
+    cognito: {
+      userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
+      userPoolClientId: import.meta.env.VITE_COGNITO_USER_POOL_CLIENT_ID,
+      region: import.meta.env.VITE_AWS_REGION || 'us-east-1',
+    },
   }
 }
 

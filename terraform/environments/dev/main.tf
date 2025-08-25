@@ -92,6 +92,28 @@ module "frontend" {
   depends_on = [module.backend]
 }
 
+# Cognito Module
+module "cognito" {
+  source = "../../modules/cognito"
+
+  project_name                     = var.project_name
+  environment                      = var.environment
+  password_minimum_length          = var.cognito_password_minimum_length
+  password_require_lowercase       = var.cognito_password_require_lowercase
+  password_require_numbers         = var.cognito_password_require_numbers
+  password_require_symbols         = var.cognito_password_require_symbols
+  password_require_uppercase       = var.cognito_password_require_uppercase
+  temporary_password_validity_days = var.cognito_temporary_password_validity_days
+  access_token_validity_minutes    = var.cognito_access_token_validity_minutes
+  id_token_validity_minutes        = var.cognito_id_token_validity_minutes
+  refresh_token_validity_days      = var.cognito_refresh_token_validity_days
+  callback_urls                    = var.cognito_callback_urls
+  logout_urls                      = var.cognito_logout_urls
+  create_domain                    = var.cognito_create_domain
+
+  tags = local.common_tags
+}
+
 # Security Module
 module "security" {
   source = "../../modules/security"

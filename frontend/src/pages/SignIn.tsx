@@ -1,0 +1,36 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AuthLayout } from '../components/auth/AuthLayout';
+import { SignInForm } from '../components/auth/SignInForm';
+import { useAuth } from '../stores/authStore';
+import { SignInData } from '../types';
+
+export const SignIn: React.FC = () => {
+  const navigate = useNavigate();
+  const { signIn, isLoading, error } = useAuth();
+  const [switchToSignUp, setSwitchToSignUp] = useState(false);
+
+  const handleSignIn = async (data: SignInData & { rememberMe?: boolean }) => {
+    try {
+      await signIn({ email: data.email, password: data.password });
+      navigate('/dashboard');
+    } catch (error) {
+      // Error is handled by auth store
+    }
+  };
+
+  const handleSwitchToSignUp = () => {
+    navigate('/signup');
+  };
+
+  return (
+    <AuthLayout>
+      <SignInForm
+        onSubmit={handleSignIn}
+        onSwitchToSignUp={handleSwitchToSignUp}
+        isLoading={isLoading}
+        error={error}
+      />
+    </AuthLayout>
+  );
+};
