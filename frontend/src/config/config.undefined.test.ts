@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { getConfig, validateConfig, getValidatedConfig } from './index'
+import type { AppConfig } from './index'
 
 describe('Config Undefined API URL Edge Case', () => {
   it('should handle case where apiUrl is completely undefined in config object', () => {
@@ -8,7 +8,9 @@ describe('Config Undefined API URL Edge Case', () => {
     
     // This should trigger the error path with 'undefined' in the message (line 68 branch coverage)
     vi.doMock('./index', async () => {
-      const originalModule = await vi.importActual('./index') as any
+      const originalModule = await vi.importActual('./index') as {
+        validateConfig: (config: Partial<AppConfig>) => config is AppConfig
+      }
       return {
         ...originalModule,
         getConfig: () => invalidConfig,

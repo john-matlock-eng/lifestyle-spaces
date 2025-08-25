@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 vi.stubEnv('VITE_API_URL', 'invalid-url-that-will-fail')
 
 import { getValidatedConfig } from './index'
+import type { AppConfig } from './index'
 
 describe('Config Validation Error Cases', () => {
   beforeEach(() => {
@@ -25,7 +26,9 @@ describe('Config Validation Error Cases', () => {
   it('should throw error with "undefined" when API URL is empty - covering line 67 branch', () => {
     // Mock the getConfig function to return empty apiUrl to test the || 'undefined' branch
     vi.doMock('./index', async () => {
-      const actualModule = await vi.importActual('./index') as any
+      const actualModule = await vi.importActual('./index') as {
+        validateConfig: (config: Partial<AppConfig>) => config is AppConfig
+      }
       return {
         ...actualModule,
         getConfig: () => ({
