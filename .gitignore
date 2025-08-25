@@ -477,7 +477,8 @@ coverage/
 .pnp.*
 
 # Package managers
-package-lock.json
+# Note: package-lock.json should be committed for consistent dependency versions
+# package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
