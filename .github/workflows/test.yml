@@ -45,7 +45,9 @@ jobs:
       - name: Install dependencies
         run: |
           if [ "${{ steps.check-lockfile.outputs.lockfile }}" == "true" ]; then
-            npm ci
+            # Use npm install instead of npm ci to properly handle Rollup optional dependencies
+            # This fixes the "@rollup/rollup-linux-x64-gnu" module not found error
+            npm install
           else
             npm install
           fi
