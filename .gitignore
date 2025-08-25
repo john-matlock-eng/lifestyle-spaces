@@ -216,6 +216,8 @@ dist
 # Gatsby files
 .cache/
 public
+# Allow frontend/public directory (needed for Vite static assets)
+!frontend/public/
 
 # Storybook build outputs
 .out
