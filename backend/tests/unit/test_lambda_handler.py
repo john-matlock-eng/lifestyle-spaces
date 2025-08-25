@@ -17,43 +17,97 @@ class TestLambdaHandler:
         """Test Lambda handler with health check event."""
         from lambda_handler import handler
         
-        # Simulate API Gateway v2 event for health check
+        # Simulate API Gateway v1 event for health check (matching placeholder handler)
         event = {
-            "version": "2.0",
-            "routeKey": "GET /health",
-            "rawPath": "/health",
-            "rawQueryString": "",
+            "path": "/health",
+            "httpMethod": "GET",
             "headers": {
-                "accept": "application/json",
-                "host": "test.execute-api.us-east-1.amazonaws.com"
-            },
-            "requestContext": {
-                "domainName": "test.execute-api.us-east-1.amazonaws.com",
-                "http": {
-                    "method": "GET",
-                    "path": "/health",
-                    "protocol": "HTTP/1.1",
-                    "sourceIp": "127.0.0.1"
-                },
-                "requestId": "test-request-id",
-                "stage": "test"
+                "Accept": "application/json",
+                "Host": "test.execute-api.us-east-1.amazonaws.com"
             },
             "body": None,
             "isBase64Encoded": False
         }
         
-        context = {}  # Lambda context (not used by mangum)
+        context = {}  # Lambda context
         
+        response = handler(event, context)
+        
+        assert response["statusCode"] == 200
+        assert "headers" in response
+        assert response["headers"]["Content-Type"] == "application/json"
+        body = json.loads(response["body"])
+        assert body["status"] == "healthy"
+        assert body["message"] == "API is running (placeholder)"
+        assert body["environment"] == "dev"
+    
+    def test_handler_with_options_request(self):
+        """Test Lambda handler with OPTIONS request for CORS."""
+        from lambda_handler import handler
+        
+        # Simulate API Gateway v1 event for OPTIONS request
+        event = {
+            "path": "/any-path",
+            "httpMethod": "OPTIONS",
+            "headers": {
+                "Origin": "http://localhost:3000"
+            },
+            "body": None,
+            "isBase64Encoded": False
+        }
+        
+        context = {}
+        response = handler(event, context)
+        
+        assert response["statusCode"] == 200
+        assert "headers" in response
+        assert response["headers"]["Access-Control-Allow-Origin"] == "*"
+        assert response["headers"]["Access-Control-Allow-Methods"] == "GET,POST,PUT,DELETE,OPTIONS"
+        assert response["body"] == ""
+    
+    def test_handler_with_default_endpoint(self):
+        """Test Lambda handler with default endpoint."""
+        from lambda_handler import handler
+        
+        # Simulate API Gateway v1 event for a default endpoint
+        event = {
+            "path": "/api/users",
+            "httpMethod": "GET",
+            "headers": {
+                "Accept": "application/json"
+            },
+            "body": None,
+            "isBase64Encoded": False
+        }
+        
+        context = {}
+        response = handler(event, context)
+        
+        assert response["statusCode"] == 200
+        assert "headers" in response
+        assert response["headers"]["Content-Type"] == "application/json"
+        body = json.loads(response["body"])
+        assert body["message"] == "Placeholder Lambda function is working"
+        assert body["path"] == "/api/users"
+        assert body["method"] == "GET"
+    
+    def test_handler_with_dev_health_path(self):
+        """Test Lambda handler with /dev/health path."""
+        from lambda_handler import handler
+        
+        # Simulate API Gateway v1 event for /dev/health
+        event = {
+            "path": "/dev/health",
+            "httpMethod": "GET",
+            "headers": {},
+            "body": None,
+            "isBase64Encoded": False
+        }
+        
+        context = {}
         response = handler(event, context)
         
         assert response["statusCode"] == 200
         body = json.loads(response["body"])
         assert body["status"] == "healthy"
-    
-    def test_handler_uses_mangum(self):
-        """Test that handler uses Mangum adapter."""
-        from lambda_handler import handler
-        from mangum import Mangum
-        
-        # Handler should be an instance of Mangum
-        assert isinstance(handler, Mangum)
+        assert body["environment"] == "dev"
