@@ -26,6 +26,8 @@ const mockAuthService = {
 describe('AuthStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default mock for getCurrentUser to prevent unhandled promises
+    mockAuthService.getCurrentUser.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -37,13 +39,20 @@ describe('AuthStore', () => {
   );
 
   describe('Initial State', () => {
-    it('should have initial state with no user', () => {
+    it('should have initial state with no user', async () => {
+      mockAuthService.getCurrentUser.mockResolvedValue(null);
+      
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       expect(result.current.user).toBeNull();
       expect(result.current.isAuthenticated).toBe(false);
       expect(result.current.isLoading).toBe(true); // Loading on mount to check existing session
       expect(result.current.error).toBeNull();
+
+      // Wait for the auth check to complete
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
     });
   });
 
@@ -64,6 +73,11 @@ describe('AuthStore', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
+      // Wait for initial auth check to complete
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
+
       await act(async () => {
         const response = await result.current.signUp(mockSignUpData);
         expect(response).toEqual(mockResponse);
@@ -77,6 +91,11 @@ describe('AuthStore', () => {
       mockAuthService.signUp.mockRejectedValue(mockError);
 
       const { result } = renderHook(() => useAuth(), { wrapper });
+
+      // Wait for initial auth check to complete
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
 
       await act(async () => {
         await expect(result.current.signUp(mockSignUpData)).rejects.toThrow('Sign up failed');
@@ -113,6 +132,11 @@ describe('AuthStore', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
+      // Wait for initial auth check to complete
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
+
       await act(async () => {
         await result.current.signIn(mockSignInData);
       });
@@ -129,6 +153,11 @@ describe('AuthStore', () => {
       mockAuthService.signIn.mockRejectedValue(mockError);
 
       const { result } = renderHook(() => useAuth(), { wrapper });
+
+      // Wait for initial auth check to complete
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
 
       await act(async () => {
         await expect(result.current.signIn(mockSignInData)).rejects.toThrow('Invalid credentials');
@@ -147,6 +176,11 @@ describe('AuthStore', () => {
       mockAuthService.signIn.mockReturnValue(promise);
 
       const { result } = renderHook(() => useAuth(), { wrapper });
+
+      // Wait for initial auth check to complete
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
 
       // Start sign in
       act(() => {
@@ -172,6 +206,11 @@ describe('AuthStore', () => {
       mockAuthService.signOut.mockResolvedValue(undefined);
 
       const { result } = renderHook(() => useAuth(), { wrapper });
+
+      // Wait for initial auth check to complete
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
 
       // First set a user
       act(() => {
@@ -200,6 +239,11 @@ describe('AuthStore', () => {
       mockAuthService.signOut.mockRejectedValue(mockError);
 
       const { result } = renderHook(() => useAuth(), { wrapper });
+
+      // Wait for initial auth check to complete
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
 
       await act(async () => {
         await expect(result.current.signOut()).rejects.toThrow('Sign out failed');
@@ -274,6 +318,11 @@ describe('AuthStore', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
+      // Wait for initial auth check to complete
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
+
       // First sign in fails
       await act(async () => {
         await expect(result.current.signIn({ email: 'test@example.com', password: 'wrong' }))
@@ -292,7 +341,14 @@ describe('AuthStore', () => {
     });
 
     it('should provide clearError function', async () => {
+      mockAuthService.getCurrentUser.mockResolvedValue(null);
+      
       const { result } = renderHook(() => useAuth(), { wrapper });
+
+      // Wait for initial auth check to complete
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
 
       // Set an error
       act(() => {

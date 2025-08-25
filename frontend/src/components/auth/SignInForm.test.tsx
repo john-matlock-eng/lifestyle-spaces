@@ -63,7 +63,10 @@ describe('SignInForm', () => {
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     await waitFor(() => {
-      expect(mockOnSubmit).toHaveBeenCalledWith(formData);
+      expect(mockOnSubmit).toHaveBeenCalledWith({
+        ...formData,
+        rememberMe: false,
+      });
     });
   });
 
@@ -91,7 +94,7 @@ describe('SignInForm', () => {
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/invalid email format/i)).toBeInTheDocument();
+      expect(screen.getByText('Invalid email format')).toBeInTheDocument();
     });
 
     expect(mockOnSubmit).not.toHaveBeenCalled();
@@ -175,21 +178,23 @@ describe('SignInForm', () => {
   });
 
   it('should support keyboard navigation', async () => {
+    const user = userEvent.setup();
     render(<SignInForm {...defaultProps} />);
 
     const emailInput = screen.getByLabelText(/email/i);
     const passwordInput = screen.getByLabelText(/password/i);
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
 
-    // Tab through form elements
+    // Start with email input focused
     emailInput.focus();
     expect(emailInput).toHaveFocus();
 
-    fireEvent.keyDown(emailInput, { key: 'Tab' });
+    // Tab to password field
+    await user.keyboard('{Tab}');
     expect(passwordInput).toHaveFocus();
 
-    fireEvent.keyDown(passwordInput, { key: 'Tab' });
-    expect(submitButton).toHaveFocus();
+    // Tab to checkbox (remember me)
+    await user.keyboard('{Tab}');
+    expect(screen.getByLabelText(/remember me/i)).toHaveFocus();
   });
 
   it('should handle Enter key to submit form', async () => {
@@ -199,13 +204,14 @@ describe('SignInForm', () => {
     await user.type(screen.getByLabelText(/email/i), 'test@example.com');
     await user.type(screen.getByLabelText(/password/i), 'password123');
 
-    // Press Enter on password field
-    fireEvent.keyDown(screen.getByLabelText(/password/i), { key: 'Enter' });
+    // Press Enter on password field should trigger form submission
+    await user.keyboard('{Enter}');
 
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalledWith({
         email: 'test@example.com',
         password: 'password123',
+        rememberMe: false,
       });
     });
   });

@@ -60,7 +60,7 @@ class TestAuthEndpoints:
             )
             
             assert response.status_code == 400
-            assert "already exists" in response.json()["detail"]
+            assert "User exists" in response.json()["detail"]
     
     def test_signin_success(self):
         """Test successful signin."""
@@ -141,9 +141,17 @@ class TestAuthEndpoints:
     def test_signout_success(self):
         """Test user signout."""
         from app.main import app
+        from app.core.security import get_current_user
+        
+        # Override the dependency
+        def override_get_current_user():
+            return {"user_id": "test123", "email": "test@example.com"}
+        
+        app.dependency_overrides[get_current_user] = override_get_current_user
         
         client = TestClient(app)
         
+        # Mock the CognitoService
         with patch('app.api.routes.auth.CognitoService') as mock_cognito:
             mock_service = Mock()
             mock_cognito.return_value = mock_service
@@ -155,6 +163,9 @@ class TestAuthEndpoints:
             
             assert response.status_code == 200
             assert response.json()["message"] == "Successfully signed out"
+        
+        # Clean up the override
+        app.dependency_overrides.clear()
     
     def test_signout_without_token(self):
         """Test signout without token."""

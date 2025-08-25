@@ -21,7 +21,7 @@ describe('AuthLayout', () => {
       </AuthLayout>
     );
 
-    expect(screen.getByText(/lifestyle spaces/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /lifestyle spaces/i })).toBeInTheDocument();
   });
 
   it('should have proper semantic structure', () => {

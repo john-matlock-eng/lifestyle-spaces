@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { SpaceCard } from './SpaceCard';
 import { Space } from '../../types';
@@ -154,7 +154,9 @@ describe('SpaceCard', () => {
     render(<SpaceCard {...defaultProps} />);
     
     const card = screen.getByRole('button');
-    card.focus();
+    act(() => {
+      card.focus();
+    });
     
     expect(card).toHaveFocus();
     expect(card).toHaveClass('space-card--focused');

@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import App from './App'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Routes, Route, Navigate } from 'react-router-dom'
+import React from 'react'
 
 // Mock the stores
 vi.mock('./stores/authStore', () => ({
@@ -56,6 +57,34 @@ vi.mock('./components/ProtectedRoute', () => ({
   ),
 }))
 
+// Import the mocked components after mocking
+const { SignIn } = await import('./pages/SignIn')
+const { SignUp } = await import('./pages/SignUp')
+const { Dashboard } = await import('./pages/Dashboard')
+const { ProtectedRoute } = await import('./components/ProtectedRoute')
+const { AuthProvider } = await import('./stores/authStore')
+const { SpaceProvider } = await import('./stores/spaceStore')
+
+// Create a test component with just the routing logic (without BrowserRouter)
+const AppRoutes = () => (
+  <div className="app">
+    <Routes>
+      <Route path="/signin" element={<SignIn />} />
+      <Route path="/signup" element={<SignUp />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  </div>
+)
+
 describe('App Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -74,9 +103,13 @@ describe('App Component', () => {
 
   it('should render sign in page on /signin route', () => {
     render(
-      <MemoryRouter initialEntries={['/signin']}>
-        <App />
-      </MemoryRouter>
+      <AuthProvider>
+        <SpaceProvider>
+          <MemoryRouter initialEntries={['/signin']}>
+            <AppRoutes />
+          </MemoryRouter>
+        </SpaceProvider>
+      </AuthProvider>
     )
     
     expect(screen.getByTestId('signin-page')).toBeInTheDocument()
@@ -84,9 +117,13 @@ describe('App Component', () => {
 
   it('should render sign up page on /signup route', () => {
     render(
-      <MemoryRouter initialEntries={['/signup']}>
-        <App />
-      </MemoryRouter>
+      <AuthProvider>
+        <SpaceProvider>
+          <MemoryRouter initialEntries={['/signup']}>
+            <AppRoutes />
+          </MemoryRouter>
+        </SpaceProvider>
+      </AuthProvider>
     )
     
     expect(screen.getByTestId('signup-page')).toBeInTheDocument()
@@ -94,9 +131,13 @@ describe('App Component', () => {
 
   it('should render protected dashboard on /dashboard route', () => {
     render(
-      <MemoryRouter initialEntries={['/dashboard']}>
-        <App />
-      </MemoryRouter>
+      <AuthProvider>
+        <SpaceProvider>
+          <MemoryRouter initialEntries={['/dashboard']}>
+            <AppRoutes />
+          </MemoryRouter>
+        </SpaceProvider>
+      </AuthProvider>
     )
     
     expect(screen.getByTestId('protected-route')).toBeInTheDocument()

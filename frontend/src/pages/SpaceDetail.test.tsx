@@ -123,7 +123,7 @@ describe('SpaceDetail', () => {
   it('renders space information', () => {
     renderWithRouter();
     
-    expect(screen.getByText('Test Space')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Test Space' })).toBeInTheDocument();
     expect(screen.getByText('A test space for testing')).toBeInTheDocument();
     expect(screen.getByText('3 members')).toBeInTheDocument();
     expect(screen.getByText('Private')).toBeInTheDocument();

@@ -126,7 +126,7 @@ describe('Spaces Service', () => {
 
       const result = await listSpaces();
 
-      expect(mockApiService.get).toHaveBeenCalledWith('/spaces');
+      expect(mockApiService.get).toHaveBeenCalledWith('/spaces', undefined);
       expect(result).toEqual(mockResponse);
     });
 
@@ -146,7 +146,7 @@ describe('Spaces Service', () => {
 
       const result = await listSpaces({}, pagination);
 
-      expect(mockApiService.get).toHaveBeenCalledWith('/spaces', { params: pagination });
+      expect(mockApiService.get).toHaveBeenCalledWith('/spaces', { params: { ...pagination } });
       expect(result).toEqual(mockResponse);
     });
 

@@ -104,6 +104,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           <input
             id="email"
             type="email"
+            required
             autoComplete="email"
             aria-describedby={errors.email ? 'email-error' : undefined}
             aria-invalid={errors.email ? 'true' : 'false'}
@@ -180,6 +181,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           <input
             id="password"
             type="password"
+            required
             autoComplete="new-password"
             aria-describedby={errors.password ? 'password-error' : undefined}
             aria-invalid={errors.password ? 'true' : 'false'}
