@@ -202,6 +202,11 @@ jobs:
             --function-name ${{ needs.deploy-infrastructure.outputs.lambda_function_name }} \
             --zip-file fileb://backend/lambda.zip \
             --publish
+          
+          # Wait for function update to complete before proceeding
+          echo "Waiting for Lambda function update to complete..."
+          aws lambda wait function-updated \
+            --function-name ${{ needs.deploy-infrastructure.outputs.lambda_function_name }}
       
       - name: Update Lambda environment
         if: steps.check-backend.outputs.backend_exists == 'true'
@@ -213,6 +218,11 @@ jobs:
               CORS_ORIGINS=${{ needs.deploy-infrastructure.outputs.website_url }},
               DYNAMODB_TABLE=${{ needs.deploy-infrastructure.outputs.dynamodb_table_name }}
             }"
+          
+          # Wait for configuration update to complete
+          echo "Waiting for Lambda configuration update to complete..."
+          aws lambda wait function-updated \
+            --function-name ${{ needs.deploy-infrastructure.outputs.lambda_function_name }}
       
       - name: Run smoke tests
         if: steps.check-backend.outputs.backend_exists == 'true'
