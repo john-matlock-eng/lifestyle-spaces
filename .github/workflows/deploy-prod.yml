@@ -40,6 +40,28 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
       
+      - name: Create Lambda placeholder
+        run: |
+          mkdir -p backend
+          cat > backend/lambda_handler.py << 'EOF'
+          """
+          Placeholder Lambda handler for initial Terraform deployment.
+          This file will be replaced during the actual backend deployment.
+          """
+          def lambda_handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'headers': {
+                      'Content-Type': 'application/json',
+                      'Access-Control-Allow-Origin': '*',
+                      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                      'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
+                  },
+                  'body': '{"message": "Placeholder API - Backend not yet deployed", "status": "placeholder"}'
+              }
+          EOF
+          cd backend && zip lambda-placeholder.zip lambda_handler.py
+      
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
