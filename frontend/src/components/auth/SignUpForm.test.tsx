@@ -25,7 +25,7 @@ describe('SignUpForm', () => {
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^username/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/display name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^password/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign up/i })).toBeInTheDocument();
   });
@@ -65,7 +65,8 @@ describe('SignUpForm', () => {
     await user.type(screen.getByLabelText(/email/i), formData.email);
     await user.type(screen.getByLabelText(/^username/i), formData.username);
     await user.type(screen.getByLabelText(/display name/i), formData.displayName);
-    await user.type(screen.getByLabelText(/^password$/i), formData.password);
+    await user.type(screen.getByLabelText(/^password/i), formData.password);
+    await user.type(screen.getByLabelText(/confirm password/i), formData.password);
 
     await user.click(screen.getByRole('button', { name: /sign up/i }));
 
@@ -97,7 +98,7 @@ describe('SignUpForm', () => {
     await user.type(screen.getByLabelText(/email/i), 'invalid-email');
     await user.type(screen.getByLabelText(/^username/i), 'testuser');
     await user.type(screen.getByLabelText(/display name/i), 'Test User');
-    await user.type(screen.getByLabelText(/^password$/i), 'TestPassword123!');
+    await user.type(screen.getByLabelText(/^password/i), 'TestPassword123!');
     
     await user.click(screen.getByRole('button', { name: /sign up/i }));
 
@@ -115,7 +116,7 @@ describe('SignUpForm', () => {
     await user.type(screen.getByLabelText(/email/i), 'test@example.com');
     await user.type(screen.getByLabelText(/^username/i), 'testuser');
     await user.type(screen.getByLabelText(/display name/i), 'Test User');
-    await user.type(screen.getByLabelText(/^password$/i), '123');
+    await user.type(screen.getByLabelText(/^password/i), '123');
     
     await user.click(screen.getByRole('button', { name: /sign up/i }));
 
@@ -133,7 +134,7 @@ describe('SignUpForm', () => {
     await user.type(screen.getByLabelText(/email/i), 'test@example.com');
     await user.type(screen.getByLabelText(/^username/i), 'ab'); // Too short
     await user.type(screen.getByLabelText(/display name/i), 'Test User');
-    await user.type(screen.getByLabelText(/^password$/i), 'TestPassword123!');
+    await user.type(screen.getByLabelText(/^password/i), 'TestPassword123!');
     
     await user.click(screen.getByRole('button', { name: /sign up/i }));
 
@@ -179,7 +180,8 @@ describe('SignUpForm', () => {
     await user.type(screen.getByLabelText(/email/i), formData.email);
     await user.type(screen.getByLabelText(/^username/i), formData.username);
     await user.type(screen.getByLabelText(/display name/i), formData.displayName);
-    await user.type(screen.getByLabelText(/^password$/i), formData.password);
+    await user.type(screen.getByLabelText(/^password/i), formData.password);
+    await user.type(screen.getByLabelText(/confirm password/i), formData.password);
 
     await user.click(screen.getByRole('button', { name: /sign up/i }));
 
@@ -190,7 +192,8 @@ describe('SignUpForm', () => {
       expect((screen.getByLabelText(/email/i) as HTMLInputElement).value).toBe('');
       expect((screen.getByLabelText(/^username/i) as HTMLInputElement).value).toBe('');
       expect((screen.getByLabelText(/display name/i) as HTMLInputElement).value).toBe('');
-      expect((screen.getByLabelText(/^password$/i) as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText(/^password/i) as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText(/confirm password/i) as HTMLInputElement).value).toBe('');
     });
   });
 
@@ -202,12 +205,10 @@ describe('SignUpForm', () => {
 
     const emailInput = screen.getByLabelText(/email/i);
     expect(emailInput).toHaveAttribute('type', 'email');
-    expect(emailInput).toHaveAttribute('required');
     expect(emailInput).toHaveAttribute('autocomplete', 'email');
 
-    const passwordInput = screen.getByLabelText(/^password$/i);
+    const passwordInput = screen.getByLabelText(/^password/i);
     expect(passwordInput).toHaveAttribute('type', 'password');
-    expect(passwordInput).toHaveAttribute('required');
     expect(passwordInput).toHaveAttribute('autocomplete', 'new-password');
   });
 

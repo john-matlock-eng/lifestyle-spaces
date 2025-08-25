@@ -26,7 +26,10 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
     formState: { errors },
     reset,
     watch,
-  } = useForm<FormData>();
+  } = useForm<FormData>({
+    mode: 'all', // Validate on submit, blur, and change
+    reValidateMode: 'onChange'
+  });
 
   const password = watch('password');
 
@@ -104,7 +107,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           <input
             id="email"
             type="email"
-            required
             autoComplete="email"
             aria-describedby={errors.email ? 'email-error' : undefined}
             aria-invalid={errors.email ? 'true' : 'false'}
@@ -181,7 +183,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
           <input
             id="password"
             type="password"
-            required
             autoComplete="new-password"
             aria-describedby={errors.password ? 'password-error' : undefined}
             aria-invalid={errors.password ? 'true' : 'false'}

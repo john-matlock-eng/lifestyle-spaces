@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, cleanup } from '@testing-library/react'
 import App from './App'
 import { MemoryRouter, Routes, Route, Navigate } from 'react-router-dom'
 import React from 'react'
@@ -88,6 +88,18 @@ const AppRoutes = () => (
 describe('App Component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.resetModules()
+    cleanup()
+  })
+
+  afterEach(() => {
+    cleanup()
+    vi.resetAllMocks()
+    vi.resetModules()
+    
+    // Clear any remaining DOM elements
+    document.body.innerHTML = ''
+    document.head.innerHTML = ''
   })
 
   it('should render with providers and router structure', () => {

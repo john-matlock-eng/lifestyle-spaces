@@ -7,8 +7,15 @@ import { getAmplifyConfig, validateAmplifyConfig, getValidatedAmplifyConfig } fr
 describe('getAmplifyConfig', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.resetModules()
     // Clear any stubbed environment variables
     vi.unstubAllEnvs()
+  })
+  
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+    vi.resetAllMocks()
   })
 
   it('should return valid config with all required environment variables', () => {
@@ -271,7 +278,14 @@ describe('validateAmplifyConfig', () => {
 describe('getValidatedAmplifyConfig', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.resetModules()
     vi.unstubAllEnvs()
+  })
+  
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+    vi.resetAllMocks()
   })
 
   it('should return config when validation passes', () => {

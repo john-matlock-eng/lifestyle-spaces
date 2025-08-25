@@ -3,12 +3,17 @@ import { getConfig, validateConfig, getValidatedConfig } from './index'
 
 describe('Config System', () => {
   beforeEach(() => {
-    // Clear any existing environment variables
+    // Clear any existing environment variables and mocks
     vi.unstubAllEnvs()
+    vi.resetModules()
+    vi.clearAllMocks()
   })
 
   afterEach(() => {
+    // Clean up all environment variables and module state
     vi.unstubAllEnvs()
+    vi.resetModules()
+    vi.resetAllMocks()
   })
 
   describe('getConfig', () => {

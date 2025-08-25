@@ -152,12 +152,10 @@ describe('SignInForm', () => {
 
     const emailInput = screen.getByLabelText(/email/i);
     expect(emailInput).toHaveAttribute('type', 'email');
-    expect(emailInput).toHaveAttribute('required');
     expect(emailInput).toHaveAttribute('autocomplete', 'email');
 
     const passwordInput = screen.getByLabelText(/password/i);
     expect(passwordInput).toHaveAttribute('type', 'password');
-    expect(passwordInput).toHaveAttribute('required');
     expect(passwordInput).toHaveAttribute('autocomplete', 'current-password');
   });
 

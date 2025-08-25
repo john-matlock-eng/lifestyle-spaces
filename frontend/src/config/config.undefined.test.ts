@@ -1,7 +1,19 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { AppConfig } from './index'
 
 describe('Config Undefined API URL Edge Case', () => {
+  beforeEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+    vi.resetAllMocks()
+  })
+
   it('should handle case where apiUrl is completely undefined in config object', () => {
     // Create a partial config object that explicitly has undefined apiUrl
     const invalidConfig = { isAWS: false, isLocal: true } // missing apiUrl entirely

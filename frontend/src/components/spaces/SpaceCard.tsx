@@ -5,17 +5,21 @@ import './spaces.css';
 interface SpaceCardProps {
   space: Space;
   onClick?: (space: Space) => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
   isLoading?: boolean;
   isSelected?: boolean;
   className?: string;
+  role?: string;
 }
 
 export const SpaceCard: React.FC<SpaceCardProps> = ({
   space,
   onClick,
+  onKeyDown,
   isLoading = false,
   isSelected = false,
   className = '',
+  role,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -27,10 +31,15 @@ export const SpaceCard: React.FC<SpaceCardProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Handle selection keys
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       handleClick();
+      return;
     }
+    
+    // Call external onKeyDown handler for navigation
+    onKeyDown?.(e);
   };
 
   const formatDate = (dateString: string) => {
@@ -83,6 +92,8 @@ export const SpaceCard: React.FC<SpaceCardProps> = ({
       onBlur={() => setIsFocused(false)}
       disabled={isLoading}
       tabIndex={0}
+      role={role}
+      data-testid={`space-card-${space.spaceId}`}
       aria-label={`Open ${space.name} space`}
       aria-busy={isLoading}
       aria-pressed={isSelected}

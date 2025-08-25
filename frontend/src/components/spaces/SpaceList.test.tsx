@@ -6,10 +6,16 @@ import { Space } from '../../types';
 
 // Mock SpaceCard component
 vi.mock('./SpaceCard', () => ({
-  SpaceCard: ({ space, onClick }: { space: Space; onClick: (space: Space) => void }) => (
-    <div data-testid={`space-card-${space.spaceId}`} onClick={() => onClick(space)}>
+  SpaceCard: ({ space, onClick, onKeyDown, role }: { space: Space; onClick: (space: Space) => void; onKeyDown?: (e: React.KeyboardEvent) => void; role?: string }) => (
+    <button
+      role={role}
+      data-testid={`space-card-${space.spaceId}`} 
+      onClick={() => onClick(space)}
+      onKeyDown={onKeyDown}
+      tabIndex={0}
+    >
       {space.name}
-    </div>
+    </button>
   ),
 }));
 

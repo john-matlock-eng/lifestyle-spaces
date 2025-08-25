@@ -25,7 +25,10 @@ export const SignInForm: React.FC<SignInFormProps> = ({
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<FormData>();
+  } = useForm<FormData>({
+    mode: 'all', // Validate on submit, blur, and change
+    reValidateMode: 'onChange'
+  });
 
   const onFormSubmit = async (data: FormData) => {
     try {
@@ -71,7 +74,6 @@ export const SignInForm: React.FC<SignInFormProps> = ({
           <input
             id="email"
             type="email"
-            required
             autoComplete="email"
             aria-describedby={errors.email ? 'email-error' : undefined}
             aria-invalid={errors.email ? 'true' : 'false'}
@@ -95,7 +97,6 @@ export const SignInForm: React.FC<SignInFormProps> = ({
           <input
             id="password"
             type="password"
-            required
             autoComplete="current-password"
             aria-describedby={errors.password ? 'password-error' : undefined}
             aria-invalid={errors.password ? 'true' : 'false'}

@@ -82,7 +82,15 @@ describe('MembersList', () => {
   it('shows joined dates', () => {
     render(<MembersList {...defaultProps} />);
     
-    expect(screen.getByText(/Joined/)).toBeInTheDocument();
+    // Check that joined dates are formatted and displayed correctly
+    // The dates may be adjusted for local timezone, so we check for the general format
+    const joinedElements = screen.getAllByText(/Joined.*\d{1,2}, \d{4}/);
+    expect(joinedElements.length).toBe(3);
+    
+    // Verify that each member has a joined date
+    expect(screen.getByTestId('member-user-1').textContent).toMatch(/Joined.*\d{4}/);
+    expect(screen.getByTestId('member-user-2').textContent).toMatch(/Joined.*\d{4}/);
+    expect(screen.getByTestId('member-user-3').textContent).toMatch(/Joined.*\d{4}/);
   });
 
   it('shows loading state', () => {
@@ -139,8 +147,9 @@ describe('MembersList', () => {
     );
     
     // Should have role change dropdown for non-owner members
-    const adminDropdown = screen.getByDisplayValue('admin');
+    const adminDropdown = screen.getByLabelText('Change role for Admin User');
     expect(adminDropdown).toBeInTheDocument();
+    expect(adminDropdown).toHaveValue('admin');
     
     fireEvent.change(adminDropdown, { target: { value: 'member' } });
     expect(onRoleChange).toHaveBeenCalledWith('user-2', 'member');

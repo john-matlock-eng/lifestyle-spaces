@@ -72,36 +72,45 @@ export const SpaceList: React.FC<SpaceListProps> = ({
     setLocalSearchQuery('');
   };
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent, currentIndex: number) => {
     if (!spaces.length) return;
+
+    let nextIndex: number | null = null;
 
     switch (e.key) {
       case 'ArrowDown': {
         e.preventDefault();
-        // Focus handling could be implemented here if needed
+        // For simplicity, always go to next item in sequence
+        nextIndex = Math.min(currentIndex + 1, spaces.length - 1);
         break;
       }
       case 'ArrowUp': {
         e.preventDefault();
-        // Focus handling could be implemented here if needed
+        // For simplicity, always go to previous item in sequence
+        nextIndex = Math.max(currentIndex - 1, 0);
         break;
       }
       case 'ArrowRight': {
         if (layout === 'grid') {
           e.preventDefault();
-          // Focus handling could be implemented here if needed
+          nextIndex = Math.min(currentIndex + 1, spaces.length - 1);
         }
         break;
       }
       case 'ArrowLeft': {
         if (layout === 'grid') {
           e.preventDefault();
-          // Focus handling could be implemented here if needed
+          nextIndex = Math.max(currentIndex - 1, 0);
         }
         break;
       }
     }
-  }, [spaces.length, layout]);
+
+    if (nextIndex !== null && nextIndex !== currentIndex) {
+      const nextElement = document.querySelector(`[data-testid="space-card-${spaces[nextIndex].spaceId}"]`) as HTMLElement;
+      nextElement?.focus();
+    }
+  }, [spaces, layout]);
 
   const renderSkeleton = () => {
     return Array.from({ length: skeletonCount }, (_, index) => (
@@ -319,14 +328,14 @@ export const SpaceList: React.FC<SpaceListProps> = ({
         aria-label="Spaces list"
       >
         {spaces.map((space, index) => (
-          <div key={space.spaceId} role="gridcell">
-            <SpaceCard
-              space={space}
-              onClick={onSpaceClick}
-              isSelected={selectedSpaceId === space.spaceId}
-              onKeyDown={(e) => handleKeyDown(e, index)}
-            />
-          </div>
+          <SpaceCard
+            key={space.spaceId}
+            space={space}
+            onClick={onSpaceClick}
+            isSelected={selectedSpaceId === space.spaceId}
+            onKeyDown={(e) => handleKeyDown(e, index)}
+            role="gridcell"
+          />
         ))}
       </div>
 

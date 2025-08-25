@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom'
-import { vi, afterEach } from 'vitest'
+import { vi, afterEach, beforeEach } from 'vitest'
+import { cleanup } from '@testing-library/react'
 
 // Global test setup for Vitest + React Testing Library
 // This file is imported before all test files
@@ -37,7 +38,44 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }))
 
+// Store original environment values to restore them
+const originalEnv = { ...process.env }
+
+// Setup cleanup before each test
+beforeEach(() => {
+  // Clear all mocks but not timers (causes issues)
+  vi.clearAllMocks()
+  
+  // Reset DOM state
+  cleanup()
+  
+  // Reset document head changes
+  document.head.innerHTML = ''
+  
+  // Clear any console spy calls
+  if (vi.isMockFunction(console.error)) {
+    console.error.mockClear()
+  }
+  if (vi.isMockFunction(console.warn)) {
+    console.warn.mockClear()
+  }
+  if (vi.isMockFunction(console.log)) {
+    console.log.mockClear()
+  }
+})
+
 // Setup cleanup after each test
 afterEach(() => {
-  vi.clearAllMocks()
+  // Complete cleanup of all mocks
+  vi.resetAllMocks()
+  
+  // Reset environment variables to original state
+  vi.unstubAllEnvs()
+  
+  // Clean up DOM
+  cleanup()
+  
+  // Clear any remaining DOM elements
+  document.body.innerHTML = ''
+  document.head.innerHTML = ''
 })

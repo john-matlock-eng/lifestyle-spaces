@@ -9,10 +9,13 @@ import type { AppConfig } from './index'
 describe('Config Validation Error Cases', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.resetModules()
   })
 
   afterEach(() => {
     vi.unstubAllEnvs()
+    vi.resetModules()
+    vi.resetAllMocks()
   })
 
   it('should throw error when configuration is invalid - covering lines 67-71', () => {

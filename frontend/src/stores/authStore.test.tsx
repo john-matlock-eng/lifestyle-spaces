@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth } from './authStore';
 import { signIn, signOut, getCurrentUser, signUp, refreshToken } from '../services/auth';
 import { SignInData, SignUpData, User, AuthResponse } from '../types';
@@ -32,6 +32,7 @@ describe('AuthStore', () => {
 
   afterEach(() => {
     vi.resetAllMocks();
+    vi.useRealTimers();
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -50,8 +51,8 @@ describe('AuthStore', () => {
       expect(result.current.error).toBeNull();
 
       // Wait for the auth check to complete
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
       });
     });
   });
@@ -74,8 +75,8 @@ describe('AuthStore', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       // Wait for initial auth check to complete
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
       });
 
       await act(async () => {
@@ -93,8 +94,8 @@ describe('AuthStore', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       // Wait for initial auth check to complete
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
       });
 
       await act(async () => {
@@ -133,8 +134,8 @@ describe('AuthStore', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       // Wait for initial auth check to complete
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
       });
 
       await act(async () => {
@@ -155,8 +156,8 @@ describe('AuthStore', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       // Wait for initial auth check to complete
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
       });
 
       await act(async () => {
@@ -178,8 +179,8 @@ describe('AuthStore', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       // Wait for initial auth check to complete
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
       });
 
       // Start sign in
@@ -208,8 +209,8 @@ describe('AuthStore', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       // Wait for initial auth check to complete
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
       });
 
       // First set a user
@@ -241,8 +242,8 @@ describe('AuthStore', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       // Wait for initial auth check to complete
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
       });
 
       await act(async () => {
@@ -268,8 +269,8 @@ describe('AuthStore', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       // Wait for the effect to run
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
       });
 
       expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
@@ -284,8 +285,8 @@ describe('AuthStore', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       // Wait for the effect to run
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
       });
 
       expect(result.current.user).toBeNull();
@@ -319,8 +320,8 @@ describe('AuthStore', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       // Wait for initial auth check to complete
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
       });
 
       // First sign in fails
@@ -346,8 +347,8 @@ describe('AuthStore', () => {
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       // Wait for initial auth check to complete
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
       });
 
       // Set an error

@@ -1,7 +1,7 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { CreateSpaceModal } from './CreateSpaceModal';
 
 // Mock the space store hook
@@ -36,9 +36,21 @@ describe('CreateSpaceModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.resetModules();
+    cleanup();
     // Reset mock state
     mockSpaceState.isLoading = false;
     mockSpaceState.error = null;
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.resetAllMocks();
+    vi.resetModules();
+    
+    // Clear any remaining DOM elements
+    document.body.innerHTML = '';
+    document.head.innerHTML = '';
   });
 
   it('renders modal when open', () => {
@@ -227,9 +239,9 @@ describe('CreateSpaceModal', () => {
     
     const nameInput = screen.getByLabelText(/space name/i);
     
-    // Wait for the setTimeout in the component to complete
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+    // Wait for the focus to be set
+    await waitFor(() => {
+      expect(nameInput).toHaveFocus();
     });
     
     expect(nameInput).toHaveFocus();
@@ -244,8 +256,8 @@ describe('CreateSpaceModal', () => {
     const createButton = screen.getByText('Create Space');
     
     // Wait for initial focus
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
+    await waitFor(() => {
+      expect(nameInput).toHaveFocus();
     });
     
     // Tab through all focusable elements

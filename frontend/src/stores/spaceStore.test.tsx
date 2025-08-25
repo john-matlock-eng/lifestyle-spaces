@@ -27,10 +27,13 @@ const mockSpacesService = {
 describe('SpaceStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.resetModules();
   });
 
   afterEach(() => {
     vi.resetAllMocks();
+    vi.resetModules();
+    vi.useRealTimers();
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
