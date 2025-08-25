@@ -27,7 +27,7 @@ output "api_gateway_arn" {
 
 output "api_gateway_url" {
   description = "URL of the API Gateway"
-  value       = "https://${aws_api_gateway_rest_api.api.id}.execute-api.${var.region}.amazonaws.com/${aws_api_gateway_deployment.api.stage_name}"
+  value       = "https://${aws_api_gateway_rest_api.api.id}.execute-api.${var.region}.amazonaws.com/${var.environment}"
 }
 
 output "api_gateway_execution_arn" {
@@ -37,7 +37,7 @@ output "api_gateway_execution_arn" {
 
 output "api_gateway_stage_name" {
   description = "Stage name of the API Gateway deployment"
-  value       = aws_api_gateway_deployment.api.stage_name
+  value       = var.environment
 }
 
 output "api_gateway_deployment_id" {
@@ -47,5 +47,5 @@ output "api_gateway_deployment_id" {
 
 output "api_gateway_invoke_url" {
   description = "Full invoke URL for the API Gateway (recommended for external use)"
-  value       = aws_api_gateway_deployment.api.invoke_url
+  value       = "https://${aws_api_gateway_rest_api.api.id}.execute-api.${var.region}.amazonaws.com/${var.environment}"
 }
