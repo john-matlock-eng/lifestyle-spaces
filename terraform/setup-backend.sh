@@ -33,30 +33,46 @@ fi
 
 # Enable versioning
 echo "Enabling versioning on S3 bucket..."
-aws s3api put-bucket-versioning \
-    --bucket "$BUCKET_NAME" \
-    --versioning-configuration Status=Enabled
+if aws s3api get-bucket-versioning --bucket "$BUCKET_NAME" | grep -q '"Status": "Enabled"'; then
+    echo "Versioning is already enabled on S3 bucket"
+else
+    aws s3api put-bucket-versioning \
+        --bucket "$BUCKET_NAME" \
+        --versioning-configuration Status=Enabled
+    echo "Versioning enabled on S3 bucket"
+fi
 
-# Enable server-side encryption
-echo "Enabling server-side encryption on S3 bucket..."
-aws s3api put-bucket-encryption \
-    --bucket "$BUCKET_NAME" \
-    --server-side-encryption-configuration '{
-        "Rules": [
-            {
-                "ApplyServerSideEncryptionByDefault": {
-                    "SSEAlgorithm": "AES256"
+# Enable server-side encryption with AWS managed keys
+echo "Configuring server-side encryption with AWS managed keys on S3 bucket..."
+if aws s3api get-bucket-encryption --bucket "$BUCKET_NAME" > /dev/null 2>&1; then
+    echo "Server-side encryption is already configured on S3 bucket"
+else
+    aws s3api put-bucket-encryption \
+        --bucket "$BUCKET_NAME" \
+        --server-side-encryption-configuration '{
+            "Rules": [
+                {
+                    "ApplyServerSideEncryptionByDefault": {
+                        "SSEAlgorithm": "aws:kms",
+                        "KMSMasterKeyID": "alias/aws/s3"
+                    }
                 }
-            }
-        ]
-    }'
+            ]
+        }'
+    echo "Server-side encryption with AWS managed keys enabled on S3 bucket"
+fi
 
 # Block public access
-echo "Blocking public access to S3 bucket..."
-aws s3api put-public-access-block \
-    --bucket "$BUCKET_NAME" \
-    --public-access-block-configuration \
-    "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+echo "Configuring public access block on S3 bucket..."
+if aws s3api get-public-access-block --bucket "$BUCKET_NAME" > /dev/null 2>&1; then
+    echo "Public access block is already configured on S3 bucket"
+else
+    aws s3api put-public-access-block \
+        --bucket "$BUCKET_NAME" \
+        --public-access-block-configuration \
+        "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+    echo "Public access blocked on S3 bucket"
+fi
 
 # Create DynamoDB table for state locking
 echo "Creating DynamoDB table for state locking..."
@@ -77,7 +93,19 @@ else
 fi
 
 echo ""
+echo "============================================"
 echo "Backend infrastructure setup complete!"
+echo "============================================"
+echo ""
+echo "Resources created/verified:"
+echo "• S3 Bucket: $BUCKET_NAME"
+echo "  - Versioning: Enabled"
+echo "  - Encryption: AWS KMS with aws/s3 key"
+echo "  - Public Access: Blocked"
+echo "• DynamoDB Table: $DYNAMODB_TABLE"
+echo "  - Primary Key: LockID (String)"
+echo "  - Billing Mode: Pay per request"
+echo "• Region: $REGION"
 echo ""
 echo "Next steps:"
 echo "1. cd terraform/environments/dev (or prod)"
@@ -85,4 +113,6 @@ echo "2. terraform init"
 echo "3. terraform plan"
 echo "4. terraform apply"
 echo ""
-echo "Note: Make sure to set up your AWS credentials and have the appropriate permissions."
+echo "Note: Ensure your AWS credentials have appropriate permissions for:"
+echo "- S3: s3:CreateBucket, s3:PutBucketVersioning, s3:PutBucketEncryption, s3:PutPublicAccessBlock"
+echo "- DynamoDB: dynamodb:CreateTable, dynamodb:DescribeTable"

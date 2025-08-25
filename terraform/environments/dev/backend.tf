@@ -9,8 +9,8 @@ terraform {
     dynamodb_table = "lifestyle-spaces-terraform-locks"
     encrypt        = true
     
-    # Additional security settings
-    kms_key_id = "alias/terraform-bucket-key"
+    # Using AWS managed encryption (AES256) for cost optimization in POC
+    # Custom KMS key not required for development environment
   }
 }
 
