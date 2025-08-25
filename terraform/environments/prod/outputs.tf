@@ -96,22 +96,22 @@ output "deployment_info" {
   description = "Important deployment information"
   value = {
     # Website URLs
-    website_url                    = module.frontend.website_url
-    cloudfront_domain             = module.frontend.cloudfront_distribution_domain
-    
+    website_url       = module.frontend.website_url
+    cloudfront_domain = module.frontend.cloudfront_distribution_domain
+
     # API URLs
-    api_url                       = module.backend.api_gateway_url
-    api_invoke_url                = module.backend.api_gateway_invoke_url
-    api_stage                     = module.backend.api_gateway_stage_name
-    
+    api_url        = module.backend.api_gateway_url
+    api_invoke_url = module.backend.api_gateway_invoke_url
+    api_stage      = module.backend.api_gateway_stage_name
+
     # Resource Names for Deployment
-    s3_bucket_name                = module.frontend.s3_bucket_name
-    cloudfront_id                 = module.frontend.cloudfront_distribution_id
-    lambda_function_name          = module.backend.lambda_function_name
-    api_gateway_id                = module.backend.api_gateway_id
-    dynamodb_table_name           = module.database.dynamodb_table_name
-    
+    s3_bucket_name       = module.frontend.s3_bucket_name
+    cloudfront_id        = module.frontend.cloudfront_distribution_id
+    lambda_function_name = module.backend.lambda_function_name
+    api_gateway_id       = module.backend.api_gateway_id
+    dynamodb_table_name  = module.database.dynamodb_table_name
+
     # Security
-    github_actions_role_arn       = module.security.github_actions_role_arn
+    github_actions_role_arn = module.security.github_actions_role_arn
   }
 }

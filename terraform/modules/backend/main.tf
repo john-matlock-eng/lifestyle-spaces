@@ -71,17 +71,17 @@ resource "aws_iam_role_policy_attachment" "lambda_dynamodb" {
 resource "aws_lambda_function" "api" {
   filename         = var.lambda_zip_path
   function_name    = "${var.project_name}-${var.environment}-api"
-  role            = aws_iam_role.lambda_role.arn
-  handler         = "lambda_handler.handler"
-  runtime         = "python3.11"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "lambda_handler.handler"
+  runtime          = "python3.11"
   source_code_hash = filebase64sha256(var.lambda_zip_path)
-  timeout         = 30
-  memory_size     = 512
+  timeout          = 30
+  memory_size      = 512
 
   environment {
     variables = {
-      ENVIRONMENT          = var.environment
-      DYNAMODB_TABLE_NAME  = var.dynamodb_table_name
+      ENVIRONMENT         = var.environment
+      DYNAMODB_TABLE_NAME = var.dynamodb_table_name
       CORS_ORIGINS        = var.cors_origins
     }
   }

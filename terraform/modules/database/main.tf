@@ -10,10 +10,10 @@ terraform {
 
 # DynamoDB Table with Single Table Design
 resource "aws_dynamodb_table" "main" {
-  name           = "${var.project_name}-${var.environment}-table"
-  billing_mode   = "PAY_PER_REQUEST"  # Cost optimization for POC
-  hash_key       = "PK"
-  range_key      = "SK"
+  name         = "${var.project_name}-${var.environment}-table"
+  billing_mode = "PAY_PER_REQUEST" # Cost optimization for POC
+  hash_key     = "PK"
+  range_key    = "SK"
 
   # Primary Key Schema
   attribute {
@@ -50,17 +50,17 @@ resource "aws_dynamodb_table" "main" {
 
   # Global Secondary Index 1
   global_secondary_index {
-    name     = "GSI1"
-    hash_key = "GSI1PK"
-    range_key = "GSI1SK"
+    name            = "GSI1"
+    hash_key        = "GSI1PK"
+    range_key       = "GSI1SK"
     projection_type = "ALL"
   }
 
   # Global Secondary Index 2 for time-based queries
   global_secondary_index {
-    name     = "GSI2"
-    hash_key = "GSI2PK"
-    range_key = "GSI2SK"
+    name            = "GSI2"
+    hash_key        = "GSI2PK"
+    range_key       = "GSI2SK"
     projection_type = "ALL"
   }
 

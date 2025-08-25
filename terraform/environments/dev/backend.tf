@@ -8,7 +8,7 @@ terraform {
     region         = "us-east-1"
     dynamodb_table = "lifestyle-spaces-terraform-locks"
     encrypt        = true
-    
+
     # Using AWS managed encryption (AES256) for cost optimization in POC
     # Custom KMS key not required for development environment
   }

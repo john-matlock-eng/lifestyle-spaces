@@ -91,7 +91,7 @@ jobs:
             
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
-              repo: context.repo.name,
+              repo: context.repo.repo,
               issue_number: context.issue.number,
             });
             
@@ -102,7 +102,7 @@ jobs:
             if (botComment) {
               github.rest.issues.updateComment({
                 owner: context.repo.owner,
-                repo: context.repo.name,
+                repo: context.repo.repo,
                 comment_id: botComment.id,
                 body: output
               });
@@ -110,7 +110,7 @@ jobs:
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
-                repo: context.repo.name,
+                repo: context.repo.repo,
                 body: output
               });
             }
@@ -188,7 +188,7 @@ jobs:
             
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
-              repo: context.repo.name,
+              repo: context.repo.repo,
               issue_number: context.issue.number,
             });
             
@@ -199,7 +199,7 @@ jobs:
             if (botComment) {
               github.rest.issues.updateComment({
                 owner: context.repo.owner,
-                repo: context.repo.name,
+                repo: context.repo.repo,
                 comment_id: botComment.id,
                 body: output
               });
@@ -207,7 +207,7 @@ jobs:
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
-                repo: context.repo.name,
+                repo: context.repo.repo,
                 body: output
               });
             }

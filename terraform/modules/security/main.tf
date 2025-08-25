@@ -212,9 +212,9 @@ resource "aws_wafv2_web_acl" "main" {
     }
 
     visibility_config {
-      cloudwatch_metrics_enabled = false  # Cost optimization
+      cloudwatch_metrics_enabled = false # Cost optimization
       metric_name                = "RateLimitRule"
-      sampled_requests_enabled   = false  # Cost optimization
+      sampled_requests_enabled   = false # Cost optimization
     }
   }
 
@@ -235,17 +235,17 @@ resource "aws_wafv2_web_acl" "main" {
     }
 
     visibility_config {
-      cloudwatch_metrics_enabled = false  # Cost optimization
+      cloudwatch_metrics_enabled = false # Cost optimization
       metric_name                = "AWSManagedRulesCommonRuleSet"
-      sampled_requests_enabled   = false  # Cost optimization
+      sampled_requests_enabled   = false # Cost optimization
     }
   }
 
   tags = var.tags
 
   visibility_config {
-    cloudwatch_metrics_enabled = false  # Cost optimization
+    cloudwatch_metrics_enabled = false # Cost optimization
     metric_name                = "${var.project_name}-${var.environment}-web-acl"
-    sampled_requests_enabled   = false  # Cost optimization
+    sampled_requests_enabled   = false # Cost optimization
   }
 }
