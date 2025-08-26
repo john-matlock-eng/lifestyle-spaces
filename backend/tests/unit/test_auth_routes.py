@@ -138,6 +138,28 @@ class TestAuthEndpoints:
             assert response.status_code == 200
             assert "access_token" in response.json()
     
+    def test_refresh_token_invalid_credentials(self):
+        """Test refresh token with invalid credentials."""
+        from app.main import app
+        from app.services.exceptions import InvalidCredentialsError
+        
+        client = TestClient(app)
+        
+        with patch('app.api.routes.auth.CognitoService') as mock_cognito:
+            mock_service = Mock()
+            mock_service.refresh_token.side_effect = InvalidCredentialsError("Invalid refresh token")
+            mock_cognito.return_value = mock_service
+            
+            response = client.post(
+                "/api/auth/refresh",
+                json={
+                    "refresh_token": "invalid_refresh_token"
+                }
+            )
+            
+            assert response.status_code == 401
+            assert "Invalid refresh token" in response.json()["detail"]
+    
     def test_signout_success(self):
         """Test user signout."""
         from app.main import app
@@ -176,3 +198,100 @@ class TestAuthEndpoints:
         response = client.post("/api/auth/signout")
         
         assert response.status_code == 401
+    
+    def test_signup_generic_error(self):
+        """Test signup with generic error."""
+        from app.main import app
+        
+        client = TestClient(app)
+        
+        with patch('app.api.routes.auth.CognitoService') as mock_cognito:
+            mock_service = Mock()
+            mock_service.sign_up.side_effect = Exception("Database error")
+            mock_cognito.return_value = mock_service
+            
+            response = client.post(
+                "/api/auth/signup",
+                json={
+                    "email": "test@example.com",
+                    "username": "testuser",
+                    "password": "Test123!@#",
+                    "full_name": "Test User"
+                }
+            )
+            
+            assert response.status_code == 500
+            assert "Failed to sign up user" in response.json()["detail"]
+    
+    def test_signin_generic_error(self):
+        """Test signin with generic error."""
+        from app.main import app
+        
+        client = TestClient(app)
+        
+        with patch('app.api.routes.auth.CognitoService') as mock_cognito:
+            mock_service = Mock()
+            mock_service.sign_in.side_effect = Exception("Database error")
+            mock_cognito.return_value = mock_service
+            
+            response = client.post(
+                "/api/auth/signin",
+                json={
+                    "email": "test@example.com",
+                    "password": "Test123!@#"
+                }
+            )
+            
+            assert response.status_code == 500
+            assert "Failed to sign in" in response.json()["detail"]
+    
+    def test_refresh_token_generic_error(self):
+        """Test refresh token with generic error."""
+        from app.main import app
+        
+        client = TestClient(app)
+        
+        with patch('app.api.routes.auth.CognitoService') as mock_cognito:
+            mock_service = Mock()
+            mock_service.refresh_token.side_effect = Exception("Database error")
+            mock_cognito.return_value = mock_service
+            
+            response = client.post(
+                "/api/auth/refresh",
+                json={
+                    "refresh_token": "refresh123"
+                }
+            )
+            
+            assert response.status_code == 500
+            assert "Failed to refresh token" in response.json()["detail"]
+    
+    def test_signout_generic_error(self):
+        """Test signout with generic error."""
+        from app.main import app
+        from app.core.security import get_current_user
+        
+        # Override the dependency to return a user
+        def override_get_current_user():
+            return {"sub": "user123", "email": "test@example.com"}
+        
+        app.dependency_overrides[get_current_user] = override_get_current_user
+        
+        client = TestClient(app)
+        
+        # Mock CognitoService to raise an exception
+        with patch('app.api.routes.auth.CognitoService') as mock_cognito:
+            mock_service = Mock()
+            # Make the entire class instantiation raise an error
+            mock_cognito.side_effect = Exception("Database error")
+            
+            response = client.post(
+                "/api/auth/signout",
+                headers={"Authorization": "Bearer access123"}
+            )
+            
+            assert response.status_code == 500
+            assert "Failed to sign out" in response.json()["detail"]
+        
+        # Clean up the override
+        app.dependency_overrides.clear()
