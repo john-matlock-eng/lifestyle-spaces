@@ -9,23 +9,30 @@ from botocore.exceptions import ClientError
 class TestFinalCognito:
     """Test final missing Cognito coverage."""
     
-    def test_create_test_pool_exception_no_match(self):
+    @patch('app.services.cognito.boto3.client')
+    def test_create_test_pool_exception_no_match(self, mock_boto):
         """Test _create_test_pool when exception and no pool matches."""
-        from app.services.cognito import CognitoService
+        import os
+        # Set environment variables to prevent auto-creation during init
+        os.environ['COGNITO_USER_POOL_ID'] = 'test-pool-id'
+        os.environ['COGNITO_CLIENT_ID'] = 'test-client-id'
         
-        service = CognitoService()
-        
-        with patch.object(service.client, 'create_user_pool') as mock_create, \
-             patch.object(service.client, 'list_user_pools') as mock_list:
+        try:
+            mock_client = Mock()
+            mock_boto.return_value = mock_client
             
+            from app.services.cognito import CognitoService
+            service = CognitoService()
+            
+            # Now test the _create_test_pool method directly
             # Mock create_user_pool to raise ClientError
-            mock_create.side_effect = ClientError(
+            mock_client.create_user_pool.side_effect = ClientError(
                 error_response={'Error': {'Code': 'SomeOtherError'}}, 
                 operation_name='CreateUserPool'
             )
             
             # Mock list_user_pools to return no matching pool
-            mock_list.return_value = {
+            mock_client.list_user_pools.return_value = {
                 'UserPools': [
                     {'Name': 'other-pool', 'Id': 'other-id'}
                 ]
@@ -34,24 +41,33 @@ class TestFinalCognito:
             # Should re-raise the original exception
             with pytest.raises(ClientError):
                 service._create_test_pool()
+        finally:
+            os.environ.pop('COGNITO_USER_POOL_ID', None)
+            os.environ.pop('COGNITO_CLIENT_ID', None)
     
-    def test_create_test_client_exception_no_match(self):
+    @patch('app.services.cognito.boto3.client')
+    def test_create_test_client_exception_no_match(self, mock_boto):
         """Test _create_test_client when exception and no client matches."""
-        from app.services.cognito import CognitoService
+        import os
+        # Set environment variables to prevent auto-creation
+        os.environ['COGNITO_USER_POOL_ID'] = 'test-pool-id'
+        os.environ['COGNITO_CLIENT_ID'] = 'test-client-id'
         
-        service = CognitoService()
-        
-        with patch.object(service.client, 'create_user_pool_client') as mock_create, \
-             patch.object(service.client, 'list_user_pool_clients') as mock_list:
+        try:
+            mock_client = Mock()
+            mock_boto.return_value = mock_client
+            
+            from app.services.cognito import CognitoService
+            service = CognitoService()
             
             # Mock create_user_pool_client to raise ClientError
-            mock_create.side_effect = ClientError(
+            mock_client.create_user_pool_client.side_effect = ClientError(
                 error_response={'Error': {'Code': 'SomeOtherError'}}, 
                 operation_name='CreateUserPoolClient'
             )
             
             # Mock list_user_pool_clients to return no matching client
-            mock_list.return_value = {
+            mock_client.list_user_pool_clients.return_value = {
                 'UserPoolClients': [
                     {'ClientName': 'other-client', 'ClientId': 'other-id'}
                 ]
@@ -60,15 +76,26 @@ class TestFinalCognito:
             # Should re-raise the original exception
             with pytest.raises(ClientError):
                 service._create_test_client()
+        finally:
+            os.environ.pop('COGNITO_USER_POOL_ID', None)
+            os.environ.pop('COGNITO_CLIENT_ID', None)
     
-    def test_get_username_by_email_found(self):
+    @patch('app.services.cognito.boto3.client')
+    def test_get_username_by_email_found(self, mock_boto):
         """Test _get_username_by_email when user is found."""
-        from app.services.cognito import CognitoService
+        import os
+        # Set environment variables to prevent auto-creation
+        os.environ['COGNITO_USER_POOL_ID'] = 'test-pool-id'
+        os.environ['COGNITO_CLIENT_ID'] = 'test-client-id'
         
-        service = CognitoService()
-        
-        with patch.object(service.client, 'list_users') as mock_list:
-            mock_list.return_value = {
+        try:
+            mock_client = Mock()
+            mock_boto.return_value = mock_client
+            
+            from app.services.cognito import CognitoService
+            service = CognitoService()
+            
+            mock_client.list_users.return_value = {
                 'Users': [
                     {'Username': 'test-username', 'Attributes': []}
                 ]
@@ -76,56 +103,95 @@ class TestFinalCognito:
             
             result = service._get_username_by_email("test@example.com")
             assert result == 'test-username'
+        finally:
+            os.environ.pop('COGNITO_USER_POOL_ID', None)
+            os.environ.pop('COGNITO_CLIENT_ID', None)
     
-    def test_refresh_token_not_authorized(self):
+    @patch('app.services.cognito.boto3.client')
+    def test_refresh_token_not_authorized(self, mock_boto):
         """Test refresh_token with NotAuthorizedException."""
-        from app.services.cognito import CognitoService
+        import os
         from app.services.exceptions import InvalidCredentialsError
         
-        service = CognitoService()
+        # Set environment variables to prevent auto-creation
+        os.environ['COGNITO_USER_POOL_ID'] = 'test-pool-id'
+        os.environ['COGNITO_CLIENT_ID'] = 'test-client-id'
         
-        with patch.object(service.client, 'initiate_auth') as mock_auth:
-            mock_auth.side_effect = ClientError(
+        try:
+            mock_client = Mock()
+            mock_boto.return_value = mock_client
+            
+            from app.services.cognito import CognitoService
+            service = CognitoService()
+            
+            mock_client.initiate_auth.side_effect = ClientError(
                 error_response={'Error': {'Code': 'NotAuthorizedException'}}, 
                 operation_name='InitiateAuth'
             )
             
             with pytest.raises(InvalidCredentialsError):
                 service.refresh_token("invalid_token")
+        finally:
+            os.environ.pop('COGNITO_USER_POOL_ID', None)
+            os.environ.pop('COGNITO_CLIENT_ID', None)
     
-    def test_get_user_not_authorized(self):
+    @patch('app.services.cognito.boto3.client')
+    def test_get_user_not_authorized(self, mock_boto):
         """Test get_user with NotAuthorizedException."""
-        from app.services.cognito import CognitoService
+        import os
         from app.services.exceptions import InvalidCredentialsError
         
-        service = CognitoService()
+        # Set environment variables to prevent auto-creation
+        os.environ['COGNITO_USER_POOL_ID'] = 'test-pool-id'
+        os.environ['COGNITO_CLIENT_ID'] = 'test-client-id'
         
-        with patch.object(service.client, 'get_user') as mock_get:
-            mock_get.side_effect = ClientError(
+        try:
+            mock_client = Mock()
+            mock_boto.return_value = mock_client
+            
+            from app.services.cognito import CognitoService
+            service = CognitoService()
+            
+            mock_client.get_user.side_effect = ClientError(
                 error_response={'Error': {'Code': 'NotAuthorizedException'}}, 
                 operation_name='GetUser'
             )
             
             with pytest.raises(InvalidCredentialsError):
                 service.get_user("invalid_token")
+        finally:
+            os.environ.pop('COGNITO_USER_POOL_ID', None)
+            os.environ.pop('COGNITO_CLIENT_ID', None)
     
-    def test_update_user_not_authorized(self):
+    @patch('app.services.cognito.boto3.client')
+    def test_update_user_not_authorized(self, mock_boto):
         """Test update_user with NotAuthorizedException."""
-        from app.services.cognito import CognitoService
+        import os
         from app.models.user import UserUpdate
         from app.services.exceptions import InvalidCredentialsError
         
-        service = CognitoService()
-        update = UserUpdate(full_name="New Name")
+        # Set environment variables to prevent auto-creation
+        os.environ['COGNITO_USER_POOL_ID'] = 'test-pool-id'
+        os.environ['COGNITO_CLIENT_ID'] = 'test-client-id'
         
-        with patch.object(service.client, 'update_user_attributes') as mock_update:
-            mock_update.side_effect = ClientError(
+        try:
+            mock_client = Mock()
+            mock_boto.return_value = mock_client
+            
+            from app.services.cognito import CognitoService
+            service = CognitoService()
+            update = UserUpdate(full_name="New Name")
+            
+            mock_client.update_user_attributes.side_effect = ClientError(
                 error_response={'Error': {'Code': 'NotAuthorizedException'}}, 
                 operation_name='UpdateUserAttributes'
             )
             
             with pytest.raises(InvalidCredentialsError):
                 service.update_user("invalid_token", update)
+        finally:
+            os.environ.pop('COGNITO_USER_POOL_ID', None)
+            os.environ.pop('COGNITO_CLIENT_ID', None)
 
 
 class TestFinalSpace:

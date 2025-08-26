@@ -18,8 +18,12 @@ class CognitoService:
     def __init__(self):
         """Initialize Cognito client."""
         self.client = boto3.client('cognito-idp', region_name=os.getenv('AWS_REGION', 'us-east-1'))
-        self.user_pool_id = os.getenv('COGNITO_USER_POOL_ID', self._create_test_pool())
-        self.client_id = os.getenv('COGNITO_CLIENT_ID', self._create_test_client())
+        self.user_pool_id = os.getenv('COGNITO_USER_POOL_ID')
+        if not self.user_pool_id:
+            self.user_pool_id = self._create_test_pool()
+        self.client_id = os.getenv('COGNITO_CLIENT_ID')
+        if not self.client_id:
+            self.client_id = self._create_test_client()
     
     def _create_test_pool(self) -> str:
         """Create a test user pool for development/testing."""
