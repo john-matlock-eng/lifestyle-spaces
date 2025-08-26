@@ -41,6 +41,23 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 // Store original environment values to restore them
 const originalEnv = { ...process.env }
 
+// Restore environment after each test
+afterEach(() => {
+  // Complete cleanup of all mocks
+  vi.resetAllMocks()
+  
+  // Reset environment variables to original state
+  process.env = { ...originalEnv }
+  vi.unstubAllEnvs()
+  
+  // Clean up DOM
+  cleanup()
+  
+  // Clear any remaining DOM elements
+  document.body.innerHTML = ''
+  document.head.innerHTML = ''
+})
+
 // Setup cleanup before each test
 beforeEach(() => {
   // Clear all mocks but not timers (causes issues)
@@ -64,18 +81,3 @@ beforeEach(() => {
   }
 })
 
-// Setup cleanup after each test
-afterEach(() => {
-  // Complete cleanup of all mocks
-  vi.resetAllMocks()
-  
-  // Reset environment variables to original state
-  vi.unstubAllEnvs()
-  
-  // Clean up DOM
-  cleanup()
-  
-  // Clear any remaining DOM elements
-  document.body.innerHTML = ''
-  document.head.innerHTML = ''
-})
