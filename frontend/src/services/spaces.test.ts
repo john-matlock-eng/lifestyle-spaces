@@ -52,7 +52,7 @@ describe('Spaces Service', () => {
 
       const result = await createSpace(mockCreateSpaceData);
 
-      expect(mockApiService.post).toHaveBeenCalledWith('/spaces', mockCreateSpaceData);
+      expect(mockApiService.post).toHaveBeenCalledWith('/api/spaces', mockCreateSpaceData);
       expect(result).toEqual(mockCreatedSpace);
     });
 
@@ -126,7 +126,7 @@ describe('Spaces Service', () => {
 
       const result = await listSpaces();
 
-      expect(mockApiService.get).toHaveBeenCalledWith('/spaces', undefined);
+      expect(mockApiService.get).toHaveBeenCalledWith('/api/users/spaces', undefined);
       expect(result).toEqual(mockResponse);
     });
 
@@ -136,7 +136,7 @@ describe('Spaces Service', () => {
 
       const result = await listSpaces(filters);
 
-      expect(mockApiService.get).toHaveBeenCalledWith('/spaces', { params: filters });
+      expect(mockApiService.get).toHaveBeenCalledWith('/api/users/spaces', { params: filters });
       expect(result).toEqual(mockResponse);
     });
 
@@ -146,7 +146,7 @@ describe('Spaces Service', () => {
 
       const result = await listSpaces({}, pagination);
 
-      expect(mockApiService.get).toHaveBeenCalledWith('/spaces', { params: { ...pagination } });
+      expect(mockApiService.get).toHaveBeenCalledWith('/api/users/spaces', { params: { ...pagination } });
       expect(result).toEqual(mockResponse);
     });
 
@@ -175,7 +175,7 @@ describe('Spaces Service', () => {
 
       const result = await getSpace('space-123');
 
-      expect(mockApiService.get).toHaveBeenCalledWith('/spaces/space-123');
+      expect(mockApiService.get).toHaveBeenCalledWith('/api/spaces/space-123');
       expect(result).toEqual(mockSpace);
     });
 
@@ -216,7 +216,7 @@ describe('Spaces Service', () => {
 
       const result = await inviteMember(mockInvitationData);
 
-      expect(mockApiService.post).toHaveBeenCalledWith('/invitations', mockInvitationData);
+      expect(mockApiService.post).toHaveBeenCalledWith('/api/invitations', mockInvitationData);
       expect(result).toEqual(mockInvitation);
     });
 
@@ -275,7 +275,7 @@ describe('Spaces Service', () => {
 
       const result = await acceptInvitation('invitation-123');
 
-      expect(mockApiService.put).toHaveBeenCalledWith('/invitations/invitation-123/accept');
+      expect(mockApiService.put).toHaveBeenCalledWith('/api/invitations/invitation-123/accept');
       expect(result).toEqual(mockAcceptedInvitation);
     });
 

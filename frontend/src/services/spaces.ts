@@ -46,7 +46,7 @@ export const createSpace = async (spaceData: CreateSpaceData): Promise<Space> =>
     throw new Error('Space description must be 500 characters or less');
   }
 
-  const response = await apiService.post('/spaces', {
+  const response = await apiService.post('/api/spaces', {
     name: name.trim(),
     description: description?.trim() || '',
     isPublic: isPublic || false,
@@ -67,7 +67,7 @@ export const listSpaces = async (
     ...pagination,
   };
 
-  const response = await apiService.get('/spaces', 
+  const response = await apiService.get('/api/users/spaces', 
       Object.keys(params).length > 0 ? { params } : undefined
   );
 
@@ -82,7 +82,7 @@ export const getSpace = async (spaceId: string): Promise<Space> => {
     throw new Error('Space ID is required');
   }
 
-  const response = await apiService.get(`/spaces/${spaceId}`);
+  const response = await apiService.get(`/api/spaces/${spaceId}`);
   return response;
 };
 
@@ -107,7 +107,7 @@ export const inviteMember = async (invitationData: InvitationData): Promise<Invi
     throw new Error('Invalid role. Must be one of: owner, admin, member');
   }
 
-  const response = await apiService.post('/invitations', {
+  const response = await apiService.post('/api/invitations', {
     email: email.trim().toLowerCase(),
     spaceId: spaceId.trim(),
     role: role || 'member',
@@ -124,7 +124,7 @@ export const acceptInvitation = async (invitationId: string): Promise<Invitation
     throw new Error('Invitation ID is required');
   }
 
-  const response = await apiService.put(`/invitations/${invitationId}/accept`);
+  const response = await apiService.put(`/api/invitations/${invitationId}/accept`);
   return response;
 };
 
@@ -136,7 +136,7 @@ export const declineInvitation = async (invitationId: string): Promise<Invitatio
     throw new Error('Invitation ID is required');
   }
 
-  const response = await apiService.put(`/invitations/${invitationId}/decline`);
+  const response = await apiService.put(`/api/invitations/${invitationId}/decline`);
   return response;
 };
 
@@ -144,7 +144,7 @@ export const declineInvitation = async (invitationId: string): Promise<Invitatio
  * Get pending invitations for the current user
  */
 export const getPendingInvitations = async (): Promise<Invitation[]> => {
-  const response = await apiService.get('/invitations/pending');
+  const response = await apiService.get('/api/invitations/pending');
   return response.invitations || [];
 };
 
@@ -156,6 +156,6 @@ export const getSpaceMembers = async (spaceId: string): Promise<MembersListRespo
     throw new Error('Space ID is required');
   }
 
-  const response = await apiService.get(`/spaces/${spaceId}/members`);
+  const response = await apiService.get(`/api/spaces/${spaceId}/members`);
   return response;
 };
