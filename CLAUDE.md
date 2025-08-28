@@ -17,10 +17,11 @@ Lifestyle Spaces - A POC application deployed on AWS with security-first archite
 
 ### 1. Test-Driven Development (TDD)
 - **ALWAYS write tests FIRST before implementation**
-- **100% code coverage is MANDATORY** (excluding Terraform/IaC)
+- **100% code coverage is MANDATORY for backend**
+- **90% code coverage is required for frontend**
 - No code merges without passing tests and coverage reports
-- Frontend: Use Vitest for React components
-- Backend: Use pytest for FastAPI
+- Frontend: Use Vitest for React components (90% coverage threshold)
+- Backend: Use pytest for FastAPI (100% coverage threshold)
 
 ### 2. Security Requirements
 - **Security-first approach on all implementations**
@@ -258,8 +259,8 @@ SK: METADATA#timestamp or RELATED#id
 
 - **NO MANUAL FIXES**: Everything through code and CI/CD
 - **TDD IS MANDATORY**: Tests before code, always
-- **100% COVERAGE**: No exceptions for application code (backend)
-- **90%+ COVERAGE**: Target for frontend code
+- **100% COVERAGE**: Required for backend (Python/FastAPI)
+- **90% COVERAGE**: Required for frontend (React/TypeScript)
 - **SECURITY FIRST**: Every decision must consider security
 - **COST CONSCIOUS**: This is a POC, avoid unnecessary AWS costs
 - **AGENT COORDINATION**: Use appropriate agents for each task

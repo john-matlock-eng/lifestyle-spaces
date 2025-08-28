@@ -206,12 +206,12 @@ resource "random_string" "domain_suffix" {
 
 # Lambda function for pre-signup auto-confirmation
 resource "aws_lambda_function" "pre_signup" {
-  filename         = data.archive_file.pre_signup_zip.output_path
-  function_name    = "${var.project_name}-${var.environment}-pre-signup"
-  role            = aws_iam_role.lambda_role.arn
-  handler         = "pre-signup.handler"
-  runtime         = "nodejs18.x"
-  timeout         = 30
+  filename      = data.archive_file.pre_signup_zip.output_path
+  function_name = "${var.project_name}-${var.environment}-pre-signup"
+  role          = aws_iam_role.lambda_role.arn
+  handler       = "pre-signup.handler"
+  runtime       = "nodejs18.x"
+  timeout       = 30
 
   source_code_hash = data.archive_file.pre_signup_zip.output_base64sha256
 

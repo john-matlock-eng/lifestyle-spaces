@@ -114,6 +114,36 @@ describe('MembersList', () => {
     expect(screen.getByText('No members found')).toBeInTheDocument();
   });
 
+  it('handles offline member with no lastSeen data', () => {
+    const membersWithOfflineNoLastSeen = [
+      {
+        userId: 'user-1',
+        email: 'owner@example.com',
+        username: 'owner',
+        displayName: 'Space Owner',
+        role: 'owner',
+        joinedAt: '2023-01-01T00:00:00Z',
+        isOnline: false,
+        // No lastSeen property - this should trigger the return null case at line 159
+      },
+    ];
+
+    render(
+      <MembersList 
+        {...defaultProps} 
+        members={membersWithOfflineNoLastSeen}
+        showOnlineStatus={true}
+      />
+    );
+    
+    // Member should be displayed but without online status info
+    expect(screen.getByText('Space Owner')).toBeInTheDocument();
+    
+    // Should not show online status or last seen since member is offline with no lastSeen
+    expect(screen.queryByText('Online')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Last seen/)).not.toBeInTheDocument();
+  });
+
   it('shows member count', () => {
     render(<MembersList {...defaultProps} />);
     
@@ -420,5 +450,74 @@ describe('MembersList', () => {
     fireEvent.click(cancelButton);
     
     expect(onCancelInvitation).toHaveBeenCalledWith('inv-1');
+  });
+
+  it('should not render member actions when user cannot manage member', () => {
+    const memberWithoutActions = {
+      ...mockMembers[0],
+      role: 'admin' as const
+    };
+    
+    render(
+      <MembersList
+        {...defaultProps}
+        members={[memberWithoutActions]}
+        canInviteMembers={false}
+        canRemoveMembers={false}
+        canManageRoles={false}
+      />
+    );
+    
+    // This covers line 159 - when canManageMember returns false, should return null
+    expect(screen.queryByText('Remove')).not.toBeInTheDocument();
+    expect(screen.queryByText('Change Role')).not.toBeInTheDocument();
+  });
+
+  it('should render invite button in empty state when user can invite', () => {
+    const mockOnInviteClick = vi.fn();
+    
+    render(
+      <MembersList
+        {...defaultProps}
+        members={[]}
+        canInviteMembers={true}
+        onInviteClick={mockOnInviteClick}
+      />
+    );
+    
+    // This covers lines 407-413 - invite button in empty state
+    const inviteButton = screen.getByText('Invite Members');
+    expect(inviteButton).toBeInTheDocument();
+    expect(inviteButton).toHaveClass('btn', 'btn-primary');
+    
+    fireEvent.click(inviteButton);
+    expect(mockOnInviteClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not render invite button in empty state when user cannot invite', () => {
+    render(
+      <MembersList
+        {...defaultProps}
+        members={[]}
+        canInviteMembers={false}
+      />
+    );
+    
+    // Should not show invite button when user cannot invite
+    expect(screen.queryByText('Invite Members')).not.toBeInTheDocument();
+  });
+
+  it('should not render invite button when onInviteClick is not provided', () => {
+    render(
+      <MembersList
+        {...defaultProps}
+        members={[]}
+        canInviteMembers={true}
+        // onInviteClick not provided
+      />
+    );
+    
+    // Should not show invite button when callback is not provided
+    expect(screen.queryByText('Invite Members')).not.toBeInTheDocument();
   });
 });

@@ -227,4 +227,54 @@ describe('SignUpForm', () => {
       expect(emailInput.getAttribute('aria-describedby')).toBe(emailError.getAttribute('id'));
     });
   });
+
+  it('should handle form submission errors gracefully', async () => {
+    const mockOnSubmit = vi.fn().mockRejectedValue(new Error('Registration failed'));
+    const user = userEvent.setup();
+
+    render(<SignUpForm {...defaultProps} onSubmit={mockOnSubmit} />);
+
+    // Fill out the form completely
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/display name/i), 'Test User');
+    await user.type(screen.getByLabelText(/username/i), 'testuser');
+    await user.type(screen.getByLabelText(/^password/i), 'Password123!');
+    await user.type(screen.getByLabelText(/confirm password/i), 'Password123!');
+
+    // Submit the form
+    const submitButton = screen.getByRole('button', { name: /sign up/i });
+    await user.click(submitButton);
+
+    // This covers line 49 - the catch block error handling
+    expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+    // The form should still be rendered (error is handled by parent component)
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+  });
+
+  it('should validate username maximum length', async () => {
+    const user = userEvent.setup();
+    render(<SignUpForm {...defaultProps} />);
+
+    // This covers lines 62-63 - username validation for max length
+    const longUsername = 'a'.repeat(31); // More than 30 characters
+    await user.type(screen.getByLabelText(/username/i), longUsername);
+    await user.tab(); // Move focus away to trigger blur validation
+
+    await waitFor(() => {
+      expect(screen.getByText('Username must be 30 characters or less')).toBeInTheDocument();
+    });
+  });
+
+  it('should validate username character restrictions', async () => {
+    const user = userEvent.setup();
+    render(<SignUpForm {...defaultProps} />);
+
+    // This covers lines 65-66 - username validation for invalid characters
+    await user.type(screen.getByLabelText(/username/i), 'invalid@username!');
+    await user.tab(); // Move focus away to trigger blur validation
+
+    await waitFor(() => {
+      expect(screen.getByText('Username can only contain letters, numbers, hyphens, and underscores')).toBeInTheDocument();
+    });
+  });
 });

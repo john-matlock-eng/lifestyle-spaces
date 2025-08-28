@@ -130,6 +130,34 @@ describe('CreateSpaceModal', () => {
     });
   });
 
+  it('handles modal ref being null on focus trap', () => {
+    // Mock React.useRef to return null initially to test line 66
+    const originalUseRef = React.useRef;
+    React.useRef = vi.fn().mockReturnValueOnce({ current: null });
+    
+    render(<CreateSpaceModal {...defaultProps} />);
+    
+    // The modal should still render even if ref is null
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    
+    // Restore original useRef
+    React.useRef = originalUseRef;
+  });
+
+  it('handles non-Error exceptions during space creation', async () => {
+    mockCreateSpace.mockRejectedValueOnce('String error');
+    
+    render(<CreateSpaceModal {...defaultProps} />);
+    
+    const nameInput = screen.getByLabelText(/space name/i);
+    fireEvent.change(nameInput, { target: { value: 'Test Space' } });
+    fireEvent.click(screen.getByText('Create Space'));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Failed to create space')).toBeInTheDocument();
+    });
+  });
+
   it('creates space with valid data', async () => {
     const mockSpace = {
       spaceId: 'space-1',
@@ -293,5 +321,59 @@ describe('CreateSpaceModal', () => {
     rerender(<CreateSpaceModal {...defaultProps} isOpen={true} />);
     
     expect(screen.getByLabelText(/space name/i)).toHaveValue('');
+  });
+
+  it('should handle tab key navigation for focus trap', () => {
+    render(<CreateSpaceModal {...defaultProps} isOpen={true} />);
+    
+    // This covers lines 81, 84-86 - focus trap tab key handling
+    const modal = screen.getByRole('dialog');
+    const nameInput = screen.getByLabelText(/space name/i);
+    const cancelButton = screen.getByText('Cancel');
+    
+    // Focus on the name input first
+    nameInput.focus();
+    expect(document.activeElement).toBe(nameInput);
+    
+    // Simulate tab key when at last element - should go to first
+    cancelButton.focus();
+    fireEvent.keyDown(document, { key: 'Tab' });
+    
+    // Simulate shift+tab when at first element - should go to last
+    nameInput.focus();
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+  });
+
+  it('should clear validation errors when user starts typing', () => {
+    render(<CreateSpaceModal {...defaultProps} isOpen={true} />);
+    
+    const nameInput = screen.getByLabelText(/space name/i);
+    const createButton = screen.getByText('Create Space');
+    
+    // First trigger validation error by submitting empty form
+    fireEvent.click(createButton);
+    
+    expect(screen.getByText(/space name is required/i)).toBeInTheDocument();
+    
+    // This covers lines 98-103 - clearing validation errors on input change
+    fireEvent.change(nameInput, { target: { value: 'T' } });
+    
+    // The validation error should be cleared
+    expect(screen.queryByText(/space name is required/i)).not.toBeInTheDocument();
+  });
+
+  it('should handle different field types in input change', () => {
+    render(<CreateSpaceModal {...defaultProps} isOpen={true} />);
+    
+    const descriptionInput = screen.getByLabelText(/description/i);
+    const publicCheckbox = screen.getByLabelText(/public space/i);
+    
+    // Test string field change
+    fireEvent.change(descriptionInput, { target: { value: 'Test description' } });
+    expect(descriptionInput).toHaveValue('Test description');
+    
+    // Test boolean field change (covers handleInputChange for different types)
+    fireEvent.click(publicCheckbox);
+    expect(publicCheckbox).toBeChecked();
   });
 });

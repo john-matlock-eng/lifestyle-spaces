@@ -266,4 +266,24 @@ describe('SignInForm', () => {
     expect(successElement).toHaveAttribute('role', 'alert');
     expect(successElement).toHaveAttribute('aria-live', 'polite');
   });
+
+  it('should handle form submission errors gracefully', async () => {
+    const mockOnSubmit = vi.fn().mockRejectedValue(new Error('Authentication failed'));
+    const user = userEvent.setup();
+
+    render(<SignInForm {...defaultProps} onSubmit={mockOnSubmit} />);
+
+    // Fill out the form
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'password123');
+
+    // Submit the form
+    const submitButton = screen.getByRole('button', { name: /sign in/i });
+    await user.click(submitButton);
+
+    // This covers line 45 - the catch block error handling
+    expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+    // The form should still be rendered (error is handled by parent component)
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+  });
 });

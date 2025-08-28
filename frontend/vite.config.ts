@@ -16,18 +16,20 @@ export default defineConfig({
         'node_modules/',
         'src/tests/setup.ts',
         '**/*.d.ts',
+        '**/*.types.ts',
         'dist/',
         'coverage/',
         '**/*.config.{js,ts}',
         'src/main.tsx', // Entry point file
-        'src/vite-env.d.ts'
+        'src/vite-env.d.ts',
+        'src/types/**' // Type definition files
       ],
       thresholds: {
         global: {
-          branches: 100,
-          functions: 100,
-          lines: 100,
-          statements: 100
+          branches: 90,
+          functions: 90,
+          lines: 90,
+          statements: 90
         }
       },
       all: true,

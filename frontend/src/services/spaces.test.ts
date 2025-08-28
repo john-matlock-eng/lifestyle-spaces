@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createSpace, listSpaces, getSpace, inviteMember, acceptInvitation } from './spaces';
-import type { CreateSpaceData, InvitationData, Space, Invitation, SpaceListResponse } from '../types';
+import { createSpace, listSpaces, getSpace, inviteMember, acceptInvitation, declineInvitation, getPendingInvitations, getSpaceMembers } from './spaces';
+import type { CreateSpaceData, InvitationData, Space, Invitation, SpaceListResponse, MembersListResponse } from '../types';
 import { apiService } from './api';
 
 // Mock the API service
@@ -288,6 +288,183 @@ describe('Spaces Service', () => {
 
     it('should validate invitation ID', async () => {
       await expect(acceptInvitation('')).rejects.toThrow('Invitation ID is required');
+    });
+
+    it('should handle invalid response from acceptInvitation', async () => {
+      // Mock API to return invalid response to test lines 148-149
+      mockApiService.put.mockResolvedValue(null);
+
+      await expect(acceptInvitation('invitation-123')).rejects.toThrow('Invalid invitation data received from API');
+    });
+
+    it('should handle response without invitationId property', async () => {
+      // Mock API to return response without invitationId property
+      mockApiService.put.mockResolvedValue({ spaceId: 'space-123' });
+
+      await expect(acceptInvitation('invitation-123')).rejects.toThrow('Invalid invitation data received from API');
+    });
+  });
+
+  describe('declineInvitation', () => {
+    const mockDeclinedInvitation: Invitation = {
+      invitationId: 'invitation-123',
+      spaceId: 'space-123',
+      spaceName: 'Test Space',
+      inviterEmail: 'owner@example.com',
+      inviterDisplayName: 'Space Owner',
+      inviteeEmail: 'newmember@example.com',
+      role: 'member',
+      status: 'declined',
+      createdAt: '2023-12-01T00:00:00Z',
+      expiresAt: '2023-12-08T00:00:00Z',
+    };
+
+    it('should successfully decline an invitation', async () => {
+      mockApiService.put.mockResolvedValue(mockDeclinedInvitation);
+
+      const result = await declineInvitation('invitation-123');
+
+      expect(mockApiService.put).toHaveBeenCalledWith('/api/invitations/invitation-123/decline', {});
+      expect(result).toEqual(mockDeclinedInvitation);
+    });
+
+    it('should handle decline invitation errors', async () => {
+      const mockError = new Error('Invitation not found');
+      mockApiService.put.mockRejectedValue(mockError);
+
+      await expect(declineInvitation('invalid-invitation')).rejects.toThrow('Invitation not found');
+    });
+
+    it('should validate invitation ID is required', async () => {
+      await expect(declineInvitation('')).rejects.toThrow('Invitation ID is required');
+    });
+
+    it('should validate invitation ID is not just whitespace', async () => {
+      await expect(declineInvitation('   ')).rejects.toThrow('Invitation ID is required');
+    });
+
+    it('should handle invalid response from declineInvitation', async () => {
+      // Mock API to return invalid response to test lines 163-165
+      mockApiService.put.mockResolvedValue(null);
+
+      await expect(declineInvitation('invitation-123')).rejects.toThrow('Invalid invitation data received from API');
+    });
+
+    it('should handle response without invitationId property in decline', async () => {
+      // Mock API to return response without invitationId property
+      mockApiService.put.mockResolvedValue({ spaceId: 'space-123' });
+
+      await expect(declineInvitation('invitation-123')).rejects.toThrow('Invalid invitation data received from API');
+    });
+  });
+
+  describe('getPendingInvitations', () => {
+    const mockInvitations: Invitation[] = [
+      {
+        invitationId: 'invitation-1',
+        spaceId: 'space-1',
+        spaceName: 'Test Space 1',
+        inviterEmail: 'owner@example.com',
+        inviterDisplayName: 'Space Owner',
+        inviteeEmail: 'user@example.com',
+        role: 'member',
+        status: 'pending',
+        createdAt: '2023-12-01T00:00:00Z',
+        expiresAt: '2023-12-08T00:00:00Z',
+      },
+    ];
+
+    it('should successfully get pending invitations', async () => {
+      // Test lines 173-175 - handles response with invitations array
+      mockApiService.get.mockResolvedValue({ invitations: mockInvitations });
+
+      const result = await getPendingInvitations();
+
+      expect(mockApiService.get).toHaveBeenCalledWith('/api/invitations/pending');
+      expect(result).toEqual(mockInvitations);
+    });
+
+    it('should handle empty invitations response', async () => {
+      // Test lines 173-175 - handles response without invitations array
+      mockApiService.get.mockResolvedValue({});
+
+      const result = await getPendingInvitations();
+
+      expect(mockApiService.get).toHaveBeenCalledWith('/api/invitations/pending');
+      expect(result).toEqual([]); // Should return empty array as fallback
+    });
+
+    it('should handle get pending invitations errors', async () => {
+      const mockError = new Error('Failed to get pending invitations');
+      mockApiService.get.mockRejectedValue(mockError);
+
+      await expect(getPendingInvitations()).rejects.toThrow('Failed to get pending invitations');
+    });
+  });
+
+  describe('getSpaceMembers', () => {
+    const mockMembersResponse: MembersListResponse = {
+      members: [
+        {
+          userId: 'user-1',
+          email: 'user1@example.com',
+          username: 'user1',
+          displayName: 'User One',
+          role: 'owner',
+          joinedAt: '2023-12-01T00:00:00Z',
+        },
+        {
+          userId: 'user-2',
+          email: 'user2@example.com',
+          username: 'user2',
+          displayName: 'User Two',
+          role: 'member',
+          joinedAt: '2023-12-02T00:00:00Z',
+        },
+      ],
+      totalCount: 2,
+      pendingInvitations: [],
+    };
+
+    it('should successfully get space members', async () => {
+      mockApiService.get.mockResolvedValue(mockMembersResponse);
+
+      const result = await getSpaceMembers('space-123');
+
+      expect(mockApiService.get).toHaveBeenCalledWith('/api/spaces/space-123/members');
+      expect(result).toEqual(mockMembersResponse);
+    });
+
+    it('should validate space ID is required', async () => {
+      // Test lines 181-183 - empty space ID validation
+      await expect(getSpaceMembers('')).rejects.toThrow('Space ID is required');
+    });
+
+    it('should validate space ID is not just whitespace', async () => {
+      // Test lines 181-183 - whitespace space ID validation  
+      await expect(getSpaceMembers('   ')).rejects.toThrow('Space ID is required');
+    });
+
+    it('should handle invalid response structure', async () => {
+      // Test lines 187-189 - invalid response validation
+      mockApiService.get.mockResolvedValue(null);
+
+      await expect(getSpaceMembers('space-123')).rejects.toThrow('Invalid members list data received from API');
+    });
+
+    it('should handle response without members property', async () => {
+      // Test lines 187-189 - missing members property
+      mockApiService.get.mockResolvedValue({ totalCount: 0 });
+
+      await expect(getSpaceMembers('space-123')).rejects.toThrow('Invalid members list data received from API');
+    });
+
+    it('should handle get space members errors', async () => {
+      // Test lines 185-191 - API errors
+      const mockError = new Error('Failed to get space members');
+      mockApiService.get.mockRejectedValue(mockError);
+
+      await expect(getSpaceMembers('space-123')).rejects.toThrow('Failed to get space members');
     });
   });
 });

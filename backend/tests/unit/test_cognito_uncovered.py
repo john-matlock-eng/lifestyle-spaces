@@ -204,3 +204,75 @@ class TestCognitoUncoveredLines:
             with pytest.raises(InvalidCredentialsError) as exc_info:
                 service.update_user("invalid_token", update)
             assert "Invalid access token" in str(exc_info.value)
+    
+    def test_create_test_pool_raises_in_lambda_environment(self):
+        """Test _create_test_pool raises RuntimeError in Lambda environment (line 32)."""
+        # Set Lambda environment variable to simulate running in Lambda
+        old_lambda_env = os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
+        os.environ['AWS_LAMBDA_FUNCTION_NAME'] = 'test-function'
+        
+        # Remove pool ID to force creation attempt
+        old_pool_id = os.environ.pop('COGNITO_USER_POOL_ID', None)
+        old_client_id = os.environ.get('COGNITO_CLIENT_ID')
+        os.environ['COGNITO_CLIENT_ID'] = 'test-client-id'  # Set client ID to avoid its creation
+        
+        try:
+            with patch('app.services.cognito.boto3.client') as mock_boto:
+                mock_client = Mock()
+                mock_boto.return_value = mock_client
+                
+                from app.services.cognito import CognitoService
+                
+                # The init should try to create pool and raise RuntimeError
+                with pytest.raises(RuntimeError) as exc_info:
+                    CognitoService()
+                assert "Cannot auto-create Cognito pools in Lambda environment" in str(exc_info.value)
+                
+        finally:
+            # Restore env vars
+            if old_lambda_env:
+                os.environ['AWS_LAMBDA_FUNCTION_NAME'] = old_lambda_env
+            else:
+                os.environ.pop('AWS_LAMBDA_FUNCTION_NAME', None)
+            if old_pool_id:
+                os.environ['COGNITO_USER_POOL_ID'] = old_pool_id
+            if old_client_id:
+                os.environ['COGNITO_CLIENT_ID'] = old_client_id
+            else:
+                os.environ.pop('COGNITO_CLIENT_ID', None)
+    
+    def test_create_test_client_raises_in_lambda_environment(self):
+        """Test _create_test_client raises RuntimeError in Lambda environment (line 76)."""
+        # Set Lambda environment variable to simulate running in Lambda
+        old_lambda_env = os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
+        os.environ['AWS_LAMBDA_FUNCTION_NAME'] = 'test-function'
+        
+        # Set pool ID but remove client ID to force creation attempt
+        old_pool_id = os.environ.get('COGNITO_USER_POOL_ID')
+        old_client_id = os.environ.pop('COGNITO_CLIENT_ID', None)
+        os.environ['COGNITO_USER_POOL_ID'] = 'test-pool-id'
+        
+        try:
+            with patch('app.services.cognito.boto3.client') as mock_boto:
+                mock_client = Mock()
+                mock_boto.return_value = mock_client
+                
+                from app.services.cognito import CognitoService
+                
+                # The init should try to create client and raise RuntimeError
+                with pytest.raises(RuntimeError) as exc_info:
+                    CognitoService()
+                assert "Cannot auto-create Cognito clients in Lambda environment" in str(exc_info.value)
+                
+        finally:
+            # Restore env vars
+            if old_lambda_env:
+                os.environ['AWS_LAMBDA_FUNCTION_NAME'] = old_lambda_env
+            else:
+                os.environ.pop('AWS_LAMBDA_FUNCTION_NAME', None)
+            if old_pool_id:
+                os.environ['COGNITO_USER_POOL_ID'] = old_pool_id
+            else:
+                os.environ.pop('COGNITO_USER_POOL_ID', None)
+            if old_client_id:
+                os.environ['COGNITO_CLIENT_ID'] = old_client_id
