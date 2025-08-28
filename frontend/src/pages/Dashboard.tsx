@@ -4,7 +4,7 @@ import { useAuth } from '../stores/authStore';
 import { useSpace } from '../stores/spaceStore';
 import { SpaceList } from '../components/spaces/SpaceList';
 import { CreateSpaceModal } from '../components/spaces/CreateSpaceModal';
-import { Space } from '../types';
+import type { Space } from '../types';
 import './Dashboard.css';
 
 export const Dashboard: React.FC = () => {

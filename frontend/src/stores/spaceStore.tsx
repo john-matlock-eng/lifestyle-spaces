@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
 import { 
   createSpace, 
   listSpaces, 
@@ -10,14 +10,14 @@ import {
   getSpaceMembers
 } from '../services/spaces';
 import { 
-  CreateSpaceData, 
-  InvitationData, 
-  Space, 
-  Invitation, 
-  SpaceMember, 
-  SpaceState,
-  SpaceFilters,
-  PaginationParams
+  type CreateSpaceData, 
+  type InvitationData, 
+  type Space, 
+  type Invitation, 
+  type SpaceMember, 
+  type SpaceState,
+  type SpaceFilters,
+  type PaginationParams
 } from '../types';
 
 // Space actions

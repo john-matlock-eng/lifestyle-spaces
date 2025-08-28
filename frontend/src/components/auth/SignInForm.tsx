@@ -1,6 +1,6 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { SignInData } from '../../types';
+import type { SignInData } from '../../types';
 import './auth.css';
 
 interface SignInFormProps {

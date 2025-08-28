@@ -4,7 +4,7 @@ import { useSpace } from '../stores/spaceStore';
 import { useAuth } from '../stores/authStore';
 import { MembersList } from '../components/spaces/MembersList';
 import { InviteMemberModal } from '../components/spaces/InviteMemberModal';
-import { SpaceMemberRole, SpaceMember } from '../types';
+import type { SpaceMemberRole, SpaceMember } from '../types';
 import './SpaceDetail.css';
 
 export const SpaceDetail: React.FC = () => {
@@ -62,15 +62,21 @@ export const SpaceDetail: React.FC = () => {
       case 'ArrowRight': {
         e.preventDefault();
         const nextIndex = (currentIndex + 1) % tabs.length;
-        setActiveTab(tabs[nextIndex]);
-        (e.target as HTMLElement).nextElementSibling?.focus();
+        setActiveTab(tabs[nextIndex] as typeof activeTab);
+        const nextElement = (e.target as HTMLElement).nextElementSibling;
+        if (nextElement && 'focus' in nextElement && typeof nextElement.focus === 'function') {
+          (nextElement as HTMLElement).focus();
+        }
         break;
       }
       case 'ArrowLeft': {
         e.preventDefault();
         const prevIndex = currentIndex - 1 < 0 ? tabs.length - 1 : currentIndex - 1;
-        setActiveTab(tabs[prevIndex]);
-        (e.target as HTMLElement).previousElementSibling?.focus();
+        setActiveTab(tabs[prevIndex] as typeof activeTab);
+        const prevElement = (e.target as HTMLElement).previousElementSibling;
+        if (prevElement && 'focus' in prevElement && typeof prevElement.focus === 'function') {
+          (prevElement as HTMLElement).focus();
+        }
         break;
       }
       case 'Enter':
@@ -340,7 +346,6 @@ export const SpaceDetail: React.FC = () => {
           >
             <MembersList
               members={members}
-              space={currentSpace}
               currentUserId={user?.userId || ''}
               onRoleChange={isAdmin ? handleRoleChange : undefined}
               onRemoveMember={isAdmin ? handleRemoveMember : undefined}

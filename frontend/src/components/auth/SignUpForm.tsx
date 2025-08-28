@@ -1,6 +1,6 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { SignUpData } from '../../types';
+import type { SignUpData } from '../../types';
 import './auth.css';
 
 interface SignUpFormProps {

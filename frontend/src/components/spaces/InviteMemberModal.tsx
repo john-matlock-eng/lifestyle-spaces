@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSpace } from '../../stores/spaceStore';
-import { Space, SpaceMemberRole, Invitation, InvitationData } from '../../types';
+import type { Space, SpaceMemberRole, Invitation, InvitationData } from '../../types';
 import './spaces.css';
 
 interface InviteMemberModalProps {

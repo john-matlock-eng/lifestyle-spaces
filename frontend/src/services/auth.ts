@@ -1,14 +1,14 @@
-import { signUp as amplifySignUp, signIn as amplifySignIn, signOut as amplifySignOut, getCurrentUser as amplifyGetCurrentUser, fetchAuthSession, configure } from '@aws-amplify/auth';
-import { SignUpData, SignInData, AuthResponse, TokenRefreshResponse, User } from '../types';
+import { signUp as amplifySignUp, signIn as amplifySignIn, signOut as amplifySignOut, getCurrentUser as amplifyGetCurrentUser, fetchAuthSession } from '@aws-amplify/auth';
+import { Amplify } from 'aws-amplify';
+import type { SignUpData, SignInData, AuthResponse, TokenRefreshResponse, User } from '../types';
 
 /**
  * Configure AWS Amplify Auth with Cognito settings
  */
-export const configureAmplify = (region: string, userPoolId: string, userPoolClientId: string): void => {
-  configure({
+export const configureAmplify = (_region: string, userPoolId: string, userPoolClientId: string): void => {
+  Amplify.configure({
     Auth: {
       Cognito: {
-        region,
         userPoolId,
         userPoolClientId,
       },

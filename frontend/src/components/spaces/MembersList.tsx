@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { SpaceMember, Invitation, SpaceMemberRole } from '../../types';
+import type { SpaceMember, Invitation, SpaceMemberRole } from '../../types';
 import './spaces.css';
 
 interface ExtendedSpaceMember extends SpaceMember {

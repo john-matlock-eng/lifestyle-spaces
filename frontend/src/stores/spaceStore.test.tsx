@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { SpaceProvider, useSpace } from './spaceStore';
 import { createSpace, listSpaces, getSpace, inviteMember, acceptInvitation, getSpaceMembers } from '../services/spaces';
-import { CreateSpaceData, InvitationData, Space, Invitation, SpaceMember } from '../types';
+import type { CreateSpaceData, InvitationData, Space, Invitation, SpaceMember } from '../types';
 import React from 'react';
 
 // Mock the spaces service

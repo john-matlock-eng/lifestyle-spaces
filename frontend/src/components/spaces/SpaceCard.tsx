@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Space } from '../../types';
+import type { Space } from '../../types';
 import './spaces.css';
 
 interface SpaceCardProps {

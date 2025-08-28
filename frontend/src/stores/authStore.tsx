@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
 import { signIn, signOut, getCurrentUser, signUp, refreshToken, configureAmplify } from '../services/auth';
-import { SignInData, SignUpData, User, AuthState } from '../types';
+import type { SignInData, SignUpData, User, AuthState } from '../types';
 
 // Auth actions
 type AuthAction =

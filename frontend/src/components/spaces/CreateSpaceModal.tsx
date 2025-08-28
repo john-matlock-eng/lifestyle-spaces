@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSpace } from '../../stores/spaceStore';
-import { CreateSpaceData, Space } from '../../types';
+import type { CreateSpaceData, Space } from '../../types';
 import './spaces.css';
 
 interface CreateSpaceModalProps {

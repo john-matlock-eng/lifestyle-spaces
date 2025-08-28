@@ -1,5 +1,5 @@
 import { apiService } from './api';
-import { 
+import type { 
   CreateSpaceData, 
   InvitationData, 
   Space, 
@@ -52,7 +52,11 @@ export const createSpace = async (spaceData: CreateSpaceData): Promise<Space> =>
     isPublic: isPublic || false,
   });
 
-  return response;
+  // Validate response has expected Space properties
+  if (!response || typeof response !== 'object' || !('spaceId' in response)) {
+    throw new Error('Invalid space data received from API');
+  }
+  return response as Space;
 };
 
 /**
@@ -67,11 +71,17 @@ export const listSpaces = async (
     ...pagination,
   };
 
-  const response = await apiService.get('/api/users/spaces', 
-      Object.keys(params).length > 0 ? { params } : undefined
-  );
+  // Build query string for GET request
+  const queryString = Object.keys(params).length > 0 
+    ? '?' + new URLSearchParams(params as Record<string, string>).toString()
+    : '';
+  const response = await apiService.get(`/api/users/spaces${queryString}`);
 
-  return response;
+  // Validate response has expected SpaceListResponse structure
+  if (!response || typeof response !== 'object' || !('spaces' in response)) {
+    throw new Error('Invalid space list data received from API');
+  }
+  return response as SpaceListResponse;
 };
 
 /**
@@ -83,7 +93,11 @@ export const getSpace = async (spaceId: string): Promise<Space> => {
   }
 
   const response = await apiService.get(`/api/spaces/${spaceId}`);
-  return response;
+  // Validate response has expected Space properties
+  if (!response || typeof response !== 'object' || !('spaceId' in response)) {
+    throw new Error('Invalid space data received from API');
+  }
+  return response as Space;
 };
 
 /**
@@ -113,7 +127,11 @@ export const inviteMember = async (invitationData: InvitationData): Promise<Invi
     role: role || 'member',
   });
 
-  return response;
+  // Validate response has expected Invitation properties
+  if (!response || typeof response !== 'object' || !('invitationId' in response)) {
+    throw new Error('Invalid invitation data received from API');
+  }
+  return response as Invitation;
 };
 
 /**
@@ -124,8 +142,12 @@ export const acceptInvitation = async (invitationId: string): Promise<Invitation
     throw new Error('Invitation ID is required');
   }
 
-  const response = await apiService.put(`/api/invitations/${invitationId}/accept`);
-  return response;
+  const response = await apiService.put(`/api/invitations/${invitationId}/accept`, {});
+  // Validate response has expected Invitation properties
+  if (!response || typeof response !== 'object' || !('invitationId' in response)) {
+    throw new Error('Invalid invitation data received from API');
+  }
+  return response as Invitation;
 };
 
 /**
@@ -136,15 +158,19 @@ export const declineInvitation = async (invitationId: string): Promise<Invitatio
     throw new Error('Invitation ID is required');
   }
 
-  const response = await apiService.put(`/api/invitations/${invitationId}/decline`);
-  return response;
+  const response = await apiService.put(`/api/invitations/${invitationId}/decline`, {});
+  // Validate response has expected Invitation properties
+  if (!response || typeof response !== 'object' || !('invitationId' in response)) {
+    throw new Error('Invalid invitation data received from API');
+  }
+  return response as Invitation;
 };
 
 /**
  * Get pending invitations for the current user
  */
 export const getPendingInvitations = async (): Promise<Invitation[]> => {
-  const response = await apiService.get('/api/invitations/pending');
+  const response = await apiService.get('/api/invitations/pending') as { invitations?: Invitation[] };
   return response.invitations || [];
 };
 
@@ -157,5 +183,9 @@ export const getSpaceMembers = async (spaceId: string): Promise<MembersListRespo
   }
 
   const response = await apiService.get(`/api/spaces/${spaceId}/members`);
-  return response;
+  // Validate response has expected MembersListResponse structure
+  if (!response || typeof response !== 'object' || !('members' in response)) {
+    throw new Error('Invalid members list data received from API');
+  }
+  return response as MembersListResponse;
 };

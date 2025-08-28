@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Space } from '../../types';
+import type { Space } from '../../types';
 import { SpaceCard } from './SpaceCard';
 import './spaces.css';
 

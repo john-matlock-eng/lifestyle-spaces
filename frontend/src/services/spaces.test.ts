@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createSpace, listSpaces, getSpace, inviteMember, acceptInvitation } from './spaces';
-import { CreateSpaceData, InvitationData, Space, Invitation, SpaceListResponse } from '../types';
+import type { CreateSpaceData, InvitationData, Space, Invitation, SpaceListResponse } from '../types';
 import { apiService } from './api';
 
 // Mock the API service
@@ -126,7 +126,7 @@ describe('Spaces Service', () => {
 
       const result = await listSpaces();
 
-      expect(mockApiService.get).toHaveBeenCalledWith('/api/users/spaces', undefined);
+      expect(mockApiService.get).toHaveBeenCalledWith('/api/users/spaces');
       expect(result).toEqual(mockResponse);
     });
 
@@ -136,7 +136,7 @@ describe('Spaces Service', () => {
 
       const result = await listSpaces(filters);
 
-      expect(mockApiService.get).toHaveBeenCalledWith('/api/users/spaces', { params: filters });
+      expect(mockApiService.get).toHaveBeenCalledWith('/api/users/spaces?search=Space+1&isPublic=true');
       expect(result).toEqual(mockResponse);
     });
 
@@ -146,7 +146,7 @@ describe('Spaces Service', () => {
 
       const result = await listSpaces({}, pagination);
 
-      expect(mockApiService.get).toHaveBeenCalledWith('/api/users/spaces', { params: { ...pagination } });
+      expect(mockApiService.get).toHaveBeenCalledWith('/api/users/spaces?limit=10&offset=0');
       expect(result).toEqual(mockResponse);
     });
 
@@ -275,7 +275,7 @@ describe('Spaces Service', () => {
 
       const result = await acceptInvitation('invitation-123');
 
-      expect(mockApiService.put).toHaveBeenCalledWith('/api/invitations/invitation-123/accept');
+      expect(mockApiService.put).toHaveBeenCalledWith('/api/invitations/invitation-123/accept', {});
       expect(result).toEqual(mockAcceptedInvitation);
     });
 

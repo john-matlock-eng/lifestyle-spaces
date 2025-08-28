@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthLayout } from '../components/auth/AuthLayout';
 import { SignUpForm } from '../components/auth/SignUpForm';
 import { useAuth } from '../stores/authStore';
-import { SignUpData } from '../types';
+import type { SignUpData } from '../types';
 
 export const SignUp: React.FC = () => {
   const navigate = useNavigate();

@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { SpaceCard } from './SpaceCard';
-import { Space } from '../../types';
+import type { Space } from '../../types';
 
 describe('SpaceCard', () => {
   const mockSpace: Space = {

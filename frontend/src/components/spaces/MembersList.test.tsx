@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { MembersList } from './MembersList';
-import { SpaceMember } from '../../types';
+import type { SpaceMember } from '../../types';
 
 describe('MembersList', () => {
   const mockMembers: SpaceMember[] = [

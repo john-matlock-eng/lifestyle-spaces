@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { SpaceList } from './SpaceList';
-import { Space } from '../../types';
+import type { Space } from '../../types';
 
 // Mock SpaceCard component
 vi.mock('./SpaceCard', () => ({

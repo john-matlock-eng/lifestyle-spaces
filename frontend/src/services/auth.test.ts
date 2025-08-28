@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { signUp, signIn, signOut, refreshToken, getCurrentUser, configureAmplify } from './auth';
 import { SignUpData, SignInData } from '../types';
 import * as AmplifyAuth from '@aws-amplify/auth';
+import { Amplify } from 'aws-amplify';
 
 // Mock AWS Amplify Auth
 vi.mock('@aws-amplify/auth', () => ({
@@ -10,7 +11,13 @@ vi.mock('@aws-amplify/auth', () => ({
   signOut: vi.fn(),
   getCurrentUser: vi.fn(),
   fetchAuthSession: vi.fn(),
-  configure: vi.fn(),
+}));
+
+// Mock AWS Amplify
+vi.mock('aws-amplify', () => ({
+  Amplify: {
+    configure: vi.fn(),
+  },
 }));
 
 const mockAmplifyAuth = AmplifyAuth as typeof AmplifyAuth & {
@@ -19,6 +26,9 @@ const mockAmplifyAuth = AmplifyAuth as typeof AmplifyAuth & {
   signOut: ReturnType<typeof vi.fn>;
   getCurrentUser: ReturnType<typeof vi.fn>;
   fetchAuthSession: ReturnType<typeof vi.fn>;
+};
+
+const mockAmplify = Amplify as typeof Amplify & {
   configure: ReturnType<typeof vi.fn>;
 };
 
@@ -41,10 +51,9 @@ describe('Authentication Service', () => {
 
       configureAmplify(mockConfig.region, mockConfig.userPoolId, mockConfig.userPoolClientId);
 
-      expect(mockAmplifyAuth.configure).toHaveBeenCalledWith({
+      expect(mockAmplify.configure).toHaveBeenCalledWith({
         Auth: {
           Cognito: {
-            region: mockConfig.region,
             userPoolId: mockConfig.userPoolId,
             userPoolClientId: mockConfig.userPoolClientId,
           },
