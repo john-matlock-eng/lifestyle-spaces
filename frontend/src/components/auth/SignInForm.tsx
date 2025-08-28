@@ -8,6 +8,7 @@ interface SignInFormProps {
   onSwitchToSignUp: () => void;
   isLoading: boolean;
   error: string | null;
+  successMessage?: string | null;
 }
 
 interface FormData extends SignInData {
@@ -19,6 +20,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
   onSwitchToSignUp,
   isLoading,
   error,
+  successMessage,
 }) => {
   const {
     register,
@@ -54,6 +56,12 @@ export const SignInForm: React.FC<SignInFormProps> = ({
         <h2>Welcome Back</h2>
         <p>Sign in to your Lifestyle Spaces account to continue.</p>
       </div>
+
+      {successMessage && (
+        <div className="success-message" role="alert" aria-live="polite">
+          {successMessage}
+        </div>
+      )}
 
       {error && (
         <div className="error-message" role="alert" aria-live="polite">

@@ -17,6 +17,7 @@ describe('SignInForm', () => {
     onSwitchToSignUp: mockOnSwitchToSignUp,
     isLoading: false,
     error: null,
+    successMessage: null,
   };
 
   it('should render all form fields', () => {
@@ -239,5 +240,30 @@ describe('SignInForm', () => {
         rememberMe: true,
       });
     });
+  });
+
+  it('should display success message', () => {
+    const successMessage = 'Account created successfully! Please sign in to continue.';
+    render(<SignInForm {...defaultProps} successMessage={successMessage} />);
+
+    expect(screen.getByText(successMessage)).toBeInTheDocument();
+    expect(screen.getByText(successMessage)).toHaveAttribute('role', 'alert');
+  });
+
+  it('should not display success message when null', () => {
+    render(<SignInForm {...defaultProps} successMessage={null} />);
+
+    // Should not have any success message text
+    expect(screen.queryByText(/account created successfully/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/welcome.*ready/i)).not.toBeInTheDocument();
+  });
+
+  it('should display success message with proper accessibility attributes', () => {
+    const successMessage = 'Welcome! Your account is ready.';
+    render(<SignInForm {...defaultProps} successMessage={successMessage} />);
+
+    const successElement = screen.getByText(successMessage);
+    expect(successElement).toHaveAttribute('role', 'alert');
+    expect(successElement).toHaveAttribute('aria-live', 'polite');
   });
 });

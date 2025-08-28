@@ -114,8 +114,10 @@ resource "aws_cognito_user_pool" "main" {
     }
   }
 
-  # Lambda triggers (none for POC)
-  # Pre-sign up, post-confirmation, etc. can be added later
+  # Lambda triggers for auto-confirmation
+  lambda_config {
+    pre_sign_up = aws_lambda_function.pre_signup.arn
+  }
 
   tags = var.tags
 
@@ -200,4 +202,75 @@ resource "random_string" "domain_suffix" {
   length  = 6
   special = false
   upper   = false
+}
+
+# Lambda function for pre-signup auto-confirmation
+resource "aws_lambda_function" "pre_signup" {
+  filename         = data.archive_file.pre_signup_zip.output_path
+  function_name    = "${var.project_name}-${var.environment}-pre-signup"
+  role            = aws_iam_role.lambda_role.arn
+  handler         = "pre-signup.handler"
+  runtime         = "nodejs18.x"
+  timeout         = 30
+
+  source_code_hash = data.archive_file.pre_signup_zip.output_base64sha256
+
+  tags = var.tags
+}
+
+# Create ZIP file for Lambda function
+data "archive_file" "pre_signup_zip" {
+  type        = "zip"
+  source_file = "${path.module}/lambda/pre-signup.js"
+  output_path = "${path.module}/lambda/pre-signup.zip"
+}
+
+# IAM role for Lambda function
+resource "aws_iam_role" "lambda_role" {
+  name = "${var.project_name}-${var.environment}-cognito-lambda-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+# IAM policy for Lambda function
+resource "aws_iam_role_policy" "lambda_policy" {
+  name = "${var.project_name}-${var.environment}-cognito-lambda-policy"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:${data.aws_region.current.name}:*:*"
+      }
+    ]
+  })
+}
+
+# Permission for Cognito to invoke Lambda function
+resource "aws_lambda_permission" "cognito_invoke_lambda" {
+  statement_id  = "AllowExecutionFromCognito"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.pre_signup.function_name
+  principal     = "cognito-idp.amazonaws.com"
+  source_arn    = aws_cognito_user_pool.main.arn
 }

@@ -27,6 +27,10 @@ class CognitoService:
     
     def _create_test_pool(self) -> str:
         """Create a test user pool for development/testing."""
+        # Safety check: Prevent creation in production
+        if os.getenv('AWS_LAMBDA_FUNCTION_NAME'):
+            raise RuntimeError("Cannot auto-create Cognito pools in Lambda environment")
+            
         try:
             response = self.client.create_user_pool(
                 PoolName='lifestyle-spaces-test',
@@ -67,6 +71,10 @@ class CognitoService:
     
     def _create_test_client(self) -> str:
         """Create a test client for the user pool."""
+        # Safety check: Prevent creation in production
+        if os.getenv('AWS_LAMBDA_FUNCTION_NAME'):
+            raise RuntimeError("Cannot auto-create Cognito clients in Lambda environment")
+            
         try:
             response = self.client.create_user_pool_client(
                 UserPoolId=self.user_pool_id,

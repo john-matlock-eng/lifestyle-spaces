@@ -10,6 +10,10 @@ import boto3
 from moto import mock_cognitoidp, mock_dynamodb
 from botocore.exceptions import ClientError
 
+# Set environment variables for Cognito to prevent real AWS calls
+os.environ['COGNITO_USER_POOL_ID'] = 'test-pool-id'
+os.environ['COGNITO_CLIENT_ID'] = 'test-client-id'
+
 
 def create_dynamodb_table():
     """Helper function to create DynamoDB table for testing."""
@@ -75,12 +79,16 @@ class TestCognitoService:
     @mock_cognitoidp
     def test_create_user_pool(self):
         """Test creating Cognito user pool."""
+        # Ensure we're using test environment variables
+        assert os.environ.get('COGNITO_USER_POOL_ID') == 'test-pool-id'
+        assert os.environ.get('COGNITO_CLIENT_ID') == 'test-client-id'
+        
         from app.services.cognito import CognitoService
         
         service = CognitoService()
         assert service.client is not None
-        assert service.user_pool_id is not None
-        assert service.client_id is not None
+        assert service.user_pool_id == 'test-pool-id'  # Should use env var
+        assert service.client_id == 'test-client-id'  # Should use env var
     
     @pytest.mark.skip(reason="Covered by properly mocked tests in test_cognito_service_methods.py")
     @mock_cognitoidp
