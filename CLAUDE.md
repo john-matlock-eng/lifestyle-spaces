@@ -47,11 +47,77 @@ Lifestyle Spaces - A POC application deployed on AWS with security-first archite
   3. Deployed via GitHub Actions
   4. Infrastructure changes via Terraform only
 
-### 5. Agent Coordination
+### 5. TypeScript & Frontend Requirements
+- **ALWAYS use `import type` for type-only imports** when `verbatimModuleSyntax` is enabled
+- **Never import React directly** in components (using new JSX transform)
+- **Validate API responses at runtime** instead of using unsafe type assertions
+- **Use proper type guards** when accessing DOM elements
+- **Always check for null/undefined** before calling methods like `focus()`
+- **Build must pass** before committing (`npm run build`)
+- **Lint must pass** before committing (`npm run lint`)
+
+#### Common TypeScript Pitfalls to Avoid:
+```typescript
+// ❌ WRONG - will fail with verbatimModuleSyntax
+import { User, AuthState } from '../types';
+
+// ✅ CORRECT
+import type { User, AuthState } from '../types';
+
+// ❌ WRONG - unsafe type assertion
+const response = await apiCall() as SomeType;
+
+// ✅ CORRECT - validate at runtime
+const response = await apiCall();
+if (!response || typeof response !== 'object' || !('expectedField' in response)) {
+  throw new Error('Invalid API response');
+}
+return response as SomeType;
+
+// ❌ WRONG - no null check for DOM elements
+element.nextElementSibling.focus();
+
+// ✅ CORRECT - proper null checks
+const nextElement = element.nextElementSibling as HTMLElement | null;
+if (nextElement && typeof nextElement.focus === 'function') {
+  nextElement.focus();
+}
+```
+
+### 6. Agent Coordination
 - Each agent must follow their specific domain guidelines
 - All agents must ensure TDD approach
 - Cross-agent dependencies must be clearly communicated
 - Final implementation must be complete before PR notification
+- **Frontend agents must ensure TypeScript compilation succeeds**
+- **Backend agents must ensure 100% test coverage**
+
+#### Agent-Specific Requirements:
+
+**frontend-developer agent:**
+- MUST use `import type` for all type-only imports
+- MUST validate builds with `npm run build` before completing
+- MUST ensure all tests pass
+- MUST handle null/undefined checks for DOM operations
+- MUST validate API responses instead of blind type casting
+
+**backend-architect agent:**
+- MUST achieve 100% test coverage
+- MUST mock all AWS services in tests
+- MUST use proper error handling
+- MUST validate all input data
+
+**deployment-engineer agent:**
+- MUST NOT set AWS reserved environment variables
+- MUST use IAM roles instead of access keys
+- MUST verify deployments don't break existing functionality
+- MUST ensure CI/CD pipelines pass all checks
+
+**typescript-pro agent:**
+- MUST enforce `verbatimModuleSyntax` compliance
+- MUST use proper type guards
+- MUST avoid unsafe type assertions
+- MUST ensure strict null checks
 
 ## Architecture Details
 
@@ -83,9 +149,18 @@ npm install
 npm run test        # Run tests first (TDD)
 npm run test:coverage # Check coverage (must be 100%)
 npm run dev         # Development server
-npm run build       # Production build
-npm run lint        # Code linting
+npm run build       # Production build - MUST PASS before commit
+npm run lint        # Code linting - MUST PASS before commit
+npm run typecheck   # TypeScript type checking
 ```
+
+### Frontend Pre-Commit Checklist
+Before committing frontend changes, ensure:
+1. ✅ `npm run build` passes without errors
+2. ✅ `npm run lint` passes without errors  
+3. ✅ `npm run test` all tests pass
+4. ✅ Coverage meets requirements
+5. ✅ No TypeScript errors (check with `npx tsc --noEmit`)
 
 ### Backend Development
 ```bash
@@ -157,11 +232,36 @@ SK: METADATA#timestamp or RELATED#id
 4. **terraform-plan.yml**: Plan infrastructure changes
 5. **terraform-apply.yml**: Apply infrastructure changes
 
+## Common CI/CD Pitfalls to Avoid
+
+### Lambda Environment Variables
+- **NEVER set AWS reserved environment variables** in Lambda configuration:
+  - ❌ AWS_REGION (automatically provided)
+  - ❌ AWS_DEFAULT_REGION (automatically provided)
+  - ❌ AWS_ACCESS_KEY_ID (use IAM roles)
+  - ❌ AWS_SECRET_ACCESS_KEY (use IAM roles)
+  - ❌ AWS_SESSION_TOKEN (use IAM roles)
+  - ❌ Any AWS_LAMBDA_* variables
+
+### API Endpoint Consistency
+- Frontend API calls must match backend routes exactly
+- Always include `/api` prefix in API calls
+- Example: `/api/spaces` not `/spaces` or `/rooms`
+
+### Test Isolation
+- Tests must not depend on external AWS services
+- All AWS SDK calls must be mocked in tests
+- Use `@patch` decorators or mock modules properly
+- Tests must pass without AWS credentials
+
 ## Important Notes
 
 - **NO MANUAL FIXES**: Everything through code and CI/CD
 - **TDD IS MANDATORY**: Tests before code, always
-- **100% COVERAGE**: No exceptions for application code
+- **100% COVERAGE**: No exceptions for application code (backend)
+- **90%+ COVERAGE**: Target for frontend code
 - **SECURITY FIRST**: Every decision must consider security
 - **COST CONSCIOUS**: This is a POC, avoid unnecessary AWS costs
 - **AGENT COORDINATION**: Use appropriate agents for each task
+- **BUILD MUST PASS**: Never commit code that doesn't build
+- **TYPE SAFETY**: Use TypeScript's strict mode effectively

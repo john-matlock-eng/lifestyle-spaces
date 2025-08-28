@@ -72,6 +72,19 @@ resource "aws_cognito_user_pool" "main" {
     }
   }
 
+  schema {
+    attribute_data_type      = "String"
+    name                     = "displayName"
+    required                 = false
+    mutable                  = true
+    developer_only_attribute = false
+
+    string_attribute_constraints {
+      min_length = 1
+      max_length = 256
+    }
+  }
+
   # Email configuration (no verification for POC)
   email_configuration {
     email_sending_account = "COGNITO_DEFAULT"
@@ -145,13 +158,15 @@ resource "aws_cognito_user_pool_client" "web" {
     "email",
     "email_verified",
     "custom:userId",
-    "custom:username"
+    "custom:username",
+    "custom:displayName"
   ]
 
   write_attributes = [
     "email",
     "custom:userId",
-    "custom:username"
+    "custom:username",
+    "custom:displayName"
   ]
 
   # OAuth settings (for future expansion)

@@ -11,6 +11,7 @@ vi.mock('@aws-amplify/auth', () => ({
   signOut: vi.fn(),
   getCurrentUser: vi.fn(),
   fetchAuthSession: vi.fn(),
+  fetchUserAttributes: vi.fn(),
 }));
 
 // Mock AWS Amplify
@@ -26,6 +27,7 @@ const mockAmplifyAuth = AmplifyAuth as typeof AmplifyAuth & {
   signOut: ReturnType<typeof vi.fn>;
   getCurrentUser: ReturnType<typeof vi.fn>;
   fetchAuthSession: ReturnType<typeof vi.fn>;
+  fetchUserAttributes: ReturnType<typeof vi.fn>;
 };
 
 const mockAmplify = Amplify as typeof Amplify & {
@@ -85,8 +87,9 @@ describe('Authentication Service', () => {
         options: {
           userAttributes: {
             email: mockSignUpData.email,
-            preferred_username: mockSignUpData.username,
-            name: mockSignUpData.displayName,
+            'custom:username': mockSignUpData.username,
+            'custom:displayName': mockSignUpData.displayName,
+            'custom:userId': expect.any(String),
           },
         },
       });
@@ -162,9 +165,17 @@ describe('Authentication Service', () => {
         username: 'testuser',
       };
 
+      const mockUserAttributes = {
+        email: 'test@example.com',
+        'custom:userId': 'test-user-id',
+        'custom:username': 'testuser',
+        'custom:displayName': 'Test User',
+      };
+
       mockAmplifyAuth.signIn.mockResolvedValue(mockSignInResponse);
       mockAmplifyAuth.fetchAuthSession.mockResolvedValue(mockSession);
       mockAmplifyAuth.getCurrentUser.mockResolvedValue(mockUser);
+      mockAmplifyAuth.fetchUserAttributes.mockResolvedValue(mockUserAttributes);
 
       const result = await signIn(mockSignInData);
 
@@ -178,7 +189,7 @@ describe('Authentication Service', () => {
           userId: 'test-user-id',
           email: 'test@example.com',
           username: 'testuser',
-          displayName: 'testuser',
+          displayName: 'Test User',
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
         },
@@ -226,15 +237,23 @@ describe('Authentication Service', () => {
         username: 'testuser',
       };
 
+      const mockUserAttributes = {
+        email: 'test@example.com',
+        'custom:userId': 'test-user-id',
+        'custom:username': 'testuser',
+        'custom:displayName': 'Test User',
+      };
+
       mockAmplifyAuth.getCurrentUser.mockResolvedValue(mockUser);
+      mockAmplifyAuth.fetchUserAttributes.mockResolvedValue(mockUserAttributes);
 
       const result = await getCurrentUser();
 
       expect(result).toEqual({
         userId: 'test-user-id',
-        email: 'testuser',
+        email: 'test@example.com',
         username: 'testuser',
-        displayName: 'testuser',
+        displayName: 'Test User',
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       });

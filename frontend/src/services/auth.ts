@@ -1,4 +1,4 @@
-import { signUp as amplifySignUp, signIn as amplifySignIn, signOut as amplifySignOut, getCurrentUser as amplifyGetCurrentUser, fetchAuthSession } from '@aws-amplify/auth';
+import { signUp as amplifySignUp, signIn as amplifySignIn, signOut as amplifySignOut, getCurrentUser as amplifyGetCurrentUser, fetchAuthSession, fetchUserAttributes } from '@aws-amplify/auth';
 import { Amplify } from 'aws-amplify';
 import type { SignUpData, SignInData, AuthResponse, TokenRefreshResponse, User } from '../types';
 
@@ -58,8 +58,9 @@ export const signUp = async (signUpData: SignUpData): Promise<{ isSignUpComplete
     options: {
       userAttributes: {
         email,
-        preferred_username: username,
-        name: displayName,
+        'custom:username': username,
+        'custom:displayName': displayName,
+        'custom:userId': crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
       },
     },
   });
@@ -87,12 +88,13 @@ export const signIn = async (signInData: SignInData): Promise<AuthResponse> => {
     // Get auth session for tokens
     const session = await fetchAuthSession();
     const currentUser = await amplifyGetCurrentUser();
+    const userAttributes = await fetchUserAttributes();
 
     const user: User = {
-      userId: currentUser.userId,
-      email,
-      username: currentUser.username,
-      displayName: currentUser.username, // Will be updated from user attributes if available
+      userId: userAttributes['custom:userId'] || currentUser.userId,
+      email: userAttributes.email || email,
+      username: userAttributes['custom:username'] || currentUser.username,
+      displayName: userAttributes['custom:displayName'] || currentUser.username,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -121,12 +123,13 @@ export const signOut = async (): Promise<void> => {
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
     const currentUser = await amplifyGetCurrentUser();
+    const userAttributes = await fetchUserAttributes();
     
     return {
-      userId: currentUser.userId,
-      email: currentUser.username, // In Cognito, username is often the email
-      username: currentUser.username,
-      displayName: currentUser.username, // Will be updated from user attributes if available
+      userId: userAttributes['custom:userId'] || currentUser.userId,
+      email: userAttributes.email || currentUser.username,
+      username: userAttributes['custom:username'] || currentUser.username,
+      displayName: userAttributes['custom:displayName'] || currentUser.username,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
