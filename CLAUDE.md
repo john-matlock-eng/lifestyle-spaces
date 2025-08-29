@@ -57,7 +57,7 @@ Lifestyle Spaces - A POC application deployed on AWS with security-first archite
 - **Build must pass** before committing (`npm run build`)
 - **Lint must pass** before committing (`npm run lint`)
 
-#### Common TypeScript Pitfalls to Avoid:
+#### Common ESLint & TypeScript Pitfalls to Avoid:
 ```typescript
 // ❌ WRONG - will fail with verbatimModuleSyntax
 import { User, AuthState } from '../types';
@@ -83,6 +83,20 @@ const nextElement = element.nextElementSibling as HTMLElement | null;
 if (nextElement && typeof nextElement.focus === 'function') {
   nextElement.focus();
 }
+
+// ❌ WRONG - using 'any' type
+const handleClick = (event: any) => { ... }
+
+// ✅ CORRECT - use specific types
+const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => { ... }
+
+// ❌ WRONG - unused variables
+const response = await apiCall();
+return true;
+
+// ✅ CORRECT - remove unused variables
+await apiCall();
+return true;
 ```
 
 ### 6. Agent Coordination
@@ -97,10 +111,13 @@ if (nextElement && typeof nextElement.focus === 'function') {
 
 **frontend-developer agent:**
 - MUST use `import type` for all type-only imports
+- MUST run `npm run lint` and fix ALL errors before completing any task
 - MUST validate builds with `npm run build` before completing
-- MUST ensure all tests pass
+- MUST ensure all tests pass with `npm run test`
 - MUST handle null/undefined checks for DOM operations
 - MUST validate API responses instead of blind type casting
+- MUST NOT use `any` type - always specify proper types
+- MUST NOT leave unused variables in code
 
 **backend-architect agent:**
 - MUST achieve 100% test coverage
@@ -156,12 +173,14 @@ npm run typecheck   # TypeScript type checking
 ```
 
 ### Frontend Pre-Commit Checklist
-Before committing frontend changes, ensure:
-1. ✅ `npm run build` passes without errors
-2. ✅ `npm run lint` passes without errors  
+**MANDATORY** - Agents must verify ALL of these before marking tasks complete:
+1. ✅ `npm run lint` passes without errors (NO ESLint errors allowed)
+2. ✅ `npm run build` passes without errors (TypeScript compilation must succeed)
 3. ✅ `npm run test` all tests pass
-4. ✅ Coverage meets requirements
+4. ✅ Coverage meets requirements (90% minimum)
 5. ✅ No TypeScript errors (check with `npx tsc --noEmit`)
+
+**IMPORTANT**: Never mark a frontend task as complete without running `npm run lint`!
 
 ### Backend Development
 ```bash

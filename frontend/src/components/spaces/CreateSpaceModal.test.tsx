@@ -327,7 +327,6 @@ describe('CreateSpaceModal', () => {
     render(<CreateSpaceModal {...defaultProps} isOpen={true} />);
     
     // This covers lines 81, 84-86 - focus trap tab key handling
-    const modal = screen.getByRole('dialog');
     const nameInput = screen.getByLabelText(/space name/i);
     const cancelButton = screen.getByText('Cancel');
     

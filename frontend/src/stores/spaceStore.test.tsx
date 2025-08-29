@@ -548,14 +548,7 @@ describe('SpaceStore', () => {
       // We'll simulate it by creating and updating a space with the same ID
       mockSpacesService.createSpace.mockResolvedValue(updatedSpace);
       
-      // Add the original space to spaces array first
-      act(() => {
-        // Access the internal dispatch through the context
-        const internalResult = result.current as any;
-        internalResult._setSpaces = (spaces: Space[]) => {
-          // This simulates having the original space in the array
-        };
-      });
+      // The UPDATE_SPACE reducer case is tested via the existing selectSpace call above
 
       // This tests the UPDATE_SPACE reducer case where currentSpace is updated
       // when its ID matches the updated space

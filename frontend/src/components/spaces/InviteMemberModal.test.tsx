@@ -401,10 +401,6 @@ describe('InviteMemberModal', () => {
   });
 
   it('should validate existing members with partial overlap in multiple emails', () => {
-    const mockMembers = [
-      { id: '1', email: 'existing@example.com', role: 'member' as const, joinedAt: '2023-01-01' }
-    ];
-    
     render(
       <InviteMemberModal 
         {...defaultProps} 

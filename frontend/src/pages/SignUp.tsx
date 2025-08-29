@@ -11,7 +11,7 @@ export const SignUp: React.FC = () => {
 
   const handleSignUp = async (data: SignUpData) => {
     try {
-      const response = await signUp(data);
+      await signUp(data);
       // Always redirect to sign-in page with success message
       // regardless of whether confirmation is needed
       navigate('/signin', {

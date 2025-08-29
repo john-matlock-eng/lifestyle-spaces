@@ -13,7 +13,7 @@ vi.mock('../stores/spaceStore');
 
 // Mock the child components
 vi.mock('../components/spaces/SpaceList', () => ({
-  SpaceList: ({ spaces, onSpaceClick, onRetry, isLoading, error }: any) => (
+  SpaceList: ({ spaces, onSpaceClick, onRetry, isLoading, error }: { spaces: Space[], onSpaceClick: (space: Space) => void, onRetry?: () => void, isLoading?: boolean, error?: string | null }) => (
     <div data-testid="space-list">
       <div data-testid="spaces-count">{spaces.length}</div>
       <div data-testid="loading-state">{isLoading ? 'loading' : 'not-loading'}</div>
@@ -37,7 +37,7 @@ vi.mock('../components/spaces/SpaceList', () => ({
 }));
 
 vi.mock('../components/spaces/CreateSpaceModal', () => ({
-  CreateSpaceModal: ({ isOpen, onClose, onSpaceCreated }: any) => (
+  CreateSpaceModal: ({ isOpen, onClose, onSpaceCreated }: { isOpen: boolean, onClose: () => void, onSpaceCreated?: (space: Space) => void }) => (
     isOpen ? (
       <div data-testid="create-space-modal">
         <button data-testid="modal-close" onClick={onClose}>Close</button>
