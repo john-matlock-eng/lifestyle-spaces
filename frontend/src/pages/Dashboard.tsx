@@ -15,7 +15,7 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     loadSpaces();
-  }, [loadSpaces]);
+  }, []); // Empty dependency array - loadSpaces is stable and should only run on mount
 
   const handleSpaceClick = (space: Space) => {
     navigate(`/space/${space.spaceId}`);
