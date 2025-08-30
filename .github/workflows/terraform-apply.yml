@@ -34,6 +34,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Build Lambda Package
+        working-directory: backend
+        run: |
+          pip install -r requirements.txt
+          python build_lambda_package.py
+      
+      - name: Verify Lambda Package
+        working-directory: backend
+        run: |
+          if [ ! -f lambda-deployment.zip ]; then
+            echo "ERROR: lambda-deployment.zip not found"
+            exit 1
+          fi
+          echo "Lambda package size: $(ls -lh lambda-deployment.zip | awk '{print $5}')"
+      
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
