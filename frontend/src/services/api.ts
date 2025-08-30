@@ -1,4 +1,5 @@
 import { getValidatedConfig } from '../config'
+import { fetchAuthSession } from '@aws-amplify/auth'
 
 /**
  * API Error class for handling API-specific errors
@@ -87,11 +88,24 @@ class ApiServiceImpl implements ApiService {
   /**
    * Default headers for all API requests
    */
-  private getDefaultHeaders(): Record<string, string> {
-    return {
+  private async getDefaultHeaders(): Promise<Record<string, string>> {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     }
+
+    // Try to get the auth token from AWS Amplify
+    try {
+      const session = await fetchAuthSession()
+      const accessToken = session.tokens?.accessToken?.toString()
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`
+      }
+    } catch {
+      // User is not authenticated, continue without auth header
+    }
+
+    return headers
   }
 
   /**
@@ -102,7 +116,7 @@ class ApiServiceImpl implements ApiService {
   async get<T = unknown>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'GET',
-      headers: this.getDefaultHeaders(),
+      headers: await this.getDefaultHeaders(),
     })
   }
 
@@ -115,7 +129,7 @@ class ApiServiceImpl implements ApiService {
   async post<T = unknown>(endpoint: string, data?: unknown): Promise<T> {
     const options: RequestOptions = {
       method: 'POST',
-      headers: this.getDefaultHeaders(),
+      headers: await this.getDefaultHeaders(),
     }
 
     if (data !== undefined) {
@@ -134,7 +148,7 @@ class ApiServiceImpl implements ApiService {
   async put<T = unknown>(endpoint: string, data: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
-      headers: this.getDefaultHeaders(),
+      headers: await this.getDefaultHeaders(),
       body: JSON.stringify(data),
     })
   }
@@ -147,7 +161,7 @@ class ApiServiceImpl implements ApiService {
   async delete<T = unknown>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'DELETE',
-      headers: this.getDefaultHeaders(),
+      headers: await this.getDefaultHeaders(),
     })
   }
 
