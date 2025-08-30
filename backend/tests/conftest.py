@@ -3,6 +3,20 @@ Pytest configuration and fixtures for all tests.
 """
 import os
 import sys
+
+# Set test environment variables BEFORE importing app
+os.environ.setdefault('JWT_SECRET_KEY', 'test-secret-key-for-testing-only')
+os.environ.setdefault('JWT_ALGORITHM', 'HS256')
+os.environ.setdefault('ACCESS_TOKEN_EXPIRE_MINUTES', '30')
+os.environ.setdefault('DYNAMODB_TABLE', 'lifestyle-spaces-test')
+os.environ.setdefault('CORS_ORIGINS', '["*"]')  # JSON array format
+os.environ.setdefault('AWS_REGION', 'us-east-1')
+os.environ.setdefault('AWS_DEFAULT_REGION', 'us-east-1')
+os.environ.setdefault('AWS_ACCESS_KEY_ID', 'test')
+os.environ.setdefault('AWS_SECRET_ACCESS_KEY', 'test')
+os.environ.setdefault('ENVIRONMENT', 'test')
+
+# Now import other modules after environment is set
 from pathlib import Path
 from typing import Generator
 import pytest
@@ -67,14 +81,33 @@ def mock_auth_token():
 
 @pytest.fixture(autouse=True)
 def set_test_env_vars():
-    """Set environment variables for testing."""
-    os.environ['ENVIRONMENT'] = 'test'
-    os.environ['AWS_REGION'] = 'us-east-1'
-    os.environ['DYNAMODB_TABLE'] = 'lifestyle-spaces-test'
-    os.environ['JWT_SECRET_KEY'] = 'test-secret-key-for-testing-only'
-    os.environ['JWT_ALGORITHM'] = 'HS256'
-    os.environ['ACCESS_TOKEN_EXPIRE_MINUTES'] = '30'
+    """Ensure test environment variables remain set during testing."""
+    # Environment variables are already set at module level
+    # This fixture ensures they stay consistent
+    original_env = {}
+    test_vars = {
+        'JWT_SECRET_KEY': 'test-secret-key-for-testing-only',
+        'JWT_ALGORITHM': 'HS256',
+        'ACCESS_TOKEN_EXPIRE_MINUTES': '30',
+        'DYNAMODB_TABLE': 'lifestyle-spaces-test',
+        'CORS_ORIGINS': '["*"]',  # JSON array format
+        'AWS_REGION': 'us-east-1',
+        'AWS_DEFAULT_REGION': 'us-east-1',
+        'AWS_ACCESS_KEY_ID': 'test',
+        'AWS_SECRET_ACCESS_KEY': 'test',
+        'ENVIRONMENT': 'test'
+    }
+    
+    # Store original values and set test values
+    for key, value in test_vars.items():
+        original_env[key] = os.environ.get(key)
+        os.environ[key] = value
+    
     yield
-    # Cleanup
-    for key in ['ENVIRONMENT', 'AWS_REGION', 'DYNAMODB_TABLE', 'JWT_SECRET_KEY', 'JWT_ALGORITHM', 'ACCESS_TOKEN_EXPIRE_MINUTES']:
-        os.environ.pop(key, None)
+    
+    # Restore original values
+    for key, value in original_env.items():
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value

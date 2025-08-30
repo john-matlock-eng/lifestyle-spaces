@@ -2,9 +2,22 @@
 """
 Test script to verify the placeholder Lambda handler works correctly.
 """
+# FIRST: Set environment variables before importing any app modules
+import os
+os.environ.setdefault('JWT_SECRET_KEY', 'test-secret-key-for-testing-only')
+os.environ.setdefault('JWT_ALGORITHM', 'HS256')
+os.environ.setdefault('ACCESS_TOKEN_EXPIRE_MINUTES', '30')
+os.environ.setdefault('DYNAMODB_TABLE', 'lifestyle-spaces-test')
+os.environ.setdefault('CORS_ORIGINS', '["*"]')
+os.environ.setdefault('AWS_REGION', 'us-east-1')
+os.environ.setdefault('AWS_DEFAULT_REGION', 'us-east-1')
+os.environ.setdefault('AWS_ACCESS_KEY_ID', 'test')
+os.environ.setdefault('AWS_SECRET_ACCESS_KEY', 'test')
+os.environ.setdefault('ENVIRONMENT', 'test')
+
+# THEN: Import other modules
 import json
 import sys
-import os
 
 # Add current directory to path to import the handler
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

@@ -2,230 +2,173 @@
 *Last Updated: 2025-08-29*
 *Session Manager: Executive Partner AI*
 
+## 🚨 CURRENT STATUS: CI/CD Fix Required
+
+### Critical Issue
+- **Problem**: GitHub Actions tests failing (showing 13% instead of 96% coverage)
+- **Root Cause**: Missing JWT_SECRET_KEY and other env vars in CI
+- **Solution**: Claude Code instructions ready in `CLAUDE_CODE_CI_FIX.md`
+- **OIDC**: Already configured (no AWS setup needed)
+
 ## 🎯 PROJECT OVERVIEW
 
 **Project**: Lifestyle Spaces POC
-**Stage**: Backend Enhancement Phase
-**Current Focus**: Improving backend coverage from 51% to 100%
+**Backend Status**: 
+- **Local**: 96% coverage, 341 tests ✅
+- **CI/CD**: 13% coverage, 4 errors ❌
+- **Package**: 28.43MB ready for deployment ✅
 
-### Current Architecture
-- **Frontend**: React + TypeScript + Vite (98.38% tested) ✅
-- **Backend**: FastAPI partially implemented (51% coverage) 🟡
-- **Infrastructure**: AWS Lambda + API Gateway + DynamoDB (Terraform deployed) ✅
-- **Agent System**: 10 specialized agents configured ✅
+### Architecture Status
+- **Frontend**: 98.38% tested ✅
+- **Backend**: Complete locally, CI needs fix 🔧
+- **Infrastructure**: Deployed with OIDC ✅
+- **Agent System**: 10 agents configured ✅
 
-## 📈 PROGRESS TRACKER
+## 📋 IMMEDIATE ACTION - Claude Code Tasks
 
-### ✅ Completed Components
-- [x] Infrastructure deployment (Terraform)
-- [x] Frontend development (98.38% coverage)
-- [x] Agent system configuration
-- [x] DynamoDB table creation
-- [x] API Gateway setup
-- [x] Backend structure created
-- [x] Core models defined
-- [x] Basic routes implemented
-- [x] Initial tests written
+### Copy to Claude Code Now:
+```markdown
+# Read CLAUDE_CODE_CI_FIX.md for detailed instructions
 
-### 🔄 Current Backend Status (51% Coverage)
+Priority Tasks:
+1. @backend-architect fix backend/tests/conftest.py - set env vars BEFORE imports
+2. @backend-architect update backend/app/core/config.py - handle test mode
+3. @deployment-engineer create backend/.env.test with test values
+4. @deployment-engineer update .github/workflows/backend-tests.yml
+5. @backend-architect fix import order in failing test files
+6. @backend-architect ensure all AWS services are mocked
+```
 
-#### Well-Covered Components (>80%)
-- ✅ app/main.py (100%)
-- ✅ app/core/config.py (100%)
-- ✅ app/models/space.py (95%)
-- ✅ app/models/user.py (90%)
-- ✅ app/models/invitation.py (87%)
-- ✅ app/models/user_profile.py (85%)
-- ✅ app/api/routes/health.py (86%)
-- ✅ app/services/exceptions.py (100%)
+## 🔴 Failing Tests Analysis
 
-#### Needs Work (<50%)
-- 🔴 app/api/routes/user_profile.py (14%)
-- 🔴 app/services/cognito.py (16%)
-- 🔴 app/services/user_profile.py (22%)
-- 🔴 app/services/invitation.py (26%)
-- 🔴 app/api/routes/invitations.py (30%)
-- 🔴 app/core/database.py (33%)
-- 🔴 app/api/routes/auth.py (39%)
-- 🔴 app/services/space.py (41%)
+### Collection Errors (4 files):
+1. `test_lambda_integration.py`
+2. `test_placeholder.py`
+3. `tests/unit/test_database_coverage.py`
+4. `tests/unit/test_user_profile_service.py`
 
-## 🎯 IMMEDIATE PRIORITIES
+**All failing with**: `jwt_secret_key Field required`
 
-### Priority 1: Critical Routes (User Profile)
-- app/api/routes/user_profile.py needs 90 lines covered
-- This is blocking frontend integration
+### Coverage Drop Analysis:
+```
+Local:  96% (305 tests pass)
+CI/CD:  13% (can't even load tests)
+Issue:  Environment variables not set
+```
 
-### Priority 2: Core Services
-- app/services/cognito.py needs 94 lines covered
-- app/services/user_profile.py needs 58 lines covered
-- app/services/space.py needs 118 lines covered
+## ✅ What's Actually Working
 
-### Priority 3: Database Layer
-- app/core/database.py needs 37 lines covered
-- Critical for all operations
+### Backend Implementation (Local)
+- 341 tests written
+- 96% coverage achieved
+- All endpoints implemented
+- Lambda package ready (28.43MB)
+- API contracts documented
 
-## 🗂️ KEY ARCHITECTURAL DECISIONS
+### Just Needs:
+- Environment variables in CI
+- Proper test configuration
+- Mock AWS services
 
-### Architecture Decisions
-1. **ADR-001**: Single DynamoDB table design ✅
-   - Status: Implemented
-   - Location: app/core/database.py
-   
-2. **ADR-002**: Single Lambda for all backend logic ✅
-   - Status: Implemented
-   - Handler: lambda_handler.py with Mangum
+## 🚀 Once CI Fixed - Deployment Plan
 
-3. **ADR-003**: TDD mandatory for all development
-   - Status: Partially enforced (51% coverage)
-   - Target: 100% coverage
+### Automatic Deployment Pipeline:
+1. Tests pass in CI (95%+ coverage)
+2. Lambda package builds
+3. OIDC authenticates to AWS
+4. Lambda updates with new code
+5. Smoke tests verify deployment
 
-### Technology Stack Confirmed
-- **Frontend**: React 18, TypeScript 5.3, Vite 5, TailwindCSS ✅
-- **Backend**: FastAPI, Python 3.11, Mangum, Boto3 ✅
-- **Infrastructure**: AWS Lambda, API Gateway, DynamoDB, CloudFront ✅
-- **Testing**: Pytest with 51% backend coverage
+### Manual Steps Required:
+- Monitor CloudWatch logs
+- Verify API Gateway integration
+- Test frontend integration
+- Update production secrets
 
-## 🚧 BLOCKERS & RISKS
+## 📊 Project Metrics
 
-### Active Blockers
-- Backend coverage at 51% (target 100%)
-- User profile endpoints need completion
-- Cognito integration not fully tested
+### Quality Metrics
+```
+Frontend Coverage:    98.38% ✅
+Backend Coverage:     96.00% ✅ (local)
+Total Tests:          341 backend + frontend tests
+Package Size:         28.43MB (43% under limit)
+```
 
-### Identified Risks
-1. **Risk**: Coverage gaps preventing deployment
-   - Mitigation: Focus on high-impact routes first
-   
-2. **Risk**: Lambda package size (need to verify)
-   - Mitigation: Check current package size
+### Implementation Status
+```
+User Profile API:     100% ✅
+Space Management:     100% ✅
+Invitation System:    100% ✅
+Authentication:       100% ✅
+Database Layer:       100% ✅
+```
 
-## 📊 CURRENT METRICS
+## 🔄 Session Continuity
 
-### Code Quality
-- Frontend Coverage: 98.38% ✅
-- Backend Coverage: 51% 🟡
-- Total Lines: 1231
-- Lines Covered: 626
-- Lines Missing: 605
+### Current Session Tasks
+1. Created `CLAUDE_CODE_CI_FIX.md` with detailed instructions
+2. Prepared GitHub Actions workflow with OIDC
+3. Identified exact test failures and root cause
 
-### Test Distribution
-- Unit Tests: ✅ Present in /tests/unit/
-- Integration Tests: ✅ Present in /tests/integration/
-- Test Files: 25+ test files created
+### Next Session Checklist
+1. Verify CI/CD fixes applied
+2. Check GitHub Actions passing
+3. Confirm Lambda deployment
+4. Test API endpoints
+5. Integration testing
 
-## 🔄 SESSION HANDOFF
+## 🎯 Success Criteria
 
-### Current Session Status
-- Created PROJECT_CONTEXT.md for continuity
-- Created BACKEND_DEPLOYMENT_STATUS.md for tracking
-- Identified coverage gaps and priorities
-- Backend is partially implemented, not a placeholder
+### Today's Goals
+- [ ] Fix environment variables in CI
+- [ ] All 305 tests collected successfully
+- [ ] 95%+ coverage in GitHub Actions
+- [ ] Lambda deploys automatically
+- [ ] Smoke tests pass
 
-### For Next Session
-1. Read this PROJECT_CONTEXT.md file
-2. Check coverage report in backend/htmlcov/index.html
-3. Focus on user_profile.py routes first (14% → 100%)
-4. Use Claude Code to fill coverage gaps
+### This Week
+- [ ] Beta environment live
+- [ ] Frontend-backend integration complete
+- [ ] Performance benchmarks met
+- [ ] Documentation complete
+- [ ] Beta users onboarded
 
-## 📋 CLAUDE CODE INSTRUCTIONS
+## 📝 Quick Commands
 
-### Immediate Tasks for 100% Coverage
-
-#### Task 1: Fix User Profile Routes (CRITICAL)
+### After Claude Code Fixes:
 ```bash
-@backend-architect analyze app/api/routes/user_profile.py and write comprehensive tests to cover the 90 missing lines. Focus on:
-- GET /api/user/profile endpoint
-- PUT /api/user/profile endpoint
-- POST /api/user/onboarding endpoints
-- Error handling paths
-```
-
-#### Task 2: Complete Cognito Service Tests
-```bash
-@backend-architect create comprehensive tests for app/services/cognito.py covering all 94 missing lines including:
-- Authentication flows
-- Token validation
-- Error scenarios
-- Edge cases
-```
-
-#### Task 3: Database Coverage
-```bash
-@backend-architect write tests for app/core/database.py to cover the 37 missing lines:
-- Connection handling
-- Query operations
-- Error handling
-- Transaction management
-```
-
-## 🎯 NEXT ACTIONS
-
-### Today's Sprint
-1. **CRITICAL**: Increase backend coverage to 100%
-   - Start with user_profile.py (highest impact)
-   - Then cognito.py (authentication critical)
-   - Then database.py (core functionality)
-
-2. **Verify Lambda Package**
-   - Run build_lambda_package.py
-   - Check package size
-   - Optimize if needed
-
-3. **Integration Testing**
-   - Test frontend against backend
-   - Verify all API contracts match
-
-### Success Criteria for Today
-- [ ] Backend coverage >= 80%
-- [ ] All critical routes tested
-- [ ] Lambda package < 50MB
-- [ ] No failing tests
-
-## 🔗 KEY FILES & LOCATIONS
-
-### Backend Structure
-```
-backend/
-├── app/
-│   ├── api/routes/      # API endpoints (needs coverage)
-│   ├── core/            # Core utilities (partially covered)
-│   ├── models/          # Data models (well covered)
-│   ├── services/        # Business logic (needs coverage)
-│   └── main.py          # FastAPI app (100% covered)
-├── tests/
-│   ├── unit/            # Unit tests
-│   ├── integration/     # Integration tests
-│   └── conftest.py      # Test configuration
-├── htmlcov/             # Coverage reports
-└── requirements.txt     # Dependencies
-```
-
-### Quick Commands
-```bash
-# Run tests with coverage
+# Test locally first
 cd backend
-pytest --cov=app --cov-report=html
+export PYTEST_CURRENT_TEST=true
+pytest --cov=app
 
-# View coverage report
-open htmlcov/index.html
+# Push to trigger CI
+git add -A
+git commit -m "fix: CI/CD environment configuration"
+git push origin main
 
-# Build Lambda package
-python build_lambda_package.py
-
-# Run local server
-uvicorn app.main:app --reload
+# Monitor deployment
+gh run watch
 ```
 
+## 🔗 Key Files
+
+### CI/CD Fix Documentation
+- `CLAUDE_CODE_CI_FIX.md` - Detailed agent instructions
+- `.github/workflows/backend-tests.yml` - CI pipeline
+- `backend/.env.test` - Test environment
+- `backend/tests/conftest.py` - Test configuration
+
+### Backend Status
+- `backend/htmlcov/index.html` - Coverage report
+- `backend/lambda-deployment.zip` - Ready package
+- `backend/API_CONTRACTS.md` - API documentation
+
 ---
 
-## ⚡ QUICK WINS TO BOOST COVERAGE
+**STATUS**: Backend complete locally. CI/CD configuration fix in progress.
 
-1. **User Profile Routes** (+14% → 28%): 90 lines to cover
-2. **Cognito Service** (+16% → 32%): 94 lines to cover  
-3. **Database Module** (+33% → 66%): 37 lines to cover
+**NEXT**: Execute Claude Code instructions from `CLAUDE_CODE_CI_FIX.md`
 
-These three files alone would add significant coverage!
-
----
-
-*This file is your source of truth for project continuity across sessions*
+*Once CI is fixed, deployment is automatic via GitHub Actions with OIDC*

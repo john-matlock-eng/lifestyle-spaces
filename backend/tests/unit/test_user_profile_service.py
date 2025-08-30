@@ -1,6 +1,20 @@
 """
 Tests for user profile service module to achieve 100% coverage.
 """
+# FIRST: Set environment variables before importing any app modules
+import os
+os.environ.setdefault('JWT_SECRET_KEY', 'test-secret-key-for-testing-only')
+os.environ.setdefault('JWT_ALGORITHM', 'HS256')
+os.environ.setdefault('ACCESS_TOKEN_EXPIRE_MINUTES', '30')
+os.environ.setdefault('DYNAMODB_TABLE', 'lifestyle-spaces-test')
+os.environ.setdefault('CORS_ORIGINS', '["*"]')
+os.environ.setdefault('AWS_REGION', 'us-east-1')
+os.environ.setdefault('AWS_DEFAULT_REGION', 'us-east-1')
+os.environ.setdefault('AWS_ACCESS_KEY_ID', 'test')
+os.environ.setdefault('AWS_SECRET_ACCESS_KEY', 'test')
+os.environ.setdefault('ENVIRONMENT', 'test')
+
+# THEN: Import other modules
 import pytest
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timezone

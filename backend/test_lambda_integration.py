@@ -2,6 +2,20 @@
 Test script to verify Lambda handler works with FastAPI.
 Run this to ensure the integration is working correctly.
 """
+# FIRST: Set environment variables before importing any app modules
+import os
+os.environ.setdefault('JWT_SECRET_KEY', 'test-secret-key-for-testing-only')
+os.environ.setdefault('JWT_ALGORITHM', 'HS256')
+os.environ.setdefault('ACCESS_TOKEN_EXPIRE_MINUTES', '30')
+os.environ.setdefault('DYNAMODB_TABLE', 'lifestyle-spaces-test')
+os.environ.setdefault('CORS_ORIGINS', '["*"]')
+os.environ.setdefault('AWS_REGION', 'us-east-1')
+os.environ.setdefault('AWS_DEFAULT_REGION', 'us-east-1')
+os.environ.setdefault('AWS_ACCESS_KEY_ID', 'test')
+os.environ.setdefault('AWS_SECRET_ACCESS_KEY', 'test')
+os.environ.setdefault('ENVIRONMENT', 'test')
+
+# THEN: Import other modules
 import json
 import sys
 from pathlib import Path

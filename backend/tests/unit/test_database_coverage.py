@@ -1,6 +1,20 @@
 """
 Tests for database module to achieve 100% coverage.
 """
+# FIRST: Set environment variables before importing any app modules
+import os
+os.environ.setdefault('JWT_SECRET_KEY', 'test-secret-key-for-testing-only')
+os.environ.setdefault('JWT_ALGORITHM', 'HS256')
+os.environ.setdefault('ACCESS_TOKEN_EXPIRE_MINUTES', '30')
+os.environ.setdefault('DYNAMODB_TABLE', 'lifestyle-spaces-test')
+os.environ.setdefault('CORS_ORIGINS', '["*"]')
+os.environ.setdefault('AWS_REGION', 'us-east-1')
+os.environ.setdefault('AWS_DEFAULT_REGION', 'us-east-1')
+os.environ.setdefault('AWS_ACCESS_KEY_ID', 'test')
+os.environ.setdefault('AWS_SECRET_ACCESS_KEY', 'test')
+os.environ.setdefault('ENVIRONMENT', 'test')
+
+# THEN: Import other modules
 import pytest
 from unittest.mock import patch, MagicMock, Mock
 from moto import mock_dynamodb
@@ -42,6 +56,8 @@ class TestDatabaseFunctions:
     @patch('app.core.database.get_dynamodb_resource')
     def test_get_dynamodb_table(self, mock_get_resource):
         """Test getting DynamoDB table."""
+        from app.core.config import settings
+        
         mock_resource = MagicMock()
         mock_table = MagicMock()
         mock_resource.Table.return_value = mock_table
@@ -50,7 +66,7 @@ class TestDatabaseFunctions:
         result = get_dynamodb_table()
         
         assert result == mock_table
-        mock_resource.Table.assert_called_once_with('lifestyle-spaces')
+        mock_resource.Table.assert_called_once_with(settings.dynamodb_table)
     
     def test_get_db_singleton(self):
         """Test get_db returns singleton instance."""
