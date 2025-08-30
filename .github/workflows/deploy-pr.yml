@@ -43,67 +43,25 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
       
-      - name: Create Lambda placeholder
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Build Lambda Package
+        working-directory: backend
         run: |
-          mkdir -p backend
-          cat > backend/lambda_handler.py << 'EOF'
-          """
-          Placeholder Lambda handler for API Gateway proxy integration.
-          This is a temporary handler until the FastAPI application is deployed.
-          """
-          import json
-          
-          def handler(event, context):
-              """AWS Lambda handler function for API Gateway proxy integration."""
-              path = event.get('path', '/')
-              http_method = event.get('httpMethod', 'GET')
-              
-              # Health check endpoint
-              if path == '/health' or path == '/dev/health':
-                  return {
-                      'statusCode': 200,
-                      'headers': {
-                          'Content-Type': 'application/json',
-                          'Access-Control-Allow-Origin': '*',
-                          'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-                          'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
-                      },
-                      'body': json.dumps({
-                          'status': 'healthy',
-                          'message': 'API is running (placeholder)',
-                          'environment': 'dev'
-                      })
-                  }
-              
-              # Handle OPTIONS requests for CORS
-              if http_method == 'OPTIONS':
-                  return {
-                      'statusCode': 200,
-                      'headers': {
-                          'Access-Control-Allow-Origin': '*',
-                          'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-                          'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
-                      },
-                      'body': ''
-                  }
-              
-              # Default response for all other endpoints
-              return {
-                  'statusCode': 200,
-                  'headers': {
-                      'Content-Type': 'application/json',
-                      'Access-Control-Allow-Origin': '*',
-                      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-                      'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
-                  },
-                  'body': json.dumps({
-                      'message': 'Placeholder Lambda function is working',
-                      'path': path,
-                      'method': http_method
-                  })
-              }
-          EOF
-          cd backend && zip lambda-placeholder.zip lambda_handler.py
+          pip install -r requirements.txt
+          python build_lambda_package.py
+      
+      - name: Verify Lambda Package
+        working-directory: backend
+        run: |
+          if [ ! -f lambda-deployment.zip ]; then
+            echo "ERROR: lambda-deployment.zip not found"
+            exit 1
+          fi
+          echo "Lambda package size: $(ls -lh lambda-deployment.zip | awk '{print $5}')"
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -221,19 +179,12 @@ jobs:
             echo "⚠️ Backend not yet configured - skipping deployment"
           fi
       
-      - name: Package Lambda
+      - name: Build Lambda Package
         if: steps.check-backend.outputs.backend_exists == 'true'
+        working-directory: backend
         run: |
-          cd backend
-          pip install -r requirements.txt -t package/
-          cp -r app package/
-          cp lambda_handler.py package/
-          cd package && zip -r ../lambda.zip . \
-            -x "*.pyc" "__pycache__/*" "*/__pycache__/*" \
-            -x "tests/*" "*test*" "*.dist-info/*" \
-            -x "pip/*" "setuptools/*" "wheel/*" \
-            -x "*.so" "*.a" "*.la" "*.exe" \
-            -x "*/.git/*" "*/node_modules/*"
+          pip install -r requirements.txt
+          python build_lambda_package.py
       
       - name: Configure AWS credentials
         if: steps.check-backend.outputs.backend_exists == 'true'
@@ -247,7 +198,7 @@ jobs:
         run: |
           aws lambda update-function-code \
             --function-name ${{ needs.deploy-infrastructure.outputs.lambda_function_name }} \
-            --zip-file fileb://backend/lambda.zip \
+            --zip-file fileb://backend/lambda-deployment.zip \
             --publish
           
           # Wait for function update to complete before proceeding
