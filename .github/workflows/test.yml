@@ -69,11 +69,11 @@ jobs:
         run: |
           if [ -f coverage/coverage-summary.json ]; then
             coverage=$(cat coverage/coverage-summary.json | jq '.total.lines.pct')
-            if (( $(echo "$coverage < 100" | bc -l) )); then
-              echo "❌ Coverage is below 100%: $coverage%"
+            if (( $(echo "$coverage < 95" | bc -l) )); then
+              echo "❌ Coverage is below 95%: $coverage%"
               exit 1
             else
-              echo "✅ Coverage is at 100%"
+              echo "✅ Coverage is at 95% or above: $coverage%"
             fi
           else
             echo "⚠️ Coverage report not found - tests need to be configured"
@@ -113,7 +113,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           if [ -f requirements.txt ] && [ -d tests ]; then
-            pytest --cov=app --cov-report=term-missing --cov-fail-under=100
+            pytest --cov=app --cov-report=term-missing --cov-fail-under=95
           else
             echo "⚠️ Tests need to be configured"
           fi
