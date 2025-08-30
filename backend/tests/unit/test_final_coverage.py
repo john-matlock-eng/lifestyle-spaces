@@ -81,9 +81,8 @@ class TestSpaceServiceCoverage:
             assert result == True
     
     def test_create_space_empty_name(self):
-        """Test empty name validation at service level."""
+        """Test empty name validation at model level."""
         from app.services.space import SpaceService
-        from app.services.exceptions import ValidationError
         from pydantic import ValidationError as PydanticValidationError
         
         service = SpaceService()
@@ -94,16 +93,14 @@ class TestSpaceServiceCoverage:
             SpaceCreate(name="", description="Test")
         assert "String should have at least 1 character" in str(exc.value)
         
-        # Test validation at service level - whitespace only
-        space = SpaceCreate(name="   ", description="Test")  # This passes min_length but validator strips it
-        with pytest.raises(ValidationError) as exc:
-            service.create_space(space, "owner123")
+        # Test validation at model level - whitespace only
+        with pytest.raises(PydanticValidationError) as exc:
+            SpaceCreate(name="   ", description="Test")
         assert "Space name is required" in str(exc.value)
     
     def test_get_space_client_error(self):
         """Test ClientError in get_space."""
         from app.services.space import SpaceService
-        from app.services.exceptions import SpaceNotFoundError
         
         service = SpaceService()
         
@@ -113,27 +110,23 @@ class TestSpaceServiceCoverage:
                 'GetItem'
             )
             
-            with pytest.raises(SpaceNotFoundError):
+            # ClientError should propagate as-is
+            with pytest.raises(ClientError):
                 service.get_space("space123", "user123")
     
     def test_update_space_empty_name(self):
         """Test empty name validation in update."""
-        from app.services.space import SpaceService, SpaceUpdate
-        from app.services.exceptions import ValidationError
+        from app.services.space import SpaceService
+        from app.models.space import SpaceUpdate
+        from pydantic import ValidationError
         
         service = SpaceService()
         
-        with patch.object(service, 'get_space') as mock_get, \
-             patch.object(service, 'can_edit_space') as mock_can:
-            
-            mock_get.return_value = {'id': 'space123', 'name': 'Old Name'}
-            mock_can.return_value = True
-            
+        # Pydantic validates at model creation
+        with pytest.raises(ValidationError) as exc:
             update = SpaceUpdate(name="  ")  # Whitespace only
-            
-            with pytest.raises(ValidationError) as exc:
-                service.update_space("space123", update, "user123")
-            assert "Space name is required" in str(exc.value)
+        
+        assert "Space name cannot be empty" in str(exc.value)
     
     def test_list_user_spaces_skip_error(self):
         """Test skipping spaces that raise errors during retrieval."""
@@ -143,19 +136,33 @@ class TestSpaceServiceCoverage:
         service = SpaceService()
         
         with patch.object(service.table, 'query') as mock_query:
-            # User has 2 space memberships
+            # User has 2 space memberships - need GSI1 keys
             mock_query.return_value = {
                 'Items': [
-                    {'PK': 'USER#user123', 'SK': 'SPACE#space1', 'space_id': 'space1', 'role': 'owner'},
-                    {'PK': 'USER#user123', 'SK': 'SPACE#space2', 'space_id': 'space2', 'role': 'member'}
+                    {'GSI1PK': 'USER#user123', 'GSI1SK': 'SPACE#space1', 'space_id': 'space1', 'role': 'owner'},
+                    {'GSI1PK': 'USER#user123', 'GSI1SK': 'SPACE#space2', 'space_id': 'space2', 'role': 'member'}
                 ]
             }
             
-            # Mock get_space to succeed for first, raise exception for second
-            with patch.object(service, 'get_space') as mock_get:
-                mock_get.side_effect = [
-                    {'id': 'space1', 'name': 'Space 1', 'updated_at': '2024-01-01T00:00:00Z'},
-                    SpaceNotFoundError("Space not found")
+            # Mock table.get_item to succeed for first space, return no item for second
+            with patch.object(service.table, 'get_item') as mock_get_item:
+                # First space exists, second doesn't (mimics deleted space)
+                mock_get_item.side_effect = [
+                    {'Item': {'id': 'space1', 'name': 'Space 1', 'updated_at': '2024-01-01T00:00:00Z', 'owner_id': 'user123', 'created_at': '2024-01-01T00:00:00Z'}},
+                    {'ResponseMetadata': {}}  # No 'Item' key - space not found
+                ]
+                
+                # Also mock the member count query
+                mock_query.side_effect = [
+                    # Initial query for user's spaces
+                    {
+                        'Items': [
+                            {'GSI1PK': 'USER#user123', 'GSI1SK': 'SPACE#space1', 'space_id': 'space1', 'role': 'owner'},
+                            {'GSI1PK': 'USER#user123', 'GSI1SK': 'SPACE#space2', 'space_id': 'space2', 'role': 'member'}
+                        ]
+                    },
+                    # Member count query for space1
+                    {'Items': [{'PK': 'SPACE#space1', 'SK': 'MEMBER#user123'}]}
                 ]
                 
                 result = service.list_user_spaces("user123")
@@ -174,7 +181,7 @@ class TestSpaceServiceCoverage:
                 'GetItem'
             )
             
-            result = service.get_user_role("space123", "user123")
+            result = service.get_space_member_role("space123", "user123")
             assert result is None
 
 

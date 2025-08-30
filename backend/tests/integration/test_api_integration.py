@@ -26,7 +26,7 @@ class TestAPIIntegration:
         assert data["environment"] == "test"
     
     @mock_dynamodb
-    def test_api_with_dynamodb_available(self, test_client, mock_dynamodb_table):
+    def test_api_with_dynamodb_available(self, test_client):
         """Test that API works when DynamoDB is available."""
         # This test ensures the app starts correctly with DynamoDB
         response = test_client.get("/health")

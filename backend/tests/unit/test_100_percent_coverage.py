@@ -73,9 +73,15 @@ class TestUserProfileRoutesEdgeCases:
         mock_service = Mock()
         mock_service_class.return_value = mock_service
         mock_service.get_user_profile.return_value = {
-            "user_id": "user1",
+            "id": "user1",
             "email": "test@test.com",
-            "username": "testuser"
+            "username": "testuser",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+            "onboarding_completed": False,
+            "onboarding_step": 0,
+            "is_active": True,
+            "is_verified": False
         }
         
         mock_cognito = Mock()
@@ -86,7 +92,7 @@ class TestUserProfileRoutesEdgeCases:
         
         # Should not raise, just skip Cognito sync
         result = await get_user_profile(current_user, "user1")
-        assert result.user_id == "user1"
+        assert result.id == "user1"
     
     @patch('app.api.routes.user_profile.UserProfileService')
     async def test_get_profile_client_error_other(self, mock_service_class):
@@ -262,17 +268,29 @@ class TestConfigParseCors:
         assert result == ["123"]
     
     def test_settings_cors_origins_test_env(self):
-        """Test line 109: Settings.cors_origins in test environment."""
+        """Test line 106-107: Settings.cors_origins in test environment."""
         import os
-        with patch.dict(os.environ, {'PYTEST_CURRENT_TEST': 'true'}, clear=True):
+        
+        # Test the specific code path where PYTEST_CURRENT_TEST is set and cors_origins_str is None
+        with patch('os.getenv') as mock_getenv:
+            mock_getenv.return_value = 'true'  # PYTEST_CURRENT_TEST is true
+            
             from app.core.config import Settings
             
+            # Create a Settings instance and directly set cors_origins_str to None
+            # to simulate the case where CORS_ORIGINS is not set
             settings = Settings()
-            # First access to trigger property logic
+            settings.cors_origins_str = None
+            
+            # Clear any cached property value
+            if hasattr(settings, '_cors_origins_parsed'):
+                delattr(settings, '_cors_origins_parsed')
+            
+            # Access cors_origins property - should trigger line 106-107
             origins = settings.cors_origins
             assert origins == ["http://testserver"]
             
-            # Second access to use cached value
+            # Second access should use cached value (line 98-99)
             origins2 = settings.cors_origins
             assert origins2 == ["http://testserver"]
 

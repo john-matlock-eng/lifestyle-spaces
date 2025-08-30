@@ -154,7 +154,6 @@ class TestSpaceServiceMissingLines:
     def test_get_space_client_error(self):
         """Test ClientError in get_space."""
         from app.services.space import SpaceService
-        from app.services.exceptions import SpaceNotFoundError
         
         service = SpaceService()
         
@@ -165,29 +164,24 @@ class TestSpaceServiceMissingLines:
                 'GetItem'
             )
             
-            with pytest.raises(SpaceNotFoundError):
+            # ClientError should propagate as-is
+            with pytest.raises(ClientError):
                 service.get_space("space123", "user123")
     
     def test_update_space_empty_name(self):
         """Test empty name in update."""
         from app.services.space import SpaceService
         from app.models.space import SpaceUpdate
-        from app.services.exceptions import ValidationError
+        from pydantic import ValidationError
         
         service = SpaceService()
         
-        with patch.object(service, 'get_space') as mock_get, \
-             patch.object(service, 'can_edit_space') as mock_can:
-            
-            mock_get.return_value = {'id': 'space123', 'name': 'Old'}
-            mock_can.return_value = True
-            
+        # Expect Pydantic to validate at model creation
+        with pytest.raises(ValidationError) as exc:
             # Update with whitespace-only name
             update = SpaceUpdate(name="   ")
-            
-            with pytest.raises(ValidationError) as exc:
-                service.update_space("space123", update, "user123")
-            assert "Space name is required" in str(exc.value)
+        
+        assert "Space name cannot be empty" in str(exc.value)
     
     def test_list_user_spaces_handle_errors(self):
         """Test handling SpaceNotFoundError and ClientError."""
@@ -197,21 +191,35 @@ class TestSpaceServiceMissingLines:
         service = SpaceService()
         
         with patch.object(service.table, 'query') as mock_query:
-            # User has 3 space memberships
+            # User has 3 space memberships - need GSI1 keys
             mock_query.return_value = {
                 'Items': [
-                    {'PK': 'USER#user123', 'SK': 'SPACE#space1', 'space_id': 'space1', 'role': 'owner'},
-                    {'PK': 'USER#user123', 'SK': 'SPACE#space2', 'space_id': 'space2', 'role': 'member'},
-                    {'PK': 'USER#user123', 'SK': 'SPACE#space3', 'space_id': 'space3', 'role': 'member'}
+                    {'GSI1PK': 'USER#user123', 'GSI1SK': 'SPACE#space1', 'space_id': 'space1', 'role': 'owner'},
+                    {'GSI1PK': 'USER#user123', 'GSI1SK': 'SPACE#space2', 'space_id': 'space2', 'role': 'member'},
+                    {'GSI1PK': 'USER#user123', 'GSI1SK': 'SPACE#space3', 'space_id': 'space3', 'role': 'member'}
                 ]
             }
             
-            with patch.object(service, 'get_space') as mock_get:
-                # First succeeds, second raises SpaceNotFoundError, third raises generic Exception
-                mock_get.side_effect = [
-                    {'id': 'space1', 'name': 'Space 1', 'updated_at': '2024-01-01T00:00:00Z'},
-                    SpaceNotFoundError("Not found"),
-                    Exception("Generic error")
+            with patch.object(service.table, 'get_item') as mock_get_item:
+                # First space exists, second doesn't, third errors
+                mock_get_item.side_effect = [
+                    {'Item': {'id': 'space1', 'name': 'Space 1', 'updated_at': '2024-01-01T00:00:00Z', 'owner_id': 'user123', 'created_at': '2024-01-01T00:00:00Z'}},
+                    {'ResponseMetadata': {}},  # No 'Item' key - space not found
+                    ClientError({'Error': {'Code': 'InternalError'}}, 'GetItem')
+                ]
+                
+                # Also mock the member count queries
+                mock_query.side_effect = [
+                    # Initial query for user's spaces
+                    {
+                        'Items': [
+                            {'GSI1PK': 'USER#user123', 'GSI1SK': 'SPACE#space1', 'space_id': 'space1', 'role': 'owner'},
+                            {'GSI1PK': 'USER#user123', 'GSI1SK': 'SPACE#space2', 'space_id': 'space2', 'role': 'member'},
+                            {'GSI1PK': 'USER#user123', 'GSI1SK': 'SPACE#space3', 'space_id': 'space3', 'role': 'member'}
+                        ]
+                    },
+                    # Member count query for space1
+                    {'Items': [{'PK': 'SPACE#space1', 'SK': 'MEMBER#user123'}]}
                 ]
                 
                 result = service.list_user_spaces("user123")
@@ -233,7 +241,7 @@ class TestSpaceServiceMissingLines:
                 'GetItem'
             )
             
-            result = service.get_user_role("space123", "user123")
+            result = service.get_space_member_role("space123", "user123")
             assert result is None
 
 

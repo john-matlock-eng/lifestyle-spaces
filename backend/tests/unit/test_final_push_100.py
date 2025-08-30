@@ -339,7 +339,7 @@ class TestSpaceServiceErrors:
         assert "Space name is required" in str(exc.value)
     
     def test_get_space_not_found_client_error(self):
-        """Test ClientError raises SpaceNotFoundError"""
+        """Test ClientError propagates as-is"""
         service = SpaceService()
         
         with patch.object(service.table, 'get_item') as mock_get:
@@ -348,45 +348,45 @@ class TestSpaceServiceErrors:
                 'GetItem'
             )
             
-            with pytest.raises(SpaceNotFoundError) as exc:
+            # ClientError should propagate as-is
+            with pytest.raises(ClientError) as exc:
                 service.get_space("space123", "user123")
-            assert "not found" in str(exc.value).lower()
+            assert exc.value.response['Error']['Code'] == 'ResourceNotFoundException'
     
     def test_update_space_empty_name_validation(self):
         """Test empty name validation"""
-        service = SpaceService()
+        from pydantic import ValidationError
         
-        with patch.object(service, 'get_space') as mock_get, \
-             patch.object(service, 'can_edit_space') as mock_can_edit:
-            
-            mock_get.return_value = {'id': 'space123', 'name': 'Old Name'}
-            mock_can_edit.return_value = True
-            
+        # Pydantic validates at model creation
+        with pytest.raises(ValidationError) as exc:
             update = SpaceUpdate(name="   ")  # Whitespace only
-            
-            with pytest.raises(ValidationError) as exc:
-                service.update_space("space123", update, "user123")
-            assert "Space name is required" in str(exc.value)
+        
+        assert "Space name cannot be empty" in str(exc.value)
     
     def test_list_user_spaces_skip_deleted(self):
         """Test skipping deleted/errored spaces"""
         service = SpaceService()
         
         with patch.object(service.table, 'query') as mock_query, \
-             patch.object(service, 'get_space') as mock_get:
+             patch.object(service.table, 'get_item') as mock_get_item:
             
-            # Mock user has 2 spaces, one will error
-            mock_query.return_value = {
-                'Items': [
-                    {'PK': 'USER#user123', 'SK': 'SPACE#space1', 'space_id': 'space1', 'role': 'owner'},
-                    {'PK': 'USER#user123', 'SK': 'SPACE#space2', 'space_id': 'space2', 'role': 'member'}
-                ]
-            }
+            # Mock user has 2 spaces, one will error - need GSI1 keys
+            mock_query.side_effect = [
+                # Initial query for user's spaces
+                {
+                    'Items': [
+                        {'GSI1PK': 'USER#user123', 'GSI1SK': 'SPACE#space1', 'space_id': 'space1', 'role': 'owner'},
+                        {'GSI1PK': 'USER#user123', 'GSI1SK': 'SPACE#space2', 'space_id': 'space2', 'role': 'member'}
+                    ]
+                },
+                # Member count query for space1
+                {'Items': [{'PK': 'SPACE#space1', 'SK': 'MEMBER#user123'}]}
+            ]
             
-            # First space exists, second throws error (deleted)
-            mock_get.side_effect = [
-                {'id': 'space1', 'name': 'Space 1', 'updated_at': '2024-01-01T00:00:00Z'},
-                SpaceNotFoundError("Space not found")
+            # First space exists, second doesn't (deleted)
+            mock_get_item.side_effect = [
+                {'Item': {'id': 'space1', 'name': 'Space 1', 'updated_at': '2024-01-01T00:00:00Z', 'owner_id': 'user123', 'created_at': '2024-01-01T00:00:00Z'}},
+                {'ResponseMetadata': {}}  # No 'Item' key - space not found
             ]
             
             result = service.list_user_spaces("user123")
@@ -441,7 +441,7 @@ class TestSpaceServiceErrors:
                 'GetItem'
             )
             
-            result = service.get_user_role("space123", "user123")
+            result = service.get_space_member_role("space123", "user123")
             assert result is None
     
     def test_join_space_with_invite_code_space_id_from_item(self):
@@ -716,7 +716,7 @@ class TestAdditionalEdgeCases:
     @pytest.mark.asyncio
     async def test_update_profile_conditional_check_retry_success(self):
         """Test ConditionalCheckFailedException with successful retry"""
-        update_data = UserProfileUpdate(display_name="Test")
+        update_data = UserProfileUpdate(preferred_name="Test")
         
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service_class:
             # First attempt fails with ConditionalCheckFailedException
@@ -732,11 +732,15 @@ class TestAdditionalEdgeCases:
             now = datetime.now(timezone.utc).isoformat()
             retry_service.update_user_profile.return_value = {
                 'id': 'user123',
-                'display_name': 'Test',
+                'preferred_name': 'Test',
                 'email': 'test@test.com',
                 'username': 'testuser',
                 'created_at': now,
-                'updated_at': now
+                'updated_at': now,
+                'onboarding_completed': False,
+                'onboarding_step': 0,
+                'is_active': True,
+                'is_verified': False
             }
             
             # Return different service instances
@@ -748,12 +752,12 @@ class TestAdditionalEdgeCases:
                 user_id='user123'
             )
             
-            assert result.display_name == 'Test'
+            assert result.preferred_name == 'Test'
     
     @pytest.mark.asyncio
     async def test_update_profile_conditional_check_retry_fail(self):
         """Test ConditionalCheckFailedException with failed retry"""
-        update_data = UserProfileUpdate(display_name="Test")
+        update_data = UserProfileUpdate(preferred_name="Test")
         
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service_class:
             # Both attempts fail
