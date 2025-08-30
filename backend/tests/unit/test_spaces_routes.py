@@ -65,10 +65,10 @@ class TestSpacesRoutes:
             
             assert response.status_code == 201
             data = response.json()
-            assert data["id"] == "space123"
+            assert data["spaceId"] == "space123"  # Using alias from model
             assert data["name"] == "Test Space"
-            assert data["member_count"] == 1
-            assert data["is_owner"] == True
+            assert data["memberCount"] == 1  # Using alias from model
+            assert data["isOwner"] == True  # Using alias from model
     
     def test_create_space_generic_error(self):
         """Test space creation with generic error."""
@@ -114,9 +114,9 @@ class TestSpacesRoutes:
             
             assert response.status_code == 200
             data = response.json()
-            assert data["id"] == "space123"
+            assert data["spaceId"] == "space123"  # Using alias from model
             assert data["name"] == "Test Space"
-            assert data["member_count"] == 5
+            assert data["memberCount"] == 5  # Using alias from model
     
     def test_get_space_not_found_error(self):
         """Test space retrieval when space is not found."""
@@ -175,10 +175,10 @@ class TestSpacesRoutes:
             
             assert response.status_code == 200
             data = response.json()
-            assert data["id"] == "space123"
+            assert data["spaceId"] == "space123"  # Using alias from model
             assert data["name"] == "Updated Space"
             assert data["description"] == "Updated description"
-            assert data["is_public"] == False
+            assert data["isPublic"] == False  # Using alias from model
     
     def test_update_space_not_found_error(self):
         """Test space update when space is not found."""
@@ -315,9 +315,9 @@ class TestSpacesRoutes:
             assert response.status_code == 200
             data = response.json()
             assert len(data) == 2
-            assert data[0]["user_id"] == "user123"
+            assert data[0]["userId"] == "user123"  # Using alias from model
             assert data[0]["role"] == "owner"
-            assert data[1]["user_id"] == "user456"
+            assert data[1]["userId"] == "user456"  # Using alias from model
             assert data[1]["role"] == "member"
     
     def test_get_space_members_not_found_error(self):

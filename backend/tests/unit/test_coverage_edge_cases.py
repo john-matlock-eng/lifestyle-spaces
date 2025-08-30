@@ -28,7 +28,7 @@ class TestEdgeCases:
         with pytest.raises(HTTPException) as exc_info:
             get_current_user(None)
         assert exc_info.value.status_code == 401
-        assert exc_info.value.detail == "Bearer token missing"
+        assert exc_info.value.detail == "Not authenticated"
         
         # Test with invalid scheme in string format
         with pytest.raises(HTTPException) as exc_info:

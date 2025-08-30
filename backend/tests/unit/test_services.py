@@ -383,8 +383,11 @@ class TestSpaceService:
         
         # Update the space
         update = SpaceUpdate(name="Updated Office", is_public=True)
-        updated = service.update_space(created["id"], update, user_id="user123")
+        result = service.update_space(created["id"], update, user_id="user123")
+        assert result is True
         
+        # Get the updated space to verify changes
+        updated = service.get_space(created["id"], user_id="user123")
         assert updated["name"] == "Updated Office"
         assert updated["is_public"] is True
     

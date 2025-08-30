@@ -35,6 +35,19 @@ def handler(event, context):
         # Log the incoming event for debugging (remove in production for cost savings)
         logger.info(f"Received event: {json.dumps(event, default=str)[:500]}")
         
+        # Handle OPTIONS requests directly for CORS preflight
+        if event.get('httpMethod') == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+                    'Access-Control-Max-Age': '86400'
+                },
+                'body': ''
+            }
+        
         # Handle health check directly for faster response
         path = event.get('path', '/')
         if path in ['/health', '/api/health', f"/{event.get('stage', 'dev')}/health"]:

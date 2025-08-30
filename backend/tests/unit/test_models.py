@@ -143,12 +143,11 @@ class TestSpaceModels:
         space_data = {
             "name": "My Workspace",
             "description": "A collaborative workspace",
-            "type": "office",
             "is_public": False
         }
         space = SpaceBase(**space_data)
         assert space.name == "My Workspace"
-        assert space.type == "office"
+        assert space.description == "A collaborative workspace"
         assert space.is_public is False
     
     def test_space_base_defaults(self):
@@ -156,8 +155,7 @@ class TestSpaceModels:
         from app.models.space import SpaceBase
         
         space = SpaceBase(
-            name="My Workspace",
-            type="office"
+            name="My Workspace"
         )
         assert space.description is None
         assert space.is_public is False  # Default value

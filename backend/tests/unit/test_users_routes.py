@@ -156,7 +156,7 @@ class TestUsersRoutes:
             assert response.status_code == 200
             data = response.json()
             assert len(data["spaces"]) == 1
-            assert data["spaces"][0]["id"] == "space123"
+            assert data["spaces"][0]["spaceId"] == "space123"  # Using alias from SpaceResponse model
             assert data["spaces"][0]["name"] == "Test Space"
             assert data["total"] == 1
             assert data["page"] == 1
@@ -175,7 +175,8 @@ class TestUsersRoutes:
             }
             mock_service.return_value = mock_service_instance
             
-            response = self.client.get("/api/users/spaces?page=2&page_size=10")
+            # Use limit=10, offset=10 to get page=2 with page_size=10
+            response = self.client.get("/api/users/spaces?limit=10&offset=10")
             
             assert response.status_code == 200
             data = response.json()
@@ -187,7 +188,10 @@ class TestUsersRoutes:
             mock_service_instance.list_user_spaces.assert_called_once_with(
                 user_id="user123",
                 page=2,
-                page_size=10
+                page_size=10,
+                search=None,
+                is_public=None,
+                role=None
             )
     
     def test_get_user_spaces_generic_error(self):
