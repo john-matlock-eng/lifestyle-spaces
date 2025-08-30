@@ -12,8 +12,6 @@ os.environ.setdefault('DYNAMODB_TABLE', 'lifestyle-spaces-test')
 os.environ.setdefault('CORS_ORIGINS', '["*"]')  # JSON array format
 os.environ.setdefault('AWS_REGION', 'us-east-1')
 os.environ.setdefault('AWS_DEFAULT_REGION', 'us-east-1')
-os.environ.setdefault('AWS_ACCESS_KEY_ID', 'test')
-os.environ.setdefault('AWS_SECRET_ACCESS_KEY', 'test')
 os.environ.setdefault('ENVIRONMENT', 'test')
 
 # Now import other modules after environment is set
@@ -93,8 +91,6 @@ def set_test_env_vars():
         'CORS_ORIGINS': '["*"]',  # JSON array format
         'AWS_REGION': 'us-east-1',
         'AWS_DEFAULT_REGION': 'us-east-1',
-        'AWS_ACCESS_KEY_ID': 'test',
-        'AWS_SECRET_ACCESS_KEY': 'test',
         'ENVIRONMENT': 'test'
     }
     

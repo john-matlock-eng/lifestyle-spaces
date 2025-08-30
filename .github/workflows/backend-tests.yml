@@ -53,8 +53,6 @@ jobs:
         DYNAMODB_TABLE_NAME: lifestyle-spaces-test
         CORS_ORIGINS: '*'
         AWS_DEFAULT_REGION: us-east-1
-        AWS_ACCESS_KEY_ID: test
-        AWS_SECRET_ACCESS_KEY: test
       run: |
         cd backend
         pytest --cov=app --cov-report=term-missing --cov-report=xml --cov-fail-under=95
