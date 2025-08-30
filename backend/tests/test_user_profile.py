@@ -6,14 +6,18 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timezone
 from botocore.exceptions import ClientError
+from app.core.dependencies import get_current_user
 
 
 class TestUserProfile:
     """Test user profile endpoints with full coverage."""
     
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self, test_client):
         """Set up mocks."""
+        # Store test_client for use in tests
+        self.client = test_client
+        
         # Mock authenticated user
         self.mock_user = {
             "sub": "user-123-456",
@@ -45,10 +49,12 @@ class TestUserProfile:
         def override_get_current_user():
             return self.mock_user
             
-        app.dependency_overrides[get_current_user] = override_get_current_user
-    
-    def teardown_method(self):
-        """Clean up dependency overrides."""
+        test_client.app.dependency_overrides[get_current_user] = override_get_current_user
+        
+        # Yield control back to the test
+        yield
+        
+        # Clean up dependency overrides after test
         test_client.app.dependency_overrides.clear()
 
 
@@ -722,10 +728,25 @@ class TestUserProfileEdgeCases:
     """Test edge cases and boundary conditions for user profile endpoints."""
     
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self, test_client):
         """Set up mocks."""
+        # Store test_client for use in tests
+        self.client = test_client
+        
         # Mock authenticated user
         self.mock_user = {"sub": "user-123-456"}
+        
+        # Override auth dependency
+        def override_get_current_user():
+            return self.mock_user
+            
+        test_client.app.dependency_overrides[get_current_user] = override_get_current_user
+        
+        # Yield control back to the test
+        yield
+        
+        # Clean up dependency overrides after test
+        test_client.app.dependency_overrides.clear()
     
     def test_profile_with_special_characters(self, test_client):
         """Test profile with special characters in fields."""
@@ -804,9 +825,7 @@ class TestUserProfileEdgeCases:
     
     def test_profile_max_field_lengths(self, test_client):
         """Test profile fields at maximum allowed lengths."""
-        with patch('app.core.security.decode_token') as mock_decode, \
-             patch('app.api.routes.user_profile.UserProfileService') as mock_service:
-            mock_decode.return_value = self.mock_user
+        with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
             
             # Create data at max lengths
@@ -831,7 +850,8 @@ class TestUserProfileEdgeCases:
             }
             mock_service.return_value = mock_service_instance
             
-            response = test_client.put("/api/user/profile", json=max_length_data)
+            response = test_client.put("/api/user/profile", json=max_length_data,
+                                      headers={"Authorization": "Bearer test-token"})
             
             assert response.status_code == 200
             data = response.json()
@@ -890,7 +910,8 @@ class TestUserProfileEdgeCases:
             
             update_data = {"full_name": "Test"}
             
-            response = test_client.put("/api/user/profile", json=update_data)
+            response = test_client.put("/api/user/profile", json=update_data,
+                                      headers={"Authorization": "Bearer test-token"})
             
             assert response.status_code == 429
             assert "Too many requests" in response.json()["detail"]

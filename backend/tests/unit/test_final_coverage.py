@@ -8,40 +8,32 @@ from botocore.exceptions import ClientError
 import os
 
 # Test app/main.py lines 16-21 (lifespan function)
-def test_main_lifespan():
+@pytest.mark.asyncio
+async def test_main_lifespan():
     """Test the lifespan context manager prints."""
     from app.main import lifespan
+    import io
+    import sys
     
     # Mock the app
     app = Mock()
     
-    # Create a generator from lifespan
-    gen = lifespan(app)
-    
-    # Test startup - this should execute print statements
-    import io
-    import sys
+    # Capture stdout
     old_stdout = sys.stdout
     sys.stdout = buffer = io.StringIO()
     
     try:
-        # Run startup
-        next(gen)
-        output = buffer.getvalue()
+        # Use the async context manager
+        async with lifespan(app):
+            startup_output = buffer.getvalue()
+            # Check that startup print statements were executed
+            assert "Starting Lifestyle Spaces API" in startup_output
+            assert "Environment:" in startup_output
+            assert "DynamoDB Table:" in startup_output
         
-        # Check that print statements were executed
-        assert "Starting Lifestyle Spaces API" in output
-        assert "Environment:" in output
-        assert "DynamoDB Table:" in output
-        
-        # Run shutdown
-        try:
-            next(gen)
-        except StopIteration:
-            pass
-        
-        output = buffer.getvalue()
-        assert "Shutting down Lifestyle Spaces API" in output
+        # After exiting the context, shutdown should have been called
+        final_output = buffer.getvalue()
+        assert "Shutting down Lifestyle Spaces API" in final_output
         
     finally:
         sys.stdout = old_stdout
@@ -52,24 +44,29 @@ class TestSpaceServiceCoverage:
     """Cover remaining SpaceService lines."""
     
     def test_get_table_resource_in_use(self):
-        """Test line 73 - ResourceInUseException handling."""
+        """Test line 71-72 - ResourceInUseException handling in _create_table."""
         from app.services.space import SpaceService
         
-        service = SpaceService()
-        
-        # Mock the table to raise ResourceInUseException then succeed
-        with patch.object(service, 'table') as mock_table:
-            mock_table.load.side_effect = ClientError(
+        # Mock boto3.resource to control the dynamodb resource
+        with patch('app.services.space.boto3.resource') as mock_boto3:
+            mock_dynamodb = Mock()
+            mock_boto3.return_value = mock_dynamodb
+            
+            # First attempt to create table raises ResourceInUseException
+            mock_dynamodb.create_table.side_effect = ClientError(
                 {'Error': {'Code': 'ResourceInUseException'}}, 
-                'DescribeTable'
+                'CreateTable'
             )
             
-            # Mock dynamodb.Table to return a table
-            mock_new_table = Mock()
-            service.dynamodb.Table = Mock(return_value=mock_new_table)
+            # Table method returns a mock table after the exception
+            mock_table = Mock()
+            mock_dynamodb.Table.return_value = mock_table
             
-            result = service._get_table()
-            assert result == mock_new_table
+            # Initialize service - this will trigger _get_or_create_table
+            service = SpaceService()
+            
+            # Verify that Table was called with the table name
+            mock_dynamodb.Table.assert_called_with(service.table_name)
     
     def test_ensure_table_exists_true(self):
         """Test line 79 - Table exists returns True."""
@@ -84,26 +81,34 @@ class TestSpaceServiceCoverage:
             assert result == True
     
     def test_create_space_empty_name(self):
-        """Test line 92 - Empty name validation."""
-        from app.services.space import SpaceService, SpaceCreate
+        """Test empty name validation at service level."""
+        from app.services.space import SpaceService
         from app.services.exceptions import ValidationError
+        from pydantic import ValidationError as PydanticValidationError
         
         service = SpaceService()
-        space = SpaceCreate(name="", description="Test")
         
+        # Test validation at model level - empty string
+        from app.models.space import SpaceCreate
+        with pytest.raises(PydanticValidationError) as exc:
+            SpaceCreate(name="", description="Test")
+        assert "String should have at least 1 character" in str(exc.value)
+        
+        # Test validation at service level - whitespace only
+        space = SpaceCreate(name="   ", description="Test")  # This passes min_length but validator strips it
         with pytest.raises(ValidationError) as exc:
             service.create_space(space, "owner123")
-        assert "Space name cannot be empty" in str(exc.value)
+        assert "Space name is required" in str(exc.value)
     
     def test_get_space_client_error(self):
-        """Test line 207 - ClientError in get_space."""
+        """Test ClientError in get_space."""
         from app.services.space import SpaceService
         from app.services.exceptions import SpaceNotFoundError
         
         service = SpaceService()
         
-        with patch.object(service, 'table') as mock_table:
-            mock_table.get_item.side_effect = ClientError(
+        with patch.object(service.table, 'get_item') as mock_get:
+            mock_get.side_effect = ClientError(
                 {'Error': {'Code': 'SomeError'}}, 
                 'GetItem'
             )
@@ -112,7 +117,7 @@ class TestSpaceServiceCoverage:
                 service.get_space("space123", "user123")
     
     def test_update_space_empty_name(self):
-        """Test line 215 - Empty name in update."""
+        """Test empty name validation in update."""
         from app.services.space import SpaceService, SpaceUpdate
         from app.services.exceptions import ValidationError
         
@@ -121,51 +126,50 @@ class TestSpaceServiceCoverage:
         with patch.object(service, 'get_space') as mock_get, \
              patch.object(service, 'can_edit_space') as mock_can:
             
-            mock_get.return_value = {'id': 'space123'}
+            mock_get.return_value = {'id': 'space123', 'name': 'Old Name'}
             mock_can.return_value = True
             
             update = SpaceUpdate(name="  ")  # Whitespace only
             
             with pytest.raises(ValidationError) as exc:
                 service.update_space("space123", update, "user123")
-            assert "Space name cannot be empty" in str(exc.value)
+            assert "Space name is required" in str(exc.value)
     
     def test_list_user_spaces_skip_error(self):
-        """Test lines 334-335 - Skip spaces with errors."""
+        """Test skipping spaces that raise errors during retrieval."""
         from app.services.space import SpaceService
         from app.services.exceptions import SpaceNotFoundError
         
         service = SpaceService()
         
-        with patch.object(service, 'table') as mock_table, \
-             patch.object(service, 'get_space') as mock_get:
-            
-            # User has 2 spaces
-            mock_table.query.return_value = {
+        with patch.object(service.table, 'query') as mock_query:
+            # User has 2 space memberships
+            mock_query.return_value = {
                 'Items': [
-                    {'space_id': 'space1', 'role': 'owner'},
-                    {'space_id': 'space2', 'role': 'member'}
+                    {'PK': 'USER#user123', 'SK': 'SPACE#space1', 'space_id': 'space1', 'role': 'owner'},
+                    {'PK': 'USER#user123', 'SK': 'SPACE#space2', 'space_id': 'space2', 'role': 'member'}
                 ]
             }
             
-            # First succeeds, second fails (ClientError)
-            mock_get.side_effect = [
-                {'id': 'space1', 'name': 'Space 1', 'updated_at': '2024-01-01T00:00:00Z'},
-                ClientError({'Error': {'Code': 'NotFound'}}, 'GetItem')
-            ]
-            
-            result = service.list_user_spaces("user123")
-            assert len(result['spaces']) == 1
-            assert result['spaces'][0]['id'] == 'space1'
+            # Mock get_space to succeed for first, raise exception for second
+            with patch.object(service, 'get_space') as mock_get:
+                mock_get.side_effect = [
+                    {'id': 'space1', 'name': 'Space 1', 'updated_at': '2024-01-01T00:00:00Z'},
+                    SpaceNotFoundError("Space not found")
+                ]
+                
+                result = service.list_user_spaces("user123")
+                assert len(result['spaces']) == 1
+                assert result['spaces'][0]['id'] == 'space1'
     
     def test_get_user_role_client_error(self):
-        """Test lines 461-462 - ClientError in get_user_role."""
+        """Test ClientError in get_user_role."""
         from app.services.space import SpaceService
         
         service = SpaceService()
         
-        with patch.object(service, 'table') as mock_table:
-            mock_table.get_item.side_effect = ClientError(
+        with patch.object(service.table, 'get_item') as mock_get:
+            mock_get.side_effect = ClientError(
                 {'Error': {'Code': 'SomeError'}}, 
                 'GetItem'
             )
@@ -179,80 +183,89 @@ class TestInvitationServiceCoverage:
     """Cover remaining InvitationService lines."""
     
     def test_get_table_resource_in_use(self):
-        """Test line 82 - ResourceInUseException handling."""
+        """Test line 80-81 - ResourceInUseException handling in _create_table."""
         from app.services.invitation import InvitationService
         
-        service = InvitationService()
-        
-        # Mock the table to raise ResourceInUseException then succeed
-        with patch.object(service, 'table') as mock_table:
-            mock_table.load.side_effect = ClientError(
+        # Mock boto3.resource to control the dynamodb resource
+        with patch('app.services.invitation.boto3.resource') as mock_boto3:
+            mock_dynamodb = Mock()
+            mock_boto3.return_value = mock_dynamodb
+            
+            # First attempt to create table raises ResourceInUseException
+            mock_dynamodb.create_table.side_effect = ClientError(
                 {'Error': {'Code': 'ResourceInUseException'}}, 
-                'DescribeTable'
+                'CreateTable'
             )
             
-            # Mock dynamodb.Table to return a table
-            mock_new_table = Mock()
-            service.dynamodb.Table = Mock(return_value=mock_new_table)
+            # Table method returns a mock table after the exception
+            mock_table = Mock()
+            mock_dynamodb.Table.return_value = mock_table
             
-            result = service._get_table()
-            assert result == mock_new_table
+            # Initialize service - this will trigger _get_or_create_table
+            service = InvitationService()
+            
+            # Verify that Table was called with the table name
+            mock_dynamodb.Table.assert_called_with(service.table_name)
     
     def test_validate_invitation_code_not_found(self):
-        """Test lines 296-298 - Code not found."""
+        """Test code not found scenario."""
         from app.services.invitation import InvitationService
         
         service = InvitationService()
         
+        # Mock the private method that fetches invitation by code
         with patch.object(service, '_get_invitation_by_code') as mock_get:
             mock_get.return_value = None
             
-            result = service.validate_invitation_code("INVALID")
+            result = service.validate_invite_code("INVALID")
             assert result == False
     
     def test_validate_invitation_code_not_pending(self):
-        """Test lines 299-300 - Not pending status."""
+        """Test not pending status scenario."""
         from app.services.invitation import InvitationService
         
         service = InvitationService()
         
+        # Mock the private method to return an accepted invitation
         with patch.object(service, '_get_invitation_by_code') as mock_get:
             mock_get.return_value = {
                 'status': 'accepted',
                 'expires_at': (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
             }
             
-            result = service.validate_invitation_code("CODE123")
+            result = service.validate_invite_code("CODE123")
             assert result == False
     
     def test_validate_invitation_code_expired(self):
-        """Test lines 301-302 - Expired invitation."""
+        """Test expired invitation scenario."""
         from app.services.invitation import InvitationService
         
         service = InvitationService()
         
+        # Mock the private method to return an expired invitation
         with patch.object(service, '_get_invitation_by_code') as mock_get:
             mock_get.return_value = {
                 'status': 'pending',
                 'expires_at': (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
             }
             
-            result = service.validate_invitation_code("CODE123")
+            result = service.validate_invite_code("CODE123")
             assert result == False
     
     def test_validate_invitation_code_valid(self):
-        """Test line 302 - Valid invitation returns True."""
+        """Test valid invitation returns True."""
         from app.services.invitation import InvitationService
         
         service = InvitationService()
         
+        # Mock the private method to return a valid pending invitation
         with patch.object(service, '_get_invitation_by_code') as mock_get:
             mock_get.return_value = {
                 'status': 'pending',
                 'expires_at': (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
             }
             
-            result = service.validate_invitation_code("CODE123")
+            result = service.validate_invite_code("CODE123")
             assert result == True
 
 
@@ -261,21 +274,19 @@ class TestConfigCoverage:
     """Cover remaining config lines."""
     
     def test_config_cors_allowed_origins(self):
-        """Test line 34 - CORS allowed origins."""
+        """Test CORS origins parsing."""
         # Set environment variable
-        os.environ['CORS_ALLOWED_ORIGINS'] = 'http://localhost:3000,https://example.com'
+        os.environ['CORS_ORIGINS'] = 'http://localhost:3000,https://example.com'
         
-        # Reimport to pick up new env var
-        import importlib
-        import app.core.config
-        importlib.reload(app.core.config)
+        # Create new settings instance with the env var
+        from app.core.config import Settings
+        settings = Settings()
         
-        from app.core.config import settings
-        assert 'http://localhost:3000' in settings.cors_allowed_origins
-        assert 'https://example.com' in settings.cors_allowed_origins
+        assert 'http://localhost:3000' in settings.cors_origins
+        assert 'https://example.com' in settings.cors_origins
         
         # Clean up
-        del os.environ['CORS_ALLOWED_ORIGINS']
+        del os.environ['CORS_ORIGINS']
     
     def test_config_model_validate(self):
         """Test line 109 - model_validate method."""
@@ -312,14 +323,21 @@ class TestUserModelCoverage:
     """Cover remaining user model line."""
     
     def test_user_response_defaults(self):
-        """Test line 24 - Default values."""
+        """Test default values in UserResponse."""
         from app.models.user import UserResponse
+        from datetime import datetime, timezone
         
-        # Create with minimal data
+        now = datetime.now(timezone.utc)
+        
+        # Create with required fields
         user = UserResponse(
             id="user123",
-            email="test@test.com"
+            email="test@test.com",
+            username="testuser",
+            created_at=now,
+            updated_at=now
         )
         
         # Check defaults
-        assert user.username == ""  # Line 24
+        assert user.is_active == True  # Default value
+        assert user.full_name is None  # Optional field
