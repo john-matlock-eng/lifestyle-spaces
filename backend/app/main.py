@@ -44,10 +44,11 @@ app.add_middleware(
 app.include_router(health.router)
 
 # Import API routes
-from app.api.routes import auth, users, spaces, invitations
+from app.api.routes import auth, users, spaces, invitations, user_profile
 
 # Include API routers
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(spaces.router)
 app.include_router(invitations.router)
+app.include_router(user_profile.router)

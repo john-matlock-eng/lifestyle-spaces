@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSpace } from '../../stores/spaceStore';
 import type { CreateSpaceData, Space } from '../../types';
 import './spaces.css';
@@ -91,17 +91,31 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
     return () => document.removeEventListener('keydown', handleTabKey);
   }, [isOpen]);
 
-  const handleInputChange = (field: keyof CreateSpaceData, value: string | boolean) => {
+  const handleInputChange = useCallback((field: keyof CreateSpaceData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear validation error when user starts typing
-    if (validationErrors[field]) {
-      setValidationErrors(prev => {
+    setValidationErrors(prev => {
+      if (prev[field]) {
         const newErrors = { ...prev };
         delete newErrors[field];
         return newErrors;
-      });
-    }
-  };
+      }
+      return prev;
+    });
+  }, []);
+
+  // Create stable event handlers for each input
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('name', e.target.value);
+  }, [handleInputChange]);
+
+  const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    handleInputChange('description', e.target.value);
+  }, [handleInputChange]);
+
+  const handlePublicChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange('isPublic', e.target.checked);
+  }, [handleInputChange]);
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -185,7 +199,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
               id="space-name"
               type="text"
               value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
+              onChange={handleNameChange}
               disabled={isLoading}
               aria-required="true"
               aria-invalid={!!validationErrors.name}
@@ -208,7 +222,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
             <textarea
               id="space-description"
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={handleDescriptionChange}
               disabled={isLoading}
               aria-invalid={!!validationErrors.description}
               aria-describedby={validationErrors.description ? 'description-error' : undefined}
@@ -230,7 +244,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                 id="space-public"
                 type="checkbox"
                 checked={formData.isPublic}
-                onChange={(e) => handleInputChange('isPublic', e.target.checked)}
+                onChange={handlePublicChange}
                 disabled={isLoading}
               />
               <label htmlFor="space-public" className="checkbox-label">

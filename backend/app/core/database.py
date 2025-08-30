@@ -95,6 +95,48 @@ class DynamoDBClient:
         response = self.table.query(**kwargs)
         return response.get('Items', [])
     
+    def update_item(self, pk: str, sk: str, updates: dict) -> Optional[dict]:
+        """
+        Update an item in the DynamoDB table.
+        
+        Args:
+            pk: Partition key
+            sk: Sort key
+            updates: Dictionary of fields to update
+        
+        Returns:
+            Optional[dict]: Updated item if successful, None otherwise
+        """
+        if not updates:
+            return None
+            
+        # Build update expression
+        update_expression = "SET "
+        expression_attribute_values = {}
+        expression_attribute_names = {}
+        
+        for i, (key, value) in enumerate(updates.items()):
+            # Use attribute names to handle reserved keywords
+            attr_name = f"#attr{i}"
+            attr_value = f":val{i}"
+            
+            if i > 0:
+                update_expression += ", "
+            update_expression += f"{attr_name} = {attr_value}"
+            
+            expression_attribute_names[attr_name] = key
+            expression_attribute_values[attr_value] = value
+        
+        response = self.table.update_item(
+            Key={'PK': pk, 'SK': sk},
+            UpdateExpression=update_expression,
+            ExpressionAttributeNames=expression_attribute_names,
+            ExpressionAttributeValues=expression_attribute_values,
+            ReturnValues="ALL_NEW"
+        )
+        
+        return response.get('Attributes')
+    
     def delete_item(self, pk: str, sk: str) -> dict:
         """
         Delete an item from the DynamoDB table.

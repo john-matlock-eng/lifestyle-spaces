@@ -3,6 +3,7 @@ Space management service with DynamoDB.
 """
 import os
 import uuid
+import secrets
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 import boto3
@@ -11,7 +12,11 @@ from botocore.exceptions import ClientError
 from app.models.space import SpaceCreate, SpaceUpdate
 from app.services.exceptions import (
     SpaceNotFoundError,
-    UnauthorizedError
+    UnauthorizedError,
+    InvalidInviteCodeError,
+    AlreadyMemberError,
+    SpaceLimitExceededError,
+    ValidationError
 )
 
 
@@ -67,9 +72,19 @@ class SpaceService:
                 return self.dynamodb.Table(self.table_name)
             raise
     
-    def create_space(self, space: SpaceCreate, owner_id: str) -> Dict[str, Any]:
-        """Create a new space."""
+    def _generate_invite_code(self) -> str:
+        """Generate a unique 8-character invite code."""
+        return secrets.token_urlsafe(6)[:8].upper()
+    
+    def create_space(self, space: SpaceCreate, owner_id: str, 
+                    owner_email: str = "", owner_username: str = "") -> Dict[str, Any]:
+        """Create a new space with invite code generation."""
+        # Validate input
+        if not space.name or not space.name.strip():
+            raise ValidationError("Space name is required")
+        
         space_id = str(uuid.uuid4())
+        invite_code = self._generate_invite_code()
         now = datetime.now(timezone.utc).isoformat()
         
         # Create space item
@@ -77,11 +92,12 @@ class SpaceService:
             'PK': f'SPACE#{space_id}',
             'SK': 'METADATA',
             'id': space_id,
-            'name': space.name,
-            'description': space.description,
+            'name': space.name.strip(),
+            'description': space.description.strip() if space.description else None,
             'type': space.type,
             'is_public': space.is_public,
             'owner_id': owner_id,
+            'invite_code': invite_code,
             'created_at': now,
             'updated_at': now,
             'metadata': space.metadata or {}
@@ -94,28 +110,40 @@ class SpaceService:
             'GSI1PK': f'USER#{owner_id}',
             'GSI1SK': f'SPACE#{space_id}',
             'user_id': owner_id,
+            'username': owner_username,
+            'email': owner_email,
             'role': 'owner',
             'joined_at': now
         }
         
-        # Write both items
+        # Create invite code mapping
+        invite_item = {
+            'PK': f'INVITE#{invite_code}',
+            'SK': f'SPACE#{space_id}',
+            'space_id': space_id,
+            'created_at': now
+        }
+        
+        # Write all items
         with self.table.batch_writer() as batch:
             batch.put_item(Item=space_item)
             batch.put_item(Item=member_item)
+            batch.put_item(Item=invite_item)
         
         return {
             'id': space_id,
-            'name': space.name,
-            'description': space.description,
+            'name': space.name.strip(),
+            'description': space.description.strip() if space.description else None,
             'type': space.type,
             'is_public': space.is_public,
             'owner_id': owner_id,
+            'invite_code': invite_code,
             'created_at': now,
             'updated_at': now
         }
     
     def get_space(self, space_id: str, user_id: str) -> Dict[str, Any]:
-        """Get space by ID."""
+        """Get space by ID (check membership or public)."""
         # Get space metadata
         response = self.table.get_item(
             Key={'PK': f'SPACE#{space_id}', 'SK': 'METADATA'}
@@ -125,6 +153,16 @@ class SpaceService:
             raise SpaceNotFoundError(f"Space {space_id} not found")
         
         space = response['Item']
+        
+        # Check if user is a member
+        member_response = self.table.get_item(
+            Key={'PK': f'SPACE#{space_id}', 'SK': f'MEMBER#{user_id}'}
+        )
+        is_member = 'Item' in member_response
+        
+        # If not a member and space is not public, deny access
+        if not is_member and not space.get('is_public', False):
+            raise UnauthorizedError("You are not a member of this space")
         
         # Check if user is owner
         is_owner = space['owner_id'] == user_id
@@ -139,8 +177,8 @@ class SpaceService:
             'id': space['id'],
             'name': space['name'],
             'description': space.get('description'),
-            'type': space['type'],
-            'is_public': space['is_public'],
+            'type': space.get('type', 'workspace'),
+            'is_public': space.get('is_public', False),
             'owner_id': space['owner_id'],
             'created_at': space['created_at'],
             'updated_at': space['updated_at'],
@@ -148,23 +186,39 @@ class SpaceService:
             'is_owner': is_owner
         }
     
-    def update_space(self, space_id: str, update: SpaceUpdate, user_id: str) -> Dict[str, Any]:
-        """Update a space."""
+    def update_space(self, space_id: str, update: SpaceUpdate, user_id: str) -> bool:
+        """Update space (owner/admin only)."""
+        # First check if space exists
+        try:
+            response = self.table.get_item(
+                Key={'PK': f'SPACE#{space_id}', 'SK': 'METADATA'}
+            )
+            if 'Item' not in response:
+                raise SpaceNotFoundError(f"Space {space_id} not found")
+        except ClientError:
+            raise SpaceNotFoundError(f"Space {space_id} not found")
+        
         # Check if user has permission
         if not self.can_edit_space(space_id, user_id):
-            raise UnauthorizedError(f"User {user_id} cannot edit space {space_id}")
+            raise UnauthorizedError("Only admins can update space settings")
+        
+        # Validate input
+        if update.name is not None and (not update.name or not update.name.strip()):
+            raise ValidationError("Space name cannot be empty")
         
         # Build update expression
         update_expr = "SET updated_at = :updated_at"
         expr_values = {':updated_at': datetime.now(timezone.utc).isoformat()}
+        expr_names = {}
         
         if update.name is not None:
             update_expr += ", #name = :name"
-            expr_values[':name'] = update.name
+            expr_values[':name'] = update.name.strip()
+            expr_names['#name'] = 'name'
         
         if update.description is not None:
             update_expr += ", description = :description"
-            expr_values[':description'] = update.description
+            expr_values[':description'] = update.description.strip() if update.description else None
         
         if update.is_public is not None:
             update_expr += ", is_public = :is_public"
@@ -175,25 +229,14 @@ class SpaceService:
             expr_values[':metadata'] = update.metadata
         
         # Update the space
-        response = self.table.update_item(
+        self.table.update_item(
             Key={'PK': f'SPACE#{space_id}', 'SK': 'METADATA'},
             UpdateExpression=update_expr,
-            ExpressionAttributeNames={'#name': 'name'} if update.name is not None else {},
-            ExpressionAttributeValues=expr_values,
-            ReturnValues='ALL_NEW'
+            ExpressionAttributeNames=expr_names if expr_names else None,
+            ExpressionAttributeValues=expr_values
         )
         
-        space = response['Attributes']
-        return {
-            'id': space['id'],
-            'name': space['name'],
-            'description': space.get('description'),
-            'type': space['type'],
-            'is_public': space['is_public'],
-            'owner_id': space['owner_id'],
-            'created_at': space['created_at'],
-            'updated_at': space['updated_at']
-        }
+        return True
     
     def delete_space(self, space_id: str, user_id: str) -> None:
         """Delete a space."""
@@ -214,8 +257,10 @@ class SpaceService:
                     Key={'PK': item['PK'], 'SK': item['SK']}
                 )
     
-    def list_user_spaces(self, user_id: str, page: int = 1, page_size: int = 20) -> Dict[str, Any]:
-        """List spaces for a user."""
+    def list_user_spaces(self, user_id: str, page: int = 1, page_size: int = 20,
+                        search: Optional[str] = None, is_public: Optional[bool] = None,
+                        role: Optional[str] = None) -> Dict[str, Any]:
+        """List spaces for a user with pagination/filters."""
         # Query GSI1 for user's spaces
         response = self.table.query(
             IndexName='GSI1',
@@ -225,13 +270,63 @@ class SpaceService:
         spaces = []
         for item in response.get('Items', []):
             space_id = item['GSI1SK'].replace('SPACE#', '')
+            user_role = item.get('role', 'member')
+            
+            # Apply role filter if specified
+            if role and role != user_role:
+                continue
+            
             try:
-                space = self.get_space(space_id, user_id)
-                spaces.append(space)
-            except SpaceNotFoundError:
+                # Get full space details
+                space_response = self.table.get_item(
+                    Key={'PK': f'SPACE#{space_id}', 'SK': 'METADATA'}
+                )
+                
+                if 'Item' not in space_response:
+                    continue
+                
+                space = space_response['Item']
+                
+                # Apply is_public filter if specified
+                if is_public is not None and space.get('is_public', False) != is_public:
+                    continue
+                
+                # Apply search filter if specified
+                if search:
+                    search_lower = search.lower()
+                    name_match = search_lower in space.get('name', '').lower()
+                    desc_match = search_lower in (space.get('description') or '').lower()
+                    if not (name_match or desc_match):
+                        continue
+                
+                # Get member count
+                members_response = self.table.query(
+                    KeyConditionExpression=Key('PK').eq(f'SPACE#{space_id}') & Key('SK').begins_with('MEMBER#')
+                )
+                member_count = len(members_response.get('Items', []))
+                
+                # Build space object
+                space_obj = {
+                    'id': space['id'],
+                    'name': space['name'],
+                    'description': space.get('description'),
+                    'type': space.get('type', 'workspace'),
+                    'is_public': space.get('is_public', False),
+                    'owner_id': space['owner_id'],
+                    'created_at': space['created_at'],
+                    'updated_at': space['updated_at'],
+                    'member_count': member_count,
+                    'user_role': user_role
+                }
+                spaces.append(space_obj)
+                
+            except (SpaceNotFoundError, ClientError):
                 pass  # Space might have been deleted
         
-        # Pagination (simple implementation)
+        # Sort by updated_at (newest first)
+        spaces.sort(key=lambda x: x['updated_at'], reverse=True)
+        
+        # Pagination
         start = (page - 1) * page_size
         end = start + page_size
         paginated_spaces = spaces[start:end]
@@ -282,10 +377,30 @@ class SpaceService:
         )
     
     def get_space_members(self, space_id: str, user_id: str) -> List[Dict[str, Any]]:
-        """Get members of a space."""
-        # Check if user has access to the space
-        self.get_space(space_id, user_id)  # This will raise if space doesn't exist
+        """Get members (members only or public)."""
+        # First check if space exists
+        try:
+            response = self.table.get_item(
+                Key={'PK': f'SPACE#{space_id}', 'SK': 'METADATA'}
+            )
+            if 'Item' not in response:
+                raise SpaceNotFoundError(f"Space {space_id} not found")
+            
+            space = response['Item']
+        except ClientError:
+            raise SpaceNotFoundError(f"Space {space_id} not found")
         
+        # Check if user is a member
+        member_response = self.table.get_item(
+            Key={'PK': f'SPACE#{space_id}', 'SK': f'MEMBER#{user_id}'}
+        )
+        is_member = 'Item' in member_response
+        
+        # If not a member and space is not public, deny access
+        if not is_member and not space.get('is_public', False):
+            raise UnauthorizedError("You are not a member of this space")
+        
+        # Get all members
         response = self.table.query(
             KeyConditionExpression=Key('PK').eq(f'SPACE#{space_id}') & Key('SK').begins_with('MEMBER#')
         )
@@ -299,6 +414,10 @@ class SpaceService:
                 'role': item['role'],
                 'joined_at': item['joined_at']
             })
+        
+        # Sort by role (owner first, then admin, then members)
+        role_order = {'owner': 0, 'admin': 1, 'member': 2, 'viewer': 3}
+        members.sort(key=lambda x: (role_order.get(x['role'], 99), x['joined_at']))
         
         return members
     
@@ -317,3 +436,82 @@ class SpaceService:
             return response['Item']['role'] in ['owner', 'admin']
         except ClientError:
             return False
+    
+    def get_space_member_role(self, space_id: str, user_id: str) -> Optional[str]:
+        """Get user's role in a space."""
+        try:
+            response = self.table.get_item(
+                Key={'PK': f'SPACE#{space_id}', 'SK': f'MEMBER#{user_id}'}
+            )
+            
+            if 'Item' in response:
+                return response['Item']['role']
+            return None
+        except ClientError:
+            return None
+    
+    def join_space_with_invite_code(self, invite_code: str, user_id: str, 
+                                   username: str = "", email: str = "") -> Dict[str, Any]:
+        """Join a space using invite code."""
+        # Look up invite code
+        try:
+            response = self.table.get_item(
+                Key={'PK': f'INVITE#{invite_code}', 'SK': f'SPACE#{invite_code}'}
+            )
+            
+            if 'Item' not in response:
+                # Try with proper SK pattern
+                invite_response = self.table.query(
+                    KeyConditionExpression=Key('PK').eq(f'INVITE#{invite_code}')
+                )
+                
+                if not invite_response.get('Items'):
+                    raise InvalidInviteCodeError("Invalid invite code")
+                
+                space_id = invite_response['Items'][0].get('space_id')
+            else:
+                space_id = response['Item'].get('space_id')
+            
+            if not space_id:
+                raise InvalidInviteCodeError("Invalid invite code")
+            
+            # Check if already a member
+            member_check = self.table.get_item(
+                Key={'PK': f'SPACE#{space_id}', 'SK': f'MEMBER#{user_id}'}
+            )
+            
+            if 'Item' in member_check:
+                raise AlreadyMemberError("You are already a member of this space")
+            
+            # Add as member
+            now = datetime.now(timezone.utc).isoformat()
+            member_item = {
+                'PK': f'SPACE#{space_id}',
+                'SK': f'MEMBER#{user_id}',
+                'GSI1PK': f'USER#{user_id}',
+                'GSI1SK': f'SPACE#{space_id}',
+                'user_id': user_id,
+                'username': username,
+                'email': email,
+                'role': 'member',
+                'joined_at': now
+            }
+            
+            self.table.put_item(Item=member_item)
+            
+            # Get space details
+            space = self.get_space(space_id, user_id)
+            
+            return {
+                'space_id': space_id,
+                'name': space['name'],
+                'role': 'member',
+                'joined_at': now
+            }
+            
+        except InvalidInviteCodeError:
+            raise
+        except AlreadyMemberError:
+            raise
+        except Exception as e:
+            raise InvalidInviteCodeError("Invalid invite code")

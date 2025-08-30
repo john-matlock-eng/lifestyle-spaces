@@ -77,6 +77,18 @@ export const listSpaces = async (
     : '';
   const response = await apiService.get(`/api/users/spaces${queryString}`);
 
+  // Handle placeholder response gracefully
+  if (response && typeof response === 'object' && 'message' in response) {
+    // Check if this is the placeholder response
+    if (response.message === 'Placeholder Lambda function is working') {
+      return {
+        spaces: [],
+        total: 0,
+        hasMore: false
+      };
+    }
+  }
+
   // Validate response has expected SpaceListResponse structure
   if (!response || typeof response !== 'object' || !('spaces' in response)) {
     throw new Error('Invalid space list data received from API');

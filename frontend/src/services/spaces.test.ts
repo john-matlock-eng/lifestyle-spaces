@@ -156,6 +156,24 @@ describe('Spaces Service', () => {
 
       await expect(listSpaces()).rejects.toThrow('Failed to list spaces');
     });
+
+    it('should handle placeholder response gracefully', async () => {
+      const placeholderResponse = {
+        message: 'Placeholder Lambda function is working',
+        path: '/api/users/spaces',
+        method: 'GET'
+      };
+      mockApiService.get.mockResolvedValue(placeholderResponse);
+
+      const result = await listSpaces();
+
+      expect(mockApiService.get).toHaveBeenCalledWith('/api/users/spaces');
+      expect(result).toEqual({
+        spaces: [],
+        total: 0,
+        hasMore: false
+      });
+    });
   });
 
   describe('getSpace', () => {

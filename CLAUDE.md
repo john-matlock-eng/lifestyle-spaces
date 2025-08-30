@@ -15,6 +15,8 @@ Lifestyle Spaces - A POC application deployed on AWS with security-first archite
 
 ## Critical Development Rules
 
+ALL CODING AND TASK EXECUTION MUST BE DONE THROUGH CLAUDE CODE AGENTS!
+
 ### 1. Test-Driven Development (TDD)
 - **ALWAYS write tests FIRST before implementation**
 - **100% code coverage is MANDATORY for backend**

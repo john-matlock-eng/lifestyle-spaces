@@ -42,7 +42,7 @@ locals {
     Repository  = var.github_repository
   }
 
-  lambda_zip_path = "${path.root}/../../../backend/lambda-placeholder.zip"
+  lambda_zip_path = "${path.root}/../../../backend/lambda-deployment.zip"
 }
 
 # Database Module

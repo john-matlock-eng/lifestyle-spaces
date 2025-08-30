@@ -1,8 +1,9 @@
 """
 User management endpoints.
 """
-from fastapi import APIRouter, HTTPException, Depends, status
-from typing import List
+from fastapi import APIRouter, HTTPException, Depends, status, Query
+from typing import List, Optional
+from botocore.exceptions import ClientError
 from app.models.user import UserResponse, UserUpdate
 from app.models.space import SpaceListResponse
 from app.services.cognito import CognitoService
@@ -64,20 +65,52 @@ async def update_profile(
 
 @router.get("/spaces", response_model=SpaceListResponse)
 async def get_user_spaces(
-    page: int = 1,
-    page_size: int = 20,
+    limit: int = Query(20, ge=1, description="Maximum number of spaces to return"),
+    offset: int = Query(0, ge=0, description="Number of spaces to skip"),
+    search: Optional[str] = Query(None, description="Search term for space name or description"),
+    isPublic: Optional[bool] = Query(None, description="Filter by public/private spaces"),
+    role: Optional[str] = Query(None, description="Filter by user's role in the space"),
     current_user: dict = Depends(get_current_user)
 ):
-    """Get spaces for current user."""
+    """Get spaces for current user with pagination/filters."""
     try:
         service = SpaceService()
+        
+        # Cap limit at 100 (instead of rejecting with validation error)
+        limit = min(limit, 100)
+        
+        # Convert offset/limit to page/page_size
+        page = (offset // limit) + 1 if limit > 0 else 1
+        page_size = limit
+        
         result = service.list_user_spaces(
             user_id=current_user.get("sub", ""),
             page=page,
-            page_size=page_size
+            page_size=page_size,
+            search=search,
+            is_public=isPublic,
+            role=role
         )
         
+        # Calculate if there are more results
+        total_pages = (result["total"] + page_size - 1) // page_size if page_size > 0 else 1
+        has_more = page < total_pages
+        
+        # Update result with has_more flag
+        result["has_more"] = has_more
+        result["hasMore"] = has_more  # Support both formats
+        
         return SpaceListResponse(**result)
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'ProvisionedThroughputExceededException':
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database throughput exceeded"
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get user spaces"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
