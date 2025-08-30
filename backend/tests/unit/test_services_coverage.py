@@ -3,12 +3,45 @@ Tests to achieve 100% coverage for services.
 """
 import pytest
 from unittest.mock import Mock, patch, MagicMock
+from moto import mock_dynamodb
+import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime, timezone
 
 
+@mock_dynamodb
 class TestSpaceServiceCoverage:
     """Test missing coverage areas in Space service."""
+    
+    def setup_method(self, method):
+        """Set up mock DynamoDB table for each test."""
+        # Create mock table
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        self.table = dynamodb.create_table(
+            TableName='lifestyle-spaces-test',
+            KeySchema=[
+                {'AttributeName': 'PK', 'KeyType': 'HASH'},
+                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
+            ],
+            AttributeDefinitions=[
+                {'AttributeName': 'PK', 'AttributeType': 'S'},
+                {'AttributeName': 'SK', 'AttributeType': 'S'},
+                {'AttributeName': 'GSI1PK', 'AttributeType': 'S'},
+                {'AttributeName': 'GSI1SK', 'AttributeType': 'S'}
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'GSI1',
+                    'KeySchema': [
+                        {'AttributeName': 'GSI1PK', 'KeyType': 'HASH'},
+                        {'AttributeName': 'GSI1SK', 'KeyType': 'RANGE'}
+                    ],
+                    'Projection': {'ProjectionType': 'ALL'}
+                }
+            ],
+            BillingMode='PAY_PER_REQUEST'
+        )
+        self.table.wait_until_exists()
     
     def test_get_or_create_table_exception(self):
         """Test _get_or_create_table when table doesn't exist."""
@@ -60,113 +93,153 @@ class TestSpaceServiceCoverage:
         from app.services.space import SpaceService
         from app.models.space import SpaceUpdate
         
+        # Pre-populate space in mock table
+        self.table.put_item(Item={
+            'PK': 'SPACE#space123',
+            'SK': 'METADATA',
+            'id': 'space123',
+            'name': 'Test Space',
+            'type': 'lifestyle',
+            'is_public': True,
+            'owner_id': 'user123',
+            'created_at': '2024-01-01T00:00:00Z',
+            'updated_at': '2024-01-01T00:00:00Z'
+        })
+        
+        # Add membership
+        self.table.put_item(Item={
+            'PK': 'SPACE#space123',
+            'SK': 'MEMBER#user123',
+            'role': 'owner'
+        })
+        
         service = SpaceService()
         update = SpaceUpdate(description="New description")
         
-        with patch.object(service, 'can_edit_space') as mock_can_edit, \
-             patch.object(service.table, 'update_item') as mock_update:
-            
-            mock_can_edit.return_value = True
-            mock_update.return_value = {
-                'Attributes': {
-                    'id': 'space123',
-                    'name': 'Test Space',
-                    'description': 'New description',
-                    'type': 'lifestyle',
-                    'is_public': True,
-                    'owner_id': 'user123',
-                    'created_at': '2024-01-01T00:00:00Z',
-                    'updated_at': '2024-01-01T00:00:00Z'
-                }
-            }
-            
-            result = service.update_space('space123', update, 'user123')
-            
-            # Verify description was included in update
-            call_args = mock_update.call_args
-            assert ':description' in call_args[1]['ExpressionAttributeValues']
-            assert 'description = :description' in call_args[1]['UpdateExpression']
+        result = service.update_space('space123', update, 'user123')
+        
+        # Verify the space was updated
+        assert result is True
+        
+        # Check the updated item
+        response = self.table.get_item(
+            Key={'PK': 'SPACE#space123', 'SK': 'METADATA'}
+        )
+        assert response['Item']['description'] == 'New description'
     
     def test_update_space_with_metadata(self):
         """Test update_space with metadata."""
         from app.services.space import SpaceService
         from app.models.space import SpaceUpdate
         
+        # Pre-populate space in mock table
+        self.table.put_item(Item={
+            'PK': 'SPACE#space123',
+            'SK': 'METADATA',
+            'id': 'space123',
+            'name': 'Test Space',
+            'type': 'lifestyle',
+            'is_public': True,
+            'owner_id': 'user123',
+            'created_at': '2024-01-01T00:00:00Z',
+            'updated_at': '2024-01-01T00:00:00Z'
+        })
+        
+        # Add membership
+        self.table.put_item(Item={
+            'PK': 'SPACE#space123',
+            'SK': 'MEMBER#user123',
+            'role': 'owner'
+        })
+        
         service = SpaceService()
         update = SpaceUpdate(metadata={'key': 'value'})
         
-        with patch.object(service, 'can_edit_space') as mock_can_edit, \
-             patch.object(service.table, 'update_item') as mock_update:
-            
-            mock_can_edit.return_value = True
-            mock_update.return_value = {
-                'Attributes': {
-                    'id': 'space123',
-                    'name': 'Test Space',
-                    'type': 'lifestyle',
-                    'is_public': True,
-                    'owner_id': 'user123',
-                    'created_at': '2024-01-01T00:00:00Z',
-                    'updated_at': '2024-01-01T00:00:00Z',
-                    'metadata': {'key': 'value'}
-                }
-            }
-            
-            result = service.update_space('space123', update, 'user123')
-            
-            # Verify metadata was included in update
-            call_args = mock_update.call_args
-            assert ':metadata' in call_args[1]['ExpressionAttributeValues']
-            assert 'metadata = :metadata' in call_args[1]['UpdateExpression']
+        result = service.update_space('space123', update, 'user123')
+        
+        # Verify the space was updated
+        assert result is True
+        
+        # Check the updated item
+        response = self.table.get_item(
+            Key={'PK': 'SPACE#space123', 'SK': 'METADATA'}
+        )
+        assert response['Item']['metadata'] == {'key': 'value'}
     
     def test_list_user_spaces_with_deleted_space(self):
         """Test list_user_spaces when a space has been deleted."""
         from app.services.space import SpaceService
-        from app.services.exceptions import SpaceNotFoundError
+        
+        # Add user memberships
+        self.table.put_item(Item={
+            'PK': 'USER#user123',
+            'SK': 'SPACE#space1',
+            'GSI1PK': 'USER#user123',
+            'GSI1SK': 'SPACE#space1',
+            'space_id': 'space1',
+            'role': 'member',
+            'joined_at': '2024-01-01T00:00:00Z'
+        })
+        
+        self.table.put_item(Item={
+            'PK': 'USER#user123',
+            'SK': 'SPACE#space2',
+            'GSI1PK': 'USER#user123',
+            'GSI1SK': 'SPACE#space2',
+            'space_id': 'space2',
+            'role': 'member',
+            'joined_at': '2024-01-01T00:00:00Z'
+        })
+        
+        # Only add space1, space2 is "deleted"
+        self.table.put_item(Item={
+            'PK': 'SPACE#space1',
+            'SK': 'METADATA',
+            'id': 'space1',
+            'name': 'Space 1',
+            'is_public': True,
+            'owner_id': 'user123',
+            'created_at': '2024-01-01T00:00:00Z',
+            'updated_at': '2024-01-01T00:00:00Z'
+        })
         
         service = SpaceService()
+        result = service.list_user_spaces('user123')
         
-        with patch.object(service.table, 'query') as mock_query, \
-             patch.object(service, 'get_space') as mock_get_space:
-            
-            # Mock query to return space references
-            mock_query.return_value = {
-                'Items': [
-                    {'GSI1SK': 'SPACE#space1'},
-                    {'GSI1SK': 'SPACE#space2'}
-                ]
-            }
-            
-            # First space exists, second is deleted
-            mock_get_space.side_effect = [
-                {'id': 'space1', 'name': 'Space 1'},
-                SpaceNotFoundError("Space not found")
-            ]
-            
-            result = service.list_user_spaces('user123')
-            
-            # Should only return the existing space
-            assert len(result['spaces']) == 1
-            assert result['spaces'][0]['id'] == 'space1'
+        # Should only return the existing space
+        assert len(result['spaces']) == 1
+        assert result['spaces'][0]['id'] == 'space1'
     
     def test_remove_member_owner_check(self):
         """Test remove_member prevents removing the owner."""
         from app.services.space import SpaceService
         from app.services.exceptions import UnauthorizedError
         
+        # Pre-populate space
+        self.table.put_item(Item={
+            'PK': 'SPACE#space123',
+            'SK': 'METADATA',
+            'id': 'space123',
+            'name': 'Test Space',
+            'owner_id': 'owner123',
+            'created_at': '2024-01-01T00:00:00Z',
+            'updated_at': '2024-01-01T00:00:00Z'
+        })
+        
+        # Add admin membership
+        self.table.put_item(Item={
+            'PK': 'SPACE#space123',
+            'SK': 'MEMBER#admin123',
+            'role': 'admin'
+        })
+        
         service = SpaceService()
         
-        with patch.object(service, 'can_edit_space') as mock_can_edit, \
-             patch.object(service, 'get_space') as mock_get_space:
-            
-            mock_can_edit.return_value = True
-            mock_get_space.return_value = {'owner_id': 'owner123'}
-            
-            # Try to remove the owner
-            with pytest.raises(UnauthorizedError) as exc_info:
-                service.remove_member('space123', 'owner123', 'admin123')
-            
-            assert "Cannot remove space owner" in str(exc_info.value)
+        # Try to remove the owner
+        with pytest.raises(UnauthorizedError) as exc_info:
+            service.remove_member('space123', 'owner123', 'admin123')
+        
+        assert "Cannot remove space owner" in str(exc_info.value)
     
     def test_can_edit_space_client_error(self):
         """Test can_edit_space when ClientError occurs."""
@@ -184,8 +257,27 @@ class TestSpaceServiceCoverage:
             assert result is False
 
 
+@mock_dynamodb
 class TestInvitationServiceCoverage:
     """Test missing coverage areas in Invitation service."""
+    
+    def setup_method(self, method):
+        """Set up mock DynamoDB table for each test."""
+        # Create mock table
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        self.table = dynamodb.create_table(
+            TableName='lifestyle-spaces-test',
+            KeySchema=[
+                {'AttributeName': 'PK', 'KeyType': 'HASH'},
+                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
+            ],
+            AttributeDefinitions=[
+                {'AttributeName': 'PK', 'AttributeType': 'S'},
+                {'AttributeName': 'SK', 'AttributeType': 'S'}
+            ],
+            BillingMode='PAY_PER_REQUEST'
+        )
+        self.table.wait_until_exists()
     
     def test_get_or_create_table_exception(self):
         """Test _get_or_create_table when table doesn't exist."""
@@ -239,13 +331,11 @@ class TestInvitationServiceCoverage:
         
         service = InvitationService()
         
-        with patch.object(service.table, 'get_item') as mock_get:
-            mock_get.return_value = {}  # No Item key means not found
-            
-            with pytest.raises(InvalidInvitationError) as exc_info:
-                service.cancel_invitation('inv123', 'user123')
-            
-            assert "Invitation not found" in str(exc_info.value)
+        # Don't add any invitation to the table
+        with pytest.raises(InvalidInvitationError) as exc_info:
+            service.cancel_invitation('inv123', 'user123')
+        
+        assert "Invitation not found" in str(exc_info.value)
 
 
 class TestModelsCoverage:

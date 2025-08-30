@@ -229,12 +229,15 @@ class SpaceService:
             expr_values[':metadata'] = update.metadata
         
         # Update the space
-        self.table.update_item(
-            Key={'PK': f'SPACE#{space_id}', 'SK': 'METADATA'},
-            UpdateExpression=update_expr,
-            ExpressionAttributeNames=expr_names if expr_names else None,
-            ExpressionAttributeValues=expr_values
-        )
+        update_params = {
+            'Key': {'PK': f'SPACE#{space_id}', 'SK': 'METADATA'},
+            'UpdateExpression': update_expr,
+            'ExpressionAttributeValues': expr_values
+        }
+        if expr_names:
+            update_params['ExpressionAttributeNames'] = expr_names
+        
+        self.table.update_item(**update_params)
         
         return True
     
