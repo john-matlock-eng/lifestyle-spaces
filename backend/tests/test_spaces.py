@@ -15,7 +15,7 @@ from jose import jwt
 class TestSpaceCreation:
     """Tests for POST /api/spaces endpoint."""
     
-    def test_create_space_success(self, test_client: TestClient):
+    def test_create_space_success(self, test_client):
         """Test successful space creation with valid data."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -62,7 +62,7 @@ class TestSpaceCreation:
                 assert "createdAt" in data
                 assert "updatedAt" in data
     
-    def test_create_space_returns_invite_code(self, test_client: TestClient):
+    def test_create_space_returns_invite_code(self, test_client):
         """Test that space creation returns a unique invite code."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -94,7 +94,7 @@ class TestSpaceCreation:
                 assert "inviteCode" in data
                 assert len(data["inviteCode"]) == 8
     
-    def test_create_space_validation_name_too_long(self, test_client: TestClient):
+    def test_create_space_validation_name_too_long(self, test_client):
         """Test space creation with name exceeding 100 characters."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -114,7 +114,7 @@ class TestSpaceCreation:
             assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
             assert "name" in response.json()["detail"][0]["loc"]
     
-    def test_create_space_validation_description_too_long(self, test_client: TestClient):
+    def test_create_space_validation_description_too_long(self, test_client):
         """Test space creation with description exceeding 500 characters."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -135,7 +135,7 @@ class TestSpaceCreation:
             assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
             assert "description" in response.json()["detail"][0]["loc"]
     
-    def test_create_space_without_authentication(self, test_client: TestClient):
+    def test_create_space_without_authentication(self, test_client):
         """Test space creation without authentication token."""
         # Act
         response = test_client.post(
@@ -147,7 +147,7 @@ class TestSpaceCreation:
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert response.json()["detail"] == "Not authenticated"
     
-    def test_create_space_database_error(self, test_client: TestClient):
+    def test_create_space_database_error(self, test_client):
         """Test space creation when database operation fails."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -171,7 +171,7 @@ class TestSpaceCreation:
 class TestGetSpace:
     """Tests for GET /api/spaces/{spaceId} endpoint."""
     
-    def test_get_space_success(self, test_client: TestClient):
+    def test_get_space_success(self, test_client):
         """Test successful retrieval of a space by ID."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -204,7 +204,7 @@ class TestGetSpace:
                 assert data["name"] == "Test Space"
                 assert data["memberCount"] == 5
     
-    def test_get_space_not_found(self, test_client: TestClient):
+    def test_get_space_not_found(self, test_client):
         """Test getting a space that doesn't exist."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -225,7 +225,7 @@ class TestGetSpace:
                 assert response.status_code == status.HTTP_404_NOT_FOUND
                 assert "not found" in response.json()["detail"].lower()
     
-    def test_get_space_permission_denied(self, test_client: TestClient):
+    def test_get_space_permission_denied(self, test_client):
         """Test getting a space without being a member."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -245,7 +245,7 @@ class TestGetSpace:
                 # Assert
                 assert response.status_code == status.HTTP_403_FORBIDDEN
     
-    def test_get_public_space_non_member(self, test_client: TestClient):
+    def test_get_public_space_non_member(self, test_client):
         """Test getting a public space without being a member."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -278,7 +278,7 @@ class TestGetSpace:
 class TestListUserSpaces:
     """Tests for GET /api/users/spaces endpoint."""
     
-    def test_list_user_spaces_success(self, test_client: TestClient):
+    def test_list_user_spaces_success(self, test_client):
         """Test successful listing of user's spaces."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -325,7 +325,7 @@ class TestListUserSpaces:
                 assert len(data["spaces"]) == 2
                 assert data["total"] == 2
     
-    def test_list_user_spaces_with_pagination(self, test_client: TestClient):
+    def test_list_user_spaces_with_pagination(self, test_client):
         """Test listing user's spaces with pagination."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -368,7 +368,7 @@ class TestListUserSpaces:
                 assert data["total"] == 25
                 assert data.get("hasMore", data.get("has_more", False)) == True
     
-    def test_list_user_spaces_with_search_filter(self, test_client: TestClient):
+    def test_list_user_spaces_with_search_filter(self, test_client):
         """Test listing user's spaces with search filter."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -406,7 +406,7 @@ class TestListUserSpaces:
                 assert len(data["spaces"]) == 1
                 assert "alpha" in data["spaces"][0]["name"].lower()
     
-    def test_list_user_spaces_filter_by_public(self, test_client: TestClient):
+    def test_list_user_spaces_filter_by_public(self, test_client):
         """Test listing user's spaces filtered by public/private."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -442,7 +442,7 @@ class TestListUserSpaces:
                 data = response.json()
                 assert all(space["isPublic"] == True for space in data["spaces"])
     
-    def test_list_user_spaces_filter_by_role(self, test_client: TestClient):
+    def test_list_user_spaces_filter_by_role(self, test_client):
         """Test listing user's spaces filtered by user's role."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -480,7 +480,7 @@ class TestListUserSpaces:
                 assert len(data["spaces"]) == 1
                 assert data["spaces"][0]["ownerId"] == "user-123"
     
-    def test_list_user_spaces_pagination_limits(self, test_client: TestClient):
+    def test_list_user_spaces_pagination_limits(self, test_client):
         """Test pagination limits (max 100 items per page)."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -517,7 +517,7 @@ class TestListUserSpaces:
 class TestUpdateSpaceSettings:
     """Tests for PUT /api/spaces/{spaceId}/settings endpoint."""
     
-    def test_update_space_settings_as_owner(self, test_client: TestClient):
+    def test_update_space_settings_as_owner(self, test_client):
         """Test updating space settings as the owner."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -559,7 +559,7 @@ class TestUpdateSpaceSettings:
                     assert data["isPublic"] == True
     
     @pytest.mark.skip(reason="Admin role check not yet implemented in service")
-    def test_update_space_settings_as_admin(self, test_client: TestClient):
+    def test_update_space_settings_as_admin(self, test_client):
         """Test updating space settings as an admin."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -595,7 +595,7 @@ class TestUpdateSpaceSettings:
                         data = response.json()
                         assert data["name"] == "Updated by Admin"
     
-    def test_update_space_settings_as_member_forbidden(self, test_client: TestClient):
+    def test_update_space_settings_as_member_forbidden(self, test_client):
         """Test that regular members cannot update space settings."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -617,7 +617,7 @@ class TestUpdateSpaceSettings:
                 assert response.status_code == status.HTTP_403_FORBIDDEN
                 assert "Only admins" in response.json()["detail"]
     
-    def test_update_space_validation_errors(self, test_client: TestClient):
+    def test_update_space_validation_errors(self, test_client):
         """Test validation errors when updating space settings."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -634,7 +634,7 @@ class TestUpdateSpaceSettings:
             # Assert
             assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     
-    def test_update_non_existent_space(self, test_client: TestClient):
+    def test_update_non_existent_space(self, test_client):
         """Test updating a space that doesn't exist."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -659,7 +659,7 @@ class TestUpdateSpaceSettings:
 class TestGetSpaceMembers:
     """Tests for GET /api/spaces/{spaceId}/members endpoint."""
     
-    def test_get_space_members_success(self, test_client: TestClient):
+    def test_get_space_members_success(self, test_client):
         """Test successful retrieval of space members."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -705,7 +705,7 @@ class TestGetSpaceMembers:
                 assert any(m["role"] == "admin" for m in data)
                 assert any(m["role"] == "member" for m in data)
     
-    def test_get_space_members_non_member_forbidden(self, test_client: TestClient):
+    def test_get_space_members_non_member_forbidden(self, test_client):
         """Test that non-members cannot view space members."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -725,7 +725,7 @@ class TestGetSpaceMembers:
                 # Assert
                 assert response.status_code == status.HTTP_403_FORBIDDEN
     
-    def test_get_public_space_members(self, test_client: TestClient):
+    def test_get_public_space_members(self, test_client):
         """Test viewing members of a public space."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -755,7 +755,7 @@ class TestGetSpaceMembers:
                 data = response.json()
                 assert len(data) >= 1
     
-    def test_get_members_space_not_found(self, test_client: TestClient):
+    def test_get_members_space_not_found(self, test_client):
         """Test getting members of a non-existent space."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -775,7 +775,7 @@ class TestGetSpaceMembers:
                 # Assert
                 assert response.status_code == status.HTTP_404_NOT_FOUND
     
-    def test_member_count_tracking(self, test_client: TestClient):
+    def test_member_count_tracking(self, test_client):
         """Test that member count is accurately tracked."""
         # Arrange
         space_id = str(uuid.uuid4())
@@ -828,7 +828,7 @@ class TestInviteCodeValidation:
     """Tests for invite code functionality."""
     
     @pytest.mark.skip(reason="Join endpoint not yet implemented")
-    def test_join_space_with_valid_invite_code(self, test_client: TestClient):
+    def test_join_space_with_valid_invite_code(self, test_client):
         """Test joining a space using a valid invite code."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -857,7 +857,7 @@ class TestInviteCodeValidation:
                 assert data["role"] == "member"
     
     @pytest.mark.skip(reason="Join endpoint not yet implemented")
-    def test_join_space_with_invalid_invite_code(self, test_client: TestClient):
+    def test_join_space_with_invalid_invite_code(self, test_client):
         """Test joining a space with an invalid invite code."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -879,7 +879,7 @@ class TestInviteCodeValidation:
                 assert "Invalid invite code" in response.json()["detail"]
     
     @pytest.mark.skip(reason="Join endpoint not yet implemented")
-    def test_join_space_already_member(self, test_client: TestClient):
+    def test_join_space_already_member(self, test_client):
         """Test joining a space when already a member."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -904,7 +904,7 @@ class TestInviteCodeValidation:
 class TestDatabaseErrorHandling:
     """Tests for database error handling."""
     
-    def test_dynamodb_connection_error(self, test_client: TestClient):
+    def test_dynamodb_connection_error(self, test_client):
         """Test handling of DynamoDB connection errors."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -927,7 +927,7 @@ class TestDatabaseErrorHandling:
                 # Assert
                 assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
     
-    def test_dynamodb_throughput_exceeded(self, test_client: TestClient):
+    def test_dynamodb_throughput_exceeded(self, test_client):
         """Test handling of DynamoDB throughput exceeded errors."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -953,7 +953,7 @@ class TestDatabaseErrorHandling:
 class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""
     
-    def test_empty_space_name(self, test_client: TestClient):
+    def test_empty_space_name(self, test_client):
         """Test creating a space with empty name."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -969,7 +969,7 @@ class TestEdgeCases:
             # Assert
             assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     
-    def test_whitespace_only_space_name(self, test_client: TestClient):
+    def test_whitespace_only_space_name(self, test_client):
         """Test creating a space with whitespace-only name."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -985,7 +985,7 @@ class TestEdgeCases:
             # Assert
             assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     
-    def test_special_characters_in_space_name(self, test_client: TestClient):
+    def test_special_characters_in_space_name(self, test_client):
         """Test creating a space with special characters in name."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -1013,7 +1013,7 @@ class TestEdgeCases:
                 assert response.status_code == status.HTTP_201_CREATED
                 assert response.json()["name"] == "Test & Space #1!"
     
-    def test_unicode_in_space_name(self, test_client: TestClient):
+    def test_unicode_in_space_name(self, test_client):
         """Test creating a space with Unicode characters."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -1041,14 +1041,14 @@ class TestEdgeCases:
                 assert response.status_code == status.HTTP_201_CREATED
                 assert response.json()["name"] == "测试空间 🚀"
     
-    def test_concurrent_space_creation(self, test_client: TestClient):
+    def test_concurrent_space_creation(self, test_client):
         """Test handling of concurrent space creation attempts."""
         # This test simulates race conditions
         # In production, DynamoDB conditional writes would handle this
         pass  # Implementation depends on specific concurrency strategy
     
     @pytest.mark.skip(reason="Space limit feature not yet implemented")
-    def test_maximum_spaces_per_user(self, test_client: TestClient):
+    def test_maximum_spaces_per_user(self, test_client):
         """Test enforcing maximum spaces per user limit."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -1073,7 +1073,7 @@ class TestEdgeCases:
 class TestAuthenticationAndAuthorization:
     """Tests for authentication and authorization."""
     
-    def test_expired_jwt_token(self, test_client: TestClient):
+    def test_expired_jwt_token(self, test_client):
         """Test handling of expired JWT tokens."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -1090,7 +1090,7 @@ class TestAuthenticationAndAuthorization:
             assert response.status_code == status.HTTP_401_UNAUTHORIZED
             assert "expired" in response.json()["detail"].lower()
     
-    def test_invalid_jwt_signature(self, test_client: TestClient):
+    def test_invalid_jwt_signature(self, test_client):
         """Test handling of JWT with invalid signature."""
         # Arrange
         with patch('app.core.security.decode_token') as mock_decode:
@@ -1106,7 +1106,7 @@ class TestAuthenticationAndAuthorization:
             # Assert
             assert response.status_code == status.HTTP_401_UNAUTHORIZED
     
-    def test_malformed_jwt_token(self, test_client: TestClient):
+    def test_malformed_jwt_token(self, test_client):
         """Test handling of malformed JWT tokens."""
         # Act
         response = test_client.get(
@@ -1117,7 +1117,7 @@ class TestAuthenticationAndAuthorization:
         # Assert
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
     
-    def test_missing_authorization_header(self, test_client: TestClient):
+    def test_missing_authorization_header(self, test_client):
         """Test requests without Authorization header."""
         # Act
         response = test_client.get("/api/users/spaces")
@@ -1126,7 +1126,7 @@ class TestAuthenticationAndAuthorization:
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert response.json()["detail"] == "Not authenticated"
     
-    def test_wrong_authorization_scheme(self, test_client: TestClient):
+    def test_wrong_authorization_scheme(self, test_client):
         """Test using wrong authorization scheme (not Bearer)."""
         # Act
         response = test_client.get(

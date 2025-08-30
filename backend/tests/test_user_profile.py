@@ -4,7 +4,6 @@ Following TDD approach - tests written BEFORE implementation.
 """
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from fastapi.testclient import TestClient
 from datetime import datetime, timezone
 from botocore.exceptions import ClientError
 
@@ -12,14 +11,9 @@ from botocore.exceptions import ClientError
 class TestUserProfile:
     """Test user profile endpoints with full coverage."""
     
-    def setup_method(self):
-        """Set up test client and mocks."""
-        from app.main import app
-        from app.core.security import get_current_user
-        
-        self.app = app
-        self.client = TestClient(app)
-        
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Set up mocks."""
         # Mock authenticated user
         self.mock_user = {
             "sub": "user-123-456",
@@ -55,13 +49,13 @@ class TestUserProfile:
     
     def teardown_method(self):
         """Clean up dependency overrides."""
-        self.app.dependency_overrides.clear()
+        test_client.app.dependency_overrides.clear()
 
 
 class TestGetUserProfile(TestUserProfile):
     """Test GET /api/user/profile endpoint."""
     
-    def test_get_profile_success(self):
+    def test_get_profile_success(self, test_client):
         """Test successful profile retrieval with all fields."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
@@ -97,7 +91,7 @@ class TestGetUserProfile(TestUserProfile):
             }
             mock_service.return_value = mock_service_instance
             
-            response = self.client.get("/api/user/profile")
+            response = test_client.get("/api/user/profile")
             
             assert response.status_code == 200
             data = response.json()
@@ -117,7 +111,7 @@ class TestGetUserProfile(TestUserProfile):
             # Verify service was called with correct user ID
             mock_service_instance.get_user_profile.assert_called_once_with("user-123-456")
     
-    def test_get_profile_minimal_fields(self):
+    def test_get_profile_minimal_fields(self, test_client):
         """Test profile retrieval with minimal required fields only."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
@@ -134,7 +128,7 @@ class TestGetUserProfile(TestUserProfile):
             }
             mock_service.return_value = mock_service_instance
             
-            response = self.client.get("/api/user/profile")
+            response = test_client.get("/api/user/profile")
             
             assert response.status_code == 200
             data = response.json()
@@ -145,19 +139,19 @@ class TestGetUserProfile(TestUserProfile):
             assert data["full_name"] is None
             assert data["bio"] is None
     
-    def test_get_profile_user_not_found(self):
+    def test_get_profile_user_not_found(self, test_client):
         """Test profile retrieval when user doesn't exist in database."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
             mock_service_instance.get_user_profile.return_value = None
             mock_service.return_value = mock_service_instance
             
-            response = self.client.get("/api/user/profile")
+            response = test_client.get("/api/user/profile")
             
             assert response.status_code == 404
             assert "User profile not found" in response.json()["detail"]
     
-    def test_get_profile_database_error(self):
+    def test_get_profile_database_error(self, test_client):
         """Test profile retrieval with database connection error."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
@@ -167,22 +161,22 @@ class TestGetUserProfile(TestUserProfile):
             )
             mock_service.return_value = mock_service_instance
             
-            response = self.client.get("/api/user/profile")
+            response = test_client.get("/api/user/profile")
             
             assert response.status_code == 500
             assert "Failed to retrieve user profile" in response.json()["detail"]
     
-    def test_get_profile_unauthenticated(self):
+    def test_get_profile_unauthenticated(self, test_client):
         """Test profile retrieval without authentication."""
         # Clear the auth override to simulate unauthenticated request
-        self.app.dependency_overrides.clear()
+        test_client.app.dependency_overrides.clear()
         
-        response = self.client.get("/api/user/profile")
+        response = test_client.get("/api/user/profile")
         
         assert response.status_code == 401
         assert "Not authenticated" in response.json()["detail"]
     
-    def test_get_profile_cognito_sync(self):
+    def test_get_profile_cognito_sync(self, test_client):
         """Test profile retrieval with Cognito user attributes sync."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service, \
              patch('app.api.routes.user_profile.CognitoService') as mock_cognito:
@@ -212,7 +206,7 @@ class TestGetUserProfile(TestUserProfile):
             mock_service.return_value = mock_service_instance
             mock_cognito.return_value = mock_cognito_instance
             
-            response = self.client.get("/api/user/profile")
+            response = test_client.get("/api/user/profile")
             
             assert response.status_code == 200
             data = response.json()
@@ -222,7 +216,7 @@ class TestGetUserProfile(TestUserProfile):
 class TestUpdateUserProfile(TestUserProfile):
     """Test PUT /api/user/profile endpoint."""
     
-    def test_update_profile_all_fields(self):
+    def test_update_profile_all_fields(self, test_client):
         """Test updating all profile fields."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
@@ -278,7 +272,7 @@ class TestUpdateUserProfile(TestUserProfile):
                 }
             }
             
-            response = self.client.put("/api/user/profile", json=update_data)
+            response = test_client.put("/api/user/profile", json=update_data)
             
             if response.status_code != 200:
                 print(f"Response: {response.json()}")
@@ -299,7 +293,7 @@ class TestUpdateUserProfile(TestUserProfile):
             assert called_data["full_name"] == "Updated Full Name"
             assert called_data["bio"] == "Updated bio text"
     
-    def test_update_profile_partial_fields(self):
+    def test_update_profile_partial_fields(self, test_client):
         """Test updating only some profile fields."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
@@ -320,39 +314,40 @@ class TestUpdateUserProfile(TestUserProfile):
             
             update_data = {"full_name": "Partial Update"}
             
-            response = self.client.put("/api/user/profile", json=update_data)
+            response = test_client.put("/api/user/profile", json=update_data, 
+                                      headers={"Authorization": "Bearer test-token"})
             
             assert response.status_code == 200
             data = response.json()
             assert data["full_name"] == "Partial Update"
             assert data["bio"] == "Original bio"
     
-    def test_update_profile_invalid_email(self):
+    def test_update_profile_invalid_email(self, test_client):
         """Test updating profile with invalid email format."""
         update_data = {
             "full_name": "Test User",
             "email": "invalid-email"  # Invalid email format
         }
         
-        response = self.client.put("/api/user/profile", json=update_data)
+        response = test_client.put("/api/user/profile", json=update_data)
         
         assert response.status_code == 422
         detail = response.json()["detail"][0]["msg"].lower()
         assert "email" in detail or "validation" in detail
     
-    def test_update_profile_invalid_phone(self):
+    def test_update_profile_invalid_phone(self, test_client):
         """Test updating profile with invalid phone number format."""
         update_data = {
             "phone_number": "123"  # Too short for a valid phone number
         }
         
-        response = self.client.put("/api/user/profile", json=update_data)
+        response = test_client.put("/api/user/profile", json=update_data)
         
         assert response.status_code == 422
         detail = str(response.json()["detail"]).lower()
         assert "phone" in detail or "validation" in detail or "10 characters" in detail
     
-    def test_update_profile_invalid_timezone(self):
+    def test_update_profile_invalid_timezone(self, test_client):
         """Test updating profile with invalid timezone."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
@@ -361,12 +356,12 @@ class TestUpdateUserProfile(TestUserProfile):
             
             update_data = {"timezone": "Invalid/Timezone"}
             
-            response = self.client.put("/api/user/profile", json=update_data)
+            response = test_client.put("/api/user/profile", json=update_data)
             
             assert response.status_code == 400
             assert "Invalid timezone" in response.json()["detail"]
     
-    def test_update_profile_invalid_language(self):
+    def test_update_profile_invalid_language(self, test_client):
         """Test updating profile with invalid language code."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
@@ -375,24 +370,24 @@ class TestUpdateUserProfile(TestUserProfile):
             
             update_data = {"language": "xyz"}  # Invalid ISO language code
             
-            response = self.client.put("/api/user/profile", json=update_data)
+            response = test_client.put("/api/user/profile", json=update_data)
             
             assert response.status_code == 400
             assert "Invalid language code" in response.json()["detail"]
     
-    def test_update_profile_bio_too_long(self):
+    def test_update_profile_bio_too_long(self, test_client):
         """Test updating profile with bio exceeding max length."""
         update_data = {
             "bio": "x" * 1001  # Exceeds 1000 character limit
         }
         
-        response = self.client.put("/api/user/profile", json=update_data)
+        response = test_client.put("/api/user/profile", json=update_data)
         
         assert response.status_code == 422
         detail = str(response.json()["detail"]).lower()
         assert "1000" in detail or "length" in detail or "characters" in detail
     
-    def test_update_profile_database_error(self):
+    def test_update_profile_database_error(self, test_client):
         """Test profile update with database error."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
@@ -404,12 +399,12 @@ class TestUpdateUserProfile(TestUserProfile):
             
             update_data = {"full_name": "Test Update"}
             
-            response = self.client.put("/api/user/profile", json=update_data)
+            response = test_client.put("/api/user/profile", json=update_data)
             
             assert response.status_code == 503
             assert "Service temporarily unavailable" in response.json()["detail"]
     
-    def test_update_profile_cognito_sync_error(self):
+    def test_update_profile_cognito_sync_error(self, test_client):
         """Test profile update with Cognito sync failure."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service, \
              patch('app.api.routes.user_profile.CognitoService') as mock_cognito:
@@ -428,30 +423,30 @@ class TestUpdateUserProfile(TestUserProfile):
             
             update_data = {"phone_number": "+1234567890"}
             
-            response = self.client.put("/api/user/profile", json=update_data)
+            response = test_client.put("/api/user/profile", json=update_data)
             
             assert response.status_code == 500
             assert "Failed to sync with authentication provider" in response.json()["detail"]
     
-    def test_update_profile_unauthenticated(self):
+    def test_update_profile_unauthenticated(self, test_client):
         """Test profile update without authentication."""
-        self.app.dependency_overrides.clear()
+        test_client.app.dependency_overrides.clear()
         
         update_data = {"full_name": "Test User"}
         
-        response = self.client.put("/api/user/profile", json=update_data)
+        response = test_client.put("/api/user/profile", json=update_data)
         
         assert response.status_code == 401
         assert "Not authenticated" in response.json()["detail"]
     
-    def test_update_profile_empty_request(self):
+    def test_update_profile_empty_request(self, test_client):
         """Test profile update with empty request body."""
-        response = self.client.put("/api/user/profile", json={})
+        response = test_client.put("/api/user/profile", json={})
         
         assert response.status_code == 400
         assert "No fields to update" in response.json()["detail"]
     
-    def test_update_profile_notification_preferences(self):
+    def test_update_profile_notification_preferences(self, test_client):
         """Test updating only notification preferences."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
@@ -481,14 +476,15 @@ class TestUpdateUserProfile(TestUserProfile):
                 }
             }
             
-            response = self.client.put("/api/user/profile", json=update_data)
+            response = test_client.put("/api/user/profile", json=update_data, 
+                                      headers={"Authorization": "Bearer test-token"})
             
             assert response.status_code == 200
             data = response.json()
             assert data["notification_preferences"]["email"] == False
             assert data["notification_preferences"]["push"] == True
     
-    def test_update_profile_privacy_settings(self):
+    def test_update_profile_privacy_settings(self, test_client):
         """Test updating only privacy settings."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
@@ -518,7 +514,8 @@ class TestUpdateUserProfile(TestUserProfile):
                 }
             }
             
-            response = self.client.put("/api/user/profile", json=update_data)
+            response = test_client.put("/api/user/profile", json=update_data, 
+                                      headers={"Authorization": "Bearer test-token"})
             
             assert response.status_code == 200
             data = response.json()
@@ -528,7 +525,7 @@ class TestUpdateUserProfile(TestUserProfile):
 class TestCompleteOnboarding(TestUserProfile):
     """Test POST /api/user/onboarding/complete endpoint."""
     
-    def test_complete_onboarding_success(self):
+    def test_complete_onboarding_success(self, test_client):
         """Test successful onboarding completion."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
@@ -546,7 +543,7 @@ class TestCompleteOnboarding(TestUserProfile):
             }
             mock_service.return_value = mock_service_instance
             
-            response = self.client.post("/api/user/onboarding/complete")
+            response = test_client.post("/api/user/onboarding/complete")
             
             assert response.status_code == 200
             data = response.json()
@@ -557,43 +554,43 @@ class TestCompleteOnboarding(TestUserProfile):
             # Verify service was called
             mock_service_instance.complete_onboarding.assert_called_once_with("user-123-456", None)
     
-    def test_complete_onboarding_already_completed(self):
+    def test_complete_onboarding_already_completed(self, test_client):
         """Test completing onboarding when already completed."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
             mock_service_instance.complete_onboarding.side_effect = ValueError("Onboarding already completed")
             mock_service.return_value = mock_service_instance
             
-            response = self.client.post("/api/user/onboarding/complete")
+            response = test_client.post("/api/user/onboarding/complete")
             
             assert response.status_code == 400
             assert "Onboarding already completed" in response.json()["detail"]
     
-    def test_complete_onboarding_incomplete_steps(self):
+    def test_complete_onboarding_incomplete_steps(self, test_client):
         """Test completing onboarding with incomplete required steps."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
             mock_service_instance.complete_onboarding.side_effect = ValueError("Required onboarding steps not completed")
             mock_service.return_value = mock_service_instance
             
-            response = self.client.post("/api/user/onboarding/complete")
+            response = test_client.post("/api/user/onboarding/complete")
             
             assert response.status_code == 400
             assert "Required onboarding steps not completed" in response.json()["detail"]
     
-    def test_complete_onboarding_user_not_found(self):
+    def test_complete_onboarding_user_not_found(self, test_client):
         """Test completing onboarding for non-existent user."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
             mock_service_instance.complete_onboarding.return_value = None
             mock_service.return_value = mock_service_instance
             
-            response = self.client.post("/api/user/onboarding/complete")
+            response = test_client.post("/api/user/onboarding/complete")
             
             assert response.status_code == 404
             assert "User not found" in response.json()["detail"]
     
-    def test_complete_onboarding_database_error(self):
+    def test_complete_onboarding_database_error(self, test_client):
         """Test onboarding completion with database error."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
@@ -603,21 +600,21 @@ class TestCompleteOnboarding(TestUserProfile):
             )
             mock_service.return_value = mock_service_instance
             
-            response = self.client.post("/api/user/onboarding/complete")
+            response = test_client.post("/api/user/onboarding/complete")
             
             assert response.status_code == 500
             assert "Failed to complete onboarding" in response.json()["detail"]
     
-    def test_complete_onboarding_unauthenticated(self):
+    def test_complete_onboarding_unauthenticated(self, test_client):
         """Test onboarding completion without authentication."""
-        self.app.dependency_overrides.clear()
+        test_client.app.dependency_overrides.clear()
         
-        response = self.client.post("/api/user/onboarding/complete")
+        response = test_client.post("/api/user/onboarding/complete")
         
         assert response.status_code == 401
         assert "Not authenticated" in response.json()["detail"]
     
-    def test_complete_onboarding_with_metadata(self):
+    def test_complete_onboarding_with_metadata(self, test_client):
         """Test onboarding completion with additional metadata."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
             mock_service_instance = Mock()
@@ -646,7 +643,7 @@ class TestCompleteOnboarding(TestUserProfile):
                 "skipped_optional_steps": ["social_connect", "import_contacts"]
             }
             
-            response = self.client.post("/api/user/onboarding/complete", json=request_data)
+            response = test_client.post("/api/user/onboarding/complete", json=request_data)
             
             assert response.status_code == 200
             data = response.json()
@@ -654,7 +651,7 @@ class TestCompleteOnboarding(TestUserProfile):
             assert data["onboarding_metadata"]["completion_source"] == "web"
             assert data["onboarding_metadata"]["time_to_complete"] == 300
     
-    def test_complete_onboarding_triggers_welcome_email(self):
+    def test_complete_onboarding_triggers_welcome_email(self, test_client):
         """Test that completing onboarding triggers a welcome email."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service, \
              patch('app.api.routes.user_profile.EmailService') as mock_email:
@@ -677,7 +674,7 @@ class TestCompleteOnboarding(TestUserProfile):
             mock_service.return_value = mock_service_instance
             mock_email.return_value = mock_email_instance
             
-            response = self.client.post("/api/user/onboarding/complete")
+            response = test_client.post("/api/user/onboarding/complete")
             
             assert response.status_code == 200
             
@@ -687,7 +684,7 @@ class TestCompleteOnboarding(TestUserProfile):
                 "user-123-456"
             )
     
-    def test_complete_onboarding_email_failure_non_blocking(self):
+    def test_complete_onboarding_email_failure_non_blocking(self, test_client):
         """Test that email failure doesn't block onboarding completion."""
         with patch('app.api.routes.user_profile.UserProfileService') as mock_service, \
              patch('app.api.routes.user_profile.EmailService') as mock_email:
@@ -713,7 +710,7 @@ class TestCompleteOnboarding(TestUserProfile):
             mock_service.return_value = mock_service_instance
             mock_email.return_value = mock_email_instance
             
-            response = self.client.post("/api/user/onboarding/complete")
+            response = test_client.post("/api/user/onboarding/complete")
             
             # Should still succeed even if email fails
             assert response.status_code == 200
@@ -724,29 +721,17 @@ class TestCompleteOnboarding(TestUserProfile):
 class TestUserProfileEdgeCases:
     """Test edge cases and boundary conditions for user profile endpoints."""
     
-    def setup_method(self):
-        """Set up test client and mocks."""
-        from app.main import app
-        from app.core.security import get_current_user
-        
-        self.app = app
-        self.client = TestClient(app)
-        
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Set up mocks."""
         # Mock authenticated user
         self.mock_user = {"sub": "user-123-456"}
-        
-        def override_get_current_user():
-            return self.mock_user
-            
-        app.dependency_overrides[get_current_user] = override_get_current_user
     
-    def teardown_method(self):
-        """Clean up dependency overrides."""
-        self.app.dependency_overrides.clear()
-    
-    def test_profile_with_special_characters(self):
+    def test_profile_with_special_characters(self, test_client):
         """Test profile with special characters in fields."""
-        with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.api.routes.user_profile.UserProfileService') as mock_service:
+            mock_decode.return_value = self.mock_user
             mock_service_instance = Mock()
             mock_service_instance.update_user_profile.return_value = {
                 "id": "user-123-456",
@@ -770,7 +755,8 @@ class TestUserProfileEdgeCases:
                 "location": "São Paulo, BR"
             }
             
-            response = self.client.put("/api/user/profile", json=update_data)
+            response = test_client.put("/api/user/profile", json=update_data, 
+                                      headers={"Authorization": "Bearer test-token"})
             
             assert response.status_code == 200
             data = response.json()
@@ -778,9 +764,11 @@ class TestUserProfileEdgeCases:
             # Bio should be sanitized to prevent XSS
             assert "<script>" not in data["bio"]
     
-    def test_profile_concurrent_updates(self):
+    def test_profile_concurrent_updates(self, test_client):
         """Test handling concurrent profile updates."""
-        with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.api.routes.user_profile.UserProfileService') as mock_service:
+            mock_decode.return_value = self.mock_user
             mock_service_instance = Mock()
             
             # Simulate optimistic locking failure
@@ -807,15 +795,18 @@ class TestUserProfileEdgeCases:
             update_data = {"full_name": "Test Update"}
             
             # First attempt should retry internally
-            response = self.client.put("/api/user/profile", json=update_data)
+            response = test_client.put("/api/user/profile", json=update_data, 
+                                      headers={"Authorization": "Bearer test-token"})
             
             assert response.status_code == 200
             data = response.json()
             assert data["full_name"] == "Successfully Updated"
     
-    def test_profile_max_field_lengths(self):
+    def test_profile_max_field_lengths(self, test_client):
         """Test profile fields at maximum allowed lengths."""
-        with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.api.routes.user_profile.UserProfileService') as mock_service:
+            mock_decode.return_value = self.mock_user
             mock_service_instance = Mock()
             
             # Create data at max lengths
@@ -840,16 +831,18 @@ class TestUserProfileEdgeCases:
             }
             mock_service.return_value = mock_service_instance
             
-            response = self.client.put("/api/user/profile", json=max_length_data)
+            response = test_client.put("/api/user/profile", json=max_length_data)
             
             assert response.status_code == 200
             data = response.json()
             assert len(data["full_name"]) == 100
             assert len(data["bio"]) == 1000
     
-    def test_profile_null_values(self):
+    def test_profile_null_values(self, test_client):
         """Test handling null values in profile updates."""
-        with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.api.routes.user_profile.UserProfileService') as mock_service:
+            mock_decode.return_value = self.mock_user
             mock_service_instance = Mock()
             mock_service_instance.update_user_profile.return_value = {
                 "id": "user-123-456",
@@ -874,7 +867,8 @@ class TestUserProfileEdgeCases:
                 "avatar_url": None
             }
             
-            response = self.client.put("/api/user/profile", json=update_data)
+            response = test_client.put("/api/user/profile", json=update_data, 
+                                      headers={"Authorization": "Bearer test-token"})
             
             assert response.status_code == 200
             data = response.json()
@@ -882,9 +876,11 @@ class TestUserProfileEdgeCases:
             assert data["bio"] is None
             assert data["avatar_url"] is None
     
-    def test_profile_rate_limiting(self):
+    def test_profile_rate_limiting(self, test_client):
         """Test rate limiting on profile endpoints."""
-        with patch('app.api.routes.user_profile.UserProfileService') as mock_service:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.api.routes.user_profile.UserProfileService') as mock_service:
+            mock_decode.return_value = self.mock_user
             mock_service_instance = Mock()
             mock_service_instance.update_user_profile.side_effect = ClientError(
                 {"Error": {"Code": "TooManyRequestsException"}},
@@ -894,7 +890,7 @@ class TestUserProfileEdgeCases:
             
             update_data = {"full_name": "Test"}
             
-            response = self.client.put("/api/user/profile", json=update_data)
+            response = test_client.put("/api/user/profile", json=update_data)
             
             assert response.status_code == 429
             assert "Too many requests" in response.json()["detail"]
