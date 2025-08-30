@@ -72,6 +72,14 @@ class SpaceService:
                 return self.dynamodb.Table(self.table_name)
             raise
     
+    def _ensure_table_exists(self) -> bool:
+        """Check if the DynamoDB table exists."""
+        try:
+            self.table.load()
+            return True
+        except ClientError:
+            return False
+    
     def _generate_invite_code(self) -> str:
         """Generate a unique 8-character invite code."""
         return secrets.token_urlsafe(6)[:8].upper()

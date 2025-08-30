@@ -150,6 +150,54 @@ class UserProfileService:
         
         return self._transform_profile_response(updated_profile)
     
+    def create_user_profile(self, user_id: str, profile_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Create a new user profile in DynamoDB.
+        
+        Args:
+            user_id: User ID to create profile for
+            profile_data: Dictionary containing profile fields
+            
+        Returns:
+            Dict: Created user profile data
+            
+        Raises:
+            ClientError: If DynamoDB operation fails
+        """
+        pk = f"USER#{user_id}"
+        sk = "PROFILE"
+        profile_item = {
+            'PK': pk,
+            'SK': sk,
+            'id': user_id,
+            'created_at': datetime.now(timezone.utc).isoformat(),
+            'updated_at': datetime.now(timezone.utc).isoformat(),
+            'is_active': True,
+            'is_verified': False,
+            'onboarding_completed': False,
+            'onboarding_step': 0,
+            **profile_data
+        }
+        self.db.put_item(profile_item)
+        return self._transform_profile_response(profile_item)
+    
+    def delete_user_profile(self, user_id: str) -> bool:
+        """
+        Delete a user profile from DynamoDB.
+        
+        Args:
+            user_id: User ID to delete profile for
+            
+        Returns:
+            bool: True if deletion was successful
+            
+        Raises:
+            ClientError: If DynamoDB operation fails
+        """
+        pk = f"USER#{user_id}"
+        sk = "PROFILE"
+        return self.db.delete_item(pk, sk)
+    
     def _transform_profile_response(self, profile: Dict[str, Any]) -> Dict[str, Any]:
         """
         Transform DynamoDB item to API response format.

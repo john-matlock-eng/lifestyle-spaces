@@ -57,18 +57,22 @@ class UserProfileBase(BaseModel):
     
     @field_validator('bio')
     @classmethod
-    def sanitize_bio(cls, v):
+    def validate_bio(cls, v):
         if v:
+            # Strip whitespace first
+            v = v.strip()
             # Remove script tags to prevent XSS
             v = re.sub(r'<script[^>]*>.*?</script>', '', v, flags=re.IGNORECASE | re.DOTALL)
             v = re.sub(r'<[^>]+>', '', v)  # Remove all HTML tags
-        return v
+        return v.strip() if v else v
     
     model_config = ConfigDict(populate_by_alias=True)
 
 
 class UserProfileUpdate(UserProfileBase):
     """Model for updating user profile."""
+    username: Optional[str] = Field(None, min_length=3, max_length=50)
+    display_name: Optional[str] = Field(None, max_length=100)
     email: Optional[EmailStr] = None  # Allow email updates for validation
 
 

@@ -406,8 +406,8 @@ class TestUpdateUserProfile(TestUserProfile):
             
             response = self.client.put("/api/user/profile", json=update_data)
             
-            assert response.status_code == 500
-            assert "Failed to update user profile" in response.json()["detail"]
+            assert response.status_code == 503
+            assert "Service temporarily unavailable" in response.json()["detail"]
     
     def test_update_profile_cognito_sync_error(self):
         """Test profile update with Cognito sync failure."""

@@ -159,8 +159,14 @@ async def update_user_profile(
             )
         if error_code == 'ProvisionedThroughputExceededException':
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update user profile"
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Service temporarily unavailable. Please try again later."
+            )
+        if error_code == 'ResourceInUseException':
+            # This typically indicates max retries exceeded
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Service temporarily unavailable. Please try again later."
             )
         if error_code == 'ConditionalCheckFailedException':
             # Retry once for concurrent update

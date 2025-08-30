@@ -290,3 +290,13 @@ class InvitationService:
                 ':cancelled_by': cancelled_by
             }
         )
+    
+    def validate_invite_code(self, code: str) -> bool:
+        """Validate if an invitation code is valid and not expired."""
+        invitation = self._get_invitation_by_code(code)
+        if not invitation:
+            return False
+        if invitation['status'] != 'pending':
+            return False
+        expires_at = datetime.fromisoformat(invitation['expires_at'])
+        return datetime.now(timezone.utc) <= expires_at

@@ -4,15 +4,41 @@ User management endpoints.
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import List, Optional
 from botocore.exceptions import ClientError
-from app.models.user import UserResponse, UserUpdate
+from app.models.user import UserResponse, UserUpdate, UserCreate
 from app.models.space import SpaceListResponse
 from app.services.cognito import CognitoService
 from app.services.space import SpaceService
+from app.services.user import UserService
+from app.services.exceptions import UserAlreadyExistsError, ValidationError
 from app.core.security import get_current_user
 from datetime import datetime, timezone
 
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
+
+
+@router.post("/register", response_model=UserResponse)
+async def register_user(user_data: UserCreate):
+    """Register a new user."""
+    try:
+        service = UserService()
+        user = service.register_user(user_data)
+        return UserResponse(**user)
+    except UserAlreadyExistsError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to register user"
+        )
 
 
 @router.get("/profile", response_model=UserResponse)

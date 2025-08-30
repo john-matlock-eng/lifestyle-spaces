@@ -4,6 +4,7 @@ Common dependencies for FastAPI routes.
 from typing import Dict, Any
 from fastapi import Depends, HTTPException, status
 from app.core.security import get_current_user as security_get_current_user
+from app.services.cognito import CognitoService
 
 
 def get_current_user(

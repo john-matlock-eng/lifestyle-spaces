@@ -35,3 +35,12 @@ class PaginationParams(BaseModel):
         if v < 1 or v > 100:
             raise ValueError("Page size must be between 1 and 100")
         return v
+
+
+class PaginationResponse(BaseModel):
+    """Paginated response model."""
+    items: list = Field(description="List of items in the current page")
+    total: int = Field(description="Total number of items across all pages")
+    page: int = Field(description="Current page number")
+    page_size: int = Field(description="Number of items per page")
+    has_next: bool = Field(description="Whether there are more pages available")
