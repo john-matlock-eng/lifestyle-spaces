@@ -271,7 +271,7 @@ class TestUsersRouteCoverage:
                 )
             
             assert exc_info.value.status_code == 500
-            assert "Failed to get user spaces" in exc_info.value.detail
+            assert "Database error:" in exc_info.value.detail
 
 
 class TestConfigCoverage:

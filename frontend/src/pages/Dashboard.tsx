@@ -15,7 +15,7 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     loadSpaces();
-  }, []); // Empty dependency array - loadSpaces is stable and should only run on mount
+  }, [loadSpaces]); // Include loadSpaces in dependency array to satisfy ESLint
 
   const handleSpaceClick = (space: Space) => {
     navigate(`/space/${space.spaceId}`);

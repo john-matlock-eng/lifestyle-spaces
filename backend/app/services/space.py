@@ -4,6 +4,7 @@ Space management service with DynamoDB.
 import os
 import uuid
 import secrets
+import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 import boto3
@@ -19,14 +20,20 @@ from app.services.exceptions import (
     ValidationError
 )
 
+logger = logging.getLogger(__name__)
+
 
 class SpaceService:
     """Service for space management operations."""
     
     def __init__(self):
         """Initialize DynamoDB client and table."""
-        self.dynamodb = boto3.resource('dynamodb', region_name=os.getenv('AWS_REGION', 'us-east-1'))
+        aws_region = os.getenv('AWS_REGION', 'us-east-1')
         self.table_name = os.getenv('DYNAMODB_TABLE', 'lifestyle-spaces')
+        
+        logger.info(f"Initializing SpaceService with table: {self.table_name}, region: {aws_region}")
+        
+        self.dynamodb = boto3.resource('dynamodb', region_name=aws_region)
         self.table = self._get_or_create_table()
     
     def _get_or_create_table(self):
@@ -272,11 +279,20 @@ class SpaceService:
                         search: Optional[str] = None, is_public: Optional[bool] = None,
                         role: Optional[str] = None) -> Dict[str, Any]:
         """List spaces for a user with pagination/filters."""
-        # Query GSI1 for user's spaces
-        response = self.table.query(
-            IndexName='GSI1',
-            KeyConditionExpression=Key('GSI1PK').eq(f'USER#{user_id}') & Key('GSI1SK').begins_with('SPACE#')
-        )
+        logger.info(f"list_user_spaces called - user_id: {user_id}, page: {page}, page_size: {page_size}")
+        logger.info(f"Filters - search: {search}, is_public: {is_public}, role: {role}")
+        
+        try:
+            # Query GSI1 for user's spaces
+            logger.info(f"Querying GSI1 with GSI1PK=USER#{user_id}")
+            response = self.table.query(
+                IndexName='GSI1',
+                KeyConditionExpression=Key('GSI1PK').eq(f'USER#{user_id}') & Key('GSI1SK').begins_with('SPACE#')
+            )
+            logger.info(f"GSI1 query returned {len(response.get('Items', []))} items")
+        except Exception as e:
+            logger.error(f"Error querying GSI1: {str(e)}", exc_info=True)
+            raise
         
         spaces = []
         for item in response.get('Items', []):

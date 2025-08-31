@@ -1,6 +1,7 @@
 """
 User management endpoints.
 """
+import logging
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import List, Optional
 from botocore.exceptions import ClientError
@@ -12,6 +13,8 @@ from app.services.user import UserService
 from app.services.exceptions import UserAlreadyExistsError, ValidationError
 from app.core.dependencies import get_current_user
 from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
@@ -99,6 +102,9 @@ async def get_user_spaces(
     current_user: dict = Depends(get_current_user)
 ):
     """Get spaces for current user with pagination/filters."""
+    logger.info(f"Getting spaces for user: {current_user.get('sub', 'unknown')}")
+    logger.info(f"Query params - limit: {limit}, offset: {offset}, search: {search}, isPublic: {isPublic}, role: {role}")
+    
     try:
         service = SpaceService()
         
@@ -109,6 +115,8 @@ async def get_user_spaces(
         page = (offset // limit) + 1 if limit > 0 else 1
         page_size = limit
         
+        logger.info(f"Calling SpaceService.list_user_spaces with user_id={current_user.get('sub', '')}, page={page}, page_size={page_size}")
+        
         result = service.list_user_spaces(
             user_id=current_user.get("sub", ""),
             page=page,
@@ -117,6 +125,8 @@ async def get_user_spaces(
             is_public=isPublic,
             role=role
         )
+        
+        logger.info(f"SpaceService returned {result.get('total', 0)} total spaces")
         
         # Calculate if there are more results
         total_pages = (result["total"] + page_size - 1) // page_size if page_size > 0 else 1
@@ -128,17 +138,22 @@ async def get_user_spaces(
         
         return SpaceListResponse(**result)
     except ClientError as e:
-        if e.response['Error']['Code'] == 'ProvisionedThroughputExceededException':
+        error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+        error_message = e.response.get('Error', {}).get('Message', str(e))
+        logger.error(f"AWS ClientError in get_user_spaces: {error_code} - {error_message}", exc_info=True)
+        
+        if error_code == 'ProvisionedThroughputExceededException':
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database throughput exceeded"
             )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get user spaces"
+            detail=f"Database error: {error_message}"
         )
     except Exception as e:
+        logger.error(f"Unexpected error in get_user_spaces: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get user spaces"
+            detail=f"Failed to get user spaces: {str(e)}"
         )

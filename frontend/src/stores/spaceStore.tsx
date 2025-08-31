@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, type ReactNode } from 'react';
 import { 
   createSpace, 
   listSpaces, 
@@ -186,7 +186,7 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
     }
   };
 
-  const handleLoadSpaces = async (
+  const handleLoadSpaces = useCallback(async (
     filters: SpaceFilters = {}, 
     pagination: PaginationParams = {}
   ): Promise<void> => {
@@ -200,9 +200,9 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load spaces';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
     }
-  };
+  }, []);
 
-  const handleSelectSpace = async (spaceId: string): Promise<void> => {
+  const handleSelectSpace = useCallback(async (spaceId: string): Promise<void> => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
@@ -218,7 +218,7 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load space';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
     }
-  };
+  }, []);
 
   const handleInviteMember = async (data: InvitationData): Promise<Invitation> => {
     try {
@@ -265,7 +265,7 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
     }
   };
 
-  const handleLoadPendingInvitations = async (): Promise<void> => {
+  const handleLoadPendingInvitations = useCallback(async (): Promise<void> => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
@@ -276,11 +276,11 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load invitations';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
     }
-  };
+  }, []);
 
-  const handleClearError = (): void => {
+  const handleClearError = useCallback((): void => {
     dispatch({ type: 'CLEAR_ERROR' });
-  };
+  }, []);
 
   const contextValue: SpaceContextType = {
     ...state,

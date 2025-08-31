@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, type ReactNode } from 'react';
 import { signIn, signOut, getCurrentUser, signUp, refreshToken, configureAmplify } from '../services/auth';
 import type { SignInData, SignUpData, User, AuthState } from '../types';
 
@@ -88,12 +88,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  // Check for existing authentication on mount
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const user = await getCurrentUser();
@@ -101,7 +96,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch {
       dispatch({ type: 'SET_USER', payload: null });
     }
-  };
+  }, []);
+
+  // Check for existing authentication on mount
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const handleSignIn = async (data: SignInData): Promise<void> => {
     try {
