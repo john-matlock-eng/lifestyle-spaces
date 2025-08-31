@@ -54,7 +54,10 @@ resource "aws_iam_policy" "lambda_dynamodb_policy" {
           "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem"
         ]
-        Resource = var.dynamodb_table_arn
+        Resource = [
+          var.dynamodb_table_arn,
+          "${var.dynamodb_table_arn}/*"
+        ]
       }
     ]
   })
