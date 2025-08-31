@@ -13,33 +13,34 @@ class TestEdgeCases:
     
     def test_get_current_user_with_credentials_object(self):
         """Test get_current_user with HTTPAuthorizationCredentials object."""
-        from app.core.dependencies import get_current_user, create_access_token
+        from app.core.cognito_auth import get_current_user_cognito
+        from app.core.security import create_access_token
         
         # Create valid token
         token = create_access_token({"sub": "user999", "email": "edge@test.com"})
         
         # Test with HTTPAuthorizationCredentials object
         creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
-        user = get_current_user(creds)
+        user = get_current_user_cognito(creds)
         assert user["sub"] == "user999"
         assert user["email"] == "edge@test.com"
         
         # Test with None credentials (should raise)
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(None)
+            get_current_user_cognito(None)
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Not authenticated"
         
         # Test with invalid scheme in string format
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user("Basic dGVzdDp0ZXN0")  # Basic auth instead of Bearer
+            get_current_user_cognito("Basic dGVzdDp0ZXN0")  # Basic auth instead of Bearer
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Invalid authentication format"
         
         # Test with HTTPAuthorizationCredentials with invalid token
         invalid_creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials="bad.token.here")
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(invalid_creds)
+            get_current_user_cognito(invalid_creds)
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Invalid or expired token"
     

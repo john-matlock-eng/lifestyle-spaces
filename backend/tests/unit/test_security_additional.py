@@ -52,7 +52,7 @@ class TestSecurityAdditional:
     
     def test_get_current_user_optional(self):
         """Test optional authentication dependency."""
-        from app.core.dependencies import get_current_user_optional, create_access_token
+        from app.core.security import get_current_user_optional, create_access_token
         from fastapi.security import HTTPAuthorizationCredentials
         
         # Test with no credentials
