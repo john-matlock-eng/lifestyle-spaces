@@ -15,12 +15,8 @@ def test_lifespan_context_manager():
     from app.main import lifespan
     from app.core.config import settings
     
-    # Capture print output
-    import io
-    old_stdout = sys.stdout
-    sys.stdout = buffer = io.StringIO()
-    
-    try:
+    # Mock the logger instead of capturing stdout
+    with patch('app.main.logger') as mock_logger:
         # Create async function to test the lifespan
         async def run_lifespan():
             app = Mock()
@@ -30,17 +26,14 @@ def test_lifespan_context_manager():
         # Run the async function
         asyncio.run(run_lifespan())
         
-        # Get output
-        output = buffer.getvalue()
+        # Verify logger.info was called with expected messages
+        calls = [str(call) for call in mock_logger.info.call_args_list]
         
-        # Verify print statements were executed
-        assert "Starting Lifestyle Spaces API" in output
-        assert f"Environment: {settings.environment}" in output
-        assert f"DynamoDB Table: {settings.dynamodb_table}" in output
-        assert "Shutting down Lifestyle Spaces API" in output
-        
-    finally:
-        sys.stdout = old_stdout
+        # Check that the expected log messages were called
+        mock_logger.info.assert_any_call(f"Starting Lifestyle Spaces API v{__import__('app').__version__}")
+        mock_logger.info.assert_any_call(f"Environment: {settings.environment}")
+        mock_logger.info.assert_any_call(f"DynamoDB Table: {settings.dynamodb_table}")
+        mock_logger.info.assert_any_call("Shutting down Lifestyle Spaces API")
 
 
 def test_config_cors_allowed_origins():

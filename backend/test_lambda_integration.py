@@ -51,7 +51,7 @@ def test_health_check():
     assert body['status'] == 'healthy'
     assert 'Access-Control-Allow-Origin' in response['headers']
     
-    print("\n✅ Health check test passed!")
+    print("\n[SUCCESS] Health check test passed!")
 
 def test_api_endpoint():
     """Test a regular API endpoint through Lambda."""
@@ -82,7 +82,7 @@ def test_api_endpoint():
     # Verify CORS headers are present
     assert 'Access-Control-Allow-Origin' in response['headers']
     
-    print("\n✅ API endpoint test passed!")
+    print("\n[SUCCESS] API endpoint test passed!")
 
 def test_error_handling():
     """Test error handling in Lambda."""
@@ -112,10 +112,10 @@ def test_error_handling():
     assert response['statusCode'] in [404, 500], f"Expected 404 or 500, got {response['statusCode']}"
     assert 'Access-Control-Allow-Origin' in response['headers']
     
-    print("\n✅ Error handling test passed!")
+    print("\n[SUCCESS] Error handling test passed!")
 
 if __name__ == "__main__":
-    print("🧪 Testing Lambda Handler Integration with FastAPI\n")
+    print("[TEST] Testing Lambda Handler Integration with FastAPI\n")
     print("=" * 50)
     
     try:
@@ -124,14 +124,14 @@ if __name__ == "__main__":
         test_error_handling()
         
         print("\n" + "=" * 50)
-        print("✅ All tests passed! Lambda handler is working correctly.")
+        print("[SUCCESS] All tests passed! Lambda handler is working correctly.")
         print("\nNext steps:")
         print("1. Run 'python build_lambda_package.py' to create deployment package")
         print("2. Run 'make test' to run full test suite")
         print("3. Deploy via GitHub Actions")
         
     except Exception as e:
-        print(f"\n❌ Test failed: {e}")
+        print(f"\n[ERROR] Test failed: {e}")
         print("\nMake sure you have installed dependencies:")
         print("  pip install -r requirements.txt")
         sys.exit(1)

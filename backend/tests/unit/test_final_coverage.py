@@ -10,33 +10,24 @@ import os
 # Test app/main.py lines 16-21 (lifespan function)
 @pytest.mark.asyncio
 async def test_main_lifespan():
-    """Test the lifespan context manager prints."""
+    """Test the lifespan context manager logs."""
     from app.main import lifespan
-    import io
-    import sys
+    from app.core.config import settings
     
     # Mock the app
     app = Mock()
     
-    # Capture stdout
-    old_stdout = sys.stdout
-    sys.stdout = buffer = io.StringIO()
-    
-    try:
+    # Mock the logger
+    with patch('app.main.logger') as mock_logger:
         # Use the async context manager
         async with lifespan(app):
-            startup_output = buffer.getvalue()
-            # Check that startup print statements were executed
-            assert "Starting Lifestyle Spaces API" in startup_output
-            assert "Environment:" in startup_output
-            assert "DynamoDB Table:" in startup_output
+            # Check that startup log statements were executed
+            mock_logger.info.assert_any_call(f"Starting Lifestyle Spaces API v{__import__('app').__version__}")
+            mock_logger.info.assert_any_call(f"Environment: {settings.environment}")
+            mock_logger.info.assert_any_call(f"DynamoDB Table: {settings.dynamodb_table}")
         
         # After exiting the context, shutdown should have been called
-        final_output = buffer.getvalue()
-        assert "Shutting down Lifestyle Spaces API" in final_output
-        
-    finally:
-        sys.stdout = old_stdout
+        mock_logger.info.assert_any_call("Shutting down Lifestyle Spaces API")
 
 
 # Test app/services/space.py remaining lines

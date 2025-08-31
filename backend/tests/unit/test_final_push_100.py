@@ -663,29 +663,17 @@ class TestMainLifespan:
     @pytest.mark.asyncio
     async def test_lifespan_startup_shutdown(self):
         """Test lines 16-21 - Application lifespan events"""
-        import sys
-        import io
-        
-        # Capture print output
-        old_stdout = sys.stdout
-        sys.stdout = buffer = io.StringIO()
-        
-        try:
+        # Mock the logger
+        with patch('app.main.logger') as mock_logger:
             # Use the async context manager
             async with lifespan(None):
                 pass
             
-            # Get captured output
-            output = buffer.getvalue()
-            
-            # Check printed output
-            assert "Starting Lifestyle Spaces API" in output
-            assert f"Environment: {settings.environment}" in output
-            assert f"DynamoDB Table: {settings.dynamodb_table}" in output
-            assert "Shutting down Lifestyle Spaces API" in output
-            
-        finally:
-            sys.stdout = old_stdout
+            # Check logged output
+            mock_logger.info.assert_any_call(f"Starting Lifestyle Spaces API v{__import__('app').__version__}")
+            mock_logger.info.assert_any_call(f"Environment: {settings.environment}")
+            mock_logger.info.assert_any_call(f"DynamoDB Table: {settings.dynamodb_table}")
+            mock_logger.info.assert_any_call("Shutting down Lifestyle Spaces API")
 
 
 # Additional edge case tests for complete coverage
