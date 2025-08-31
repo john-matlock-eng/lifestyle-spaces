@@ -14,7 +14,7 @@ from app.services.space import SpaceService
 from app.services.exceptions import (
     SpaceNotFoundError, UnauthorizedError, ValidationError
 )
-from app.core.security import get_current_user
+from app.core.dependencies import get_current_user
 
 
 router = APIRouter(prefix="/api/spaces", tags=["Spaces"])

@@ -7,7 +7,7 @@ from app.models.user import UserCreate, UserResponse, LoginRequest, TokenRespons
 from app.models.common import SuccessResponse
 from app.services.cognito import CognitoService
 from app.services.exceptions import UserAlreadyExistsError, InvalidCredentialsError
-from app.core.security import get_current_user
+from app.core.dependencies import get_current_user
 from pydantic import BaseModel
 
 

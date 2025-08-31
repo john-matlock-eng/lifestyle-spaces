@@ -10,7 +10,7 @@ from app.services.cognito import CognitoService
 from app.services.space import SpaceService
 from app.services.user import UserService
 from app.services.exceptions import UserAlreadyExistsError, ValidationError
-from app.core.security import get_current_user
+from app.core.dependencies import get_current_user
 from datetime import datetime, timezone
 
 

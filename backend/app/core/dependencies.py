@@ -3,12 +3,12 @@ Common dependencies for FastAPI routes.
 """
 from typing import Dict, Any
 from fastapi import Depends, HTTPException, status
-from app.core.security import get_current_user as security_get_current_user
+from app.core.cognito_auth import get_current_user_cognito
 from app.services.cognito import CognitoService
 
 
 def get_current_user(
-    current_user: Dict[str, Any] = Depends(security_get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user_cognito)
 ) -> Dict[str, Any]:
     """
     Get the current authenticated user.

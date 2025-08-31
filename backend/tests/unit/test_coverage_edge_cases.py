@@ -13,7 +13,7 @@ class TestEdgeCases:
     
     def test_get_current_user_with_credentials_object(self):
         """Test get_current_user with HTTPAuthorizationCredentials object."""
-        from app.core.security import get_current_user, create_access_token
+        from app.core.dependencies import get_current_user, create_access_token
         
         # Create valid token
         token = create_access_token({"sub": "user999", "email": "edge@test.com"})

@@ -12,7 +12,7 @@ class TestUsersRoutes:
     def setup_method(self):
         """Set up test client and mocks."""
         from app.main import app
-        from app.core.security import get_current_user
+        from app.core.dependencies import get_current_user
         
         self.app = app
         self.client = TestClient(app)

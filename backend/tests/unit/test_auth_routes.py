@@ -163,7 +163,7 @@ class TestAuthEndpoints:
     def test_signout_success(self):
         """Test user signout."""
         from app.main import app
-        from app.core.security import get_current_user
+        from app.core.dependencies import get_current_user
         
         # Override the dependency
         def override_get_current_user():
@@ -269,7 +269,7 @@ class TestAuthEndpoints:
     def test_signout_generic_error(self):
         """Test signout with generic error."""
         from app.main import app
-        from app.core.security import get_current_user
+        from app.core.dependencies import get_current_user
         
         # Override the dependency to return a user
         def override_get_current_user():

@@ -19,6 +19,7 @@ email-validator==2.2.0
 # CORS and HTTP utilities
 python-dotenv==1.0.0
 httpx==0.25.2
+requests==2.31.0
 
 # Date/time utilities
 pytz==2023.3.post1

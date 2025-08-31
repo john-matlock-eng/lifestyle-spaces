@@ -53,7 +53,7 @@ class TestSecurity:
     
     def test_get_current_user_dependency(self):
         """Test the get_current_user dependency."""
-        from app.core.security import get_current_user, create_access_token
+        from app.core.dependencies import get_current_user, create_access_token
         from fastapi import HTTPException
         
         # Test with valid token
