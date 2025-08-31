@@ -86,11 +86,40 @@ def handler(event, context):
             }
         
         # Process request through FastAPI
-        response = mangum_handler(event, context)
+        try:
+            response = mangum_handler(event, context)
+        except Exception as app_error:
+            # Log the actual FastAPI/application error
+            logger.error(f"FastAPI application error: {str(app_error)}", exc_info=True)
+            
+            # Return error response with details in dev
+            return {
+                'statusCode': 500,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
+                },
+                'body': json.dumps({
+                    'error': 'Internal server error',
+                    'message': str(app_error) if event.get('stage') == 'dev' else 'An error occurred',
+                    'path': event.get('path', '/'),
+                    'method': event.get('httpMethod', 'UNKNOWN')
+                })
+            }
         
         # Log response status for debugging
         status_code = response.get('statusCode', 0)
-        logger.info(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code}")
+        
+        # Log error responses with more detail
+        if status_code >= 500:
+            body = response.get('body', '')
+            logger.error(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code} - Response: {body[:500]}")
+        elif status_code >= 400:
+            logger.warning(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code}")
+        else:
+            logger.info(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code}")
         
         # Ensure CORS headers are always present
         if 'headers' not in response:
