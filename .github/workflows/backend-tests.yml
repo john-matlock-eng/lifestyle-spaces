@@ -65,14 +65,16 @@ jobs:
         file: ./backend/coverage.xml
         flags: backend
         fail_ci_if_error: false
-
-    - name: Comment coverage on PR
-      if: github.event_name == 'pull_request'
-      uses: py-cov-action/python-coverage-comment-action@v3
-      with:
-        GITHUB_TOKEN: ${{ github.token }}
-        MINIMUM_GREEN: 95
-        MINIMUM_ORANGE: 85
+    
+    # Coverage comment action temporarily disabled due to Docker image issues
+    # TODO: Re-enable when py-cov-action fixes their Docker image
+    # - name: Comment coverage on PR
+    #   if: github.event_name == 'pull_request'
+    #   uses: py-cov-action/python-coverage-comment-action@v3
+    #   with:
+    #     GITHUB_TOKEN: ${{ github.token }}
+    #     MINIMUM_GREEN: 95
+    #     MINIMUM_ORANGE: 85
         
   deploy:
     needs: test

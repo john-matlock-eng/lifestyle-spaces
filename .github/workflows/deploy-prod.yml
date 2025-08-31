@@ -116,10 +116,14 @@ jobs:
       
       - name: Terraform Plan
         working-directory: terraform/environments/prod
+        env:
+          TF_VAR_jwt_secret_key: ${{ secrets.JWT_SECRET_KEY_PROD }}
         run: terraform plan -out=tfplan
       
       - name: Terraform Apply
         working-directory: terraform/environments/prod
+        env:
+          TF_VAR_jwt_secret_key: ${{ secrets.JWT_SECRET_KEY_PROD }}
         run: terraform apply tfplan
       
       - name: Get Terraform Outputs

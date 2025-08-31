@@ -37,6 +37,22 @@ variable "cors_origins" {
   default     = "*"
 }
 
+variable "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  type        = string
+}
+
+variable "cognito_user_pool_client_id" {
+  description = "Cognito User Pool Client ID"
+  type        = string
+}
+
+variable "jwt_secret_key" {
+  description = "JWT secret key for token signing"
+  type        = string
+  sensitive   = true
+}
+
 variable "log_retention_days" {
   description = "Number of days to retain CloudWatch logs"
   type        = number

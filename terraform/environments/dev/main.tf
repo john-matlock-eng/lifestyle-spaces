@@ -62,18 +62,21 @@ module "database" {
 module "backend" {
   source = "../../modules/backend"
 
-  project_name        = var.project_name
-  environment         = var.environment
-  region              = var.aws_region
-  lambda_zip_path     = local.lambda_zip_path
-  dynamodb_table_name = module.database.dynamodb_table_name
-  dynamodb_table_arn  = module.database.dynamodb_table_arn
-  cors_origins        = var.cors_origins
-  log_retention_days  = var.log_retention_days
+  project_name                = var.project_name
+  environment                 = var.environment
+  region                      = var.aws_region
+  lambda_zip_path             = local.lambda_zip_path
+  dynamodb_table_name         = module.database.dynamodb_table_name
+  dynamodb_table_arn          = module.database.dynamodb_table_arn
+  cors_origins                = var.cors_origins
+  cognito_user_pool_id        = module.cognito.user_pool_id
+  cognito_user_pool_client_id = module.cognito.user_pool_client_id
+  jwt_secret_key              = var.jwt_secret_key
+  log_retention_days          = var.log_retention_days
 
   tags = local.common_tags
 
-  depends_on = [module.database]
+  depends_on = [module.database, module.cognito]
 }
 
 # Frontend Module

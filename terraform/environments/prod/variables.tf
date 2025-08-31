@@ -56,6 +56,13 @@ variable "log_retention_days" {
   default     = 30 # Longer retention for production
 }
 
+variable "jwt_secret_key" {
+  description = "JWT secret key for token signing (use a strong secret in production)"
+  type        = string
+  sensitive   = true
+  # No default for production - must be provided via environment variable or secrets manager
+}
+
 # Frontend Configuration
 variable "enable_s3_versioning" {
   description = "Enable S3 bucket versioning"

@@ -71,6 +71,8 @@ jobs:
       
       - name: Terraform Plan
         working-directory: terraform/environments/${{ github.event.inputs.environment }}
+        env:
+          TF_VAR_jwt_secret_key: ${{ secrets.JWT_SECRET_KEY }}
         run: |
           terraform plan -out=tfplan
           terraform show -no-color tfplan > plan.txt
@@ -84,6 +86,8 @@ jobs:
       - name: Terraform Apply
         if: github.event.inputs.auto_approve == 'true' || github.event.inputs.environment == 'dev'
         working-directory: terraform/environments/${{ github.event.inputs.environment }}
+        env:
+          TF_VAR_jwt_secret_key: ${{ secrets.JWT_SECRET_KEY }}
         run: terraform apply tfplan
       
       - name: Capture Outputs

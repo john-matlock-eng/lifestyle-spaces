@@ -32,8 +32,27 @@ def handler(event, context):
         API Gateway proxy response
     """
     try:
-        # Log the incoming event for debugging (remove in production for cost savings)
-        logger.info(f"Received event: {json.dumps(event, default=str)[:500]}")
+        # Sanitize event for logging - remove sensitive data
+        safe_event = event.copy()
+        if 'headers' in safe_event and safe_event['headers']:
+            safe_headers = safe_event['headers'].copy()
+            # Remove sensitive headers
+            sensitive_headers = ['Authorization', 'authorization', 'Cookie', 'cookie', 
+                               'X-Api-Key', 'x-api-key', 'X-Auth-Token', 'x-auth-token']
+            for header in sensitive_headers:
+                if header in safe_headers:
+                    safe_headers[header] = '[REDACTED]'
+            safe_event['headers'] = safe_headers
+        
+        if 'multiValueHeaders' in safe_event and safe_event['multiValueHeaders']:
+            safe_mv_headers = safe_event['multiValueHeaders'].copy()
+            for header in ['Authorization', 'authorization', 'Cookie', 'cookie']:
+                if header in safe_mv_headers:
+                    safe_mv_headers[header] = ['[REDACTED]']
+            safe_event['multiValueHeaders'] = safe_mv_headers
+        
+        # Log the sanitized event for debugging
+        logger.info(f"Received request: {event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')}")
         
         # Handle OPTIONS requests directly for CORS preflight
         if event.get('httpMethod') == 'OPTIONS':
@@ -68,6 +87,10 @@ def handler(event, context):
         
         # Process request through FastAPI
         response = mangum_handler(event, context)
+        
+        # Log response status for debugging
+        status_code = response.get('statusCode', 0)
+        logger.info(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code}")
         
         # Ensure CORS headers are always present
         if 'headers' not in response:
