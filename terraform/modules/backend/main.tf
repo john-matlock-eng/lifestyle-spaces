@@ -80,15 +80,15 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      ENVIRONMENT                = var.environment
-      DYNAMODB_TABLE_NAME        = var.dynamodb_table_name
-      CORS_ORIGINS               = var.cors_origins
-      COGNITO_USER_POOL_ID       = var.cognito_user_pool_id
+      ENVIRONMENT                 = var.environment
+      DYNAMODB_TABLE_NAME         = var.dynamodb_table_name
+      CORS_ORIGINS                = var.cors_origins
+      COGNITO_USER_POOL_ID        = var.cognito_user_pool_id
       COGNITO_USER_POOL_CLIENT_ID = var.cognito_user_pool_client_id
-      JWT_SECRET_KEY             = var.jwt_secret_key
-      JWT_ALGORITHM              = "HS256"
+      JWT_SECRET_KEY              = var.jwt_secret_key
+      JWT_ALGORITHM               = "HS256"
       ACCESS_TOKEN_EXPIRE_MINUTES = "30"
-      DYNAMODB_TABLE             = var.dynamodb_table_name
+      DYNAMODB_TABLE              = var.dynamodb_table_name
     }
   }
 
