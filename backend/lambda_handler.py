@@ -237,8 +237,10 @@ def handler(event, context):
                     response['body'] = json.dumps(final_body)
         else:
             logger.error(f"BODY IS EMPTY! Value: {repr(final_body)}")
-            # Set an empty JSON object as body for debugging
-            response['body'] = json.dumps({"error": "Empty response body"})
+            # Only add error message for non-204 responses
+            if response.get('statusCode') != 204:
+                # Set an empty JSON object as body for debugging
+                response['body'] = json.dumps({"error": "Empty response body"})
         
         # Log the complete response structure for API Gateway proxy integration
         logger.info(f"Response structure matches API Gateway proxy format: {all(k in response for k in ['statusCode', 'headers', 'body'])}")
