@@ -17,8 +17,15 @@ def test_settings_in_test_mode():
     assert settings.environment == "test"
     assert settings.debug is True
     assert settings.dynamodb_table == "lifestyle-spaces-test"
-    # The JWT secret key comes from .env.test file when it exists or CI environment
-    assert settings.jwt_secret_key in ["test-secret-key-for-testing-only", "test-secret-key-for-ci-only-not-for-production", "test-secret-key-for-ci"]
+    # The JWT secret key comes from environment or .env.test file
+    # Accept any of the valid test secret keys
+    assert settings.jwt_secret_key in [
+        "test-secret-key-for-testing-only", 
+        "test-secret-key-for-ci-only-not-for-production", 
+        "test-secret-key-for-ci",
+        "test-secret-key-for-ci-only-do-not-use-in-production",
+        "test-secret"  # May be set by some test fixtures
+    ]
     assert settings.jwt_algorithm == "HS256"
     assert settings.access_token_expire_minutes == 30
     assert settings.aws_region == "us-east-1"

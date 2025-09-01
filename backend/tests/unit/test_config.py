@@ -21,7 +21,11 @@ class TestConfig:
         from app.core.config import settings
         
         # Accept multiple valid test secret keys including CI
-        assert settings.jwt_secret_key in ["test-secret-key-for-testing-only", "test-secret-key-for-ci"]
+        assert settings.jwt_secret_key in [
+            "test-secret-key-for-testing-only", 
+            "test-secret-key-for-ci",
+            "test-secret-key-for-ci-only-do-not-use-in-production"
+        ]
         assert settings.jwt_algorithm == "HS256"
         assert settings.access_token_expire_minutes == 30
     

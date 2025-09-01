@@ -16,13 +16,18 @@ pytest_plugins = ('pytest_asyncio',)
 @pytest.fixture
 def test_client():
     """Create a test client for the FastAPI app."""
+    # Clear settings cache before creating test client
+    from app.core.config import get_settings
+    get_settings.cache_clear()
+    
     # Mock AWS services before importing the app
     with patch.dict(os.environ, {
         'AWS_REGION': 'us-east-1',
         'DYNAMODB_TABLE_NAME': 'test-table',
         'USER_POOL_ID': 'test-pool-id',
         'USER_POOL_CLIENT_ID': 'test-client-id',
-        'ENVIRONMENT': 'test'
+        'ENVIRONMENT': 'test',
+        'PYTEST_CURRENT_TEST': 'true'
     }):
         # Mock boto3 clients
         with patch('boto3.client') as mock_boto_client:
@@ -38,7 +43,7 @@ def test_client():
             
             mock_boto_client.side_effect = client_factory
             
-            # Import app after mocking
+            # Import app after mocking and clearing cache
             from app.main import app
             client = TestClient(app)
             return client
@@ -47,4 +52,5 @@ def test_client():
 def test_environment():
     """Set test environment for all tests."""
     os.environ['ENVIRONMENT'] = 'test'
+    os.environ['PYTEST_CURRENT_TEST'] = 'true'
     yield
