@@ -4,11 +4,14 @@ export interface Space {
   spaceId: string;
   name: string;
   description: string;
+  type?: string;
   ownerId: string;
   createdAt: string;
   updatedAt: string;
   memberCount: number;
   isPublic: boolean;
+  isOwner?: boolean;
+  inviteCode?: string;
 }
 
 export interface SpaceMember {

@@ -35,7 +35,8 @@ async def create_space(
             owner_username=current_user.get("username", "")
         )
         
-        # Convert response fields to match expected format
+        # Return SpaceResponse with proper field mapping
+        # The model will handle the alias conversion (id -> spaceId)
         return SpaceResponse(
             id=result["id"],
             name=result["name"],

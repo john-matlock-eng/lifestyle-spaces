@@ -53,10 +53,33 @@ export const createSpace = async (spaceData: CreateSpaceData): Promise<Space> =>
   });
 
   // Validate response has expected Space properties
-  if (!response || typeof response !== 'object' || !('spaceId' in response)) {
-    throw new Error('Invalid space data received from API');
+  if (!response || typeof response !== 'object') {
+    throw new Error('Invalid response format from API');
   }
-  return response as Space;
+
+  const requiredFields = ['spaceId', 'name', 'ownerId', 'createdAt', 'updatedAt'];
+  for (const field of requiredFields) {
+    if (!(field in response)) {
+      throw new Error(`Missing required field '${field}' in space response`);
+    }
+  }
+
+  // Validate field types
+  const spaceResponse = response as Space;
+  if (typeof spaceResponse.spaceId !== 'string' || !spaceResponse.spaceId) {
+    throw new Error('Invalid spaceId in response');
+  }
+  if (typeof spaceResponse.name !== 'string' || !spaceResponse.name) {
+    throw new Error('Invalid name in response');
+  }
+  if (typeof spaceResponse.ownerId !== 'string' || !spaceResponse.ownerId) {
+    throw new Error('Invalid ownerId in response');
+  }
+  if (typeof spaceResponse.isPublic !== 'boolean') {
+    throw new Error('Invalid isPublic value in response');
+  }
+
+  return spaceResponse;
 };
 
 /**

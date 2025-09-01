@@ -160,7 +160,7 @@ class TestUsersRoutes:
             assert data["spaces"][0]["name"] == "Test Space"
             assert data["total"] == 1
             assert data["page"] == 1
-            assert data["page_size"] == 20
+            assert data["pageSize"] == 20
     
     def test_get_user_spaces_with_pagination(self):
         """Test user spaces retrieval with pagination parameters."""
@@ -181,7 +181,7 @@ class TestUsersRoutes:
             assert response.status_code == 200
             data = response.json()
             assert data["page"] == 2
-            assert data["page_size"] == 10
+            assert data["pageSize"] == 10
             assert data["total"] == 0
             
             # Verify the service was called with correct parameters

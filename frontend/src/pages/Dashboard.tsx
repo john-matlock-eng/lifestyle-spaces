@@ -27,6 +27,7 @@ export const Dashboard: React.FC = () => {
 
   const handleSpaceCreated = (space: Space) => {
     setIsCreateModalOpen(false);
+    // The spaces list is automatically updated via the store's ADD_SPACE action
     // Navigate to the newly created space
     navigate(`/space/${space.spaceId}`);
   };

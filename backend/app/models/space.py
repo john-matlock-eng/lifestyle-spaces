@@ -3,7 +3,7 @@ Space-related Pydantic models.
 """
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, Field, field_validator, ConfigDict, field_serializer
 
 
 class SpaceBase(BaseModel):
@@ -76,10 +76,26 @@ class SpaceResponse(BaseModel):
     is_owner: Optional[bool] = Field(False, alias="isOwner")
     invite_code: Optional[str] = Field(None, alias="inviteCode")
     
+    @field_serializer('created_at', 'updated_at')
+    def serialize_datetime(self, dt: datetime) -> str:
+        """Serialize datetime fields to ISO format."""
+        return dt.isoformat() if dt else None
+    
     model_config = ConfigDict(
         populate_by_name=True,
-        json_encoders={
-            datetime: lambda v: v.isoformat()
+        by_alias=True,
+        json_schema_extra={
+            "example": {
+                "spaceId": "123e4567-e89b-12d3-a456-426614174000",
+                "name": "My Workspace",
+                "description": "A collaborative workspace",
+                "ownerId": "user-123",
+                "createdAt": "2024-01-01T00:00:00Z",
+                "updatedAt": "2024-01-01T00:00:00Z",
+                "memberCount": 5,
+                "isPublic": False,
+                "isOwner": True
+            }
         }
     )
 
@@ -93,11 +109,14 @@ class SpaceMember(BaseModel):
     role: str
     joined_at: datetime = Field(..., alias="joinedAt")
     
+    @field_serializer('joined_at')
+    def serialize_datetime(self, dt: datetime) -> str:
+        """Serialize datetime fields to ISO format."""
+        return dt.isoformat() if dt else None
+    
     model_config = ConfigDict(
         populate_by_name=True,
-        json_encoders={
-            datetime: lambda v: v.isoformat()
-        }
+        by_alias=True
     )
     
     @field_validator("role")
@@ -114,10 +133,13 @@ class SpaceListResponse(BaseModel):
     spaces: List[SpaceResponse]
     total: int
     page: Optional[int] = Field(1)
-    page_size: Optional[int] = Field(20)
+    page_size: Optional[int] = Field(20, alias="pageSize")
     has_more: Optional[bool] = Field(False, alias="hasMore")
     
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(
+        populate_by_name=True,
+        by_alias=True
+    )
 
 
 class MembersListResponse(BaseModel):
@@ -126,4 +148,7 @@ class MembersListResponse(BaseModel):
     total: int
     has_more: bool = Field(False, alias="hasMore")
     
-    model_config = ConfigDict(populate_by_name=True)
+    model_config = ConfigDict(
+        populate_by_name=True,
+        by_alias=True
+    )

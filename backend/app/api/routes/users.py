@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import List, Optional
 from botocore.exceptions import ClientError
 from app.models.user import UserResponse, UserUpdate, UserCreate
-from app.models.space import SpaceListResponse
+from app.models.space import SpaceListResponse, SpaceResponse
 from app.services.cognito import CognitoService
 from app.services.space import SpaceService
 from app.services.user import UserService
@@ -132,11 +132,22 @@ async def get_user_spaces(
         total_pages = (result["total"] + page_size - 1) // page_size if page_size > 0 else 1
         has_more = page < total_pages
         
-        # Update result with has_more flag
-        result["has_more"] = has_more
-        result["hasMore"] = has_more  # Support both formats
+        # Convert raw space dicts to SpaceResponse models
+        space_models = []
+        for space_data in result.get("spaces", []):
+            # Remove user_role as it's not part of SpaceResponse
+            space_data_copy = space_data.copy()
+            space_data_copy.pop('user_role', None)
+            space_models.append(SpaceResponse(**space_data_copy))
         
-        return SpaceListResponse(**result)
+        # Create and return the list response
+        return SpaceListResponse(
+            spaces=space_models,
+            total=result["total"],
+            page=page,
+            page_size=page_size,
+            has_more=has_more
+        )
     except ClientError as e:
         error_code = e.response.get('Error', {}).get('Code', 'Unknown')
         error_message = e.response.get('Error', {}).get('Message', str(e))

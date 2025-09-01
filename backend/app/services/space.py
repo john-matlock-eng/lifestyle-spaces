@@ -282,6 +282,16 @@ class SpaceService:
         logger.info(f"list_user_spaces called - user_id: {user_id}, page: {page}, page_size: {page_size}")
         logger.info(f"Filters - search: {search}, is_public: {is_public}, role: {role}")
         
+        # If no user_id provided, return empty list
+        if not user_id:
+            logger.warning("No user_id provided, returning empty list")
+            return {
+                'spaces': [],
+                'total': 0,
+                'page': page,
+                'page_size': page_size
+            }
+        
         try:
             # Query GSI1 for user's spaces
             logger.info(f"Querying GSI1 with GSI1PK=USER#{user_id}")
@@ -290,8 +300,17 @@ class SpaceService:
                 KeyConditionExpression=Key('GSI1PK').eq(f'USER#{user_id}') & Key('GSI1SK').begins_with('SPACE#')
             )
             logger.info(f"GSI1 query returned {len(response.get('Items', []))} items")
-        except Exception as e:
+        except ClientError as e:
             logger.error(f"Error querying GSI1: {str(e)}", exc_info=True)
+            # Return empty list on error instead of raising
+            return {
+                'spaces': [],
+                'total': 0,
+                'page': page,
+                'page_size': page_size
+            }
+        except Exception as e:
+            logger.error(f"Unexpected error querying GSI1: {str(e)}", exc_info=True)
             raise
         
         spaces = []
@@ -332,7 +351,9 @@ class SpaceService:
                 )
                 member_count = len(members_response.get('Items', []))
                 
-                # Build space object
+                # Build space object with proper field names
+                # Note: These match the internal field names, not aliases
+                # The SpaceResponse model will handle the alias conversion
                 space_obj = {
                     'id': space['id'],
                     'name': space['name'],
@@ -343,6 +364,7 @@ class SpaceService:
                     'created_at': space['created_at'],
                     'updated_at': space['updated_at'],
                     'member_count': member_count,
+                    'is_owner': space['owner_id'] == user_id,  # Add is_owner field
                     'user_role': user_role
                 }
                 spaces.append(space_obj)
@@ -357,6 +379,8 @@ class SpaceService:
         start = (page - 1) * page_size
         end = start + page_size
         paginated_spaces = spaces[start:end]
+        
+        logger.info(f"Returning {len(paginated_spaces)} spaces out of {len(spaces)} total")
         
         return {
             'spaces': paginated_spaces,
