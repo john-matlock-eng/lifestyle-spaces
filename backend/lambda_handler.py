@@ -112,14 +112,26 @@ def handler(event, context):
         # Log response status for debugging
         status_code = response.get('statusCode', 0)
         
-        # Log error responses with more detail
+        # Enhanced logging for debugging response body issues
+        body = response.get('body', '')
+        body_length = len(body) if body else 0
+        
+        # Log detailed response information
         if status_code >= 500:
-            body = response.get('body', '')
-            logger.error(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code} - Response: {body[:500]}")
+            logger.error(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code} - Body length: {body_length}, First 500 chars: {body[:500]}")
         elif status_code >= 400:
-            logger.warning(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code}")
+            logger.warning(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code} - Body length: {body_length}")
         else:
-            logger.info(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code}")
+            logger.info(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code} - Body length: {body_length}")
+        
+        # Log response structure for debugging
+        if event.get('path', '/').startswith('/api/users/spaces'):
+            logger.info(f"Response structure - Keys: {list(response.keys())}, Headers: {list(response.get('headers', {}).keys())}, Body type: {type(body)}, Body present: {bool(body)}")
+        
+        # Verify body is a string for API Gateway
+        if body and not isinstance(body, str):
+            logger.warning(f"Response body is not a string, type: {type(body)}. Converting to string.")
+            response['body'] = json.dumps(body) if not isinstance(body, str) else body
         
         # Ensure CORS headers are always present
         if 'headers' not in response:
@@ -130,7 +142,32 @@ def handler(event, context):
             'Access-Control-Allow-Headers': 'Content-Type,Authorization',
             'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
         }
-        response['headers'].update(cors_headers)
+        
+        # Update headers carefully to preserve content-length
+        for key, value in cors_headers.items():
+            if key not in response['headers']:
+                response['headers'][key] = value
+        
+        # Log final response details for debugging
+        final_body_length = len(response.get('body', '')) if response.get('body') else 0
+        content_length = response.get('headers', {}).get('content-length', 'not set')
+        
+        if final_body_length > 0 and content_length != 'not set':
+            stated_length = int(content_length)
+            if stated_length != final_body_length:
+                logger.warning(f"Content-length mismatch! Stated: {stated_length}, Actual: {final_body_length}")
+                # Fix the content-length header
+                response['headers']['content-length'] = str(final_body_length)
+        
+        # Ensure isBase64Encoded is False for JSON responses
+        if 'isBase64Encoded' not in response:
+            response['isBase64Encoded'] = False
+        
+        # Final validation for API Gateway
+        if not response.get('body'):
+            logger.warning("Response body is empty or missing!")
+            # Ensure we have at least an empty string for the body
+            response['body'] = response.get('body', '')
         
         return response
         
