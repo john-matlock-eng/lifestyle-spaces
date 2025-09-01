@@ -141,13 +141,19 @@ async def get_user_spaces(
             space_models.append(SpaceResponse(**space_data_copy))
         
         # Create and return the list response
-        return SpaceListResponse(
+        response = SpaceListResponse(
             spaces=space_models,
             total=result["total"],
             page=page,
             page_size=page_size,
             has_more=has_more
         )
+        
+        # Log the response for debugging
+        logger.info(f"Returning SpaceListResponse with {len(response.spaces)} spaces")
+        logger.info(f"Response model dict: {response.model_dump()}")
+        
+        return response
     except ClientError as e:
         error_code = e.response.get('Error', {}).get('Code', 'Unknown')
         error_message = e.response.get('Error', {}).get('Message', str(e))

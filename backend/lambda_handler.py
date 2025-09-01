@@ -12,11 +12,11 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Create the Mangum handler
+# Note: api_gateway_base_path should be None to let Mangum handle paths correctly
 mangum_handler = Mangum(
     app, 
     lifespan="off",  # Disable lifespan for Lambda
-    api_gateway_base_path="/",
-    custom_handlers=[]
+    api_gateway_base_path=None  # Let Mangum auto-detect the base path
 )
 
 # Lambda handler function
@@ -87,7 +87,18 @@ def handler(event, context):
         
         # Process request through FastAPI
         try:
+            logger.info(f"Calling Mangum handler for {event.get('httpMethod')} {event.get('path')}")
             response = mangum_handler(event, context)
+            logger.info(f"Mangum handler returned response type: {type(response)}")
+            
+            # Check if Mangum returned a dict (expected)
+            if not isinstance(response, dict):
+                logger.error(f"Mangum returned non-dict response: {type(response)}")
+                response = {
+                    'statusCode': 500,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Invalid response format from handler'})
+                }
         except Exception as app_error:
             # Log the actual FastAPI/application error
             logger.error(f"FastAPI application error: {str(app_error)}", exc_info=True)
@@ -116,17 +127,51 @@ def handler(event, context):
         body = response.get('body', '')
         body_length = len(body) if body else 0
         
-        # Log detailed response information
-        if status_code >= 500:
-            logger.error(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code} - Body length: {body_length}, First 500 chars: {body[:500]}")
-        elif status_code >= 400:
-            logger.warning(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code} - Body length: {body_length}")
-        else:
-            logger.info(f"{event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')} {status_code} - Body length: {body_length}")
+        # VERY DETAILED LOGGING FOR DEBUGGING
+        logger.info(f"=== RESPONSE DEBUG START ===")
+        logger.info(f"Path: {event.get('path', '/')}")
+        logger.info(f"Method: {event.get('httpMethod', 'UNKNOWN')}")
+        logger.info(f"Status Code: {status_code}")
+        logger.info(f"Response Keys: {list(response.keys())}")
+        logger.info(f"Body Type: {type(body)}")
+        logger.info(f"Body Length: {body_length}")
         
-        # Log response structure for debugging
+        # Log the actual body content (first 500 chars)
+        if body:
+            logger.info(f"Body Content (first 500 chars): {body[:500]}")
+            # Check if body is valid JSON
+            try:
+                parsed_body = json.loads(body) if isinstance(body, str) else body
+                logger.info(f"Body is valid JSON with keys: {list(parsed_body.keys()) if isinstance(parsed_body, dict) else 'not a dict'}")
+            except json.JSONDecodeError as e:
+                logger.error(f"Body is NOT valid JSON! Error: {e}")
+                logger.error(f"Raw body bytes: {body.encode('utf-8')[:100] if isinstance(body, str) else 'not a string'}")
+        else:
+            logger.warning(f"Body is empty or None! Body value: {repr(body)}")
+        
+        # Log headers
+        headers = response.get('headers', {})
+        logger.info(f"Headers: {json.dumps(headers, default=str)}")
+        
+        # Check for content-length header
+        content_length_header = headers.get('content-length', 'NOT SET')
+        logger.info(f"Content-Length Header: {content_length_header}")
+        
+        # Log if this is a specific path we're debugging
         if event.get('path', '/').startswith('/api/users/spaces'):
-            logger.info(f"Response structure - Keys: {list(response.keys())}, Headers: {list(response.get('headers', {}).keys())}, Body type: {type(body)}, Body present: {bool(body)}")
+            logger.info(f"=== SPACES ENDPOINT SPECIAL DEBUG ===")
+            logger.info(f"Full response object type: {type(response)}")
+            logger.info(f"Response is dict: {isinstance(response, dict)}")
+            logger.info(f"Response has body key: {'body' in response}")
+            logger.info(f"Body is string: {isinstance(response.get('body'), str)}")
+            logger.info(f"Body is bytes: {isinstance(response.get('body'), bytes)}")
+            if body:
+                # Log character codes of first few characters to check for special chars
+                first_chars = body[:20] if len(body) > 20 else body
+                char_codes = [ord(c) for c in first_chars]
+                logger.info(f"First 20 char codes: {char_codes}")
+        
+        logger.info(f"=== RESPONSE DEBUG END ===")
         
         # Verify body is a string for API Gateway
         if body and not isinstance(body, str):
@@ -168,6 +213,46 @@ def handler(event, context):
             logger.warning("Response body is empty or missing!")
             # Ensure we have at least an empty string for the body
             response['body'] = response.get('body', '')
+        
+        # LOG FINAL RESPONSE BEING SENT TO API GATEWAY
+        logger.info(f"=== FINAL RESPONSE TO API GATEWAY ===")
+        logger.info(f"statusCode: {response.get('statusCode')}")
+        logger.info(f"isBase64Encoded: {response.get('isBase64Encoded')}")
+        logger.info(f"headers keys: {list(response.get('headers', {}).keys())}")
+        logger.info(f"body type: {type(response.get('body'))}")
+        logger.info(f"body length: {len(response.get('body', ''))}")
+        
+        final_body = response.get('body', '')
+        if final_body:
+            logger.info(f"body first 200 chars: {final_body[:200]}")
+            # Validate it's proper JSON
+            try:
+                json.loads(final_body)
+                logger.info("Body is valid JSON")
+            except Exception as e:
+                logger.error(f"Body is NOT valid JSON! Error: {e}")
+                # Try to fix the body if it's not a string
+                if not isinstance(final_body, str):
+                    logger.info("Converting body to JSON string")
+                    response['body'] = json.dumps(final_body)
+        else:
+            logger.error(f"BODY IS EMPTY! Value: {repr(final_body)}")
+            # Set an empty JSON object as body for debugging
+            response['body'] = json.dumps({"error": "Empty response body"})
+        
+        # Log the complete response structure for API Gateway proxy integration
+        logger.info(f"Response structure matches API Gateway proxy format: {all(k in response for k in ['statusCode', 'headers', 'body'])}")
+        
+        # CRITICAL: Ensure body is ALWAYS a string for API Gateway
+        if 'body' in response and not isinstance(response['body'], str):
+            logger.warning(f"Body is not a string! Type: {type(response['body'])}. Converting...")
+            response['body'] = json.dumps(response['body'])
+        
+        # Final sanity check
+        logger.info(f"=== FINAL SANITY CHECK ===")
+        logger.info(f"Body is string: {isinstance(response.get('body'), str)}")
+        logger.info(f"StatusCode is int: {isinstance(response.get('statusCode'), int)}")
+        logger.info(f"Headers is dict: {isinstance(response.get('headers'), dict)}")
         
         return response
         
