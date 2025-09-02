@@ -190,6 +190,30 @@ def handler(event, context):
             logger.info(f"Calling Mangum handler for {event.get('httpMethod')} {event.get('path')}")
             response = mangum_handler(event, context)
             
+            # CRITICAL FIX: Remove multiValueHeaders if present
+            # API Gateway doesn't handle multiValueHeaders well in some configurations
+            if isinstance(response, dict) and 'multiValueHeaders' in response:
+                logger.info("Found multiValueHeaders in response - converting to single-value headers")
+                
+                # Ensure headers dict exists
+                if 'headers' not in response:
+                    response['headers'] = {}
+                
+                # Merge multiValueHeaders into headers (taking first value for single-value headers)
+                for key, values in response.get('multiValueHeaders', {}).items():
+                    if values and len(values) > 0:
+                        # For most headers, take the first value
+                        # Some headers like Set-Cookie might need special handling in the future
+                        if key.lower() == 'set-cookie' and len(values) > 1:
+                            # For Set-Cookie, we might want to join them, but for now take first
+                            logger.warning(f"Multiple Set-Cookie headers found, using first: {key}")
+                        response['headers'][key] = values[0]
+                        logger.debug(f"Converted multiValueHeader {key}: {values} -> {values[0]}")
+                
+                # Remove multiValueHeaders completely
+                del response['multiValueHeaders']
+                logger.info("Removed multiValueHeaders from response")
+            
             # === ENHANCED RESPONSE DEBUGGING START ===
             logger.info("=== RAW MANGUM RESPONSE INSPECTION ===")
             logger.info(f"Response type: {type(response)}")
