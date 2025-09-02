@@ -153,10 +153,10 @@ resource "aws_api_gateway_integration" "lambda" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.api.invoke_arn
-  
+
   # Ensure JSON responses are handled as text, not binary
   content_handling = "CONVERT_TO_TEXT"
-  
+
   # Pass through requests when no template matches
   passthrough_behavior = "WHEN_NO_MATCH"
 }
@@ -170,10 +170,10 @@ resource "aws_api_gateway_integration" "lambda_root" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.api.invoke_arn
-  
+
   # Ensure JSON responses are handled as text, not binary
   content_handling = "CONVERT_TO_TEXT"
-  
+
   # Pass through requests when no template matches
   passthrough_behavior = "WHEN_NO_MATCH"
 }
