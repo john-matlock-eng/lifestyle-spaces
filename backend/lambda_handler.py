@@ -19,6 +19,106 @@ mangum_handler = Mangum(
     api_gateway_base_path=None  # Let Mangum auto-detect the base path
 )
 
+def validate_and_fix_response(response, event=None):
+    """
+    Ensure response has valid body for API Gateway.
+    This function performs comprehensive validation and fixes common issues.
+    
+    Args:
+        response: The response dict from Mangum handler
+        event: Optional event dict for context in error messages
+        
+    Returns:
+        Valid response dict for API Gateway
+    """
+    logger.info("=== RESPONSE VALIDATION START ===")
+    
+    # Ensure response is a dict
+    if not isinstance(response, dict):
+        logger.error(f"Response is not a dict! Type: {type(response)}")
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({"error": "Invalid response type from handler"})
+        }
+    
+    # Check for required keys
+    if 'statusCode' not in response:
+        logger.error("Response missing statusCode!")
+        response['statusCode'] = 500
+    
+    if 'headers' not in response:
+        logger.warning("Response missing headers!")
+        response['headers'] = {}
+    
+    # Validate and fix the body
+    if 'body' not in response:
+        logger.error("Response missing body key!")
+        response['body'] = json.dumps({"error": "Response missing body"})
+    elif response['body'] is None:
+        logger.error("Response body is None!")
+        # For 204 No Content, empty string is appropriate
+        if response.get('statusCode') == 204:
+            response['body'] = ''
+        else:
+            response['body'] = json.dumps({"error": "Empty response from handler"})
+    elif response['body'] == '':
+        # Empty string is valid for some status codes
+        if response.get('statusCode') not in [204, 304]:
+            logger.warning("Response body is empty string for non-204/304 status!")
+            # Keep empty string but log it
+    elif isinstance(response['body'], bytes):
+        logger.warning(f"Response body is bytes, converting to string")
+        try:
+            response['body'] = response['body'].decode('utf-8')
+        except Exception as e:
+            logger.error(f"Failed to decode bytes body: {e}")
+            response['body'] = json.dumps({"error": "Failed to decode response"})
+    elif not isinstance(response['body'], str):
+        logger.error(f"Response body is not string: {type(response['body'])}")
+        try:
+            response['body'] = json.dumps(response['body'])
+        except Exception as e:
+            logger.error(f"Failed to serialize body to JSON: {e}")
+            response['body'] = str(response['body'])
+    
+    # Additional validation for string bodies
+    if isinstance(response['body'], str) and response['body']:
+        # Check if it's valid JSON (for non-HTML responses)
+        content_type = response.get('headers', {}).get('Content-Type', 'application/json')
+        if 'json' in content_type:
+            try:
+                parsed = json.loads(response['body'])
+                logger.info(f"Body is valid JSON with type: {type(parsed)}")
+            except json.JSONDecodeError as e:
+                logger.warning(f"Body claims to be JSON but isn't valid: {e}")
+                # Don't modify - might be intentionally malformed for testing
+        
+        # Check for suspicious patterns
+        if response['body'].startswith('\x00') or '\x00' in response['body'][:100]:
+            logger.error("Body contains null bytes!")
+            response['body'] = json.dumps({"error": "Response contains invalid characters"})
+    
+    # Ensure content-length matches if present
+    if 'content-length' in response.get('headers', {}):
+        actual_length = len(response['body']) if response['body'] else 0
+        stated_length = response['headers'].get('content-length')
+        try:
+            if int(stated_length) != actual_length:
+                logger.warning(f"Fixing content-length: was {stated_length}, now {actual_length}")
+                response['headers']['content-length'] = str(actual_length)
+        except (ValueError, TypeError):
+            logger.error(f"Invalid content-length header: {stated_length}")
+            response['headers']['content-length'] = str(actual_length)
+    
+    # Log validation result
+    logger.info(f"Validation complete. Status: {response.get('statusCode')}, "
+                f"Body type: {type(response.get('body'))}, "
+                f"Body length: {len(response.get('body', ''))}")
+    logger.info("=== RESPONSE VALIDATION END ===")
+    
+    return response
+
 # Lambda handler function
 def handler(event, context):
     """
@@ -89,11 +189,114 @@ def handler(event, context):
         try:
             logger.info(f"Calling Mangum handler for {event.get('httpMethod')} {event.get('path')}")
             response = mangum_handler(event, context)
-            logger.info(f"Mangum handler returned response type: {type(response)}")
+            
+            # === ENHANCED RESPONSE DEBUGGING START ===
+            logger.info("=== RAW MANGUM RESPONSE INSPECTION ===")
+            logger.info(f"Response type: {type(response)}")
+            logger.info(f"Response is dict: {isinstance(response, dict)}")
+            
+            # Deep inspection of the response object
+            if response is None:
+                logger.error("CRITICAL: Mangum returned None!")
+                response = {
+                    'statusCode': 500,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Null response from Mangum handler'})
+                }
+            elif isinstance(response, dict):
+                logger.info(f"Response keys: {list(response.keys())}")
+                
+                # Inspect the body in detail
+                body = response.get('body')
+                logger.info(f"Body key exists: {'body' in response}")
+                logger.info(f"Body value type: {type(body)}")
+                logger.info(f"Body is None: {body is None}")
+                logger.info(f"Body is empty string: {body == ''}")
+                
+                if body is not None:
+                    logger.info(f"Body length: {len(body) if hasattr(body, '__len__') else 'N/A'}")
+                    
+                    # Byte-level inspection
+                    if isinstance(body, str):
+                        body_bytes = body.encode('utf-8', errors='replace')
+                        logger.info(f"Body byte length: {len(body_bytes)}")
+                        logger.info(f"First 50 bytes (hex): {body_bytes[:50].hex()}")
+                        logger.info(f"First 50 bytes (repr): {repr(body_bytes[:50])}")
+                        
+                        # Check for invisible characters
+                        if len(body) > 0 and all(c.isspace() for c in body):
+                            logger.warning("Body contains only whitespace characters!")
+                            whitespace_types = {
+                                ' ': 'space',
+                                '\t': 'tab',
+                                '\n': 'newline',
+                                '\r': 'carriage return',
+                                '\f': 'form feed',
+                                '\v': 'vertical tab'
+                            }
+                            found_whitespace = [whitespace_types.get(c, f'unknown({ord(c)})') 
+                                              for c in set(body)]
+                            logger.warning(f"Whitespace types found: {found_whitespace}")
+                    elif isinstance(body, bytes):
+                        logger.info(f"Body is bytes with length: {len(body)}")
+                        logger.info(f"First 50 bytes (hex): {body[:50].hex()}")
+                        logger.info(f"First 50 bytes (repr): {repr(body[:50])}")
+                        # Convert bytes to string
+                        try:
+                            response['body'] = body.decode('utf-8')
+                            logger.info("Converted bytes body to string")
+                        except Exception as decode_error:
+                            logger.error(f"Failed to decode bytes: {decode_error}")
+                            response['body'] = json.dumps({'error': 'Failed to decode response'})
+                    else:
+                        logger.warning(f"Body is neither string nor bytes: {type(body)}")
+                        # Try to convert to JSON string
+                        try:
+                            response['body'] = json.dumps(body)
+                            logger.info("Converted body to JSON string")
+                        except Exception as json_error:
+                            logger.error(f"Failed to convert body to JSON: {json_error}")
+                            response['body'] = str(body)
+                else:
+                    logger.error("Body is None - this will cause empty response!")
+                
+                # Check headers for clues
+                headers = response.get('headers', {})
+                content_type = headers.get('content-type', headers.get('Content-Type', 'not set'))
+                content_length = headers.get('content-length', headers.get('Content-Length', 'not set'))
+                logger.info(f"Content-Type header: {content_type}")
+                logger.info(f"Content-Length header: {content_length}")
+                
+                # Check if content-length matches actual body length
+                if content_length != 'not set' and body is not None:
+                    try:
+                        stated_length = int(content_length)
+                        actual_length = len(body) if isinstance(body, (str, bytes)) else len(str(body))
+                        if stated_length != actual_length:
+                            logger.warning(f"Content-Length mismatch! Stated: {stated_length}, Actual: {actual_length}")
+                    except (ValueError, TypeError) as e:
+                        logger.error(f"Error checking content-length: {e}")
+            else:
+                logger.error(f"Mangum returned non-dict response: {type(response)}")
+                logger.error(f"Response value: {repr(response)[:500]}")
+                response = {
+                    'statusCode': 500,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Invalid response format from handler'})
+                }
+            
+            logger.info("=== END RAW MANGUM RESPONSE INSPECTION ===")
+            
+            # Track response body through the flow
+            if isinstance(response, dict) and 'body' in response:
+                original_body = response['body']
+                logger.info(f"RESPONSE TRACKING - After Mangum: body type={type(original_body)}, "
+                           f"length={len(original_body) if original_body else 0}, "
+                           f"is_none={original_body is None}, is_empty={original_body == ''}")
             
             # Check if Mangum returned a dict (expected)
             if not isinstance(response, dict):
-                logger.error(f"Mangum returned non-dict response: {type(response)}")
+                logger.error(f"Mangum returned non-dict response after inspection: {type(response)}")
                 response = {
                     'statusCode': 500,
                     'headers': {'Content-Type': 'application/json'},
@@ -177,6 +380,8 @@ def handler(event, context):
         if body and not isinstance(body, str):
             logger.warning(f"Response body is not a string, type: {type(body)}. Converting to string.")
             response['body'] = json.dumps(body) if not isinstance(body, str) else body
+            logger.info(f"RESPONSE TRACKING - After string conversion: body type={type(response['body'])}, "
+                       f"length={len(response['body']) if response['body'] else 0}")
         
         # Ensure CORS headers are always present
         if 'headers' not in response:
@@ -250,11 +455,54 @@ def handler(event, context):
             logger.warning(f"Body is not a string! Type: {type(response['body'])}. Converting...")
             response['body'] = json.dumps(response['body'])
         
-        # Final sanity check
-        logger.info(f"=== FINAL SANITY CHECK ===")
+        # Log response state before validation
+        logger.info(f"RESPONSE TRACKING - Before validation: body type={type(response.get('body'))}, "
+                   f"length={len(response.get('body', '')) if response.get('body') else 0}, "
+                   f"is_none={response.get('body') is None}, is_empty={response.get('body') == ''}")
+        
+        # Apply comprehensive validation and fixes before returning
+        response = validate_and_fix_response(response, event)
+        
+        # Log response state after validation
+        logger.info(f"RESPONSE TRACKING - After validation: body type={type(response.get('body'))}, "
+                   f"length={len(response.get('body', '')) if response.get('body') else 0}, "
+                   f"is_none={response.get('body') is None}, is_empty={response.get('body') == ''}")
+        
+        # Final sanity check after validation
+        logger.info(f"=== FINAL SANITY CHECK AFTER VALIDATION ===")
         logger.info(f"Body is string: {isinstance(response.get('body'), str)}")
         logger.info(f"StatusCode is int: {isinstance(response.get('statusCode'), int)}")
         logger.info(f"Headers is dict: {isinstance(response.get('headers'), dict)}")
+        logger.info(f"Body length: {len(response.get('body', ''))}")
+        
+        # One more check - ensure body is NEVER None for API Gateway
+        if response.get('body') is None:
+            logger.error("CRITICAL: Body is still None after validation! Setting empty string.")
+            response['body'] = ''
+        
+        # Special debugging for problematic endpoints
+        request_path = event.get('path', '/')
+        if '/spaces' in request_path or '/users' in request_path:
+            logger.info(f"=== SPECIAL DEBUG FOR {request_path} ===")
+            logger.info(f"Final response structure:")
+            logger.info(f"  - statusCode: {response.get('statusCode')} (type: {type(response.get('statusCode'))})")
+            logger.info(f"  - headers: {list(response.get('headers', {}).keys())}")
+            logger.info(f"  - body exists: {'body' in response}")
+            logger.info(f"  - body type: {type(response.get('body'))}")
+            logger.info(f"  - body length: {len(response.get('body', ''))}")
+            if response.get('body'):
+                # Show actual content preview
+                body_preview = response['body'][:200] if len(response['body']) > 200 else response['body']
+                logger.info(f"  - body preview: {repr(body_preview)}")
+                # Check encoding
+                if isinstance(response['body'], str):
+                    try:
+                        # Verify it can be encoded to bytes
+                        encoded = response['body'].encode('utf-8')
+                        logger.info(f"  - body encodes to {len(encoded)} bytes successfully")
+                    except Exception as e:
+                        logger.error(f"  - body encoding failed: {e}")
+            logger.info(f"=== END SPECIAL DEBUG ===")
         
         return response
         
