@@ -5,13 +5,12 @@ uvicorn[standard]==0.34.0
 mangum==0.17.0
 pydantic==2.10.5
 pydantic-settings==2.7.1
-# Security fixes
-urllib3>=2.5.0
-
-# AWS SDK
-boto3==1.34.11
-botocore==1.34.11
-boto3-stubs[cognito-idp,dynamodb]==1.34.11
+# AWS SDK  
+# Updated to 1.35.0+ to support urllib3 2.5.0 (security fix)
+boto3>=1.35.0
+botocore>=1.35.0
+boto3-stubs[cognito-idp,dynamodb]>=1.35.0
+urllib3>=2.5.0  # Security fix for CVE-2025-50181, CVE-2025-50182, CVE-2024-37891
 
 # Security and authentication
 python-jose[cryptography]==3.3.0  # Note: Contains ecdsa with known vulnerabilities
