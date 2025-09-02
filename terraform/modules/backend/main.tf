@@ -111,6 +111,9 @@ resource "aws_api_gateway_rest_api" "api" {
   name        = "${var.project_name}-${var.environment}-api"
   description = "API Gateway for ${var.project_name}"
 
+  # Handle binary media types to ensure JSON responses are properly transmitted
+  binary_media_types = ["*/*"]
+
   endpoint_configuration {
     types = ["REGIONAL"]
   }
@@ -150,6 +153,12 @@ resource "aws_api_gateway_integration" "lambda" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.api.invoke_arn
+  
+  # Ensure JSON responses are handled as text, not binary
+  content_handling = "CONVERT_TO_TEXT"
+  
+  # Pass through requests when no template matches
+  passthrough_behavior = "WHEN_NO_MATCH"
 }
 
 # API Gateway Integration for root
@@ -161,6 +170,12 @@ resource "aws_api_gateway_integration" "lambda_root" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.api.invoke_arn
+  
+  # Ensure JSON responses are handled as text, not binary
+  content_handling = "CONVERT_TO_TEXT"
+  
+  # Pass through requests when no template matches
+  passthrough_behavior = "WHEN_NO_MATCH"
 }
 
 # API Gateway Deployment
