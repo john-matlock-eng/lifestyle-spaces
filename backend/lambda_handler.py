@@ -11,6 +11,65 @@ from app.main import app
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# Allowed origins for CORS
+ALLOWED_ORIGINS = [
+    "https://duh187imz287k.cloudfront.net",
+    "http://localhost:3000",
+    "http://localhost:3001",
+]
+
+def get_cors_headers(event):
+    """
+    Get appropriate CORS headers based on request origin.
+    
+    Args:
+        event: API Gateway event with headers
+        
+    Returns:
+        dict: CORS headers appropriate for the request origin
+    """
+    # Get headers with case-insensitive lookup
+    headers = event.get('headers', {}) or {}
+    
+    # Try both 'Origin' and 'origin' keys for case-insensitive lookup
+    request_origin = headers.get('Origin') or headers.get('origin') or ''
+    
+    # Log the origin for debugging
+    logger.info(f"Request origin: {request_origin}")
+    
+    # Check if origin is in the allowed list
+    if request_origin in ALLOWED_ORIGINS:
+        logger.info(f"Origin {request_origin} is explicitly allowed")
+        return {
+            'Access-Control-Allow-Origin': request_origin,
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Max-Age': '86400'
+        }
+    
+    # Check for dynamic CloudFront, Vercel, or Amplify domains
+    dynamic_domains = ['.cloudfront.net', '.vercel.app', '.amplifyapp.com']
+    if request_origin and any(request_origin.endswith(domain) for domain in dynamic_domains):
+        logger.info(f"Origin {request_origin} matches dynamic domain pattern")
+        return {
+            'Access-Control-Allow-Origin': request_origin,
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Max-Age': '86400'
+        }
+    
+    # Default to wildcard for unknown origins (no credentials)
+    logger.info(f"Origin {request_origin} not in allowed list, using wildcard")
+    return {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+        'Access-Control-Max-Age': '86400'
+        # Note: no Access-Control-Allow-Credentials when using wildcard
+    }
+
 # Create the Mangum handler
 # Note: api_gateway_base_path should be None to let Mangum handle paths correctly
 mangum_handler = Mangum(
@@ -154,30 +213,28 @@ def handler(event, context):
         # Log the sanitized event for debugging
         logger.info(f"Received request: {event.get('httpMethod', 'UNKNOWN')} {event.get('path', '/')}")
         
+        # Get appropriate CORS headers for this request
+        cors_headers = get_cors_headers(event)
+        
         # Handle OPTIONS requests directly for CORS preflight
         if event.get('httpMethod') == 'OPTIONS':
+            logger.info("Handling OPTIONS preflight request")
             return {
                 'statusCode': 200,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-                    'Access-Control-Max-Age': '86400'
-                },
+                'headers': cors_headers,
                 'body': ''
             }
         
         # Handle health check directly for faster response
         path = event.get('path', '/')
         if path in ['/health', '/api/health', f"/{event.get('stage', 'dev')}/health"]:
+            # Merge CORS headers with Content-Type
+            health_headers = {'Content-Type': 'application/json'}
+            health_headers.update(cors_headers)
+            
             return {
                 'statusCode': 200,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
-                },
+                'headers': health_headers,
                 'body': json.dumps({
                     'status': 'healthy',
                     'environment': event.get('stage', 'dev'),
@@ -330,15 +387,14 @@ def handler(event, context):
             # Log the actual FastAPI/application error
             logger.error(f"FastAPI application error: {str(app_error)}", exc_info=True)
             
+            # Build error response headers with dynamic CORS
+            error_headers = {'Content-Type': 'application/json'}
+            error_headers.update(cors_headers)
+            
             # Return error response with details in dev
             return {
                 'statusCode': 500,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-                    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
-                },
+                'headers': error_headers,
                 'body': json.dumps({
                     'error': 'Internal server error',
                     'message': str(app_error) if event.get('stage') == 'dev' else 'An error occurred',
@@ -411,13 +467,8 @@ def handler(event, context):
         if 'headers' not in response:
             response['headers'] = {}
         
-        cors_headers = {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
-        }
-        
-        # Update headers carefully to preserve content-length
+        # Update headers with dynamic CORS headers
+        # Only add CORS headers if they're not already present (Mangum might have added them)
         for key, value in cors_headers.items():
             if key not in response['headers']:
                 response['headers'][key] = value
@@ -533,13 +584,21 @@ def handler(event, context):
     except Exception as e:
         logger.error(f"Lambda handler error: {str(e)}", exc_info=True)
         
+        # Try to get CORS headers even in error case
+        try:
+            error_cors_headers = get_cors_headers(event)
+        except:
+            # Fallback to wildcard if get_cors_headers fails
+            error_cors_headers = {'Access-Control-Allow-Origin': '*'}
+        
+        # Build final error headers
+        final_error_headers = {'Content-Type': 'application/json'}
+        final_error_headers.update(error_cors_headers)
+        
         # Return a proper error response
         return {
             'statusCode': 500,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
+            'headers': final_error_headers,
             'body': json.dumps({
                 'error': 'Internal server error',
                 'message': str(e) if event.get('stage') == 'dev' else 'An error occurred'

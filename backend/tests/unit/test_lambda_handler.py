@@ -73,7 +73,9 @@ class TestLambdaHandler:
         # OPTIONS request should return 200 with CORS headers
         assert response["statusCode"] == 200
         assert "headers" in response
-        assert response["headers"]["Access-Control-Allow-Origin"] == "*"
+        # Now we return the specific origin for localhost:3000 (it's in the allowed list)
+        assert response["headers"]["Access-Control-Allow-Origin"] == "http://localhost:3000"
+        assert response["headers"]["Access-Control-Allow-Credentials"] == "true"
         assert "Access-Control-Allow-Methods" in response["headers"]
     
     def test_handler_with_default_endpoint(self):
