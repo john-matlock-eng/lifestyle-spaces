@@ -5,6 +5,8 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { SignIn } from './pages/SignIn';
 import { SignUp } from './pages/SignUp';
 import { Dashboard } from './pages/Dashboard';
+import { SpaceDetail } from './pages/SpaceDetail';
+import { JoinSpace } from './pages/JoinSpace';
 import './App.css';
 
 function App() {
@@ -24,6 +26,22 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/space/:spaceId"
+                element={
+                  <ProtectedRoute>
+                    <SpaceDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/join/:inviteCode"
+                element={
+                  <ProtectedRoute>
+                    <JoinSpace />
                   </ProtectedRoute>
                 }
               />

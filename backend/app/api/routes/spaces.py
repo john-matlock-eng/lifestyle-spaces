@@ -1,7 +1,7 @@
 """
 Space management endpoints.
 """
-from fastapi import APIRouter, HTTPException, Depends, status, Query
+from fastapi import APIRouter, HTTPException, Depends, status, Query, Body
 from typing import List, Optional
 from jose import JWTError
 from botocore.exceptions import ClientError
@@ -12,9 +12,13 @@ from app.models.space import (
 from app.models.common import SuccessResponse
 from app.services.space import SpaceService
 from app.services.exceptions import (
-    SpaceNotFoundError, UnauthorizedError, ValidationError
+    SpaceNotFoundError, UnauthorizedError, ValidationError,
+    InvalidInviteCodeError, AlreadyMemberError
 )
 from app.core.dependencies import get_current_user
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(prefix="/api/spaces", tags=["Spaces"])
@@ -238,4 +242,89 @@ async def get_space_members(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get space members"
+        )
+
+
+@router.post("/{space_id}/invite", response_model=dict)
+async def regenerate_invite_code(
+    space_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Regenerate invite code for a space (owner/admin only)."""
+    try:
+        service = SpaceService()
+        
+        # Check if user is owner/admin
+        member = service.get_member(space_id, current_user.get("sub"))
+        if not member or member.get("role") not in ["owner", "admin"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only owners and admins can regenerate invite codes"
+            )
+        
+        # Generate new invite code
+        new_code = service.regenerate_invite_code(space_id)
+        
+        return {
+            "invite_code": new_code,
+            "invite_url": f"/join/{new_code}"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to regenerate invite code: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to regenerate invite code"
+        )
+
+
+@router.post("/join", response_model=SpaceResponse)
+async def join_space_with_code(
+    invite_code: str = Body(..., embed=True),
+    current_user: dict = Depends(get_current_user)
+):
+    """Join a space using an invite code."""
+    try:
+        service = SpaceService()
+        result = service.join_space_with_invite_code(
+            invite_code=invite_code,
+            user_id=current_user.get("sub"),
+            username=current_user.get("username"),
+            email=current_user.get("email")
+        )
+        
+        # Get full space details
+        space = service.get_space(
+            space_id=result["space_id"],
+            user_id=current_user.get("sub")
+        )
+        
+        return SpaceResponse(
+            id=space["id"],
+            name=space["name"],
+            description=space.get("description"),
+            type=space.get("type", "workspace"),
+            owner_id=space["owner_id"],
+            created_at=space["created_at"],
+            updated_at=space["updated_at"],
+            member_count=space.get("member_count", 0),
+            is_public=space.get("is_public", False),
+            is_owner=space.get("is_owner", False)
+        )
+    except InvalidInviteCodeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except AlreadyMemberError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Failed to join space with invite code: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to join space"
         )

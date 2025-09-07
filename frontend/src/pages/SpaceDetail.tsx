@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpace } from '../stores/spaceStore';
 import { useAuth } from '../stores/authStore';
@@ -22,9 +22,10 @@ export const SpaceDetail: React.FC = () => {
     clearError 
   } = useSpace();
 
-  const [activeTab, setActiveTab] = useState<'members' | 'activity' | 'files'>('members');
+  const [activeTab, setActiveTab] = useState<'content' | 'members' | 'settings'>('content');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
+  const [copySuccess, setCopySuccess] = useState<string | null>(null);
 
   // Load space data when component mounts or spaceId changes
   useEffect(() => {
@@ -50,12 +51,12 @@ export const SpaceDetail: React.FC = () => {
     member.userId === user?.userId && (member.role === 'admin' || member.role === 'owner')
   );
 
-  const handleTabClick = (tab: 'members' | 'activity' | 'files') => {
+  const handleTabClick = (tab: 'content' | 'members' | 'settings') => {
     setActiveTab(tab);
   };
 
-  const handleTabKeyDown = (e: React.KeyboardEvent, tab: 'members' | 'activity' | 'files') => {
-    const tabs = ['members', 'activity', 'files'];
+  const handleTabKeyDown = (e: React.KeyboardEvent, tab: 'content' | 'members' | 'settings') => {
+    const tabs = ['content', 'members', 'settings'];
     const currentIndex = tabs.indexOf(activeTab);
     
     switch (e.key) {
@@ -91,10 +92,27 @@ export const SpaceDetail: React.FC = () => {
     try {
       const url = `${window.location.origin}/space/${spaceId}`;
       await navigator.clipboard.writeText(url);
-      // You could add a toast notification here
+      setCopySuccess('Space link copied to clipboard!');
       setIsActionsMenuOpen(false);
+      setTimeout(() => setCopySuccess(null), 3000);
     } catch (error) {
       console.error('Failed to copy link:', error);
+      setCopySuccess('Failed to copy link');
+      setTimeout(() => setCopySuccess(null), 3000);
+    }
+  };
+
+  const handleCopyInviteCode = async () => {
+    if (!currentSpace?.inviteCode) return;
+    
+    try {
+      await navigator.clipboard.writeText(currentSpace.inviteCode);
+      setCopySuccess('Invite code copied to clipboard!');
+      setTimeout(() => setCopySuccess(null), 3000);
+    } catch (error) {
+      console.error('Failed to copy invite code:', error);
+      setCopySuccess('Failed to copy invite code');
+      setTimeout(() => setCopySuccess(null), 3000);
     }
   };
 
@@ -289,9 +307,28 @@ export const SpaceDetail: React.FC = () => {
         </div>
       </header>
 
+      {/* Copy Success Notification */}
+      {copySuccess && (
+        <div className="space-detail__notification" role="alert" aria-live="polite">
+          {copySuccess}
+        </div>
+      )}
+
       {/* Tab Navigation */}
       <div className="space-detail__tabs">
         <div className="tabs" role="tablist" aria-label="Space sections">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'content'}
+            aria-controls="content-panel"
+            id="content-tab"
+            onClick={() => handleTabClick('content')}
+            onKeyDown={(e) => handleTabKeyDown(e, 'content')}
+            className={`tab ${activeTab === 'content' ? 'tab--active' : ''}`}
+          >
+            Content
+          </button>
           <button
             type="button"
             role="tab"
@@ -304,30 +341,20 @@ export const SpaceDetail: React.FC = () => {
           >
             Members
           </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'activity'}
-            aria-controls="activity-panel"
-            id="activity-tab"
-            onClick={() => handleTabClick('activity')}
-            onKeyDown={(e) => handleTabKeyDown(e, 'activity')}
-            className={`tab ${activeTab === 'activity' ? 'tab--active' : ''}`}
-          >
-            Activity
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'files'}
-            aria-controls="files-panel"
-            id="files-tab"
-            onClick={() => handleTabClick('files')}
-            onKeyDown={(e) => handleTabKeyDown(e, 'files')}
-            className={`tab ${activeTab === 'files' ? 'tab--active' : ''}`}
-          >
-            Files
-          </button>
+          {isOwner && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'settings'}
+              aria-controls="settings-panel"
+              id="settings-tab"
+              onClick={() => handleTabClick('settings')}
+              onKeyDown={(e) => handleTabKeyDown(e, 'settings')}
+              className={`tab ${activeTab === 'settings' ? 'tab--active' : ''}`}
+            >
+              Settings
+            </button>
+          )}
         </div>
       </div>
 
@@ -337,6 +364,45 @@ export const SpaceDetail: React.FC = () => {
         role="main"
         aria-labelledby="space-title"
       >
+        {activeTab === 'content' && (
+          <div
+            role="tabpanel"
+            id="content-panel"
+            aria-labelledby="content-tab"
+            className="tab-panel"
+          >
+            <div className="space-detail__content">
+              <div className="space-detail__coming-soon">
+                <h3>Content</h3>
+                <p>Content management features coming soon!</p>
+                <div className="space-detail__placeholder-content">
+                  <div className="space-detail__placeholder-item">
+                    <div className="space-detail__placeholder-icon">📄</div>
+                    <div>
+                      <h4>Documents</h4>
+                      <p>Shared documents and files</p>
+                    </div>
+                  </div>
+                  <div className="space-detail__placeholder-item">
+                    <div className="space-detail__placeholder-icon">💬</div>
+                    <div>
+                      <h4>Discussions</h4>
+                      <p>Team conversations and announcements</p>
+                    </div>
+                  </div>
+                  <div className="space-detail__placeholder-item">
+                    <div className="space-detail__placeholder-icon">📊</div>
+                    <div>
+                      <h4>Analytics</h4>
+                      <p>Space activity and insights</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'members' && (
           <div
             role="tabpanel"
@@ -344,6 +410,51 @@ export const SpaceDetail: React.FC = () => {
             aria-labelledby="members-tab"
             className="tab-panel"
           >
+            {/* Invitation Section for Owners/Admins */}
+            {isAdmin && (
+              <div className="space-detail__invite-section">
+                <h3>Invite Members</h3>
+                <div className="space-detail__invite-actions">
+                  <button
+                    type="button"
+                    onClick={() => setIsInviteModalOpen(true)}
+                    className="btn btn-primary"
+                  >
+                    Send Email Invitation
+                  </button>
+                  {currentSpace?.inviteCode && (
+                    <div className="space-detail__invite-code">
+                      <div className="space-detail__invite-code-section">
+                        <label htmlFor="invite-code" className="space-detail__invite-code-label">
+                          Invite Code
+                        </label>
+                        <div className="space-detail__invite-code-input-group">
+                          <input
+                            id="invite-code"
+                            type="text"
+                            value={currentSpace.inviteCode}
+                            readOnly
+                            className="space-detail__invite-code-input"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleCopyInviteCode}
+                            className="btn btn-secondary"
+                            title="Copy invite code"
+                          >
+                            Copy Code
+                          </button>
+                        </div>
+                        <p className="space-detail__invite-code-description">
+                          Share this code with people you want to invite to the space.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <MembersList
               members={members}
               currentUserId={user?.userId || ''}
@@ -365,30 +476,80 @@ export const SpaceDetail: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'activity' && (
+        {activeTab === 'settings' && isOwner && (
           <div
             role="tabpanel"
-            id="activity-panel"
-            aria-labelledby="activity-tab"
+            id="settings-panel"
+            aria-labelledby="settings-tab"
             className="tab-panel"
           >
-            <div className="space-detail__coming-soon">
-              <h3>Activity Feed</h3>
-              <p>Activity tracking coming soon!</p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'files' && (
-          <div
-            role="tabpanel"
-            id="files-panel"
-            aria-labelledby="files-tab"
-            className="tab-panel"
-          >
-            <div className="space-detail__coming-soon">
-              <h3>File Sharing</h3>
-              <p>File sharing features coming soon!</p>
+            <div className="space-detail__settings">
+              <h3>Space Settings</h3>
+              <div className="space-detail__settings-section">
+                <h4>General Settings</h4>
+                <div className="space-detail__settings-grid">
+                  <div className="space-detail__setting-item">
+                    <label className="space-detail__setting-label">
+                      Space Name
+                    </label>
+                    <input
+                      type="text"
+                      value={currentSpace?.name || ''}
+                      readOnly
+                      className="space-detail__setting-input space-detail__setting-input--readonly"
+                    />
+                    <p className="space-detail__setting-description">
+                      Name editing coming soon
+                    </p>
+                  </div>
+                  <div className="space-detail__setting-item">
+                    <label className="space-detail__setting-label">
+                      Visibility
+                    </label>
+                    <div className="space-detail__setting-radio-group">
+                      <label className="space-detail__setting-radio">
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="public"
+                          checked={currentSpace?.isPublic}
+                          readOnly
+                        />
+                        Public - Anyone can find and join
+                      </label>
+                      <label className="space-detail__setting-radio">
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value="private"
+                          checked={!currentSpace?.isPublic}
+                          readOnly
+                        />
+                        Private - Invite only
+                      </label>
+                    </div>
+                    <p className="space-detail__setting-description">
+                      Visibility settings coming soon
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-detail__settings-section space-detail__settings-section--danger">
+                <h4>Danger Zone</h4>
+                <div className="space-detail__setting-item">
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    disabled
+                  >
+                    Delete Space
+                  </button>
+                  <p className="space-detail__setting-description">
+                    Space deletion coming soon. This action cannot be undone.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}

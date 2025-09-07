@@ -566,3 +566,79 @@ class SpaceService:
             raise
         except Exception as e:
             raise InvalidInviteCodeError("Invalid invite code")
+    
+    def get_member(self, space_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific member of a space.
+        
+        Args:
+            space_id: The space identifier
+            user_id: The user identifier
+            
+        Returns:
+            Member details if found, None otherwise
+        """
+        try:
+            response = self.table.get_item(
+                Key={'PK': f'SPACE#{space_id}', 'SK': f'MEMBER#{user_id}'}
+            )
+            
+            if 'Item' not in response:
+                return None
+            
+            return response['Item']
+        except ClientError:
+            return None
+    
+    def regenerate_invite_code(self, space_id: str) -> str:
+        """Generate a new invite code for a space.
+        
+        Args:
+            space_id: The space identifier
+            
+        Returns:
+            The new invite code
+            
+        Raises:
+            SpaceNotFoundError: If the space doesn't exist
+        """
+        # Get existing space
+        response = self.table.get_item(
+            Key={'PK': f'SPACE#{space_id}', 'SK': 'METADATA'}
+        )
+        
+        if 'Item' not in response:
+            raise SpaceNotFoundError(f"Space {space_id} not found")
+        
+        old_code = response['Item'].get('invite_code')
+        new_code = self._generate_invite_code()
+        
+        # Update space with new code
+        self.table.update_item(
+            Key={'PK': f'SPACE#{space_id}', 'SK': 'METADATA'},
+            UpdateExpression='SET invite_code = :code, updated_at = :updated',
+            ExpressionAttributeValues={
+                ':code': new_code,
+                ':updated': datetime.now(timezone.utc).isoformat()
+            }
+        )
+        
+        # Delete old invite mapping if exists
+        if old_code:
+            try:
+                self.table.delete_item(
+                    Key={'PK': f'INVITE#{old_code}', 'SK': f'SPACE#{space_id}'}
+                )
+            except Exception:
+                pass  # Old code might not exist or deletion might fail
+        
+        # Create new invite mapping
+        self.table.put_item(
+            Item={
+                'PK': f'INVITE#{new_code}',
+                'SK': f'SPACE#{space_id}',
+                'space_id': space_id,
+                'created_at': datetime.now(timezone.utc).isoformat()
+            }
+        )
+        
+        return new_code

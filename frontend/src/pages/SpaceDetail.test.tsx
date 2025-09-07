@@ -259,8 +259,12 @@ describe('SpaceDetail', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
   });
 
-  it('renders members list', () => {
+  it('renders members list when members tab is selected', () => {
     renderWithRouter();
+    
+    // Click on members tab to activate it (default tab is now 'content')
+    const membersTab = screen.getByRole('tab', { name: 'Members' });
+    fireEvent.click(membersTab);
     
     expect(screen.getByTestId('members-list')).toBeInTheDocument();
     expect(screen.getByText('Members: 2')).toBeInTheDocument();
@@ -341,6 +345,9 @@ describe('SpaceDetail', () => {
     });
     
     renderWithRouter();
+    
+    // Settings tab should not be visible for non-owners
+    expect(screen.queryByRole('tab', { name: 'Settings' })).not.toBeInTheDocument();
     
     // Space Settings button should only be visible in the actions dropdown
     // and only for owners, so first check if it's not directly visible
@@ -440,38 +447,39 @@ describe('SpaceDetail', () => {
   it('shows tab navigation', () => {
     renderWithRouter();
     
+    expect(screen.getByRole('tab', { name: 'Content' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Members' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Activity' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Files' })).toBeInTheDocument();
+    // Settings tab only shows for owners
+    expect(screen.getByRole('tab', { name: 'Settings' })).toBeInTheDocument();
   });
 
   it('switches between tabs', () => {
     renderWithRouter();
     
+    const contentTab = screen.getByRole('tab', { name: 'Content' });
     const membersTab = screen.getByRole('tab', { name: 'Members' });
-    const activityTab = screen.getByRole('tab', { name: 'Activity' });
     
-    expect(membersTab).toHaveAttribute('aria-selected', 'true');
-    expect(activityTab).toHaveAttribute('aria-selected', 'false');
-    
-    fireEvent.click(activityTab);
-    
+    expect(contentTab).toHaveAttribute('aria-selected', 'true');
     expect(membersTab).toHaveAttribute('aria-selected', 'false');
-    expect(activityTab).toHaveAttribute('aria-selected', 'true');
+    
+    fireEvent.click(membersTab);
+    
+    expect(contentTab).toHaveAttribute('aria-selected', 'false');
+    expect(membersTab).toHaveAttribute('aria-selected', 'true');
   });
 
   it('handles keyboard navigation in tabs', () => {
     renderWithRouter();
     
+    const contentTab = screen.getByRole('tab', { name: 'Content' });
     const membersTab = screen.getByRole('tab', { name: 'Members' });
-    const activityTab = screen.getByRole('tab', { name: 'Activity' });
     
-    // Simulate keydown event on members tab
-    fireEvent.keyDown(membersTab, { key: 'ArrowRight' });
+    // Simulate keydown event on content tab
+    fireEvent.keyDown(contentTab, { key: 'ArrowRight' });
     
-    // After arrow right, the activity tab should be active
-    expect(activityTab).toHaveAttribute('aria-selected', 'true');
-    expect(membersTab).toHaveAttribute('aria-selected', 'false');
+    // After arrow right, the members tab should be active
+    expect(membersTab).toHaveAttribute('aria-selected', 'true');
+    expect(contentTab).toHaveAttribute('aria-selected', 'false');
   });
 
   it('has proper accessibility attributes', () => {
@@ -508,6 +516,10 @@ describe('SpaceDetail', () => {
     
     renderWithRouter();
     
+    // Navigate to the Members tab first
+    const membersTab = screen.getByRole('tab', { name: 'Members' });
+    fireEvent.click(membersTab);
+    
     // Should show cancel invitation button for admin users (lines 123-124)
     const cancelInvitationBtn = screen.getByTestId('cancel-invitation-btn');
     expect(cancelInvitationBtn).toBeInTheDocument();
@@ -520,36 +532,33 @@ describe('SpaceDetail', () => {
     consoleSpy.mockRestore();
   });
 
-  it('displays files tab panel when files tab is active', () => {
+  it('displays settings tab panel when settings tab is active for owners', () => {
     renderWithRouter();
     
-    // Click on files tab to activate it
-    const filesTab = screen.getByRole('tab', { name: 'Files' });
-    fireEvent.click(filesTab);
+    // Click on settings tab to activate it (only visible to owners)
+    const settingsTab = screen.getByRole('tab', { name: 'Settings' });
+    fireEvent.click(settingsTab);
     
-    // Check that files panel is displayed (lines 382-393)
-    expect(screen.getByRole('tabpanel')).toHaveAttribute('id', 'files-panel');
-    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'files-tab');
-    expect(screen.getByText('File Sharing')).toBeInTheDocument();
-    expect(screen.getByText('File sharing features coming soon!')).toBeInTheDocument();
+    // Check that settings panel is displayed
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('id', 'settings-panel');
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'settings-tab');
+    expect(screen.getByText('Space Settings')).toBeInTheDocument();
+    expect(screen.getByText('General Settings')).toBeInTheDocument();
   });
 
-  it('shows files tab with proper accessibility and class attributes', () => {
+  it('shows content tab with proper accessibility and class attributes', () => {
     renderWithRouter();
     
-    // Click on files tab
-    const filesTab = screen.getByRole('tab', { name: 'Files' });
-    fireEvent.click(filesTab);
+    // Content tab is default, so it should be active
+    // Check accessibility attributes and classes for content panel
+    const contentPanel = screen.getByRole('tabpanel');
+    expect(contentPanel).toHaveAttribute('id', 'content-panel');
+    expect(contentPanel).toHaveAttribute('aria-labelledby', 'content-tab');
+    expect(contentPanel).toHaveClass('tab-panel');
     
-    // Check accessibility attributes and classes for files panel (lines 383-393)
-    const filesPanel = screen.getByRole('tabpanel');
-    expect(filesPanel).toHaveAttribute('id', 'files-panel');
-    expect(filesPanel).toHaveAttribute('aria-labelledby', 'files-tab');
-    expect(filesPanel).toHaveClass('tab-panel');
-    
-    // Verify the coming soon section structure
-    const comingSoonSection = screen.getByText('File Sharing').closest('div');
-    expect(comingSoonSection).toHaveClass('space-detail__coming-soon');
+    // Verify the content section structure - use more specific selector
+    expect(screen.getByRole('heading', { name: 'Content' })).toBeInTheDocument();
+    expect(screen.getByText('Content management features coming soon!')).toBeInTheDocument();
   });
 
   it('handles invite sent callback and refreshes pending invitations', () => {
