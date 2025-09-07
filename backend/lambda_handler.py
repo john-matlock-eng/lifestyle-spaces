@@ -247,9 +247,18 @@ def handler(event, context):
             logger.info(f"Calling Mangum handler for {event.get('httpMethod')} {event.get('path')}")
             response = mangum_handler(event, context)
             
+            # Check if response is None first
+            if response is None:
+                logger.error("CRITICAL: Mangum returned None!")
+                response = {
+                    'statusCode': 500,
+                    'headers': {'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Null response from Mangum handler'})
+                }
+            
             # CRITICAL FIX: Remove multiValueHeaders if present
             # API Gateway doesn't handle multiValueHeaders well in some configurations
-            if isinstance(response, dict) and 'multiValueHeaders' in response:
+            elif isinstance(response, dict) and 'multiValueHeaders' in response:
                 logger.info("Found multiValueHeaders in response - converting to single-value headers")
                 
                 # Ensure headers dict exists
@@ -270,6 +279,38 @@ def handler(event, context):
                 # Remove multiValueHeaders completely
                 del response['multiValueHeaders']
                 logger.info("Removed multiValueHeaders from response")
+            
+            # CRITICAL: Normalize headers to avoid duplicates (case-insensitive)
+            # This fixes the issue where headers appear in both lowercase and proper case
+            if isinstance(response, dict) and 'headers' in response and response['headers']:
+                logger.info(f"Original headers before normalization: {list(response['headers'].keys())}")
+                
+                # Create new headers dict with normalized keys
+                normalized_headers = {}
+                for key, value in response['headers'].items():
+                    # Use title case for CORS headers
+                    normalized_key = key
+                    if key.lower().startswith('access-control'):
+                        # Convert to proper title case for CORS headers
+                        parts = key.split('-')
+                        normalized_key = '-'.join(word.capitalize() for word in parts)
+                    normalized_headers[normalized_key] = value
+                
+                # Remove any duplicate headers (case-insensitive)
+                final_headers = {}
+                seen_lower = set()
+                for key, value in normalized_headers.items():
+                    lower_key = key.lower()
+                    if lower_key not in seen_lower:
+                        final_headers[key] = value
+                        seen_lower.add(lower_key)
+                    else:
+                        logger.warning(f"Removing duplicate header: {key} (already have header with key matching {lower_key})")
+                
+                response['headers'] = final_headers
+                
+                # Log final headers for debugging
+                logger.info(f"Final headers after normalization: {list(response['headers'].keys())}")
             
             # === ENHANCED RESPONSE DEBUGGING START ===
             logger.info("=== RAW MANGUM RESPONSE INSPECTION ===")
@@ -469,9 +510,18 @@ def handler(event, context):
         
         # Update headers with dynamic CORS headers
         # Only add CORS headers if they're not already present (Mangum might have added them)
+        # Check case-insensitively to avoid duplicates
+        existing_headers_lower = {k.lower(): k for k in response['headers'].keys()}
         for key, value in cors_headers.items():
-            if key not in response['headers']:
+            lower_key = key.lower()
+            if lower_key not in existing_headers_lower:
                 response['headers'][key] = value
+                logger.debug(f"Added CORS header: {key}: {value}")
+            else:
+                # Header already exists (possibly with different case)
+                existing_key = existing_headers_lower[lower_key]
+                if existing_key != key:
+                    logger.debug(f"CORS header {key} already exists as {existing_key}, skipping")
         
         # Log final response details for debugging
         final_body_length = len(response.get('body', '')) if response.get('body') else 0
