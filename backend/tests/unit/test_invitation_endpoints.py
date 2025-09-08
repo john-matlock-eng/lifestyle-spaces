@@ -171,9 +171,7 @@ class TestInvitationEndpoints:
             # Verify service calls
             mock_service_instance.join_space_with_invite_code.assert_called_once_with(
                 invite_code="TESTCODE",
-                user_id="user123",
-                username="testuser",
-                email="test@example.com"
+                user_id="user123"
             )
             mock_service_instance.get_space.assert_called_once_with(
                 space_id="space123",

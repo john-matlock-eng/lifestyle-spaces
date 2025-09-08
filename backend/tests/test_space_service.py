@@ -174,7 +174,7 @@ class TestSpaceService:
         mock_table.query.return_value = {'Items': []}
         
         with pytest.raises(InvalidInviteCodeError, match="Invalid invite code"):
-            service.join_space_with_invite_code("INVALID", "user-123", "user", "user@example.com")
+            service.join_space_with_invite_code("INVALID", "user-123")
     
     def test_join_space_already_member(self, service, mock_table):
         """Test joining space when already a member."""
@@ -187,4 +187,4 @@ class TestSpaceService:
         mock_table.query.return_value = {'Items': [{'space_id': 'space-123'}]}
         
         with pytest.raises(AlreadyMemberError, match="You are already a member of this space"):
-            service.join_space_with_invite_code("VALID123", "user-123", "user", "user@example.com")
+            service.join_space_with_invite_code("VALID123", "user-123")

@@ -199,9 +199,7 @@ class TestSpaceServiceInvitations:
         with pytest.raises(AlreadyMemberError) as exc_info:
             self.service.join_space_with_invite_code(
                 invite_code='VALIDCODE',
-                user_id='user456',
-                username='testuser',
-                email='test@example.com'
+                user_id='user456'
             )
         
         assert "already a member" in str(exc_info.value)
@@ -214,9 +212,7 @@ class TestSpaceServiceInvitations:
         with pytest.raises(InvalidInviteCodeError) as exc_info:
             self.service.join_space_with_invite_code(
                 invite_code='BADCODE',
-                user_id='user456',
-                username='testuser',
-                email='test@example.com'
+                user_id='user456'
             )
         
         assert "Invalid invite code" in str(exc_info.value)

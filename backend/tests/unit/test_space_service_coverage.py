@@ -59,9 +59,7 @@ class TestSpaceServiceCoverage:
         
         result = service.create_space(
             space=space,
-            owner_id="user123",
-            owner_email="owner@test.com",
-            owner_username="owner"
+            owner_id="user123"
         )
         
         assert result["name"] == "Test Space"
@@ -337,9 +335,7 @@ class TestSpaceServiceCoverage:
         with pytest.raises(AlreadyMemberError, match="already a member"):
             service.join_space_with_invite_code(
                 invite_code='ABC123',
-                user_id='user123',
-                username='testuser',
-                email='user@test.com'
+                user_id='user123'
             )
     
     def test_join_space_invalid_invite_code(self):
@@ -349,9 +345,7 @@ class TestSpaceServiceCoverage:
         with pytest.raises(InvalidInviteCodeError, match="Invalid invite code"):
             service.join_space_with_invite_code(
                 invite_code='INVALID',
-                user_id='user123',
-                username='testuser',
-                email='user@test.com'
+                user_id='user123'
             )
     
     def test_get_space_members_public_space(self):

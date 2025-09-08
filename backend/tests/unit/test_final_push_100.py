@@ -496,7 +496,7 @@ class TestSpaceServiceErrors:
             mock_put.return_value = {}
             mock_get.return_value = {'id': 'space123', 'name': 'Test Space', 'owner_id': 'owner123'}
             
-            result = service.join_space_with_invite_code("INVITE123", "user123", "testuser", "test@test.com")
+            result = service.join_space_with_invite_code("INVITE123", "user123")
             
             # Verify member was created with correct data
             put_call = mock_put.call_args
@@ -506,8 +506,6 @@ class TestSpaceServiceErrors:
             assert member_item['GSI1PK'] == 'USER#user123'
             assert member_item['GSI1SK'] == 'SPACE#space123'
             assert member_item['user_id'] == 'user123'
-            assert member_item['username'] == 'testuser'
-            assert member_item['email'] == 'test@test.com'
             assert member_item['role'] == 'member'
             assert 'joined_at' in member_item
             
