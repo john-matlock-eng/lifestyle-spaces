@@ -220,6 +220,60 @@ class TestSpaceModels:
         assert member.user_id == "user123"
         assert member.role == "admin"
     
+    def test_space_member_with_optional_username(self):
+        """Test SpaceMember model with optional username."""
+        from app.models.space import SpaceMember
+        
+        # Test with None username
+        member_data = {
+            "user_id": "user123",
+            "username": None,
+            "email": "john@example.com",
+            "role": "member",
+            "joined_at": datetime.now(timezone.utc)
+        }
+        member = SpaceMember(**member_data)
+        assert member.user_id == "user123"
+        assert member.username is None
+        assert member.email == "john@example.com"
+        assert member.role == "member"
+    
+    def test_space_member_with_optional_email(self):
+        """Test SpaceMember model with optional email."""
+        from app.models.space import SpaceMember
+        
+        # Test with None email
+        member_data = {
+            "user_id": "user123",
+            "username": "johndoe",
+            "email": None,
+            "role": "viewer",
+            "joined_at": datetime.now(timezone.utc)
+        }
+        member = SpaceMember(**member_data)
+        assert member.user_id == "user123"
+        assert member.username == "johndoe"
+        assert member.email is None
+        assert member.role == "viewer"
+    
+    def test_space_member_with_both_optional(self):
+        """Test SpaceMember model with both username and email optional."""
+        from app.models.space import SpaceMember
+        
+        # Test with both None
+        member_data = {
+            "user_id": "user123",
+            "username": None,
+            "email": None,
+            "role": "owner",
+            "joined_at": datetime.now(timezone.utc)
+        }
+        member = SpaceMember(**member_data)
+        assert member.user_id == "user123"
+        assert member.username is None
+        assert member.email is None
+        assert member.role == "owner"
+    
     def test_space_member_role_validation(self):
         """Test SpaceMember role validation."""
         from app.models.space import SpaceMember

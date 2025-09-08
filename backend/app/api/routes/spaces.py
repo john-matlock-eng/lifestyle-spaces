@@ -220,13 +220,16 @@ async def get_space_members(
         # Convert response fields to match expected format
         formatted_members = []
         for member in members:
-            # Handle display_name field - use username if not available
-            display_name = member.get("display_name") or member.get("username", "")
+            # Handle display_name field - use username if not available, or empty string if both are None
+            display_name = member.get("display_name")
+            if display_name is None:
+                username = member.get("username")
+                display_name = username if username is not None else ""
             
             formatted_members.append(SpaceMember(
                 user_id=member["user_id"],
-                username=member.get("username", ""),
-                email=member.get("email", ""),
+                username=member.get("username"),  # Allow None
+                email=member.get("email"),  # Allow None
                 display_name=display_name,
                 role=member["role"],
                 joined_at=member["joined_at"]

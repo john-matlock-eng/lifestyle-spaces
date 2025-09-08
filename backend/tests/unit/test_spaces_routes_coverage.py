@@ -164,3 +164,100 @@ class TestSpacesRoutesFullCoverage:
             
             assert response.status_code == status.HTTP_403_FORBIDDEN
             assert "Not a member" in response.json()["detail"]
+    
+    def test_get_members_with_null_username(self):
+        """Test getting members where some have null usernames."""
+        from datetime import datetime, timezone
+        
+        with patch('app.api.routes.spaces.SpaceService') as mock_service:
+            mock_service_instance = Mock()
+            mock_service.return_value = mock_service_instance
+            
+            # Mock members with one having null username
+            mock_members = [
+                {
+                    "user_id": "user1",
+                    "username": "johndoe",
+                    "email": "john@example.com",
+                    "display_name": "John Doe",
+                    "role": "owner",
+                    "joined_at": datetime.now(timezone.utc)
+                },
+                {
+                    "user_id": "user2",
+                    "username": None,  # Null username
+                    "email": "jane@example.com",
+                    "display_name": "Jane Smith",
+                    "role": "member",
+                    "joined_at": datetime.now(timezone.utc)
+                }
+            ]
+            mock_service_instance.get_space_members.return_value = mock_members
+            
+            response = self.client.get("/api/spaces/space123/members")
+            
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert len(data["members"]) == 2
+            assert data["members"][0]["username"] == "johndoe"
+            assert data["members"][1]["username"] is None
+    
+    def test_get_members_with_null_email(self):
+        """Test getting members where some have null emails."""
+        from datetime import datetime, timezone
+        
+        with patch('app.api.routes.spaces.SpaceService') as mock_service:
+            mock_service_instance = Mock()
+            mock_service.return_value = mock_service_instance
+            
+            # Mock members with one having null email
+            mock_members = [
+                {
+                    "user_id": "user1",
+                    "username": "johndoe",
+                    "email": None,  # Null email
+                    "display_name": "John Doe",
+                    "role": "owner",
+                    "joined_at": datetime.now(timezone.utc)
+                }
+            ]
+            mock_service_instance.get_space_members.return_value = mock_members
+            
+            response = self.client.get("/api/spaces/space123/members")
+            
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert len(data["members"]) == 1
+            assert data["members"][0]["email"] is None
+    
+    def test_get_members_with_all_null_fields(self):
+        """Test getting members where username and email are null."""
+        from datetime import datetime, timezone
+        
+        with patch('app.api.routes.spaces.SpaceService') as mock_service:
+            mock_service_instance = Mock()
+            mock_service.return_value = mock_service_instance
+            
+            # Mock member with null username and email
+            mock_members = [
+                {
+                    "user_id": "user1",
+                    "username": None,  # Null username
+                    "email": None,  # Null email
+                    "display_name": None,  # Also null display_name
+                    "role": "member",
+                    "joined_at": datetime.now(timezone.utc)
+                }
+            ]
+            mock_service_instance.get_space_members.return_value = mock_members
+            
+            response = self.client.get("/api/spaces/space123/members")
+            
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert len(data["members"]) == 1
+            member = data["members"][0]
+            assert member["username"] is None
+            assert member["email"] is None
+            # display_name should be empty string when both username and display_name are None
+            assert member["displayName"] == ""

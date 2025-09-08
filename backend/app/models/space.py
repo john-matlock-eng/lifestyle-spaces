@@ -103,8 +103,8 @@ class SpaceResponse(BaseModel):
 class SpaceMember(BaseModel):
     """Space member model."""
     user_id: str = Field(..., alias="userId")
-    username: str
-    email: str
+    username: Optional[str] = None
+    email: Optional[str] = None
     display_name: Optional[str] = Field(None, alias="displayName")
     role: str
     joined_at: datetime = Field(..., alias="joinedAt")
