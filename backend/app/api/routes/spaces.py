@@ -34,9 +34,7 @@ async def create_space(
         service = SpaceService()
         result = service.create_space(
             space=space,
-            owner_id=current_user.get("sub", ""),
-            owner_email=current_user.get("email", ""),
-            owner_username=current_user.get("username", "")
+            owner_id=current_user.get("sub", "")
         )
         
         # Return SpaceResponse with proper field mapping
@@ -305,9 +303,7 @@ async def join_space_with_code(
         service = SpaceService()
         result = service.join_space_with_invite_code(
             invite_code=invite_code,
-            user_id=current_user.get("sub"),
-            username=current_user.get("username"),
-            email=current_user.get("email")
+            user_id=current_user.get("sub")
         )
         
         # Get full space details

@@ -91,8 +91,7 @@ class SpaceService:
         """Generate a unique 8-character invite code."""
         return secrets.token_urlsafe(6)[:8].upper()
     
-    def create_space(self, space: SpaceCreate, owner_id: str, 
-                    owner_email: str = "", owner_username: str = "") -> Dict[str, Any]:
+    def create_space(self, space: SpaceCreate, owner_id: str) -> Dict[str, Any]:
         """Create a new space with invite code generation."""
         # Validate input
         if not space.name or not space.name.strip():
@@ -118,15 +117,13 @@ class SpaceService:
             'metadata': space.metadata or {}
         }
         
-        # Create owner membership
+        # Create owner membership (only store user_id and role)
         member_item = {
             'PK': f'SPACE#{space_id}',
             'SK': f'MEMBER#{owner_id}',
             'GSI1PK': f'USER#{owner_id}',
             'GSI1SK': f'SPACE#{space_id}',
             'user_id': owner_id,
-            'username': owner_username,
-            'email': owner_email,
             'role': 'owner',
             'joined_at': now
         }
@@ -389,8 +386,7 @@ class SpaceService:
             'page_size': page_size
         }
     
-    def add_member(self, space_id: str, user_id: str, username: str, email: str, 
-                   role: str, added_by: str) -> None:
+    def add_member(self, space_id: str, user_id: str, role: str, added_by: str) -> None:
         """Add a member to a space."""
         # Check if adder has permission
         if not self.can_edit_space(space_id, added_by):
@@ -404,8 +400,6 @@ class SpaceService:
             'GSI1PK': f'USER#{user_id}',
             'GSI1SK': f'SPACE#{space_id}',
             'user_id': user_id,
-            'username': username,
-            'email': email,
             'role': role,
             'joined_at': now
         }
@@ -428,7 +422,7 @@ class SpaceService:
         )
     
     def get_space_members(self, space_id: str, user_id: str) -> List[Dict[str, Any]]:
-        """Get members (members only or public)."""
+        """Get members with their profiles (members only or public)."""
         # First check if space exists
         try:
             response = self.table.get_item(
@@ -451,19 +445,41 @@ class SpaceService:
         if not is_member and not space.get('is_public', False):
             raise UnauthorizedError("You are not a member of this space")
         
-        # Get all members
+        # Get all member records
         response = self.table.query(
             KeyConditionExpression=Key('PK').eq(f'SPACE#{space_id}') & Key('SK').begins_with('MEMBER#')
         )
         
-        members = []
+        # Extract user IDs and membership data
+        member_data = {}
+        user_ids = []
         for item in response.get('Items', []):
-            members.append({
-                'user_id': item['user_id'],
-                'username': item.get('username', ''),
-                'email': item.get('email', ''),
+            uid = item['user_id']
+            user_ids.append(uid)
+            member_data[uid] = {
+                'user_id': uid,
                 'role': item['role'],
                 'joined_at': item['joined_at']
+            }
+        
+        # Batch fetch user profiles
+        from app.services.user_profile import UserProfileService
+        user_profile_service = UserProfileService()
+        profiles = user_profile_service.get_batch_user_profiles(user_ids)
+        
+        # Combine membership and profile data
+        members = []
+        for uid in user_ids:
+            profile = profiles.get(uid, {})
+            membership = member_data[uid]
+            
+            members.append({
+                'user_id': uid,
+                'username': profile.get('username', 'Unknown'),
+                'email': profile.get('email', ''),
+                'display_name': profile.get('display_name', profile.get('username', 'Unknown')),
+                'role': membership['role'],
+                'joined_at': membership['joined_at']
             })
         
         # Sort by role (owner first, then admin, then members)
@@ -501,8 +517,7 @@ class SpaceService:
         except ClientError:
             return None
     
-    def join_space_with_invite_code(self, invite_code: str, user_id: str, 
-                                   username: str = "", email: str = "") -> Dict[str, Any]:
+    def join_space_with_invite_code(self, invite_code: str, user_id: str) -> Dict[str, Any]:
         """Join a space using invite code."""
         # Look up invite code
         try:
@@ -534,7 +549,7 @@ class SpaceService:
             if 'Item' in member_check:
                 raise AlreadyMemberError("You are already a member of this space")
             
-            # Add as member
+            # Add as member (only store user_id and role)
             now = datetime.now(timezone.utc).isoformat()
             member_item = {
                 'PK': f'SPACE#{space_id}',
@@ -542,8 +557,6 @@ class SpaceService:
                 'GSI1PK': f'USER#{user_id}',
                 'GSI1SK': f'SPACE#{space_id}',
                 'user_id': user_id,
-                'username': username,
-                'email': email,
                 'role': 'member',
                 'joined_at': now
             }

@@ -471,8 +471,6 @@ class TestSpaceService:
         service.add_member(
             space_id=created["id"],
             user_id="user456",
-            username="johndoe",
-            email="john@example.com",
             role="member",
             added_by="user123"
         )
@@ -499,8 +497,6 @@ class TestSpaceService:
         service.add_member(
             space_id=created["id"],
             user_id="user456",
-            username="johndoe",
-            email="john@example.com",
             role="member",
             added_by="user123"
         )
@@ -532,9 +528,9 @@ class TestSpaceService:
         created = service.create_space(space, owner_id="user123")
         
         # Add members with different roles
-        service.add_member(created["id"], "user_admin", "admin", "admin@test.com", "admin", "user123")
-        service.add_member(created["id"], "user_member", "member", "member@test.com", "member", "user123")
-        service.add_member(created["id"], "user_viewer", "viewer", "viewer@test.com", "viewer", "user123")
+        service.add_member(created["id"], "user_admin", "admin", "user123")
+        service.add_member(created["id"], "user_member", "member", "user123")
+        service.add_member(created["id"], "user_viewer", "viewer", "user123")
         
         # Check permissions
         assert service.can_edit_space(created["id"], "user123") is True  # Owner

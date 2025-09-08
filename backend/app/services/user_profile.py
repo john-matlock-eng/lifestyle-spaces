@@ -1,7 +1,7 @@
 """
 User profile service for business logic.
 """
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
 from app.core.database import get_db
 from botocore.exceptions import ClientError
@@ -180,6 +180,90 @@ class UserProfileService:
         }
         self.db.put_item(profile_item)
         return self._transform_profile_response(profile_item)
+    
+    def get_or_create_user_profile(self, user_id: str, cognito_attributes: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Get existing user profile or create new one from Cognito attributes.
+        
+        Args:
+            user_id: User ID from Cognito
+            cognito_attributes: Attributes from Cognito token
+            
+        Returns:
+            Dict: User profile data
+        """
+        # Try to get existing profile
+        existing_profile = self.get_user_profile(user_id)
+        
+        if existing_profile:
+            # Update last_seen timestamp
+            self.db.update_item(
+                f"USER#{user_id}",
+                "PROFILE",
+                {'last_seen': datetime.now(timezone.utc).isoformat()}
+            )
+            return existing_profile
+        
+        # Create new profile from Cognito attributes
+        profile_data = {
+            'email': cognito_attributes.get('email', ''),
+            'username': cognito_attributes.get('username', ''),
+            'display_name': cognito_attributes.get('display_name', cognito_attributes.get('username', '')),
+            'full_name': cognito_attributes.get('full_name', ''),
+            'last_seen': datetime.now(timezone.utc).isoformat()
+        }
+        
+        return self.create_user_profile(user_id, profile_data)
+    
+    def get_batch_user_profiles(self, user_ids: List[str]) -> Dict[str, Dict[str, Any]]:
+        """
+        Get multiple user profiles in a single batch operation.
+        
+        Args:
+            user_ids: List of user IDs to fetch profiles for
+            
+        Returns:
+            Dict: Mapping of user_id to profile data
+        """
+        if not user_ids:
+            return {}
+        
+        profiles = {}
+        
+        # Build batch get items request
+        keys = []
+        for user_id in user_ids:
+            keys.append({
+                'PK': f"USER#{user_id}",
+                'SK': 'PROFILE'
+            })
+        
+        # Batch get profiles (DynamoDB limits to 100 items per batch)
+        for i in range(0, len(keys), 100):
+            batch_keys = keys[i:i+100]
+            try:
+                response = self.db.batch_get_items(batch_keys)
+                for item in response:
+                    user_id = item.get('id')
+                    if user_id:
+                        profiles[user_id] = self._transform_profile_response(item)
+            except ClientError:
+                # Log error but continue with partial results
+                pass
+        
+        # For any missing profiles, return minimal data
+        for user_id in user_ids:
+            if user_id not in profiles:
+                profiles[user_id] = {
+                    'id': user_id,
+                    'username': 'Unknown User',
+                    'email': '',
+                    'display_name': 'Unknown User',
+                    'is_active': False,
+                    'is_verified': False
+                }
+        
+        return profiles
     
     def delete_user_profile(self, user_id: str) -> bool:
         """

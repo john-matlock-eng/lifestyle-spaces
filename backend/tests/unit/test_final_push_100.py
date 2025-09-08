@@ -403,7 +403,7 @@ class TestSpaceServiceErrors:
             mock_can_edit.return_value = False
             
             with pytest.raises(UnauthorizedError) as exc:
-                service.add_member("space123", "newuser", "username", "email@test.com", "member", "user123")
+                service.add_member("space123", "newuser", "member", "user123")
             assert "cannot add members" in str(exc.value)
     
     def test_remove_member_unauthorized(self):
@@ -460,7 +460,7 @@ class TestSpaceServiceErrors:
             mock_put.return_value = {}
             mock_get.return_value = {'id': 'space123', 'name': 'Test Space'}
             
-            result = service.join_space_with_invite_code("INVITE123", "user123", "username", "email@test.com")
+            result = service.join_space_with_invite_code("INVITE123", "user123")
             
             assert result['space_id'] == 'space123'
             assert result['role'] == 'member'

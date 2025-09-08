@@ -188,14 +188,31 @@ def get_current_user_cognito(
         
         # Return user information from token
         # Map Cognito claims to our expected format
+        # Handle custom attributes (they come with 'custom:' prefix)
+        username = (payload.get('custom:username') or 
+                   payload.get('cognito:username') or 
+                   payload.get('preferred_username') or
+                   payload.get('email'))
+        
+        display_name = (payload.get('custom:displayName') or
+                       payload.get('custom:display_name') or
+                       payload.get('preferred_username') or
+                       payload.get('name') or
+                       username)
+        
         return {
             'sub': payload.get('sub'),  # User ID
             'email': payload.get('email'),
-            'username': payload.get('cognito:username', payload.get('email')),
+            'username': username,
+            'display_name': display_name,
             'full_name': payload.get('name', ''),
             'token_use': payload.get('token_use'),
             'exp': payload.get('exp'),
             'iat': payload.get('iat'),
+            # Include raw custom attributes for debugging
+            'custom:username': payload.get('custom:username'),
+            'custom:displayName': payload.get('custom:displayName'),
+            'custom:userId': payload.get('custom:userId'),
         }
         
     except HTTPException:

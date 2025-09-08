@@ -167,6 +167,45 @@ class DynamoDBClient:
                 batch.put_item(Item=item)
         
         return {'ResponseMetadata': {'HTTPStatusCode': 200}}
+    
+    def batch_get_items(self, keys: list) -> list:
+        """
+        Batch get items from the DynamoDB table.
+        
+        Args:
+            keys: List of key dictionaries with PK and SK
+        
+        Returns:
+            list: List of items found
+        """
+        if not keys:
+            return []
+        
+        # DynamoDB batch_get_item requires the table name in the request
+        response = boto3.client('dynamodb', region_name=settings.aws_region).batch_get_item(
+            RequestItems={
+                settings.dynamodb_table: {
+                    'Keys': [
+                        {
+                            'PK': {'S': key['PK']},
+                            'SK': {'S': key['SK']}
+                        }
+                        for key in keys
+                    ]
+                }
+            }
+        )
+        
+        # Convert DynamoDB format to regular format
+        items = []
+        for item in response.get('Responses', {}).get(settings.dynamodb_table, []):
+            # Use boto3's TypeDeserializer to convert DynamoDB format to Python
+            from boto3.dynamodb.types import TypeDeserializer
+            deserializer = TypeDeserializer()
+            python_item = {k: deserializer.deserialize(v) for k, v in item.items()}
+            items.append(python_item)
+        
+        return items
 
 
 # Singleton instance
