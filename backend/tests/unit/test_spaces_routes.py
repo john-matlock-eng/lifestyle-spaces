@@ -314,11 +314,16 @@ class TestSpacesRoutes:
             
             assert response.status_code == 200
             data = response.json()
-            assert len(data) == 2
-            assert data[0]["userId"] == "user123"  # Using alias from model
-            assert data[0]["role"] == "owner"
-            assert data[1]["userId"] == "user456"  # Using alias from model
-            assert data[1]["role"] == "member"
+            assert "members" in data
+            assert "total" in data
+            assert "hasMore" in data
+            assert data["total"] == 2
+            assert data["hasMore"] == False
+            assert len(data["members"]) == 2
+            assert data["members"][0]["userId"] == "user123"  # Using alias from model
+            assert data["members"][0]["role"] == "owner"
+            assert data["members"][1]["userId"] == "user456"  # Using alias from model
+            assert data["members"][1]["role"] == "member"
     
     def test_get_space_members_not_found_error(self):
         """Test space members retrieval when space is not found."""

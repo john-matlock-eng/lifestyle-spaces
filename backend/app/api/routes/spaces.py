@@ -2,7 +2,7 @@
 Space management endpoints.
 """
 from fastapi import APIRouter, HTTPException, Depends, status, Query, Body
-from typing import List, Optional
+from typing import Optional
 from jose import JWTError
 from botocore.exceptions import ClientError
 from app.models.space import (
@@ -203,13 +203,14 @@ async def delete_space(
         )
 
 
-@router.get("/{space_id}/members", response_model=List[SpaceMember])
+@router.get("/{space_id}/members", response_model=MembersListResponse)
 async def get_space_members(
     space_id: str,
     current_user: dict = Depends(get_current_user)
 ):
     """Get members (members only or public)."""
     try:
+        logger.info(f"Getting members for space {space_id} by user {current_user.get('sub')}")
         service = SpaceService()
         members = service.get_space_members(
             space_id=space_id,
@@ -219,29 +220,41 @@ async def get_space_members(
         # Convert response fields to match expected format
         formatted_members = []
         for member in members:
+            # Handle display_name field - use username if not available
+            display_name = member.get("display_name") or member.get("username", "")
+            
             formatted_members.append(SpaceMember(
                 user_id=member["user_id"],
                 username=member.get("username", ""),
                 email=member.get("email", ""),
+                display_name=display_name,
                 role=member["role"],
                 joined_at=member["joined_at"]
             ))
         
-        return formatted_members
+        # Return MembersListResponse as expected by frontend
+        return MembersListResponse(
+            members=formatted_members,
+            total=len(formatted_members),
+            has_more=False
+        )
     except SpaceNotFoundError as e:
+        logger.error(f"Space not found: {e}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
     except UnauthorizedError as e:
+        logger.error(f"Unauthorized access: {e}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e)
         )
     except Exception as e:
+        logger.error(f"Error getting space members: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get space members"
+            detail=f"Failed to get space members: {str(e)}"
         )
 
 

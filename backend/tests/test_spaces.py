@@ -700,10 +700,14 @@ class TestGetSpaceMembers:
                 # Assert
                 assert response.status_code == status.HTTP_200_OK
                 data = response.json()
-                assert len(data) == 3
-                assert any(m["role"] == "owner" for m in data)
-                assert any(m["role"] == "admin" for m in data)
-                assert any(m["role"] == "member" for m in data)
+                assert "members" in data
+                assert "total" in data
+                assert "hasMore" in data
+                assert data["total"] == 3
+                assert len(data["members"]) == 3
+                assert any(m["role"] == "owner" for m in data["members"])
+                assert any(m["role"] == "admin" for m in data["members"])
+                assert any(m["role"] == "member" for m in data["members"])
     
     def test_get_space_members_non_member_forbidden(self, test_client):
         """Test that non-members cannot view space members."""
@@ -753,7 +757,11 @@ class TestGetSpaceMembers:
                 # Assert
                 assert response.status_code == status.HTTP_200_OK
                 data = response.json()
-                assert len(data) >= 1
+                assert "members" in data
+                assert "total" in data
+                assert "hasMore" in data
+                assert data["total"] >= 1
+                assert len(data["members"]) >= 1
     
     def test_get_members_space_not_found(self, test_client):
         """Test getting members of a non-existent space."""
@@ -820,8 +828,11 @@ class TestGetSpaceMembers:
                     space_data = space_response.json()
                     members_data = members_response.json()
                     
-                    assert space_data["memberCount"] == len(members_data)
+                    assert "members" in members_data
+                    assert "total" in members_data
+                    assert space_data["memberCount"] == len(members_data["members"])
                     assert space_data["memberCount"] == 3
+                    assert members_data["total"] == 3
 
 
 class TestInviteCodeValidation:
