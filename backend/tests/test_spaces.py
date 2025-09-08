@@ -25,42 +25,56 @@ class TestSpaceCreation:
                 "username": "testuser"
             }
             
-            with patch('app.services.space.SpaceService.create_space') as mock_create:
-                space_id = str(uuid.uuid4())
-                mock_create.return_value = {
-                    "id": space_id,
-                    "name": "Test Space",
-                    "description": "A test space",
-                    "type": "workspace",
-                    "is_public": False,
-                    "owner_id": "user-123",
-                    "created_at": datetime.now(timezone.utc).isoformat(),
-                    "updated_at": datetime.now(timezone.utc).isoformat()
+            # Mock UserProfileService to prevent DynamoDB calls
+            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+                mock_profile_instance = Mock()
+                mock_profile_service.return_value = mock_profile_instance
+                mock_profile_instance.get_or_create_user_profile.return_value = {
+                    "user_id": "user-123",
+                    "username": "testuser",
+                    "email": "test@example.com"
                 }
                 
-                # Act
-                response = test_client.post(
-                    "/api/spaces",
-                    json={
+                # Mock the entire SpaceService class
+                with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                    mock_service_instance = Mock()
+                    mock_service_class.return_value = mock_service_instance
+                    
+                    space_id = str(uuid.uuid4())
+                    mock_service_instance.create_space.return_value = {
+                        "id": space_id,
                         "name": "Test Space",
                         "description": "A test space",
                         "type": "workspace",
-                        "isPublic": False
-                    },
-                    headers={"Authorization": "Bearer test-token"}
-                )
-                
-                # Assert
-                assert response.status_code == status.HTTP_201_CREATED
-                data = response.json()
-                assert data["name"] == "Test Space"
-                assert data["description"] == "A test space"
-                assert data["ownerId"] == "user-123"
-                assert data["memberCount"] == 1
-                assert data["isOwner"] == True
-                assert "spaceId" in data
-                assert "createdAt" in data
-                assert "updatedAt" in data
+                        "is_public": False,
+                        "owner_id": "user-123",
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    
+                    # Act
+                    response = test_client.post(
+                        "/api/spaces",
+                        json={
+                            "name": "Test Space",
+                            "description": "A test space",
+                            "type": "workspace",
+                            "isPublic": False
+                        },
+                        headers={"Authorization": "Bearer test-token"}
+                    )
+                    
+                    # Assert
+                    assert response.status_code == status.HTTP_201_CREATED
+                    data = response.json()
+                    assert data["name"] == "Test Space"
+                    assert data["description"] == "A test space"
+                    assert data["ownerId"] == "user-123"
+                    assert data["memberCount"] == 1
+                    assert data["isOwner"] == True
+                    assert "spaceId" in data
+                    assert "createdAt" in data
+                    assert "updatedAt" in data
     
     def test_create_space_returns_invite_code(self, test_client):
         """Test that space creation returns a unique invite code."""
@@ -68,31 +82,45 @@ class TestSpaceCreation:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.create_space') as mock_create:
-                space_id = str(uuid.uuid4())
-                invite_code = str(uuid.uuid4())[:8].upper()
-                mock_create.return_value = {
-                    "id": space_id,
-                    "name": "Test Space",
-                    "type": "workspace",
-                    "owner_id": "user-123",
-                    "invite_code": invite_code,
-                    "created_at": datetime.now(timezone.utc).isoformat(),
-                    "updated_at": datetime.now(timezone.utc).isoformat()
+            # Mock UserProfileService to prevent DynamoDB calls
+            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+                mock_profile_instance = Mock()
+                mock_profile_service.return_value = mock_profile_instance
+                mock_profile_instance.get_or_create_user_profile.return_value = {
+                    "user_id": "user-123",
+                    "username": "testuser",
+                    "email": "test@example.com"
                 }
                 
-                # Act
-                response = test_client.post(
-                    "/api/spaces",
-                    json={"name": "Test Space", "type": "workspace"},
-                    headers={"Authorization": "Bearer test-token"}
-                )
-                
-                # Assert
-                assert response.status_code == status.HTTP_201_CREATED
-                data = response.json()
-                assert "inviteCode" in data
-                assert len(data["inviteCode"]) == 8
+                # Mock the entire SpaceService class
+                with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                    mock_service_instance = Mock()
+                    mock_service_class.return_value = mock_service_instance
+                    
+                    space_id = str(uuid.uuid4())
+                    invite_code = str(uuid.uuid4())[:8].upper()
+                    mock_service_instance.create_space.return_value = {
+                        "id": space_id,
+                        "name": "Test Space",
+                        "type": "workspace",
+                        "owner_id": "user-123",
+                        "invite_code": invite_code,
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    
+                    # Act
+                    response = test_client.post(
+                        "/api/spaces",
+                        json={"name": "Test Space", "type": "workspace"},
+                        headers={"Authorization": "Bearer test-token"}
+                    )
+                    
+                    # Assert
+                    assert response.status_code == status.HTTP_201_CREATED
+                    data = response.json()
+                    assert "inviteCode" in data
+                    assert len(data["inviteCode"]) == 8
     
     def test_create_space_validation_name_too_long(self, test_client):
         """Test space creation with name exceeding 100 characters."""
@@ -100,19 +128,29 @@ class TestSpaceCreation:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            # Act
-            response = test_client.post(
-                "/api/spaces",
-                json={
-                    "name": "a" * 101,  # 101 characters
-                    "type": "workspace"
-                },
-                headers={"Authorization": "Bearer test-token"}
-            )
-            
-            # Assert
-            assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-            assert "name" in response.json()["detail"][0]["loc"]
+            # Mock UserProfileService to prevent DynamoDB calls
+            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+                mock_profile_instance = Mock()
+                mock_profile_service.return_value = mock_profile_instance
+                mock_profile_instance.get_or_create_user_profile.return_value = {
+                    "user_id": "user-123",
+                    "username": "testuser",
+                    "email": "test@example.com"
+                }
+                
+                # Act
+                response = test_client.post(
+                    "/api/spaces",
+                    json={
+                        "name": "a" * 101,  # 101 characters
+                        "type": "workspace"
+                    },
+                    headers={"Authorization": "Bearer test-token"}
+                )
+                
+                # Assert
+                assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+                assert "name" in response.json()["detail"][0]["loc"]
     
     def test_create_space_validation_description_too_long(self, test_client):
         """Test space creation with description exceeding 500 characters."""
@@ -120,20 +158,30 @@ class TestSpaceCreation:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            # Act
-            response = test_client.post(
-                "/api/spaces",
-                json={
-                    "name": "Test Space",
-                    "description": "a" * 501,  # 501 characters
-                    "type": "workspace"
-                },
-                headers={"Authorization": "Bearer test-token"}
-            )
-            
-            # Assert
-            assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-            assert "description" in response.json()["detail"][0]["loc"]
+            # Mock UserProfileService to prevent DynamoDB calls
+            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+                mock_profile_instance = Mock()
+                mock_profile_service.return_value = mock_profile_instance
+                mock_profile_instance.get_or_create_user_profile.return_value = {
+                    "user_id": "user-123",
+                    "username": "testuser",
+                    "email": "test@example.com"
+                }
+                
+                # Act
+                response = test_client.post(
+                    "/api/spaces",
+                    json={
+                        "name": "Test Space",
+                        "description": "a" * 501,  # 501 characters
+                        "type": "workspace"
+                    },
+                    headers={"Authorization": "Bearer test-token"}
+                )
+                
+                # Assert
+                assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+                assert "description" in response.json()["detail"][0]["loc"]
     
     def test_create_space_without_authentication(self, test_client):
         """Test space creation without authentication token."""
@@ -153,19 +201,32 @@ class TestSpaceCreation:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.create_space') as mock_create:
-                mock_create.side_effect = Exception("Database connection failed")
+            # Mock UserProfileService to prevent DynamoDB calls
+            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+                mock_profile_instance = Mock()
+                mock_profile_service.return_value = mock_profile_instance
+                mock_profile_instance.get_or_create_user_profile.return_value = {
+                    "user_id": "user-123",
+                    "username": "testuser",
+                    "email": "test@example.com"
+                }
                 
-                # Act
-                response = test_client.post(
-                    "/api/spaces",
-                    json={"name": "Test Space", "type": "workspace"},
-                    headers={"Authorization": "Bearer test-token"}
-                )
-                
-                # Assert
-                assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-                assert "Failed to create space" in response.json()["detail"]
+                # Mock the entire SpaceService class
+                with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                    mock_service_instance = Mock()
+                    mock_service_class.return_value = mock_service_instance
+                    mock_service_instance.create_space.side_effect = Exception("Database connection failed")
+                    
+                    # Act
+                    response = test_client.post(
+                        "/api/spaces",
+                        json={"name": "Test Space", "type": "workspace"},
+                        headers={"Authorization": "Bearer test-token"}
+                    )
+                    
+                    # Assert
+                    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+                    assert "Failed to create space" in response.json()["detail"]
 
 
 class TestGetSpace:
@@ -178,31 +239,45 @@ class TestGetSpace:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.get_space') as mock_get:
-                mock_get.return_value = {
-                    "id": space_id,
-                    "name": "Test Space",
-                    "description": "A test space",
-                    "type": "workspace",
-                    "is_public": False,
-                    "owner_id": "user-123",
-                    "member_count": 5,
-                    "created_at": datetime.now(timezone.utc).isoformat(),
-                    "updated_at": datetime.now(timezone.utc).isoformat()
+            # Mock UserProfileService to prevent DynamoDB calls
+            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+                mock_profile_instance = Mock()
+                mock_profile_service.return_value = mock_profile_instance
+                mock_profile_instance.get_or_create_user_profile.return_value = {
+                    "user_id": "user-123",
+                    "username": "testuser",
+                    "email": "test@example.com"
                 }
                 
-                # Act
-                response = test_client.get(
-                    f"/api/spaces/{space_id}",
-                    headers={"Authorization": "Bearer test-token"}
-                )
-                
-                # Assert
-                assert response.status_code == status.HTTP_200_OK
-                data = response.json()
-                assert data["spaceId"] == space_id
-                assert data["name"] == "Test Space"
-                assert data["memberCount"] == 5
+                # Mock the entire SpaceService class
+                with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                    mock_service_instance = Mock()
+                    mock_service_class.return_value = mock_service_instance
+                    
+                    mock_service_instance.get_space.return_value = {
+                        "id": space_id,
+                        "name": "Test Space",
+                        "description": "A test space",
+                        "type": "workspace",
+                        "is_public": False,
+                        "owner_id": "user-123",
+                        "member_count": 5,
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    
+                    # Act
+                    response = test_client.get(
+                        f"/api/spaces/{space_id}",
+                        headers={"Authorization": "Bearer test-token"}
+                    )
+                    
+                    # Assert
+                    assert response.status_code == status.HTTP_200_OK
+                    data = response.json()
+                    assert data["spaceId"] == space_id
+                    assert data["name"] == "Test Space"
+                    assert data["memberCount"] == 5
     
     def test_get_space_not_found(self, test_client):
         """Test getting a space that doesn't exist."""
@@ -211,19 +286,33 @@ class TestGetSpace:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.get_space') as mock_get:
-                from app.services.exceptions import SpaceNotFoundError
-                mock_get.side_effect = SpaceNotFoundError(f"Space {space_id} not found")
+            # Mock UserProfileService to prevent DynamoDB calls
+            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+                mock_profile_instance = Mock()
+                mock_profile_service.return_value = mock_profile_instance
+                mock_profile_instance.get_or_create_user_profile.return_value = {
+                    "user_id": "user-123",
+                    "username": "testuser",
+                    "email": "test@example.com"
+                }
                 
-                # Act
-                response = test_client.get(
-                    f"/api/spaces/{space_id}",
-                    headers={"Authorization": "Bearer test-token"}
-                )
-                
-                # Assert
-                assert response.status_code == status.HTTP_404_NOT_FOUND
-                assert "not found" in response.json()["detail"].lower()
+                # Mock the entire SpaceService class
+                with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                    mock_service_instance = Mock()
+                    mock_service_class.return_value = mock_service_instance
+                    
+                    from app.services.exceptions import SpaceNotFoundError
+                    mock_service_instance.get_space.side_effect = SpaceNotFoundError(f"Space {space_id} not found")
+                    
+                    # Act
+                    response = test_client.get(
+                        f"/api/spaces/{space_id}",
+                        headers={"Authorization": "Bearer test-token"}
+                    )
+                    
+                    # Assert
+                    assert response.status_code == status.HTTP_404_NOT_FOUND
+                    assert "not found" in response.json()["detail"].lower()
     
     def test_get_space_permission_denied(self, test_client):
         """Test getting a space without being a member."""
@@ -232,18 +321,32 @@ class TestGetSpace:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-456"}  # Different user
             
-            with patch('app.services.space.SpaceService.get_space') as mock_get:
-                from app.services.exceptions import UnauthorizedError
-                mock_get.side_effect = UnauthorizedError("You are not a member of this space")
+            # Mock UserProfileService to prevent DynamoDB calls
+            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+                mock_profile_instance = Mock()
+                mock_profile_service.return_value = mock_profile_instance
+                mock_profile_instance.get_or_create_user_profile.return_value = {
+                    "user_id": "user-456",
+                    "username": "otheruser",
+                    "email": "other@example.com"
+                }
                 
-                # Act
-                response = test_client.get(
-                    f"/api/spaces/{space_id}",
-                    headers={"Authorization": "Bearer test-token"}
-                )
-                
-                # Assert
-                assert response.status_code == status.HTTP_403_FORBIDDEN
+                # Mock the entire SpaceService class
+                with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                    mock_service_instance = Mock()
+                    mock_service_class.return_value = mock_service_instance
+                    
+                    from app.services.exceptions import UnauthorizedError
+                    mock_service_instance.get_space.side_effect = UnauthorizedError("You are not a member of this space")
+                    
+                    # Act
+                    response = test_client.get(
+                        f"/api/spaces/{space_id}",
+                        headers={"Authorization": "Bearer test-token"}
+                    )
+                    
+                    # Assert
+                    assert response.status_code == status.HTTP_403_FORBIDDEN
     
     def test_get_public_space_non_member(self, test_client):
         """Test getting a public space without being a member."""
@@ -252,27 +355,41 @@ class TestGetSpace:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-456"}
             
-            with patch('app.services.space.SpaceService.get_space') as mock_get:
-                mock_get.return_value = {
-                    "id": space_id,
-                    "name": "Public Space",
-                    "is_public": True,
-                    "owner_id": "user-123",
-                    "member_count": 10,
-                    "created_at": datetime.now(timezone.utc).isoformat(),
-                    "updated_at": datetime.now(timezone.utc).isoformat()
+            # Mock UserProfileService to prevent DynamoDB calls
+            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+                mock_profile_instance = Mock()
+                mock_profile_service.return_value = mock_profile_instance
+                mock_profile_instance.get_or_create_user_profile.return_value = {
+                    "user_id": "user-456",
+                    "username": "otheruser",
+                    "email": "other@example.com"
                 }
                 
-                # Act
-                response = test_client.get(
-                    f"/api/spaces/{space_id}",
-                    headers={"Authorization": "Bearer test-token"}
-                )
-                
-                # Assert
-                assert response.status_code == status.HTTP_200_OK
-                data = response.json()
-                assert data["isPublic"] == True
+                # Mock the entire SpaceService class
+                with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                    mock_service_instance = Mock()
+                    mock_service_class.return_value = mock_service_instance
+                    
+                    mock_service_instance.get_space.return_value = {
+                        "id": space_id,
+                        "name": "Public Space",
+                        "is_public": True,
+                        "owner_id": "user-123",
+                        "member_count": 10,
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    
+                    # Act
+                    response = test_client.get(
+                        f"/api/spaces/{space_id}",
+                        headers={"Authorization": "Bearer test-token"}
+                    )
+                    
+                    # Assert
+                    assert response.status_code == status.HTTP_200_OK
+                    data = response.json()
+                    assert data["isPublic"] == True
 
 
 class TestListUserSpaces:
@@ -412,8 +529,11 @@ class TestListUserSpaces:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.list_user_spaces') as mock_list:
-                mock_list.return_value = {
+            # Note: This endpoint is in users router, not spaces router
+            with patch('app.api.routes.users.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
+                mock_service_instance.list_user_spaces.return_value = {
                     "spaces": [
                         {
                             "id": str(uuid.uuid4()),
@@ -448,8 +568,11 @@ class TestListUserSpaces:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.list_user_spaces') as mock_list:
-                mock_list.return_value = {
+            # Note: This endpoint is in users router, not spaces router
+            with patch('app.api.routes.users.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
+                mock_service_instance.list_user_spaces.return_value = {
                     "spaces": [
                         {
                             "id": str(uuid.uuid4()),
@@ -486,9 +609,12 @@ class TestListUserSpaces:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.list_user_spaces') as mock_list:
+            # Note: This endpoint is in users router, not spaces router
+            with patch('app.api.routes.users.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
                 # Should cap at 100 even if requested more
-                mock_list.return_value = {
+                mock_service_instance.list_user_spaces.return_value = {
                     "spaces": [],
                     "total": 0,
                     "page": 1,
@@ -504,7 +630,7 @@ class TestListUserSpaces:
                 # Assert
                 assert response.status_code == status.HTTP_200_OK
                 # Check that service was called with max 100
-                mock_list.assert_called_with(
+                mock_service_instance.list_user_spaces.assert_called_with(
                     user_id="user-123",
                     page=1,
                     page_size=100,  # Capped at 100
@@ -524,39 +650,41 @@ class TestUpdateSpaceSettings:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.update_space') as mock_update:
-                mock_update.return_value = True
+            # Mock the entire SpaceService class
+            with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
                 
-                with patch('app.services.space.SpaceService.get_space') as mock_get:
-                    mock_get.return_value = {
-                        "id": space_id,
+                mock_service_instance.update_space.return_value = True
+                mock_service_instance.get_space.return_value = {
+                    "id": space_id,
+                    "name": "Updated Space",
+                    "description": "Updated description",
+                    "type": "workspace",
+                    "is_public": True,
+                    "owner_id": "user-123",
+                    "member_count": 5,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+                
+                # Act
+                response = test_client.put(
+                    f"/api/spaces/{space_id}",
+                    json={
                         "name": "Updated Space",
                         "description": "Updated description",
-                        "type": "workspace",
-                        "is_public": True,
-                        "owner_id": "user-123",
-                        "member_count": 5,
-                        "created_at": datetime.now(timezone.utc).isoformat(),
-                        "updated_at": datetime.now(timezone.utc).isoformat()
-                    }
-                    
-                    # Act
-                    response = test_client.put(
-                        f"/api/spaces/{space_id}",
-                        json={
-                            "name": "Updated Space",
-                            "description": "Updated description",
-                            "isPublic": True
-                        },
-                        headers={"Authorization": "Bearer test-token"}
-                    )
-                    
-                    # Assert
-                    assert response.status_code == status.HTTP_200_OK
-                    data = response.json()
-                    assert data["name"] == "Updated Space"
-                    assert data["description"] == "Updated description"
-                    assert data["isPublic"] == True
+                        "isPublic": True
+                    },
+                    headers={"Authorization": "Bearer test-token"}
+                )
+                
+                # Assert
+                assert response.status_code == status.HTTP_200_OK
+                data = response.json()
+                assert data["name"] == "Updated Space"
+                assert data["description"] == "Updated description"
+                assert data["isPublic"] == True
     
     @pytest.mark.skip(reason="Admin role check not yet implemented in service")
     def test_update_space_settings_as_admin(self, test_client):
@@ -666,8 +794,12 @@ class TestGetSpaceMembers:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.get_space_members') as mock_members:
-                mock_members.return_value = [
+            # Mock the entire SpaceService class
+            with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
+                
+                mock_service_instance.get_space_members.return_value = [
                     {
                         "user_id": "user-123",
                         "email": "owner@example.com",
@@ -716,9 +848,13 @@ class TestGetSpaceMembers:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-999"}  # Not a member
             
-            with patch('app.services.space.SpaceService.get_space_members') as mock_members:
+            # Mock the entire SpaceService class
+            with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
+                
                 from app.services.exceptions import UnauthorizedError
-                mock_members.side_effect = UnauthorizedError("You are not a member of this space")
+                mock_service_instance.get_space_members.side_effect = UnauthorizedError("You are not a member of this space")
                 
                 # Act
                 response = test_client.get(
@@ -736,9 +872,13 @@ class TestGetSpaceMembers:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-999"}  # Not a member
             
-            with patch('app.services.space.SpaceService.get_space_members') as mock_members:
+            # Mock the entire SpaceService class
+            with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
+                
                 # Public spaces allow viewing members
-                mock_members.return_value = [
+                mock_service_instance.get_space_members.return_value = [
                     {
                         "user_id": "user-123",
                         "email": "owner@example.com",
@@ -770,9 +910,13 @@ class TestGetSpaceMembers:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.get_space_members') as mock_members:
+            # Mock the entire SpaceService class
+            with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
+                
                 from app.services.exceptions import SpaceNotFoundError
-                mock_members.side_effect = SpaceNotFoundError(f"Space {space_id} not found")
+                mock_service_instance.get_space_members.side_effect = SpaceNotFoundError(f"Space {space_id} not found")
                 
                 # Act
                 response = test_client.get(
@@ -790,9 +934,13 @@ class TestGetSpaceMembers:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            # First, get the space to check member count
-            with patch('app.services.space.SpaceService.get_space') as mock_get:
-                mock_get.return_value = {
+            # Mock the entire SpaceService class
+            with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
+                
+                # First, get the space to check member count
+                mock_service_instance.get_space.return_value = {
                     "id": space_id,
                     "name": "Test Space",
                     "type": "workspace",
@@ -803,36 +951,35 @@ class TestGetSpaceMembers:
                 }
                 
                 # Then get members list
-                with patch('app.services.space.SpaceService.get_space_members') as mock_members:
-                    mock_members.return_value = [
-                        {"user_id": "user-123", "role": "owner", "username": "owner", "email": "owner@example.com", "joined_at": datetime.now(timezone.utc).isoformat()},
-                        {"user_id": "user-456", "role": "admin", "username": "admin", "email": "admin@example.com", "joined_at": datetime.now(timezone.utc).isoformat()},
-                        {"user_id": "user-789", "role": "member", "username": "member", "email": "member@example.com", "joined_at": datetime.now(timezone.utc).isoformat()}
-                    ]
-                    
-                    # Act
-                    space_response = test_client.get(
-                        f"/api/spaces/{space_id}",
-                        headers={"Authorization": "Bearer test-token"}
-                    )
-                    
-                    members_response = test_client.get(
-                        f"/api/spaces/{space_id}/members",
-                        headers={"Authorization": "Bearer test-token"}
-                    )
-                    
-                    # Assert
-                    assert space_response.status_code == status.HTTP_200_OK
-                    assert members_response.status_code == status.HTTP_200_OK
-                    
-                    space_data = space_response.json()
-                    members_data = members_response.json()
-                    
-                    assert "members" in members_data
-                    assert "total" in members_data
-                    assert space_data["memberCount"] == len(members_data["members"])
-                    assert space_data["memberCount"] == 3
-                    assert members_data["total"] == 3
+                mock_service_instance.get_space_members.return_value = [
+                    {"user_id": "user-123", "role": "owner", "username": "owner", "email": "owner@example.com", "joined_at": datetime.now(timezone.utc).isoformat()},
+                    {"user_id": "user-456", "role": "admin", "username": "admin", "email": "admin@example.com", "joined_at": datetime.now(timezone.utc).isoformat()},
+                    {"user_id": "user-789", "role": "member", "username": "member", "email": "member@example.com", "joined_at": datetime.now(timezone.utc).isoformat()}
+                ]
+                
+                # Act
+                space_response = test_client.get(
+                    f"/api/spaces/{space_id}",
+                    headers={"Authorization": "Bearer test-token"}
+                )
+                
+                members_response = test_client.get(
+                    f"/api/spaces/{space_id}/members",
+                    headers={"Authorization": "Bearer test-token"}
+                )
+                
+                # Assert
+                assert space_response.status_code == status.HTTP_200_OK
+                assert members_response.status_code == status.HTTP_200_OK
+                
+                space_data = space_response.json()
+                members_data = members_response.json()
+                
+                assert "members" in members_data
+                assert "total" in members_data
+                assert space_data["memberCount"] == len(members_data["members"])
+                assert space_data["memberCount"] == 3
+                assert members_data["total"] == 3
 
 
 class TestInviteCodeValidation:
@@ -921,9 +1068,13 @@ class TestDatabaseErrorHandling:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.create_space') as mock_create:
+            # Mock the entire SpaceService class
+            with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
+                
                 from botocore.exceptions import ClientError
-                mock_create.side_effect = ClientError(
+                mock_service_instance.create_space.side_effect = ClientError(
                     {"Error": {"Code": "ServiceUnavailable", "Message": "DynamoDB is unavailable"}},
                     "PutItem"
                 )
@@ -944,9 +1095,13 @@ class TestDatabaseErrorHandling:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.list_user_spaces') as mock_list:
+            # Note: This endpoint is in users router, not spaces router
+            with patch('app.api.routes.users.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
+                
                 from botocore.exceptions import ClientError
-                mock_list.side_effect = ClientError(
+                mock_service_instance.list_user_spaces.side_effect = ClientError(
                     {"Error": {"Code": "ProvisionedThroughputExceededException"}},
                     "Query"
                 )
@@ -1002,9 +1157,13 @@ class TestEdgeCases:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.create_space') as mock_create:
+            # Mock the entire SpaceService class
+            with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
+                
                 space_id = str(uuid.uuid4())
-                mock_create.return_value = {
+                mock_service_instance.create_space.return_value = {
                     "id": space_id,
                     "name": "Test & Space #1!",
                     "type": "workspace",
@@ -1030,9 +1189,13 @@ class TestEdgeCases:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.create_space') as mock_create:
+            # Mock the entire SpaceService class
+            with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
+                
                 space_id = str(uuid.uuid4())
-                mock_create.return_value = {
+                mock_service_instance.create_space.return_value = {
                     "id": space_id,
                     "name": "测试空间 🚀",
                     "type": "workspace",
@@ -1065,9 +1228,13 @@ class TestEdgeCases:
         with patch('app.core.security.decode_token') as mock_decode:
             mock_decode.return_value = {"sub": "user-123"}
             
-            with patch('app.services.space.SpaceService.create_space') as mock_create:
+            # Mock the entire SpaceService class
+            with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                mock_service_instance = Mock()
+                mock_service_class.return_value = mock_service_instance
+                
                 from app.services.exceptions import SpaceLimitExceededError
-                mock_create.side_effect = SpaceLimitExceededError("User has reached maximum number of spaces")
+                mock_service_instance.create_space.side_effect = SpaceLimitExceededError("User has reached maximum number of spaces")
                 
                 # Act
                 response = test_client.post(

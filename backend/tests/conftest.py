@@ -24,6 +24,7 @@ def test_client():
     with patch.dict(os.environ, {
         'AWS_REGION': 'us-east-1',
         'DYNAMODB_TABLE_NAME': 'test-table',
+        'DYNAMODB_TABLE': 'test-table',
         'USER_POOL_ID': 'test-pool-id',
         'USER_POOL_CLIENT_ID': 'test-client-id',
         'ENVIRONMENT': 'test',
@@ -32,7 +33,8 @@ def test_client():
         # Mock boto3 clients and resources
         with patch('boto3.client') as mock_boto_client, \
              patch('boto3.resource') as mock_boto_resource, \
-             patch('app.services.user_profile.UserProfileService') as mock_profile_service_class:
+             patch('app.services.user_profile.UserProfileService') as mock_profile_service_class, \
+             patch('app.services.space.boto3.resource') as mock_space_boto_resource:
             
             mock_cognito = Mock()
             mock_dynamodb = Mock()
@@ -67,6 +69,7 @@ def test_client():
             
             mock_boto_client.side_effect = client_factory
             mock_boto_resource.side_effect = resource_factory
+            mock_space_boto_resource.side_effect = resource_factory
             
             # Mock UserProfileService instance
             mock_profile_instance = Mock()

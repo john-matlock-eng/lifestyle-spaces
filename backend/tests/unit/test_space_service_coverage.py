@@ -400,9 +400,7 @@ class TestSpaceServiceCoverage:
             with pytest.raises(ClientError):
                 service.create_space(
                     space=space,
-                    owner_id="user123",
-                    owner_email="test@example.com",
-                    owner_username="testuser"
+                    owner_id="user123"
                 )
     
     def test_generate_invite_code(self):
