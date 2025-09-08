@@ -398,7 +398,7 @@ describe('Spaces Service', () => {
 
       const result = await getPendingInvitations();
 
-      expect(mockApiService.get).toHaveBeenCalledWith('/api/invitations/pending');
+      expect(mockApiService.get).toHaveBeenCalledWith('/api/invitations');
       expect(result).toEqual(mockInvitations);
     });
 
@@ -408,7 +408,7 @@ describe('Spaces Service', () => {
 
       const result = await getPendingInvitations();
 
-      expect(mockApiService.get).toHaveBeenCalledWith('/api/invitations/pending');
+      expect(mockApiService.get).toHaveBeenCalledWith('/api/invitations');
       expect(result).toEqual([]); // Should return empty array as fallback
     });
 

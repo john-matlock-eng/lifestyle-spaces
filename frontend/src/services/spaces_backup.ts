@@ -205,7 +205,7 @@ export const declineInvitation = async (invitationId: string): Promise<Invitatio
  * Get pending invitations for the current user
  */
 export const getPendingInvitations = async (): Promise<Invitation[]> => {
-  const response = await apiService.get('/api/invitations/pending') as { invitations?: Invitation[] };
+  const response = await apiService.get('/api/invitations') as { invitations?: Invitation[] };
   return response.invitations || [];
 };
 
