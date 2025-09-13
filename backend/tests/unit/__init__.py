@@ -1,3 +1,1 @@
-"""
-Unit tests.
-"""
+from . import test_cognito_auth
