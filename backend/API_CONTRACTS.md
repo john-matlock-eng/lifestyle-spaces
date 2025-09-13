@@ -469,7 +469,6 @@ from datetime import datetime
 
 class CreateInvitationRequest(BaseModel):
     email: EmailStr
-    space_id: str = Field(..., alias="spaceId")
     role: Optional[SpaceMemberRole] = SpaceMemberRole.MEMBER
     
     @validator('email')

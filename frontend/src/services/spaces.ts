@@ -156,9 +156,8 @@ export const inviteMember = async (invitationData: InvitationData): Promise<Invi
     throw new Error('Invalid role. Must be one of: owner, admin, member');
   }
 
-  const response = await apiService.post('/api/invitations', {
+  const response = await apiService.post(`/api/spaces/${spaceId}/invitations`, {
     email: email.trim().toLowerCase(),
-    spaceId: spaceId.trim(),
     role: role || 'member',
   });
 

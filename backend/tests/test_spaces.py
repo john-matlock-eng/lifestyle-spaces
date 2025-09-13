@@ -398,8 +398,16 @@ class TestListUserSpaces:
     def test_list_user_spaces_success(self, test_client):
         """Test successful listing of user's spaces."""
         # Arrange
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
             
             with patch('app.services.space.SpaceService.list_user_spaces') as mock_list:
                 mock_list.return_value = {
@@ -445,9 +453,17 @@ class TestListUserSpaces:
     def test_list_user_spaces_with_pagination(self, test_client):
         """Test listing user's spaces with pagination."""
         # Arrange
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             with patch('app.services.space.SpaceService.list_user_spaces') as mock_list:
                 # Create 25 spaces for pagination test
                 spaces = []
@@ -488,9 +504,17 @@ class TestListUserSpaces:
     def test_list_user_spaces_with_search_filter(self, test_client):
         """Test listing user's spaces with search filter."""
         # Arrange
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             with patch('app.services.space.SpaceService.list_user_spaces') as mock_list:
                 mock_list.return_value = {
                     "spaces": [
@@ -526,9 +550,17 @@ class TestListUserSpaces:
     def test_list_user_spaces_filter_by_public(self, test_client):
         """Test listing user's spaces filtered by public/private."""
         # Arrange
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Note: This endpoint is in users router, not spaces router
             with patch('app.api.routes.users.SpaceService') as mock_service_class:
                 mock_service_instance = Mock()
@@ -565,9 +597,17 @@ class TestListUserSpaces:
     def test_list_user_spaces_filter_by_role(self, test_client):
         """Test listing user's spaces filtered by user's role."""
         # Arrange
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Note: This endpoint is in users router, not spaces router
             with patch('app.api.routes.users.SpaceService') as mock_service_class:
                 mock_service_instance = Mock()
@@ -606,9 +646,16 @@ class TestListUserSpaces:
     def test_list_user_spaces_pagination_limits(self, test_client):
         """Test pagination limits (max 100 items per page)."""
         # Arrange
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode,             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Note: This endpoint is in users router, not spaces router
             with patch('app.api.routes.users.SpaceService') as mock_service_class:
                 mock_service_instance = Mock()
@@ -647,9 +694,17 @@ class TestUpdateSpaceSettings:
         """Test updating space settings as the owner."""
         # Arrange
         space_id = str(uuid.uuid4())
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Mock the entire SpaceService class
             with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
                 mock_service_instance = Mock()
@@ -727,9 +782,17 @@ class TestUpdateSpaceSettings:
         """Test that regular members cannot update space settings."""
         # Arrange
         space_id = str(uuid.uuid4())
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-789"}  # Regular member
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-789",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             with patch('app.services.space.SpaceService.update_space') as mock_update:
                 from app.services.exceptions import UnauthorizedError
                 mock_update.side_effect = UnauthorizedError("Only admins can update space settings")
@@ -749,9 +812,16 @@ class TestUpdateSpaceSettings:
         """Test validation errors when updating space settings."""
         # Arrange
         space_id = str(uuid.uuid4())
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode,         patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Act - Name too long
             response = test_client.put(
                 f"/api/spaces/{space_id}",
@@ -766,9 +836,17 @@ class TestUpdateSpaceSettings:
         """Test updating a space that doesn't exist."""
         # Arrange
         space_id = str(uuid.uuid4())
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             with patch('app.services.space.SpaceService.update_space') as mock_update:
                 from app.services.exceptions import SpaceNotFoundError
                 mock_update.side_effect = SpaceNotFoundError(f"Space {space_id} not found")
@@ -791,9 +869,17 @@ class TestGetSpaceMembers:
         """Test successful retrieval of space members."""
         # Arrange
         space_id = str(uuid.uuid4())
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Mock the entire SpaceService class
             with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
                 mock_service_instance = Mock()
@@ -845,9 +931,17 @@ class TestGetSpaceMembers:
         """Test that non-members cannot view space members."""
         # Arrange
         space_id = str(uuid.uuid4())
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-999"}  # Not a member
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-999",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Mock the entire SpaceService class
             with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
                 mock_service_instance = Mock()
@@ -869,9 +963,17 @@ class TestGetSpaceMembers:
         """Test viewing members of a public space."""
         # Arrange
         space_id = str(uuid.uuid4())
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-999"}  # Not a member
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-999",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Mock the entire SpaceService class
             with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
                 mock_service_instance = Mock()
@@ -907,9 +1009,17 @@ class TestGetSpaceMembers:
         """Test getting members of a non-existent space."""
         # Arrange
         space_id = str(uuid.uuid4())
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Mock the entire SpaceService class
             with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
                 mock_service_instance = Mock()
@@ -931,9 +1041,16 @@ class TestGetSpaceMembers:
         """Test that member count is accurately tracked."""
         # Arrange
         space_id = str(uuid.uuid4())
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode,             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Mock the entire SpaceService class
             with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
                 mock_service_instance = Mock()
@@ -1065,9 +1182,17 @@ class TestDatabaseErrorHandling:
     def test_dynamodb_connection_error(self, test_client):
         """Test handling of DynamoDB connection errors."""
         # Arrange
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Mock the entire SpaceService class
             with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
                 mock_service_instance = Mock()
@@ -1092,9 +1217,16 @@ class TestDatabaseErrorHandling:
     def test_dynamodb_throughput_exceeded(self, test_client):
         """Test handling of DynamoDB throughput exceeded errors."""
         # Arrange
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode,             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Note: This endpoint is in users router, not spaces router
             with patch('app.api.routes.users.SpaceService') as mock_service_class:
                 mock_service_instance = Mock()
@@ -1122,9 +1254,17 @@ class TestEdgeCases:
     def test_empty_space_name(self, test_client):
         """Test creating a space with empty name."""
         # Arrange
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Act
             response = test_client.post(
                 "/api/spaces",
@@ -1138,9 +1278,17 @@ class TestEdgeCases:
     def test_whitespace_only_space_name(self, test_client):
         """Test creating a space with whitespace-only name."""
         # Arrange
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Act
             response = test_client.post(
                 "/api/spaces",
@@ -1154,9 +1302,17 @@ class TestEdgeCases:
     def test_special_characters_in_space_name(self, test_client):
         """Test creating a space with special characters in name."""
         # Arrange
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Mock the entire SpaceService class
             with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
                 mock_service_instance = Mock()
@@ -1186,9 +1342,17 @@ class TestEdgeCases:
     def test_unicode_in_space_name(self, test_client):
         """Test creating a space with Unicode characters."""
         # Arrange
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch('app.core.security.decode_token') as mock_decode, \
+             patch('app.core.dependencies.UserProfileService') as mock_profile_service:
             mock_decode.return_value = {"sub": "user-123"}
-            
+            mock_profile_instance = Mock()
+            mock_profile_service.return_value = mock_profile_instance
+            mock_profile_instance.get_or_create_user_profile.return_value = {
+                "user_id": "user-123",
+                "username": "testuser",
+                "email": "test@example.com"
+            }
+
             # Mock the entire SpaceService class
             with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
                 mock_service_instance = Mock()

@@ -234,7 +234,13 @@ describe('Spaces Service', () => {
 
       const result = await inviteMember(mockInvitationData);
 
-      expect(mockApiService.post).toHaveBeenCalledWith('/api/invitations', mockInvitationData);
+      expect(mockApiService.post).toHaveBeenCalledWith(
+        `/api/spaces/${mockInvitationData.spaceId}/invitations`,
+        {
+          email: mockInvitationData.email,
+          role: mockInvitationData.role,
+        }
+      );
       expect(result).toEqual(mockInvitation);
     });
 
