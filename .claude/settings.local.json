@@ -26,7 +26,9 @@
       "Read(//c/c/github/lifestyle-spaces/**)",
       "Bash(npm run type-check:*)",
       "Bash(npm run lint)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(DEBUG=1 python -c \"\nimport sys, os\nos.environ[''DEBUG''] = ''1''\nsys.path.append(''.'')\nfrom unittest.mock import Mock, patch\nfrom fastapi.testclient import TestClient\nfrom app.main import app\nfrom app.core.dependencies import get_current_user\n\n# Override auth dependency\ndef override_get_current_user():\n    return {''sub'': ''user123'', ''email'': ''test@example.com'', ''username'': ''testuser'', ''full_name'': ''Test User''}\n\napp.dependency_overrides[get_current_user] = override_get_current_user\nclient = TestClient(app)\n\nwith patch(''app.api.routes.invitations.SpaceService'') as mock_space_service:\n    mock_space_instance = Mock()\n    mock_space_instance.get_space.return_value = {''id'': ''space123'', ''name'': ''Test Space''}\n    mock_space_instance.can_edit_space.return_value = False\n    mock_space_service.return_value = mock_space_instance\n    \n    response = client.post(''/api/spaces/space123/invitations'', json={''email'': ''invite@example.com'', ''role'': ''member''})\n    print(f''Status: {response.status_code}'')\n    print(f''Response: {response.text}'')\n\")"
     ],
     "deny": [],
     "ask": []
