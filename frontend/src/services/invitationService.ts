@@ -127,13 +127,18 @@ class InvitationService {
 
   /**
    * Join space by invitation code
+   * Uses the spaces API endpoint for joining with invite codes
    */
-  async joinByCode(request: JoinByCodeRequest): Promise<Invitation> {
+  async joinByCode(request: JoinByCodeRequest): Promise<{ spaceId: string; spaceName: string }> {
     try {
-      return await apiService.post<Invitation>(
-        `${this.baseEndpoint}/join`,
-        request
+      const response = await apiService.post<{ spaceId: string; name: string }>(
+        '/api/spaces/join',
+        { invite_code: request.code }
       );
+      return {
+        spaceId: response.spaceId,
+        spaceName: response.name
+      };
     } catch (error: unknown) {
       throw this.handleError(error, 'Failed to join by code');
     }

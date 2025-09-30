@@ -5,10 +5,10 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { invitationService } from '../../services/invitationService';
-import type { ValidateInviteCodeResponse, Invitation } from '../../types/invitation.types';
+import type { ValidateInviteCodeResponse } from '../../types/invitation.types';
 
 interface JoinByCodeFormProps {
-  onSuccess?: (invitation: Invitation) => void;
+  onSuccess?: (result: { spaceId: string; spaceName: string }) => void;
   onCancel?: () => void;
   className?: string;
 }
@@ -89,8 +89,8 @@ export const JoinByCodeForm: React.FC<JoinByCodeFormProps> = ({
     setState(prev => ({ ...prev, isJoining: true, error: null }));
 
     try {
-      const invitation = await invitationService.joinByCode({ code: state.code });
-      onSuccess?.(invitation);
+      const result = await invitationService.joinByCode({ code: state.code });
+      onSuccess?.(result);
 
       // Reset form
       setState({

@@ -173,6 +173,14 @@ vi.mock('../stores/authStore', () => ({
   useAuth: () => mockAuthState,
 }));
 
+// Mock spaces service - declare the mock function before using it in the factory
+vi.mock('../services/spaces', () => ({
+  regenerateInviteCode: vi.fn(),
+}));
+
+// Import the mocked service to get access to the mock function
+import * as spacesService from '../services/spaces';
+
 // Test wrapper component
 const TestWrapper: React.FC<{ children: React.ReactNode; initialPath?: string }> = ({
   children,
@@ -467,5 +475,280 @@ describe('SpaceDetail', () => {
     // Look for actions menu trigger
     const actionsButton = screen.getByText('Actions');
     expect(actionsButton).toBeInTheDocument();
+  });
+
+  describe('Invite Code Features', () => {
+    beforeEach(() => {
+      // Set up a space with an invite code
+      setMockSpaceState({
+        currentSpace: {
+          ...mockSpaceState.currentSpace,
+          inviteCode: 'ABC12345',
+        },
+      });
+    });
+
+    it('displays invite code section for admins', () => {
+      render(
+        <TestWrapper>
+          <SpaceDetail />
+        </TestWrapper>
+      );
+
+      // Switch to members tab
+      const membersTab = screen.getByRole('tab', { name: 'Members' });
+      fireEvent.click(membersTab);
+
+      expect(screen.getByLabelText('Invite Code')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('ABC12345')).toBeInTheDocument();
+    });
+
+    it('copies invite code to clipboard when Copy Code is clicked', async () => {
+      // Mock clipboard API
+      const writeTextMock = vi.fn().mockResolvedValue(undefined);
+      Object.assign(navigator, {
+        clipboard: {
+          writeText: writeTextMock,
+        },
+      });
+
+      render(
+        <TestWrapper>
+          <SpaceDetail />
+        </TestWrapper>
+      );
+
+      // Switch to members tab
+      const membersTab = screen.getByRole('tab', { name: 'Members' });
+      fireEvent.click(membersTab);
+
+      // Click copy code button
+      const copyCodeButton = screen.getByTitle('Copy invite code');
+      fireEvent.click(copyCodeButton);
+
+      await waitFor(() => {
+        expect(writeTextMock).toHaveBeenCalledWith('ABC12345');
+        expect(screen.getByText('Invite code copied to clipboard!')).toBeInTheDocument();
+      });
+    });
+
+    it('copies join link to clipboard when Copy Link is clicked', async () => {
+      // Mock clipboard API
+      const writeTextMock = vi.fn().mockResolvedValue(undefined);
+      Object.assign(navigator, {
+        clipboard: {
+          writeText: writeTextMock,
+        },
+      });
+
+      render(
+        <TestWrapper>
+          <SpaceDetail />
+        </TestWrapper>
+      );
+
+      // Switch to members tab
+      const membersTab = screen.getByRole('tab', { name: 'Members' });
+      fireEvent.click(membersTab);
+
+      // Click copy link button
+      const copyLinkButton = screen.getByTitle('Copy join link');
+      fireEvent.click(copyLinkButton);
+
+      await waitFor(() => {
+        expect(writeTextMock).toHaveBeenCalledWith(expect.stringContaining('/join/ABC12345'));
+        expect(screen.getByText('Join link copied to clipboard!')).toBeInTheDocument();
+      });
+    });
+
+    it('shows confirmation dialog when Regenerate is clicked', async () => {
+      render(
+        <TestWrapper>
+          <SpaceDetail />
+        </TestWrapper>
+      );
+
+      // Switch to members tab
+      const membersTab = screen.getByRole('tab', { name: 'Members' });
+      fireEvent.click(membersTab);
+
+      // Click regenerate button
+      const regenerateButton = screen.getByTitle('Regenerate invite code');
+      fireEvent.click(regenerateButton);
+
+      // Confirmation dialog should appear
+      await waitFor(() => {
+        expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
+        expect(screen.getByText(/This will invalidate the old invite code/)).toBeInTheDocument();
+        expect(screen.getByText(/This action cannot be undone/)).toBeInTheDocument();
+      });
+    });
+
+    it('closes confirmation dialog when Cancel is clicked', async () => {
+      render(
+        <TestWrapper>
+          <SpaceDetail />
+        </TestWrapper>
+      );
+
+      // Switch to members tab
+      const membersTab = screen.getByRole('tab', { name: 'Members' });
+      fireEvent.click(membersTab);
+
+      // Click regenerate button
+      const regenerateButton = screen.getByTitle('Regenerate invite code');
+      fireEvent.click(regenerateButton);
+
+      // Wait for dialog to appear
+      await waitFor(() => {
+        expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
+      });
+
+      // Click cancel
+      const cancelButton = screen.getByText('Cancel');
+      fireEvent.click(cancelButton);
+
+      // Dialog should disappear
+      await waitFor(() => {
+        expect(screen.queryByText('Regenerate Invite Code?')).not.toBeInTheDocument();
+      });
+    });
+
+    it('regenerates invite code when Continue is clicked', async () => {
+      vi.mocked(spacesService.regenerateInviteCode).mockResolvedValue({ inviteCode: 'NEW12345' });
+
+      render(
+        <TestWrapper>
+          <SpaceDetail />
+        </TestWrapper>
+      );
+
+      // Switch to members tab
+      const membersTab = screen.getByRole('tab', { name: 'Members' });
+      fireEvent.click(membersTab);
+
+      // Click regenerate button
+      const regenerateButton = screen.getByTitle('Regenerate invite code');
+      fireEvent.click(regenerateButton);
+
+      // Wait for dialog to appear
+      await waitFor(() => {
+        expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
+      });
+
+      // Click continue
+      const continueButton = screen.getByText('Continue');
+      fireEvent.click(continueButton);
+
+      await waitFor(() => {
+        expect(spacesService.regenerateInviteCode).toHaveBeenCalledWith('space-1');
+        expect(mockSelectSpace).toHaveBeenCalledWith('space-1'); // Reload space
+        expect(screen.getByText('Invite code regenerated successfully!')).toBeInTheDocument();
+      });
+    });
+
+    it('shows error message when regenerate fails', async () => {
+      vi.mocked(spacesService.regenerateInviteCode).mockRejectedValue(new Error('Failed to regenerate'));
+
+      render(
+        <TestWrapper>
+          <SpaceDetail />
+        </TestWrapper>
+      );
+
+      // Switch to members tab
+      const membersTab = screen.getByRole('tab', { name: 'Members' });
+      fireEvent.click(membersTab);
+
+      // Click regenerate button
+      const regenerateButton = screen.getByTitle('Regenerate invite code');
+      fireEvent.click(regenerateButton);
+
+      // Wait for dialog to appear
+      await waitFor(() => {
+        expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
+      });
+
+      // Click continue
+      const continueButton = screen.getByText('Continue');
+      fireEvent.click(continueButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Failed to regenerate invite code')).toBeInTheDocument();
+      });
+    });
+
+    it('disables buttons during regeneration', async () => {
+      // Make the mock slow to complete
+      vi.mocked(spacesService.regenerateInviteCode).mockImplementation(() =>
+        new Promise(resolve => setTimeout(() => resolve({ inviteCode: 'NEW12345' }), 100))
+      );
+
+      render(
+        <TestWrapper>
+          <SpaceDetail />
+        </TestWrapper>
+      );
+
+      // Switch to members tab
+      const membersTab = screen.getByRole('tab', { name: 'Members' });
+      fireEvent.click(membersTab);
+
+      // Click regenerate button
+      const regenerateButton = screen.getByTitle('Regenerate invite code');
+      fireEvent.click(regenerateButton);
+
+      // Wait for dialog to appear
+      await waitFor(() => {
+        expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
+      });
+
+      // Click continue
+      const continueButton = screen.getByText('Continue');
+      fireEvent.click(continueButton);
+
+      // Buttons should be disabled during operation
+      await waitFor(() => {
+        expect(screen.getByText('Regenerating...')).toBeInTheDocument();
+      });
+    });
+
+    it('does not show invite code section for non-admin members', () => {
+      // Set user as a regular member
+      setMockAuthState({
+        user: {
+          userId: 'user-3',
+          email: 'member@example.com',
+          displayName: 'Regular Member',
+        },
+      });
+
+      setMockSpaceState({
+        members: [
+          ...mockSpaceState.members,
+          {
+            userId: 'user-3',
+            email: 'member@example.com',
+            username: 'member',
+            displayName: 'Regular Member',
+            role: 'member',
+            joinedAt: '2023-01-03T00:00:00Z',
+          },
+        ],
+      });
+
+      render(
+        <TestWrapper>
+          <SpaceDetail />
+        </TestWrapper>
+      );
+
+      // Switch to members tab
+      const membersTab = screen.getByRole('tab', { name: 'Members' });
+      fireEvent.click(membersTab);
+
+      // Invite code section should not be visible
+      expect(screen.queryByLabelText('Invite Code')).not.toBeInTheDocument();
+    });
   });
 });

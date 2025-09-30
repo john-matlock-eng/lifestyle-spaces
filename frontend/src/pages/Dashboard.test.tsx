@@ -41,14 +41,33 @@ vi.mock('../components/spaces/CreateSpaceModal', () => ({
     isOpen ? (
       <div data-testid="create-space-modal">
         <button data-testid="modal-close" onClick={onClose}>Close</button>
-        <button 
-          data-testid="modal-create" 
+        <button
+          data-testid="modal-create"
           onClick={() => onSpaceCreated({ spaceId: 'new-space', name: 'New Space' })}
         >
           Create
         </button>
       </div>
     ) : null
+  ),
+}));
+
+vi.mock('../components/invitations/JoinByCodeForm', () => ({
+  JoinByCodeForm: ({ onSuccess, onCancel }: { onSuccess?: (result: { spaceId: string; spaceName: string }) => void, onCancel?: () => void }) => (
+    <div data-testid="join-by-code-form">
+      <button
+        data-testid="join-cancel"
+        onClick={onCancel}
+      >
+        Cancel
+      </button>
+      <button
+        data-testid="join-submit"
+        onClick={() => onSuccess?.({ spaceId: 'joined-space', spaceName: 'Joined Space' })}
+      >
+        Join
+      </button>
+    </div>
   ),
 }));
 
@@ -289,7 +308,80 @@ describe('Dashboard', () => {
     });
 
     renderDashboard();
-    
+
     expect(screen.getByTestId('spaces-count')).toHaveTextContent('0');
+  });
+
+  describe('Join by Code functionality', () => {
+    it('shows join by code card initially', () => {
+      renderDashboard();
+
+      expect(screen.getByText('Have an invite code?')).toBeInTheDocument();
+      expect(screen.getByText('Join a space instantly using an invitation code')).toBeInTheDocument();
+      expect(screen.getByText('Join with Code')).toBeInTheDocument();
+    });
+
+    it('shows join by code form when button is clicked', () => {
+      renderDashboard();
+
+      const joinButton = screen.getByText('Join with Code');
+      fireEvent.click(joinButton);
+
+      expect(screen.getByTestId('join-by-code-form')).toBeInTheDocument();
+      expect(screen.queryByText('Have an invite code?')).not.toBeInTheDocument();
+    });
+
+    it('hides join by code form when cancel is clicked', () => {
+      renderDashboard();
+
+      // Show the form
+      const joinButton = screen.getByText('Join with Code');
+      fireEvent.click(joinButton);
+
+      expect(screen.getByTestId('join-by-code-form')).toBeInTheDocument();
+
+      // Cancel
+      const cancelButton = screen.getByTestId('join-cancel');
+      fireEvent.click(cancelButton);
+
+      expect(screen.queryByTestId('join-by-code-form')).not.toBeInTheDocument();
+      expect(screen.getByText('Have an invite code?')).toBeInTheDocument();
+    });
+
+    it('reloads spaces and navigates when join is successful', async () => {
+      renderDashboard();
+
+      // Show the form
+      const joinButton = screen.getByText('Join with Code');
+      fireEvent.click(joinButton);
+
+      // Submit the form
+      const submitButton = screen.getByTestId('join-submit');
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockLoadSpaces).toHaveBeenCalledTimes(2); // Once on mount, once after join
+        expect(mockNavigate).toHaveBeenCalledWith('/space/joined-space');
+        expect(screen.queryByTestId('join-by-code-form')).not.toBeInTheDocument();
+      });
+    });
+
+    it('toggles between join card and form correctly', () => {
+      renderDashboard();
+
+      // Initially shows the card
+      expect(screen.getByText('Have an invite code?')).toBeInTheDocument();
+      expect(screen.queryByTestId('join-by-code-form')).not.toBeInTheDocument();
+
+      // Click to show form
+      fireEvent.click(screen.getByText('Join with Code'));
+      expect(screen.queryByText('Have an invite code?')).not.toBeInTheDocument();
+      expect(screen.getByTestId('join-by-code-form')).toBeInTheDocument();
+
+      // Click cancel to show card again
+      fireEvent.click(screen.getByTestId('join-cancel'));
+      expect(screen.getByText('Have an invite code?')).toBeInTheDocument();
+      expect(screen.queryByTestId('join-by-code-form')).not.toBeInTheDocument();
+    });
   });
 });

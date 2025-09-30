@@ -5,6 +5,7 @@ import { useAuth } from '../stores/authStore';
 import { useInvitations } from '../hooks/useInvitations';
 import { MembersList } from '../components/spaces/MembersList';
 import { InviteMemberModal } from '../components/spaces/InviteMemberModal';
+import { regenerateInviteCode } from '../services/spaces';
 import type { SpaceMemberRole, SpaceMember } from '../types';
 import './SpaceDetail.css';
 
@@ -30,6 +31,8 @@ export const SpaceDetail: React.FC = () => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   // Load space data when component mounts or spaceId changes
   useEffect(() => {
@@ -108,7 +111,7 @@ export const SpaceDetail: React.FC = () => {
 
   const handleCopyInviteCode = async () => {
     if (!currentSpace?.inviteCode) return;
-    
+
     try {
       await navigator.clipboard.writeText(currentSpace.inviteCode);
       setCopySuccess('Invite code copied to clipboard!');
@@ -117,6 +120,43 @@ export const SpaceDetail: React.FC = () => {
       console.error('Failed to copy invite code:', error);
       setCopySuccess('Failed to copy invite code');
       setTimeout(() => setCopySuccess(null), 3000);
+    }
+  };
+
+  const handleCopyJoinLink = async () => {
+    if (!currentSpace?.inviteCode) return;
+
+    try {
+      const joinUrl = `${window.location.origin}/join/${currentSpace.inviteCode}`;
+      await navigator.clipboard.writeText(joinUrl);
+      setCopySuccess('Join link copied to clipboard!');
+      setTimeout(() => setCopySuccess(null), 3000);
+    } catch (error) {
+      console.error('Failed to copy join link:', error);
+      setCopySuccess('Failed to copy join link');
+      setTimeout(() => setCopySuccess(null), 3000);
+    }
+  };
+
+  const handleRegenerateCode = async () => {
+    if (!spaceId || isRegenerating) return;
+
+    setIsRegenerating(true);
+    try {
+      const response = await regenerateInviteCode(spaceId);
+      // Update the space with the new invite code
+      if (currentSpace) {
+        selectSpace(spaceId); // Reload the space to get the new code
+      }
+      setCopySuccess('Invite code regenerated successfully!');
+      setShowRegenerateConfirm(false);
+      setTimeout(() => setCopySuccess(null), 3000);
+    } catch (error) {
+      console.error('Failed to regenerate invite code:', error);
+      setCopySuccess('Failed to regenerate invite code');
+      setTimeout(() => setCopySuccess(null), 3000);
+    } finally {
+      setIsRegenerating(false);
     }
   };
 
@@ -450,9 +490,25 @@ export const SpaceDetail: React.FC = () => {
                           >
                             Copy Code
                           </button>
+                          <button
+                            type="button"
+                            onClick={handleCopyJoinLink}
+                            className="btn btn-secondary"
+                            title="Copy join link"
+                          >
+                            Copy Link
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowRegenerateConfirm(true)}
+                            className="btn btn-secondary"
+                            title="Regenerate invite code"
+                          >
+                            Regenerate
+                          </button>
                         </div>
                         <p className="space-detail__invite-code-description">
-                          Share this code with people you want to invite to the space.
+                          Share this code or link with people you want to invite to the space.
                         </p>
                       </div>
                     </div>
@@ -570,6 +626,39 @@ export const SpaceDetail: React.FC = () => {
           onInviteSent={handleInviteSent}
           existingMemberEmails={members.map(member => member.email)}
         />
+      )}
+
+      {/* Regenerate Confirmation Dialog */}
+      {showRegenerateConfirm && (
+        <div className="space-detail__modal-overlay" onClick={() => !isRegenerating && setShowRegenerateConfirm(false)}>
+          <div className="space-detail__modal" onClick={(e) => e.stopPropagation()}>
+            <div className="space-detail__modal-header">
+              <h3>Regenerate Invite Code?</h3>
+            </div>
+            <div className="space-detail__modal-body">
+              <p>This will invalidate the old invite code. Anyone with the old code will no longer be able to use it to join this space.</p>
+              <p className="space-detail__modal-warning">This action cannot be undone.</p>
+            </div>
+            <div className="space-detail__modal-footer">
+              <button
+                type="button"
+                onClick={() => setShowRegenerateConfirm(false)}
+                className="btn btn-secondary"
+                disabled={isRegenerating}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRegenerateCode}
+                className="btn btn-primary"
+                disabled={isRegenerating}
+              >
+                {isRegenerating ? 'Regenerating...' : 'Continue'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Click outside to close actions menu */}

@@ -169,7 +169,8 @@ Get a specific space by ID.
   "updatedAt": "string (ISO 8601)",
   "memberCount": "integer",
   "isPublic": "boolean",
-  "isOwner": "boolean"
+  "isOwner": "boolean",
+  "inviteCode": "string (optional, 8 characters uppercase alphanumeric)"
 }
 ```
 
@@ -178,6 +179,13 @@ Get a specific space by ID.
 - Public spaces: Accessible to all authenticated users
 - Returns 403 if user is not a member of a private space
 - Returns 404 if space doesn't exist
+
+**Security Note**:
+- The `inviteCode` field is OPTIONAL and only included in the response when:
+  - The requesting user is the space owner, OR
+  - The requesting user is an admin of the space
+- Regular members and viewers will NOT see the invite code in the response
+- This prevents unauthorized sharing of invite codes
 
 ### PUT /api/spaces/{spaceId}
 Update space settings (owner/admin only).
@@ -244,6 +252,115 @@ Get members of a specific space.
 **Notes**:
 - Members are sorted by role (owner → admin → member → viewer) then by join date
 - Response is an array directly, not wrapped in an object
+
+### POST /api/spaces/join
+Join a space using an invite code.
+
+**Request Body**:
+```json
+{
+  "inviteCode": "string (required, 8 characters)"
+}
+```
+
+**Response (200 OK)**:
+```json
+{
+  "spaceId": "string (UUID)",
+  "name": "string",
+  "description": "string",
+  "type": "string",
+  "ownerId": "string",
+  "createdAt": "string (ISO 8601)",
+  "updatedAt": "string (ISO 8601)",
+  "memberCount": "integer",
+  "isPublic": "boolean",
+  "isOwner": "boolean (false for new members)"
+}
+```
+
+**Authorization**:
+- Requires valid JWT authentication
+- User must not already be a member of the space
+
+**Error Responses**:
+- `400 Bad Request`: Invalid or expired invite code
+  ```json
+  {
+    "detail": "Invalid or expired invite code",
+    "status_code": 400
+  }
+  ```
+- `401 Unauthorized`: Missing or invalid authentication token
+  ```json
+  {
+    "detail": "Not authenticated",
+    "status_code": 401
+  }
+  ```
+- `409 Conflict`: User is already a member of the space
+  ```json
+  {
+    "detail": "User is already a member of this space",
+    "status_code": 409
+  }
+  ```
+
+**Notes**:
+- Invite codes are case-insensitive (automatically converted to uppercase)
+- New members join with the "member" role by default
+- Joining a space increments the memberCount
+- The invite code does not expire and can be used multiple times
+
+### POST /api/spaces/{spaceId}/invite-code/regenerate
+Regenerate the invite code for a space (owner/admin only).
+
+**Path Parameters**:
+- `spaceId`: string (UUID) - The space identifier
+
+**Request Body**: Empty object `{}`
+
+**Response (200 OK)**:
+```json
+{
+  "inviteCode": "string (8 characters uppercase alphanumeric)",
+  "inviteUrl": "string (full URL with invite code)"
+}
+```
+
+**Authorization**:
+- Only space owner and admins can regenerate invite codes
+- Returns 403 if user doesn't have permission
+- Returns 404 if space doesn't exist
+
+**Error Responses**:
+- `401 Unauthorized`: Missing or invalid authentication token
+  ```json
+  {
+    "detail": "Not authenticated",
+    "status_code": 401
+  }
+  ```
+- `403 Forbidden`: User is not owner or admin
+  ```json
+  {
+    "detail": "Only space owner and admins can regenerate invite codes",
+    "status_code": 403
+  }
+  ```
+- `404 Not Found`: Space doesn't exist
+  ```json
+  {
+    "detail": "Space not found",
+    "status_code": 404
+  }
+  ```
+
+**Notes**:
+- Regenerating an invite code immediately invalidates the old code
+- The new invite code is 8 characters, uppercase alphanumeric
+- The inviteUrl is a convenience field containing the full URL: `{frontend_url}/join/{inviteCode}`
+- Use this endpoint if an invite code has been compromised or needs to be reset
 
 ## Invitation Management Endpoints
 
@@ -632,6 +749,60 @@ Authorization: Bearer <jwt_token>
 2. **Member Management**: Only space owners and admins can invite new members
 3. **Invitation Access**: Users can only see/accept/decline their own invitations
 4. **Role Hierarchy**: owner > admin > member
+
+### Invite Code Security
+
+#### Visibility Rules
+- **Invite codes are ONLY visible to**:
+  - Space owner
+  - Space admins
+- **Regular members and viewers CANNOT**:
+  - See the invite code in space details responses
+  - Regenerate invite codes
+  - Access invite code endpoints
+
+#### Code Format and Generation
+- **Length**: 8 characters
+- **Character Set**: Uppercase alphanumeric (A-Z, 0-9) excluding ambiguous characters (0, O, I, 1)
+- **Randomness**: Cryptographically secure random generation
+- **Uniqueness**: Globally unique across all spaces
+- **Case Handling**: Codes are case-insensitive, automatically converted to uppercase
+
+#### Rate Limiting Recommendations
+1. **Join endpoint** (`POST /api/spaces/join`):
+   - Recommended: 10 requests per minute per user
+   - Prevents brute-force attempts to guess invite codes
+
+2. **Regenerate endpoint** (`POST /api/spaces/{spaceId}/invite-code/regenerate`):
+   - Recommended: 5 requests per hour per space
+   - Prevents abuse and excessive code rotation
+
+3. **Get space details** (`GET /api/spaces/{spaceId}`):
+   - Recommended: 100 requests per minute per user
+   - Standard API rate limit
+
+#### Security Best Practices
+1. **Code Rotation**: Regenerate invite codes periodically or when compromised
+2. **Access Logging**: Log all join attempts with invite codes for audit purposes
+3. **Monitoring**: Alert on unusual patterns (many failed join attempts, rapid code regeneration)
+4. **HTTPS Only**: Invite codes must only be transmitted over HTTPS
+5. **No Email/Logs**: Never include invite codes in logs, error messages, or emails
+6. **Temporary Display**: Frontend should provide "copy to clipboard" functionality rather than persistent display
+
+#### Invite Code vs Email Invitations
+The system supports two invitation methods:
+
+1. **Invite Codes** (POST /api/spaces/join):
+   - Shareable link/code
+   - No email required
+   - Instant access
+   - Good for: Public communities, quick onboarding, social sharing
+
+2. **Email Invitations** (POST /api/invitations):
+   - Personalized email invitation
+   - Role assignment before joining
+   - Expiration date (7 days default)
+   - Good for: Formal invitations, specific role assignments, controlled access
 
 ## DynamoDB Table Design
 

@@ -86,7 +86,7 @@ async def get_space(
             space_id=space_id,
             user_id=current_user.get("sub", "")
         )
-        
+
         # Convert response fields to match expected format
         return SpaceResponse(
             id=result["id"],
@@ -98,7 +98,8 @@ async def get_space(
             updated_at=result["updated_at"],
             member_count=result.get("member_count", 0),
             is_public=result.get("is_public", False),
-            is_owner=result.get("is_owner", False)
+            is_owner=result.get("is_owner", False),
+            invite_code=result.get("invite_code")
         )
     except SpaceNotFoundError as e:
         raise HTTPException(

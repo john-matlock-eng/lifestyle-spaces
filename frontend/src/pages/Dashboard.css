@@ -184,6 +184,69 @@
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
+/* Join with Code Section */
+.dashboard-join-section {
+  margin-bottom: 2rem;
+}
+
+.dashboard-join-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.dashboard-join-card:hover {
+  box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.1), 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-join-card__icon {
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  background-color: #eff6ff;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-join-card__icon svg {
+  width: 2rem;
+  height: 2rem;
+  color: #3b82f6;
+}
+
+.dashboard-join-card__content {
+  flex: 1;
+}
+
+.dashboard-join-card__title {
+  margin: 0 0 0.25rem 0;
+  color: #1f2937;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.dashboard-join-card__description {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.dashboard-join-card__button {
+  flex-shrink: 0;
+}
+
+.dashboard-join-form {
+  width: 100%;
+  max-width: 100%;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .dashboard-header {
@@ -217,6 +280,15 @@
 
   .dashboard-spaces-list {
     padding: 1rem;
+  }
+
+  .dashboard-join-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .dashboard-join-card__content {
+    text-align: center;
   }
 }
 

@@ -4,6 +4,7 @@ import { useAuth } from '../stores/authStore';
 import { useSpace } from '../stores/spaceStore';
 import { SpaceList } from '../components/spaces/SpaceList';
 import { CreateSpaceModal } from '../components/spaces/CreateSpaceModal';
+import { JoinByCodeForm } from '../components/invitations/JoinByCodeForm';
 import type { Space } from '../types';
 import './Dashboard.css';
 
@@ -12,6 +13,7 @@ export const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { spaces, loadSpaces, isLoading, error } = useSpace();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [showJoinByCode, setShowJoinByCode] = useState(false);
 
   useEffect(() => {
     loadSpaces();
@@ -36,6 +38,14 @@ export const Dashboard: React.FC = () => {
     loadSpaces();
   };
 
+  const handleJoinByCodeSuccess = (result: { spaceId: string; spaceName: string }) => {
+    setShowJoinByCode(false);
+    // Reload spaces to include the newly joined space
+    loadSpaces();
+    // Navigate to the newly joined space
+    navigate(`/space/${result.spaceId}`);
+  };
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -57,11 +67,58 @@ export const Dashboard: React.FC = () => {
       </header>
 
       <main className="dashboard-main">
+        {/* Join with Code Section */}
+        {!showJoinByCode && (
+          <div className="dashboard-join-section">
+            <div className="dashboard-join-card">
+              <div className="dashboard-join-card__icon">
+                <svg
+                  className="w-8 h-8 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+              </div>
+              <div className="dashboard-join-card__content">
+                <h3 className="dashboard-join-card__title">Have an invite code?</h3>
+                <p className="dashboard-join-card__description">
+                  Join a space instantly using an invitation code
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowJoinByCode(true)}
+                className="btn btn-primary dashboard-join-card__button"
+              >
+                Join with Code
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Join by Code Form */}
+        {showJoinByCode && (
+          <div className="dashboard-join-section">
+            <JoinByCodeForm
+              onSuccess={handleJoinByCodeSuccess}
+              onCancel={() => setShowJoinByCode(false)}
+              className="dashboard-join-form"
+            />
+          </div>
+        )}
+
         <div className="spaces-section">
           <div className="spaces-section__header">
             <h2>Your Spaces</h2>
           </div>
-          
+
           <SpaceList
             spaces={spaces}
             onSpaceClick={handleSpaceClick}

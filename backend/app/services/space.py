@@ -160,32 +160,34 @@ class SpaceService:
         response = self.table.get_item(
             Key={'PK': f'SPACE#{space_id}', 'SK': 'METADATA'}
         )
-        
+
         if 'Item' not in response:
             raise SpaceNotFoundError(f"Space {space_id} not found")
-        
+
         space = response['Item']
-        
-        # Check if user is a member
+
+        # Check if user is a member and get their role
         member_response = self.table.get_item(
             Key={'PK': f'SPACE#{space_id}', 'SK': f'MEMBER#{user_id}'}
         )
         is_member = 'Item' in member_response
-        
+        user_role = member_response['Item'].get('role') if is_member else None
+
         # If not a member and space is not public, deny access
         if not is_member and not space.get('is_public', False):
             raise UnauthorizedError("You are not a member of this space")
-        
+
         # Check if user is owner
         is_owner = space['owner_id'] == user_id
-        
+
         # Get member count
         members_response = self.table.query(
             KeyConditionExpression=Key('PK').eq(f'SPACE#{space_id}') & Key('SK').begins_with('MEMBER#')
         )
         member_count = len(members_response.get('Items', []))
-        
-        return {
+
+        # Build response
+        result = {
             'id': space['id'],
             'name': space['name'],
             'description': space.get('description'),
@@ -197,6 +199,12 @@ class SpaceService:
             'member_count': member_count,
             'is_owner': is_owner
         }
+
+        # Include invite_code only for owners and admins
+        if user_role in ['owner', 'admin']:
+            result['invite_code'] = space.get('invite_code')
+
+        return result
     
     def update_space(self, space_id: str, update: SpaceUpdate, user_id: str) -> bool:
         """Update space (owner/admin only)."""
