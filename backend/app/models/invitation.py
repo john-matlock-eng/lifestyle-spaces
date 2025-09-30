@@ -1,46 +1,28 @@
-"""
-Invitation-related Pydantic models.
-"""
-from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, field_validator
+from enum import Enum
+from typing import Optional
+from pydantic import BaseModel, Field
 
+class InvitationStatus(str, Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    EXPIRED = "expired"
+
+class Invitation(BaseModel):
+    invitation_id: str = Field(..., description="Unique identifier for the invitation")
+    space_id: str = Field(..., description="ID of the space the user is invited to")
+    invitee_email: str = Field(..., description="Email of the user being invited")
+    inviter_user_id: str = Field(..., description="ID of the user who sent the invitation")
+    status: InvitationStatus = Field(InvitationStatus.PENDING, description="Current status of the invitation")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp of when the invitation was created")
+    expires_at: Optional[datetime] = Field(None, description="Timestamp of when the invitation expires")
 
 class InvitationCreate(BaseModel):
-    """Invitation creation model."""
-    email: EmailStr
-    role: str = "viewer"
-    message: Optional[str] = None
+    space_id: str = Field(..., description="ID of the space the user is invited to")
+    invitee_email: str = Field(..., description="Email of the user being invited")
+    expires_at: Optional[datetime] = Field(None, description="Timestamp of when the invitation expires")
 
-
-class InvitationResponse(BaseModel):
-    """Invitation response model."""
-    id: str
-    space_id: str
-    space_name: str
-    inviter_id: str
-    inviter_name: str
-    invitee_email: str
-    role: str
-    status: str
-    expires_at: datetime
-    created_at: datetime
-    
-    @field_validator("status")
-    @classmethod
-    def validate_status(cls, v: str) -> str:
-        valid_statuses = ["pending", "accepted", "declined", "expired"]
-        if v not in valid_statuses:
-            raise ValueError(f"Status must be one of {valid_statuses}")
-        return v
-
-
-class InvitationAccept(BaseModel):
-    """Invitation acceptance model."""
-    invitation_code: str
-
-
-class InvitationListResponse(BaseModel):
-    """Invitation list response model."""
-    invitations: List[InvitationResponse]
-    total: int
+class InvitationUpdate(BaseModel):
+    status: InvitationStatus = Field(..., description="New status of the invitation")
+    expires_at: Optional[datetime] = Field(None, description="New expiration timestamp for the invitation")

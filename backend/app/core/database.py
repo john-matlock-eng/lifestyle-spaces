@@ -94,8 +94,31 @@ class DynamoDBClient:
         
         response = self.table.query(**kwargs)
         return response.get('Items', [])
+
+    def scan(self, filter_expression: Optional[str] = None, expression_attribute_values: Optional[dict] = None, expression_attribute_names: Optional[dict] = None) -> list:
+        """
+        Scan items from the DynamoDB table.
+        
+        Args:
+            filter_expression: Optional filter expression
+            expression_attribute_values: Optional dictionary of expression attribute values
+            expression_attribute_names: Optional dictionary of expression attribute names
+        
+        Returns:
+            list: List of items matching the scan
+        """
+        kwargs = {}
+        if filter_expression:
+            kwargs['FilterExpression'] = filter_expression
+        if expression_attribute_values:
+            kwargs['ExpressionAttributeValues'] = expression_attribute_values
+        if expression_attribute_names:
+            kwargs['ExpressionAttributeNames'] = expression_attribute_names
+        
+        response = self.table.scan(**kwargs)
+        return response.get('Items', [])
     
-    def update_item(self, pk: str, sk: str, updates: dict) -> Optional[dict]:
+    def update_item(self, pk: str, sk: str, updates: dict, return_values: str = "ALL_NEW") -> Optional[dict]:
         """
         Update an item in the DynamoDB table.
         
@@ -103,6 +126,7 @@ class DynamoDBClient:
             pk: Partition key
             sk: Sort key
             updates: Dictionary of fields to update
+            return_values: Use 'ALL_NEW' to return all attributes of the item after the update.
         
         Returns:
             Optional[dict]: Updated item if successful, None otherwise
@@ -132,7 +156,7 @@ class DynamoDBClient:
             UpdateExpression=update_expression,
             ExpressionAttributeNames=expression_attribute_names,
             ExpressionAttributeValues=expression_attribute_values,
-            ReturnValues="ALL_NEW"
+            ReturnValues=return_values
         )
         
         return response.get('Attributes')

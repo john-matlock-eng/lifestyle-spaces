@@ -1,6 +1,7 @@
 // Re-export all types from a central location
 export * from './auth.types';
 export * from './space.types';
+export * from './invitation.types';
 
 // Common types used across the application
 export interface ApiError {

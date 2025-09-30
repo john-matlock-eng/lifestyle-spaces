@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSpace } from '../../stores/spaceStore';
-import type { Space, SpaceMemberRole, Invitation, InvitationData } from '../../types';
+import { useInvitations } from '../../hooks/useInvitations';
+import type { Space, SpaceMemberRole } from '../../types';
+import type { Invitation } from '../../types/invitation.types';
 import './spaces.css';
 
 interface InviteMemberModalProps {
@@ -20,7 +21,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
   existingMemberEmails = [],
   allowMultiple = false,
 }) => {
-  const { inviteMember, clearError, isLoading, error } = useSpace();
+  const { createInvitation, clearError, isCreating, error } = useInvitations();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<SpaceMemberRole>('member');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -141,13 +142,11 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
     if (!validateForm()) return;
 
     try {
-      const invitationData: InvitationData = {
+      const invitation = await createInvitation({
         email: email.trim(),
         spaceId: space.spaceId,
         role,
-      };
-
-      const invitation = await inviteMember(invitationData);
+      });
       onInviteSent?.(invitation);
       onClose();
     } catch (err) {
@@ -252,7 +251,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
                   });
                 }
               }}
-              disabled={isLoading}
+              disabled={isCreating}
               aria-required="true"
               aria-invalid={!!validationErrors.email}
               aria-describedby={validationErrors.email ? 'email-error' : 'email-help'}
@@ -281,7 +280,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
               id="invite-role"
               value={role}
               onChange={(e) => setRole(e.target.value as SpaceMemberRole)}
-              disabled={isLoading}
+              disabled={isCreating}
               className="form-select"
             >
               <option value="member">Member</option>
@@ -317,15 +316,15 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
           <div className="modal-actions">
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isCreating}
               className="btn btn-primary"
             >
-              {isLoading ? 'Sending Invitation...' : 'Send Invitation'}
+              {isCreating ? 'Sending Invitation...' : 'Send Invitation'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              disabled={isLoading}
+              disabled={isCreating}
               className="btn btn-secondary"
             >
               Cancel

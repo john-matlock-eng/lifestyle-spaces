@@ -1,5 +1,5 @@
 """
-Custom exception classes for service layer.
+Custom exception classes for the application.
 """
 
 
@@ -86,6 +86,7 @@ class AlreadyMemberError(ConflictError):
 class SpaceLimitExceededError(ServiceException):
     """Raised when user has reached maximum number of spaces."""
     pass
+
 
 # Alternative exception names for test compatibility
 class InvitationNotFoundException(NotFoundError):

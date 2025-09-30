@@ -200,7 +200,7 @@ class TestInvitationServiceCoverage:
             mock_dynamodb.Table.return_value = mock_table
             
             # Initialize service - this will trigger _get_or_create_table
-            service = InvitationService()
+            service = InvitationService(MagicMock())
             
             # Verify that Table was called with the table name
             mock_dynamodb.Table.assert_called_with(service.table_name)
@@ -209,7 +209,7 @@ class TestInvitationServiceCoverage:
         """Test code not found scenario."""
         from app.services.invitation import InvitationService
         
-        service = InvitationService()
+        service = InvitationService(MagicMock())
         
         # Mock the private method that fetches invitation by code
         with patch.object(service, '_get_invitation_by_code') as mock_get:
@@ -222,7 +222,7 @@ class TestInvitationServiceCoverage:
         """Test not pending status scenario."""
         from app.services.invitation import InvitationService
         
-        service = InvitationService()
+        service = InvitationService(MagicMock())
         
         # Mock the private method to return an accepted invitation
         with patch.object(service, '_get_invitation_by_code') as mock_get:
@@ -238,7 +238,7 @@ class TestInvitationServiceCoverage:
         """Test expired invitation scenario."""
         from app.services.invitation import InvitationService
         
-        service = InvitationService()
+        service = InvitationService(MagicMock())
         
         # Mock the private method to return an expired invitation
         with patch.object(service, '_get_invitation_by_code') as mock_get:
@@ -254,7 +254,7 @@ class TestInvitationServiceCoverage:
         """Test valid invitation returns True."""
         from app.services.invitation import InvitationService
         
-        service = InvitationService()
+        service = InvitationService(MagicMock())
         
         # Mock the private method to return a valid pending invitation
         with patch.object(service, '_get_invitation_by_code') as mock_get:

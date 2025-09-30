@@ -267,7 +267,10 @@ jobs:
               ENVIRONMENT=production,
               CORS_ORIGINS=${{ needs.deploy-infrastructure.outputs.website_url }},
               DYNAMODB_TABLE=${{ needs.deploy-infrastructure.outputs.dynamodb_table_name }},
-              COGNITO_USER_POOL_ID=${{ needs.deploy-infrastructure.outputs.cognito_user_pool_id }}
+              COGNITO_USER_POOL_ID=${{ needs.deploy-infrastructure.outputs.cognito_user_pool_id }},
+              INVITATION_EXPIRE_DAYS=7,
+              EMAIL_SENDER_ADDRESS=noreply@lifestylespaces.com,
+              ENABLE_INVITATION_EMAILS=false
             }"
           
           # Wait for configuration update to complete
@@ -285,6 +288,15 @@ jobs:
           else
             echo "❌ API health check failed with status: $response"
             exit 1
+          fi
+
+          echo "Testing invitation endpoints availability..."
+          # Test invitation endpoints return 401 (auth required) not 404 (missing)
+          auth_response=$(curl -s -o /dev/null -w "%{http_code}" ${{ needs.deploy-infrastructure.outputs.api_gateway_url }}/api/invitations/pending)
+          if [ $auth_response -eq 401 ]; then
+            echo "✅ Invitation endpoints deployed successfully"
+          else
+            echo "⚠️ Invitation endpoints returned unexpected status: $auth_response"
           fi
       
       - name: Display deployment URLs

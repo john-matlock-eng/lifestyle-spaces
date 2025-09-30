@@ -15,6 +15,14 @@ class SpaceBase(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+class Space(BaseModel):
+    """Represents a space for internal service use."""
+    space_id: str
+    name: str
+    owner_id: str
+    members: List[str] = [] # List of user_ids
+
+
 class SpaceCreate(SpaceBase):
     """Space creation model."""
     type: str = Field(default="workspace")

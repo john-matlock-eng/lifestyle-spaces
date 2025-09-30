@@ -1,20 +1,14 @@
 import React, { createContext, useContext, useReducer, useCallback, type ReactNode } from 'react';
-import { 
-  createSpace, 
-  listSpaces, 
-  getSpace, 
-  inviteMember, 
-  acceptInvitation,
-  declineInvitation,
-  getPendingInvitations,
+import {
+  createSpace,
+  listSpaces,
+  getSpace,
   getSpaceMembers
 } from '../services/spaces';
-import { 
-  type CreateSpaceData, 
-  type InvitationData, 
-  type Space, 
-  type Invitation, 
-  type SpaceMember, 
+import {
+  type CreateSpaceData,
+  type Space,
+  type SpaceMember,
   type SpaceState,
   type SpaceFilters,
   type PaginationParams
@@ -29,9 +23,6 @@ type SpaceAction =
   | { type: 'SET_CURRENT_SPACE'; payload: Space | null }
   | { type: 'SET_MEMBERS'; payload: SpaceMember[] }
   | { type: 'ADD_MEMBER'; payload: SpaceMember }
-  | { type: 'SET_INVITATIONS'; payload: Invitation[] }
-  | { type: 'ADD_INVITATION'; payload: Invitation }
-  | { type: 'UPDATE_INVITATION'; payload: Invitation }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'CLEAR_ERROR' };
 
@@ -40,17 +31,12 @@ interface SpaceContextType extends SpaceState {
   createSpace: (data: CreateSpaceData) => Promise<Space>;
   loadSpaces: (filters?: SpaceFilters, pagination?: PaginationParams) => Promise<void>;
   selectSpace: (spaceId: string) => Promise<void>;
-  inviteMember: (data: InvitationData) => Promise<Invitation>;
-  acceptInvitation: (invitationId: string) => Promise<Invitation>;
-  declineInvitation: (invitationId: string) => Promise<Invitation>;
-  loadPendingInvitations: () => Promise<void>;
   clearError: () => void;
 }
 
 // Extended interface for testing
 interface SpaceContextTypeWithTestMethods extends SpaceContextType {
   _setError: (error: string | null) => void;
-  _setInvitations: (invitations: Invitation[]) => void;
 }
 
 // Initial state
@@ -58,7 +44,6 @@ const initialState: SpaceState = {
   spaces: [],
   currentSpace: null,
   members: [],
-  invitations: [],
   isLoading: false,
   error: null,
 };
@@ -115,31 +100,6 @@ const spaceReducer = (state: SpaceState, action: SpaceAction): SpaceState => {
       return {
         ...state,
         members: [...state.members, action.payload],
-        isLoading: false,
-        error: null,
-      };
-    case 'SET_INVITATIONS':
-      return {
-        ...state,
-        invitations: action.payload,
-        isLoading: false,
-        error: null,
-      };
-    case 'ADD_INVITATION':
-      return {
-        ...state,
-        invitations: [...state.invitations, action.payload],
-        isLoading: false,
-        error: null,
-      };
-    case 'UPDATE_INVITATION':
-      return {
-        ...state,
-        invitations: state.invitations.map(invitation =>
-          invitation.invitationId === action.payload.invitationId 
-            ? action.payload 
-            : invitation
-        ),
         isLoading: false,
         error: null,
       };
@@ -220,63 +180,6 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const handleInviteMember = async (data: InvitationData): Promise<Invitation> => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'CLEAR_ERROR' });
-      
-      const invitation = await inviteMember(data);
-      dispatch({ type: 'ADD_INVITATION', payload: invitation });
-      return invitation;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to send invitation';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      throw error;
-    }
-  };
-
-  const handleAcceptInvitation = async (invitationId: string): Promise<Invitation> => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'CLEAR_ERROR' });
-      
-      const invitation = await acceptInvitation(invitationId);
-      dispatch({ type: 'UPDATE_INVITATION', payload: invitation });
-      return invitation;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to accept invitation';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      throw error;
-    }
-  };
-
-  const handleDeclineInvitation = async (invitationId: string): Promise<Invitation> => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'CLEAR_ERROR' });
-      
-      const invitation = await declineInvitation(invitationId);
-      dispatch({ type: 'UPDATE_INVITATION', payload: invitation });
-      return invitation;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to decline invitation';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      throw error;
-    }
-  };
-
-  const handleLoadPendingInvitations = useCallback(async (): Promise<void> => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'CLEAR_ERROR' });
-      
-      const invitations = await getPendingInvitations();
-      dispatch({ type: 'SET_INVITATIONS', payload: invitations });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load invitations';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-    }
-  }, []);
 
   const handleClearError = useCallback((): void => {
     dispatch({ type: 'CLEAR_ERROR' });
@@ -287,10 +190,6 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
     createSpace: handleCreateSpace,
     loadSpaces: handleLoadSpaces,
     selectSpace: handleSelectSpace,
-    inviteMember: handleInviteMember,
-    acceptInvitation: handleAcceptInvitation,
-    declineInvitation: handleDeclineInvitation,
-    loadPendingInvitations: handleLoadPendingInvitations,
     clearError: handleClearError,
   };
 
@@ -299,9 +198,6 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
     const testContextValue = contextValue as SpaceContextTypeWithTestMethods;
     testContextValue._setError = (error: string | null) => {
       dispatch({ type: 'SET_ERROR', payload: error });
-    };
-    testContextValue._setInvitations = (invitations: Invitation[]) => {
-      dispatch({ type: 'SET_INVITATIONS', payload: invitations });
     };
   }
 

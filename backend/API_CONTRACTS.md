@@ -348,6 +348,32 @@ Get all pending invitations for the current authenticated user.
 }
 ```
 
+### GET /api/spaces/{spaceId}/invitations
+Get all pending invitations for a specific space (admin only).
+
+**Path Parameters**:
+- `spaceId`: string (UUID) - The space identifier
+
+**Response (200 OK)**:
+```json
+{
+  "invitations": [
+    {
+      "invitationId": "string (UUID)",
+      "spaceId": "string (UUID)",
+      "spaceName": "string",
+      "inviterEmail": "string",
+      "inviterDisplayName": "string",
+      "inviteeEmail": "string",
+      "role": "enum ['owner', 'admin', 'member']",
+      "status": "enum ['pending', 'accepted', 'declined', 'expired']",
+      "createdAt": "string (ISO 8601)",
+      "expiresAt": "string (ISO 8601)"
+    }
+  ]
+}
+```
+
 ## Type Definitions for Pydantic Models
 
 ### Core Enums

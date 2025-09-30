@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpace } from '../stores/spaceStore';
 import { useAuth } from '../stores/authStore';
+import { useInvitations } from '../hooks/useInvitations';
 import { MembersList } from '../components/spaces/MembersList';
 import { InviteMemberModal } from '../components/spaces/InviteMemberModal';
 import type { SpaceMemberRole, SpaceMember } from '../types';
@@ -11,16 +12,19 @@ export const SpaceDetail: React.FC = () => {
   const { spaceId } = useParams<{ spaceId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { 
-    currentSpace, 
-    members, 
-    invitations,
-    isLoading, 
-    error, 
-    selectSpace, 
-    loadPendingInvitations,
-    clearError 
+  const {
+    currentSpace,
+    members,
+    isLoading,
+    error,
+    selectSpace,
+    clearError
   } = useSpace();
+
+  const {
+    spaceInvitations,
+    fetchSpaceInvitations
+  } = useInvitations();
 
   const [activeTab, setActiveTab] = useState<'content' | 'members' | 'settings'>('content');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -32,9 +36,9 @@ export const SpaceDetail: React.FC = () => {
     if (spaceId) {
       clearError();
       selectSpace(spaceId);
-      loadPendingInvitations();
+      fetchSpaceInvitations(spaceId);
     }
-  }, [spaceId, selectSpace, loadPendingInvitations, clearError]);
+  }, [spaceId, selectSpace, fetchSpaceInvitations, clearError]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -133,7 +137,9 @@ export const SpaceDetail: React.FC = () => {
 
   const handleInviteSent = () => {
     setIsInviteModalOpen(false);
-    loadPendingInvitations(); // Refresh pending invitations
+    if (spaceId) {
+      fetchSpaceInvitations(spaceId); // Refresh pending invitations
+    }
   };
 
   const handleCancelInvitation = (invitationId: string) => {
@@ -471,7 +477,7 @@ export const SpaceDetail: React.FC = () => {
               filterable={true}
               sortable={true}
               showPendingInvitations={isAdmin}
-              pendingInvitations={invitations}
+              pendingInvitations={spaceInvitations[spaceId || ''] || []}
             />
           </div>
         )}

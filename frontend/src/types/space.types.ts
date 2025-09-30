@@ -1,4 +1,5 @@
 // Space and invitation related types
+import type { SpaceMemberRole } from './invitation.types';
 
 export interface Space {
   spaceId: string;
@@ -35,31 +36,14 @@ export interface InvitationData {
   role?: SpaceMemberRole;
 }
 
-export interface Invitation {
-  invitationId: string;
-  spaceId: string;
-  spaceName: string;
-  inviterEmail: string;
-  inviterDisplayName: string;
-  inviteeEmail: string;
-  role: SpaceMemberRole;
-  status: InvitationStatus;
-  createdAt: string;
-  expiresAt: string;
-}
-
 export interface SpaceState {
   spaces: Space[];
   currentSpace: Space | null;
   members: SpaceMember[];
-  invitations: Invitation[];
   isLoading: boolean;
   error: string | null;
 }
 
-export type SpaceMemberRole = 'owner' | 'admin' | 'member';
-
-export type InvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired';
 
 export interface SpaceFilters {
   search?: string;

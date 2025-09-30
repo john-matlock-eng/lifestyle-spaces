@@ -260,7 +260,7 @@ class TestInvitationServiceMissingLines:
             mock_table = Mock()
             mock_dynamodb.Table.return_value = mock_table
             
-            service = InvitationService()
+            service = InvitationService(MagicMock())
             
             # Verify Table was called after ResourceInUseException
             mock_dynamodb.Table.assert_called_with(service.table_name)
@@ -269,7 +269,7 @@ class TestInvitationServiceMissingLines:
         """Test all validation scenarios."""
         from app.services.invitation import InvitationService
         
-        service = InvitationService()
+        service = InvitationService(MagicMock())
         
         # Test 1: Code not found
         with patch.object(service, '_get_invitation_by_code') as mock_get:

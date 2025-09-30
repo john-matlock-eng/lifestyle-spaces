@@ -1,7 +1,7 @@
 """
 User-related Pydantic models.
 """
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -11,6 +11,13 @@ class UserBase(BaseModel):
     email: EmailStr
     username: str
     full_name: Optional[str] = None
+
+
+class User(BaseModel):
+    """Represents a user for internal service use."""
+    user_id: str
+    email: EmailStr
+    spaces: List[str] = [] # List of space_ids
 
 
 class UserCreate(UserBase):
