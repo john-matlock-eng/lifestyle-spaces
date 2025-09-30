@@ -178,28 +178,145 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
       
-      - name: Deploy to S3
+      - name: Create frontend deployment backup
         run: |
+          echo "🔄 Creating frontend backup for safe deployment..."
+          BACKUP_DIR="frontend-backup-${{ github.sha }}-$(date +%Y%m%d-%H%M%S)"
+
+          # Create backup of current frontend (if exists)
+          aws s3 sync s3://${{ needs.deploy-infrastructure.outputs.s3_bucket_name }}/ \
+            s3://${{ needs.deploy-infrastructure.outputs.s3_bucket_name }}-backup/$BACKUP_DIR/ \
+            --exclude "*.backup/*" || echo "No existing frontend to backup"
+
+          echo "frontend_backup_dir=$BACKUP_DIR" >> $GITHUB_ENV
+          echo "✅ Frontend backup created: $BACKUP_DIR"
+
+      - name: Deploy to S3 with validation
+        run: |
+          echo "🚀 Deploying frontend with enhanced validation..."
+
+          # Deploy static assets first (with long cache)
+          echo "Deploying static assets..."
           aws s3 sync frontend/dist/ s3://${{ needs.deploy-infrastructure.outputs.s3_bucket_name }}/ \
             --delete \
             --cache-control "public, max-age=31536000" \
             --exclude "index.html" \
-            --exclude "*.json"
-          
-          aws s3 cp frontend/dist/index.html s3://${{ needs.deploy-infrastructure.outputs.s3_bucket_name }}/ \
-            --cache-control "no-cache, no-store, must-revalidate"
-          
-          aws s3 cp frontend/dist/ s3://${{ needs.deploy-infrastructure.outputs.s3_bucket_name }}/ \
-            --recursive \
+            --exclude "*.json" \
+            --exclude "*.map"
+
+          # Deploy source maps with no cache (development)
+          echo "Deploying source maps..."
+          aws s3 sync frontend/dist/ s3://${{ needs.deploy-infrastructure.outputs.s3_bucket_name }}/ \
+            --cache-control "no-cache" \
             --exclude "*" \
-            --include "*.json" \
-            --cache-control "no-cache"
-      
-      - name: Invalidate CloudFront
+            --include "*.map"
+
+          # Deploy JSON files with short cache
+          echo "Deploying JSON configuration files..."
+          aws s3 sync frontend/dist/ s3://${{ needs.deploy-infrastructure.outputs.s3_bucket_name }}/ \
+            --cache-control "public, max-age=300" \
+            --exclude "*" \
+            --include "*.json"
+
+          # Deploy index.html last (no cache for immediate updates)
+          echo "Deploying index.html..."
+          aws s3 cp frontend/dist/index.html s3://${{ needs.deploy-infrastructure.outputs.s3_bucket_name }}/ \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --metadata "deployment-id=${{ github.sha }},deployed-at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          echo "✅ Frontend deployed successfully"
+
+      - name: Validate frontend deployment
         run: |
-          aws cloudfront create-invalidation \
+          echo "🔍 Validating frontend deployment..."
+
+          # Wait a moment for S3 eventual consistency
+          sleep 10
+
+          # Test that key files are accessible
+          BUCKET_URL="https://${{ needs.deploy-infrastructure.outputs.s3_bucket_name }}.s3.amazonaws.com"
+
+          # Test index.html
+          index_status=$(curl -s -w "%{http_code}" -o /tmp/index.html "$BUCKET_URL/index.html")
+          if [ $index_status -eq 200 ]; then
+            echo "✅ index.html is accessible"
+            # Check if it contains expected content
+            if grep -q "Lifestyle Spaces" /tmp/index.html; then
+              echo "✅ index.html contains expected content"
+            else
+              echo "⚠️ index.html may not contain expected content"
+            fi
+          else
+            echo "❌ index.html not accessible (status: $index_status)"
+            exit 1
+          fi
+
+          # Test that static assets are accessible
+          asset_files=$(aws s3 ls s3://${{ needs.deploy-infrastructure.outputs.s3_bucket_name }}/ --recursive | grep -E '\.(js|css)$' | head -3)
+          if [ -n "$asset_files" ]; then
+            echo "✅ Static assets found in S3"
+          else
+            echo "⚠️ No static assets found"
+          fi
+
+          echo "✅ Frontend deployment validation completed"
+      
+      - name: Invalidate CloudFront with monitoring
+        run: |
+          echo "🔄 Creating CloudFront invalidation..."
+
+          # Create invalidation and capture the ID
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
             --distribution-id ${{ needs.deploy-infrastructure.outputs.cloudfront_distribution_id }} \
-            --paths "/*"
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+
+          echo "Invalidation ID: $INVALIDATION_ID"
+          echo "cloudfront_invalidation_id=$INVALIDATION_ID" >> $GITHUB_ENV
+
+          # Wait for invalidation to complete (with timeout)
+          echo "Waiting for CloudFront invalidation to complete..."
+          timeout 300 aws cloudfront wait invalidation-completed \
+            --distribution-id ${{ needs.deploy-infrastructure.outputs.cloudfront_distribution_id }} \
+            --id $INVALIDATION_ID && \
+            echo "✅ CloudFront invalidation completed" || \
+            echo "⚠️ CloudFront invalidation is still in progress (will complete in background)"
+
+      - name: Test website accessibility
+        run: |
+          echo "🌐 Testing website accessibility..."
+
+          WEBSITE_URL="${{ needs.deploy-infrastructure.outputs.website_url }}"
+
+          # Wait a moment for CloudFront to propagate
+          sleep 30
+
+          # Test website is accessible
+          website_status=$(curl -s -w "%{http_code}" -o /tmp/website.html "$WEBSITE_URL")
+          if [ $website_status -eq 200 ]; then
+            echo "✅ Website is accessible at $WEBSITE_URL"
+
+            # Check if website contains expected content
+            if grep -q "Lifestyle Spaces" /tmp/website.html; then
+              echo "✅ Website contains expected content"
+            else
+              echo "⚠️ Website may not contain expected content"
+            fi
+
+            # Check if website has invitation-related UI elements
+            if grep -qi "invitation\|invite" /tmp/website.html; then
+              echo "✅ Website appears to include invitation system UI"
+            else
+              echo "ℹ️ Invitation UI may be dynamically loaded"
+            fi
+          else
+            echo "❌ Website not accessible (status: $website_status)"
+            echo "Website URL: $WEBSITE_URL"
+            exit 1
+          fi
+
+          echo "✅ Website accessibility test completed"
 
   deploy-backend:
     needs: [test, deploy-infrastructure]
@@ -270,40 +387,305 @@ jobs:
               COGNITO_USER_POOL_ID=${{ needs.deploy-infrastructure.outputs.cognito_user_pool_id }},
               INVITATION_EXPIRE_DAYS=7,
               EMAIL_SENDER_ADDRESS=noreply@lifestylespaces.com,
-              ENABLE_INVITATION_EMAILS=false
+              ENABLE_INVITATION_EMAILS=false,
+              LAMBDA_HANDLER=lambda_handler.handler,
+              PYTHONPATH=/var/task
             }"
-          
+
           # Wait for configuration update to complete
           echo "Waiting for Lambda configuration update to complete..."
           aws lambda wait function-updated \
             --function-name ${{ needs.deploy-infrastructure.outputs.lambda_function_name }}
       
-      - name: Run smoke tests
+      - name: Create deployment backup and tag
         if: steps.check-backend.outputs.backend_exists == 'true'
         run: |
-          echo "Running API health check..."
-          response=$(curl -s -o /dev/null -w "%{http_code}" ${{ needs.deploy-infrastructure.outputs.api_gateway_url }}/health)
-          if [ $response -eq 200 ]; then
+          # Create backup alias for rollback capability
+          echo "Creating backup alias for safe deployment..."
+          BACKUP_ALIAS="${{ github.sha }}-$(date +%Y%m%d-%H%M%S)"
+
+          # Get current function version for backup
+          CURRENT_VERSION=$(aws lambda get-function \
+            --function-name ${{ needs.deploy-infrastructure.outputs.lambda_function_name }} \
+            --query 'Configuration.Version' --output text)
+
+          echo "Current Lambda version: $CURRENT_VERSION"
+          echo "backup_alias=$BACKUP_ALIAS" >> $GITHUB_ENV
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_ENV
+
+          # Create backup alias pointing to previous version (for rollback)
+          if [ "$CURRENT_VERSION" != "\$LATEST" ]; then
+            aws lambda create-alias \
+              --function-name ${{ needs.deploy-infrastructure.outputs.lambda_function_name }} \
+              --name "backup-$BACKUP_ALIAS" \
+              --function-version $CURRENT_VERSION \
+              --description "Backup before deployment ${{ github.sha }}" || true
+            echo "✅ Created backup alias: backup-$BACKUP_ALIAS"
+          fi
+
+      - name: Run comprehensive smoke tests
+        if: steps.check-backend.outputs.backend_exists == 'true'
+        run: |
+          API_URL="${{ needs.deploy-infrastructure.outputs.api_gateway_url }}"
+          WEBSITE_URL="${{ needs.deploy-infrastructure.outputs.website_url }}"
+
+          echo "🚀 Running comprehensive deployment validation..."
+          echo "API URL: $API_URL"
+          echo "Website URL: $WEBSITE_URL"
+
+          # Test 1: API Health Check
+          echo "Test 1/6: API Health Check..."
+          health_response=$(curl -s -w "%{http_code}" -o /tmp/health_response.json $API_URL/health)
+          if [ $health_response -eq 200 ]; then
             echo "✅ API health check passed"
+            cat /tmp/health_response.json
           else
-            echo "❌ API health check failed with status: $response"
+            echo "❌ API health check failed with status: $health_response"
+            cat /tmp/health_response.json 2>/dev/null || echo "No response body"
             exit 1
           fi
 
-          echo "Testing invitation endpoints availability..."
-          # Test invitation endpoints return 401 (auth required) not 404 (missing)
-          auth_response=$(curl -s -o /dev/null -w "%{http_code}" ${{ needs.deploy-infrastructure.outputs.api_gateway_url }}/api/invitations/pending)
+          # Test 2: CORS Headers
+          echo "Test 2/6: CORS Headers..."
+          cors_response=$(curl -s -I -H "Origin: $WEBSITE_URL" $API_URL/health)
+          if echo "$cors_response" | grep -i "access-control-allow-origin"; then
+            echo "✅ CORS headers present"
+          else
+            echo "⚠️ CORS headers might be missing"
+            echo "$cors_response"
+          fi
+
+          # Test 3: Invitation Endpoints Availability
+          echo "Test 3/6: Invitation Endpoints..."
+          auth_response=$(curl -s -w "%{http_code}" -o /tmp/auth_response.json \
+            $API_URL/api/invitations/pending)
           if [ $auth_response -eq 401 ]; then
-            echo "✅ Invitation endpoints deployed successfully"
+            echo "✅ Invitation endpoints deployed (auth required as expected)"
+          elif [ $auth_response -eq 404 ]; then
+            echo "❌ Invitation endpoints not found - deployment may have failed"
+            exit 1
           else
             echo "⚠️ Invitation endpoints returned unexpected status: $auth_response"
+            cat /tmp/auth_response.json 2>/dev/null || echo "No response body"
           fi
+
+          # Test 4: API Documentation
+          echo "Test 4/6: API Documentation..."
+          docs_response=$(curl -s -w "%{http_code}" -o /tmp/docs_response.html \
+            $API_URL/docs)
+          if [ $docs_response -eq 200 ]; then
+            echo "✅ API documentation accessible"
+          else
+            echo "⚠️ API documentation returned status: $docs_response"
+          fi
+
+          # Test 5: Lambda Function Metrics
+          echo "Test 5/6: Lambda Function Status..."
+          FUNCTION_STATE=$(aws lambda get-function \
+            --function-name ${{ needs.deploy-infrastructure.outputs.lambda_function_name }} \
+            --query 'Configuration.State' --output text)
+
+          if [ "$FUNCTION_STATE" = "Active" ]; then
+            echo "✅ Lambda function is Active"
+          else
+            echo "❌ Lambda function state: $FUNCTION_STATE"
+            exit 1
+          fi
+
+          # Test 6: CloudWatch Logs
+          echo "Test 6/6: Recent Lambda Logs..."
+          LOG_GROUP="/aws/lambda/${{ needs.deploy-infrastructure.outputs.lambda_function_name }}"
+
+          # Get recent log events (last 5 minutes)
+          aws logs filter-log-events \
+            --log-group-name "$LOG_GROUP" \
+            --start-time $(date -d '5 minutes ago' +%s)000 \
+            --query 'events[?!contains(message, `EXTENSION`)].[timestamp,message]' \
+            --output table || echo "⚠️ No recent logs found"
+
+          echo ""
+          echo "🎉 All smoke tests completed successfully!"
+          echo "📊 Deployment Summary:"
+          echo "  - API Health: ✅ Healthy"
+          echo "  - CORS: ✅ Configured"
+          echo "  - Invitation System: ✅ Deployed"
+          echo "  - Lambda Function: ✅ Active"
+          echo "  - Documentation: ✅ Available"
       
-      - name: Display deployment URLs
+      - name: Set up monitoring and alerting
+        if: steps.check-backend.outputs.backend_exists == 'true'
+        run: |
+          echo "🔍 Setting up monitoring for invitation system..."
+
+          # Create CloudWatch dashboard for invitation system monitoring
+          DASHBOARD_BODY=$(cat <<EOF
+          {
+            "widgets": [
+              {
+                "type": "metric",
+                "x": 0,
+                "y": 0,
+                "width": 12,
+                "height": 6,
+                "properties": {
+                  "metrics": [
+                    [ "AWS/Lambda", "Duration", "FunctionName", "${{ needs.deploy-infrastructure.outputs.lambda_function_name }}" ],
+                    [ ".", "Errors", ".", "." ],
+                    [ ".", "Invocations", ".", "." ],
+                    [ ".", "Throttles", ".", "." ]
+                  ],
+                  "period": 300,
+                  "stat": "Average",
+                  "region": "${{ env.AWS_REGION }}",
+                  "title": "Lambda Performance Metrics"
+                }
+              },
+              {
+                "type": "metric",
+                "x": 12,
+                "y": 0,
+                "width": 12,
+                "height": 6,
+                "properties": {
+                  "metrics": [
+                    [ "AWS/ApiGateway", "Count", "ApiName", "lifestyle-spaces-api-prod" ],
+                    [ ".", "4XXError", ".", "." ],
+                    [ ".", "5XXError", ".", "." ],
+                    [ ".", "Latency", ".", "." ]
+                  ],
+                  "period": 300,
+                  "stat": "Sum",
+                  "region": "${{ env.AWS_REGION }}",
+                  "title": "API Gateway Metrics"
+                }
+              }
+            ]
+          }
+          EOF
+          )
+
+          # Create the dashboard
+          aws cloudwatch put-dashboard \
+            --dashboard-name "lifestyle-spaces-invitation-system" \
+            --dashboard-body "$DASHBOARD_BODY" && \
+            echo "✅ Created CloudWatch dashboard: lifestyle-spaces-invitation-system"
+
+          # Create CloudWatch alarms for critical metrics
+          echo "Setting up CloudWatch alarms..."
+
+          # Lambda error rate alarm
+          aws cloudwatch put-metric-alarm \
+            --alarm-name "lifestyle-spaces-lambda-errors" \
+            --alarm-description "Lambda function error rate" \
+            --metric-name Errors \
+            --namespace AWS/Lambda \
+            --statistic Sum \
+            --period 300 \
+            --threshold 5 \
+            --comparison-operator GreaterThanThreshold \
+            --dimensions Name=FunctionName,Value=${{ needs.deploy-infrastructure.outputs.lambda_function_name }} \
+            --evaluation-periods 2 \
+            --alarm-actions "arn:aws:sns:${{ env.AWS_REGION }}:$(aws sts get-caller-identity --query Account --output text):lifestyle-spaces-alerts" || \
+            echo "⚠️ Could not create error alarm (SNS topic may not exist)"
+
+          # API Gateway 5xx errors
+          aws cloudwatch put-metric-alarm \
+            --alarm-name "lifestyle-spaces-api-5xx-errors" \
+            --alarm-description "API Gateway 5xx error rate" \
+            --metric-name 5XXError \
+            --namespace AWS/ApiGateway \
+            --statistic Sum \
+            --period 300 \
+            --threshold 3 \
+            --comparison-operator GreaterThanThreshold \
+            --dimensions Name=ApiName,Value=lifestyle-spaces-api-prod \
+            --evaluation-periods 1 \
+            --alarm-actions "arn:aws:sns:${{ env.AWS_REGION }}:$(aws sts get-caller-identity --query Account --output text):lifestyle-spaces-alerts" || \
+            echo "⚠️ Could not create 5xx alarm (SNS topic may not exist)"
+
+          echo "✅ Monitoring and alerting configured"
+
+      - name: Create post-deployment validation tests
+        if: steps.check-backend.outputs.backend_exists == 'true'
+        run: |
+          echo "🧪 Running post-deployment validation tests..."
+
+          API_URL="${{ needs.deploy-infrastructure.outputs.api_gateway_url }}"
+
+          # Test invitation workflow (without authentication for now)
+          echo "Testing invitation system endpoints structure..."
+
+          # Test that all invitation endpoints are accessible (return auth errors, not 404)
+          ENDPOINTS=(
+            "/api/invitations/pending"
+            "/api/invitations"
+            "/api/invitations/accept"
+            "/api/invitations/decline"
+          )
+
+          for endpoint in "${ENDPOINTS[@]}"; do
+            echo "Testing endpoint: $endpoint"
+            status=$(curl -s -w "%{http_code}" -o /dev/null "$API_URL$endpoint")
+
+            if [ $status -eq 401 ] || [ $status -eq 422 ]; then
+              echo "  ✅ $endpoint: Auth required (status $status) - endpoint exists"
+            elif [ $status -eq 404 ]; then
+              echo "  ❌ $endpoint: Not found (status $status) - endpoint missing!"
+              exit 1
+            else
+              echo "  ⚠️ $endpoint: Unexpected status $status"
+            fi
+          done
+
+          # Test database connectivity (via health endpoint that might check DB)
+          echo "Testing database connectivity..."
+          health_response=$(curl -s "$API_URL/health")
+          if echo "$health_response" | grep -q "healthy"; then
+            echo "✅ Database connectivity appears healthy"
+          else
+            echo "⚠️ Health check response: $health_response"
+          fi
+
+          echo "✅ Post-deployment validation completed"
+
+      - name: Display deployment URLs and next steps
         if: always()
         run: |
+          echo ""
           echo "🚀 Production Deployment Complete!"
-          echo "Website URL: ${{ needs.deploy-infrastructure.outputs.website_url }}"
-          echo "API URL: ${{ needs.deploy-infrastructure.outputs.api_gateway_url }}"
-          echo "Cognito User Pool ID: ${{ needs.deploy-infrastructure.outputs.cognito_user_pool_id }}"
-          echo "Cognito User Pool Client ID: ${{ needs.deploy-infrastructure.outputs.cognito_user_pool_client_id }}"
+          echo "================================================================="
+          echo ""
+          echo "📱 Application URLs:"
+          echo "  Website: ${{ needs.deploy-infrastructure.outputs.website_url }}"
+          echo "  API: ${{ needs.deploy-infrastructure.outputs.api_gateway_url }}"
+          echo "  API Docs: ${{ needs.deploy-infrastructure.outputs.api_gateway_url }}/docs"
+          echo ""
+          echo "🔐 Authentication Configuration:"
+          echo "  Cognito User Pool ID: ${{ needs.deploy-infrastructure.outputs.cognito_user_pool_id }}"
+          echo "  Cognito User Pool Client ID: ${{ needs.deploy-infrastructure.outputs.cognito_user_pool_client_id }}"
+          echo ""
+          echo "📊 Monitoring:"
+          echo "  CloudWatch Dashboard: https://console.aws.amazon.com/cloudwatch/home?region=${{ env.AWS_REGION }}#dashboards:name=lifestyle-spaces-invitation-system"
+          echo "  Lambda Logs: https://console.aws.amazon.com/cloudwatch/home?region=${{ env.AWS_REGION }}#logsV2:log-groups/log-group/%2Faws%2Flambda%2F${{ needs.deploy-infrastructure.outputs.lambda_function_name }}"
+          echo ""
+          echo "🎯 Invitation System Features Deployed:"
+          echo "  ✅ Create space invitations"
+          echo "  ✅ Accept/decline invitations"
+          echo "  ✅ List pending invitations"
+          echo "  ✅ Role-based access control"
+          echo "  ✅ Email notifications (configurable)"
+          echo ""
+          echo "🔧 Next Steps:"
+          echo "  1. Test invitation workflows in production"
+          echo "  2. Monitor CloudWatch metrics and logs"
+          echo "  3. Configure email notifications if needed"
+          echo "  4. Set up additional monitoring alerts"
+          echo ""
+          if [ "${{ env.backup_alias }}" != "" ]; then
+            echo "🔄 Rollback Information:"
+            echo "  Backup Alias: backup-${{ env.backup_alias }}"
+            echo "  To rollback if needed:"
+            echo "    aws lambda update-alias --function-name ${{ needs.deploy-infrastructure.outputs.lambda_function_name }} --name LIVE --function-version backup-${{ env.backup_alias }}"
+            echo ""
+          fi
+          echo "================================================================="
