@@ -143,7 +143,7 @@ export const SpaceDetail: React.FC = () => {
 
     setIsRegenerating(true);
     try {
-      const response = await regenerateInviteCode(spaceId);
+      await regenerateInviteCode(spaceId);
       // Update the space with the new invite code
       if (currentSpace) {
         selectSpace(spaceId); // Reload the space to get the new code

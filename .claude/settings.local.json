@@ -14,7 +14,10 @@
       "Bash(python -m pytest tests/ --cov=app.models.space --cov-report=term-missing -q)",
       "Bash(python -m pytest tests/integration/test_invite_code_visibility.py tests/test_spaces.py::TestSpaceRetrieval -v)",
       "Bash(python -m pytest tests/integration/test_invite_code_visibility.py -v --tb=short)",
-      "Bash(python -m pytest tests/ -k \"invite\" -v --tb=short)"
+      "Bash(python -m pytest tests/ -k \"invite\" -v --tb=short)",
+      "Bash(python -m pytest tests/integration/test_invite_code_visibility.py tests/test_spaces.py -v --tb=short)",
+      "Bash(python -m pytest tests/ -k \"not invitation_service\" --tb=short -q)",
+      "Bash(python -m pytest tests/ -k \"invite_code or InviteCode\" -v)"
     ],
     "deny": [],
     "ask": []

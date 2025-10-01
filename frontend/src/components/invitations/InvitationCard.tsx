@@ -174,8 +174,10 @@ export const InvitationCard: React.FC<InvitationCardProps> = ({
               <>
                 {canAccept && (
                   <button
+                    type="button"
                     onClick={() => handleAction('accept', () => acceptInvitation(invitation.invitationId))}
                     disabled={actionInProgress !== null}
+                    aria-label="Accept invitation"
                     className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {actionInProgress === 'accept' ? (
@@ -194,8 +196,10 @@ export const InvitationCard: React.FC<InvitationCardProps> = ({
 
                 {canDecline && (
                   <button
+                    type="button"
                     onClick={() => handleAction('decline', () => declineInvitation(invitation.invitationId))}
                     disabled={actionInProgress !== null}
+                    aria-label="Decline invitation"
                     className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {actionInProgress === 'decline' ? (
@@ -218,8 +222,10 @@ export const InvitationCard: React.FC<InvitationCardProps> = ({
               <>
                 {canRevoke && (
                   <button
+                    type="button"
                     onClick={() => handleAction('revoke', () => revokeInvitation(invitation.invitationId))}
                     disabled={actionInProgress !== null}
+                    aria-label="Revoke invitation"
                     className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-md hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {actionInProgress === 'revoke' ? (
@@ -238,8 +244,10 @@ export const InvitationCard: React.FC<InvitationCardProps> = ({
 
                 {canResend && (
                   <button
+                    type="button"
                     onClick={() => handleAction('resend', () => resendInvitation(invitation.invitationId))}
                     disabled={actionInProgress !== null}
+                    aria-label="Resend invitation"
                     className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-white border border-blue-300 rounded-md hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {actionInProgress === 'resend' ? (

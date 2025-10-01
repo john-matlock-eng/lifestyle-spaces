@@ -282,22 +282,26 @@ class TestInvitationServiceCoverage:
     def test_get_or_create_table_exception(self):
         """Test _get_or_create_table when table doesn't exist."""
         from app.services.invitation import InvitationService
-        
-        with patch('app.services.invitation.boto3.resource') as mock_boto:
+
+        with patch('app.services.invitation.boto3.resource') as mock_boto, \
+             patch('app.services.invitation.DynamoDBClient') as mock_db_client:
             mock_dynamodb = Mock()
             mock_boto.return_value = mock_dynamodb
-            
+
+            # Mock DynamoDBClient to avoid initialization errors
+            mock_db_client.return_value = MagicMock()
+
             # Mock Table to raise ClientError
             mock_dynamodb.Table.side_effect = ClientError(
-                error_response={'Error': {'Code': 'ResourceNotFoundException'}}, 
+                error_response={'Error': {'Code': 'ResourceNotFoundException'}},
                 operation_name='DescribeTable'
             )
-            
+
             # Mock create_table
             mock_table = Mock()
             mock_dynamodb.create_table.return_value = mock_table
             mock_table.wait_until_exists.return_value = None
-            
+
             service = InvitationService()
             # Should call _create_table when table doesn't exist
             assert service.table == mock_table

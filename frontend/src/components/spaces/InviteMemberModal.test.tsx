@@ -1,6 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { InviteMemberModal } from './InviteMemberModal';
 import { InvitationProvider } from '../../stores/invitationStore';
 import type { Invitation } from '../../types/invitation.types';
@@ -74,6 +74,11 @@ describe('InviteMemberModal', () => {
       refreshData: vi.fn(),
       subscribeToUpdates: vi.fn(),
     });
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.clearAllTimers();
   });
 
   it('renders modal when open', () => {
@@ -199,7 +204,7 @@ describe('InviteMemberModal', () => {
     const emailInput = screen.getByLabelText(/Email Address/);
     emailInput.focus();
 
-    fireEvent.keyDown(emailInput, { key: 'Tab', shiftKey: true });
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
 
     const cancelButton = screen.getByText('Cancel');
     expect(document.activeElement).toBe(cancelButton);
@@ -300,14 +305,14 @@ describe('InviteMemberModal', () => {
     expect(emailInput).toHaveAttribute('aria-required', 'true');
   });
 
-  it('focuses email input when modal opens', () => {
+  it('focuses email input when modal opens', async () => {
     renderWithProvider();
 
-    // Use setTimeout to account for the focus delay in the component
-    setTimeout(() => {
+    // Wait for the focus to be applied
+    await waitFor(() => {
       const emailInput = screen.getByLabelText(/Email Address/);
       expect(document.activeElement).toBe(emailInput);
-    }, 0);
+    });
   });
 
   it('traps focus within modal', () => {
