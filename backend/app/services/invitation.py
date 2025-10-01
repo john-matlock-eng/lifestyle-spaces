@@ -334,7 +334,7 @@ class InvitationService:
         existing = self.db_client.scan(
             filter_expression="invitee_email = :email AND space_id = :space_id AND #s = :status",
             expression_attribute_values={
-                ":email": invitation.email if hasattr(invitation, 'email') else invitation.invitee_email,
+                ":email": invitation.email or invitation.invitee_email,
                 ":space_id": space_id,
                 ":status": InvitationStatus.PENDING.value
             },
@@ -356,7 +356,7 @@ class InvitationService:
             "invitation_code": invitation_code,
             "space_id": space_id,
             "space_name": space_name,
-            "invitee_email": invitation.email if hasattr(invitation, 'email') else invitation.invitee_email,
+            "invitee_email": invitation.email or invitation.invitee_email,
             "inviter_user_id": inviter_id,
             "inviter_name": inviter_name,
             "role": getattr(invitation, 'role', 'member'),
@@ -463,7 +463,13 @@ class InvitationService:
         """Cancel an invitation."""
         pk = f"INVITATION#{invitation_id}"
         sk = f"INVITATION#{invitation_id}"
-        item = self.db_client.get_item(pk, sk)
+        result = self.db_client.get_item(pk, sk)
+
+        # Handle both {"Item": {...}} and direct item format
+        if isinstance(result, dict) and "Item" in result:
+            item = result.get("Item")
+        else:
+            item = result
 
         if not item:
             raise InvalidInvitationError("Invitation not found")

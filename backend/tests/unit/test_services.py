@@ -19,16 +19,18 @@ def create_dynamodb_table():
     """Helper function to create DynamoDB table for testing."""
     dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
     table_name = os.getenv('DYNAMODB_TABLE', 'lifestyle-spaces')
-    
-    # Check if table already exists
+
+    # Delete all existing tables in moto to ensure completely clean state
     try:
-        table = dynamodb.Table(table_name)
-        table.load()
-        return table
-    except:
+        for table_obj in dynamodb.tables.all():
+            try:
+                table_obj.delete()
+            except Exception:
+                pass
+    except Exception:
         pass
-    
-    # Create table with all required indexes
+
+    # Create fresh table with all required indexes
     table = dynamodb.create_table(
         TableName=table_name,
         KeySchema=[
@@ -541,32 +543,39 @@ class TestSpaceService:
 
 class TestInvitationService:
     """Test Invitation service."""
-    
+
+    # Use unique table name for this test class to prevent pollution
+    table_name = f"test-invitation-service-{uuid.uuid4().hex[:12]}"
+
     @mock_dynamodb
     def test_create_invitation(self):
         """Test creating an invitation."""
         create_dynamodb_table()
-        
+
         from app.services.invitation import InvitationService
         from app.models.invitation import InvitationCreate
-        
+
         service = InvitationService()
-        
+
+        # Use unique email to prevent pollution
+        test_email = f"create_test_{uuid.uuid4().hex[:8]}@example.com"
+        test_space_id = f"space_create_test_{uuid.uuid4().hex[:8]}"
+
         invitation = InvitationCreate(
-            email="invitee@example.com",
+            email=test_email,
             role="member",
             message="Join our workspace!"
         )
-        
+
         result = service.create_invitation(
             invitation=invitation,
-            space_id="space123",
+            space_id=test_space_id,
             space_name="My Office",
             inviter_id="user123",
             inviter_name="John Doe"
         )
-        
-        assert result["invitee_email"] == "invitee@example.com"
+
+        assert result["invitee_email"] == test_email
         assert result["status"] == "pending"
         assert "id" in result
         assert "invitation_code" in result
@@ -575,29 +584,33 @@ class TestInvitationService:
     def test_create_duplicate_invitation(self):
         """Test creating duplicate invitation."""
         create_dynamodb_table()
-        
+
         from app.services.invitation import InvitationService
         from app.models.invitation import InvitationCreate
         from app.services.exceptions import InvitationAlreadyExistsError
-        
+
         service = InvitationService()
-        
-        invitation = InvitationCreate(email="invitee@example.com")
-        
+
+        # Use unique IDs to prevent pollution
+        test_email = f"duplicate_test_{uuid.uuid4().hex[:8]}@example.com"
+        test_space_id = f"space_duplicate_test_{uuid.uuid4().hex[:8]}"
+
+        invitation = InvitationCreate(email=test_email)
+
         # First invitation should succeed
         service.create_invitation(
             invitation=invitation,
-            space_id="space123",
+            space_id=test_space_id,
             space_name="My Office",
             inviter_id="user123",
             inviter_name="John Doe"
         )
-        
+
         # Second invitation to same email/space should fail
         with pytest.raises(InvitationAlreadyExistsError):
             service.create_invitation(
                 invitation=invitation,
-                space_id="space123",
+                space_id=test_space_id,
                 space_name="My Office",
                 inviter_id="user123",
                 inviter_name="John Doe"
@@ -607,32 +620,36 @@ class TestInvitationService:
     def test_accept_invitation(self):
         """Test accepting an invitation."""
         create_dynamodb_table()
-        
+
         from app.services.invitation import InvitationService
         from app.models.invitation import InvitationCreate
-        
+
         service = InvitationService()
-        
+
+        # Use unique IDs to prevent pollution
+        test_email = f"accept_test_{uuid.uuid4().hex[:8]}@example.com"
+        test_space_id = f"space_accept_test_{uuid.uuid4().hex[:8]}"
+
         # Create invitation
-        invitation = InvitationCreate(email="invitee@example.com")
+        invitation = InvitationCreate(email=test_email)
         created = service.create_invitation(
             invitation=invitation,
-            space_id="space123",
+            space_id=test_space_id,
             space_name="My Office",
             inviter_id="user123",
             inviter_name="John Doe"
         )
-        
+
         # Accept invitation
         result = service.accept_invitation(
             invitation_code=created["invitation_code"],
             user_id="user456",
             username="invitee",
-            email="invitee@example.com"
+            email=test_email
         )
-        
+
         assert result["status"] == "accepted"
-        assert result["space_id"] == "space123"
+        assert result["space_id"] == test_space_id
     
     @mock_dynamodb
     def test_accept_invalid_invitation(self):
@@ -656,59 +673,66 @@ class TestInvitationService:
     def test_accept_expired_invitation(self):
         """Test accepting expired invitation."""
         create_dynamodb_table()
-        
+
         from app.services.invitation import InvitationService
         from app.models.invitation import InvitationCreate
         from app.services.exceptions import InvitationExpiredError
-        
+
         service = InvitationService()
-        
+
+        # Use unique IDs to prevent pollution
+        test_email = f"expired_test_{uuid.uuid4().hex[:8]}@example.com"
+        test_space_id = f"space_expired_test_{uuid.uuid4().hex[:8]}"
+
         # Create invitation with past expiry
         with patch('app.services.invitation.datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime.now(timezone.utc) - timedelta(days=8)
             mock_datetime.timezone = timezone
-            
-            invitation = InvitationCreate(email="invitee@example.com")
+
+            invitation = InvitationCreate(email=test_email)
             created = service.create_invitation(
                 invitation=invitation,
-                space_id="space123",
+                space_id=test_space_id,
                 space_name="My Office",
                 inviter_id="user123",
                 inviter_name="John Doe"
             )
-        
+
         # Try to accept expired invitation
         with pytest.raises(InvitationExpiredError):
             service.accept_invitation(
                 invitation_code=created["invitation_code"],
                 user_id="user456",
                 username="invitee",
-                email="invitee@example.com"
+                email=test_email
             )
     
     @mock_dynamodb
     def test_list_user_invitations(self):
         """Test listing user's invitations."""
         create_dynamodb_table()
-        
+
         from app.services.invitation import InvitationService
         from app.models.invitation import InvitationCreate
-        
+
         service = InvitationService()
-        
+
+        # Use unique email to prevent pollution
+        test_email = f"list_user_test_{uuid.uuid4().hex[:8]}@example.com"
+
         # Create multiple invitations
         for i in range(3):
-            invitation = InvitationCreate(email="invitee@example.com")
+            invitation = InvitationCreate(email=test_email)
             service.create_invitation(
                 invitation=invitation,
-                space_id=f"space{i}",
+                space_id=f"space_list_user_{uuid.uuid4().hex[:8]}_{i}",
                 space_name=f"Space {i}",
                 inviter_id="user123",
                 inviter_name="John Doe"
             )
-        
+
         # List invitations
-        result = service.list_user_invitations("invitee@example.com")
+        result = service.list_user_invitations(test_email)
         assert result["total"] == 3
         assert len(result["invitations"]) == 3
     
@@ -716,25 +740,28 @@ class TestInvitationService:
     def test_list_space_invitations(self):
         """Test listing space invitations."""
         create_dynamodb_table()
-        
+
         from app.services.invitation import InvitationService
         from app.models.invitation import InvitationCreate
-        
+
         service = InvitationService()
-        
+
+        # Use unique space ID to prevent pollution
+        test_space_id = f"space_list_space_test_{uuid.uuid4().hex[:8]}"
+
         # Create invitations for a space
         for i in range(2):
-            invitation = InvitationCreate(email=f"user{i}@example.com")
+            invitation = InvitationCreate(email=f"list_space_user{i}_{uuid.uuid4().hex[:6]}@example.com")
             service.create_invitation(
                 invitation=invitation,
-                space_id="space123",
+                space_id=test_space_id,
                 space_name="My Office",
                 inviter_id="user123",
                 inviter_name="John Doe"
             )
-        
+
         # List space invitations
-        result = service.list_space_invitations("space123", requester_id="user123")
+        result = service.list_space_invitations(test_space_id, requester_id="user123")
         assert result["total"] == 2
         assert len(result["invitations"]) == 2
     
@@ -742,25 +769,29 @@ class TestInvitationService:
     def test_cancel_invitation(self):
         """Test canceling an invitation."""
         create_dynamodb_table()
-        
+
         from app.services.invitation import InvitationService
         from app.models.invitation import InvitationCreate
-        
+
         service = InvitationService()
-        
+
+        # Use unique IDs to prevent pollution
+        test_email = f"cancel_test_{uuid.uuid4().hex[:8]}@example.com"
+        test_space_id = f"space_cancel_test_{uuid.uuid4().hex[:8]}"
+
         # Create invitation
-        invitation = InvitationCreate(email="invitee@example.com")
+        invitation = InvitationCreate(email=test_email)
         created = service.create_invitation(
             invitation=invitation,
-            space_id="space123",
+            space_id=test_space_id,
             space_name="My Office",
             inviter_id="user123",
             inviter_name="John Doe"
         )
-        
+
         # Cancel invitation
         service.cancel_invitation(created["id"], cancelled_by="user123")
-        
+
         # Verify it's cancelled
         from app.services.exceptions import InvalidInvitationError
         with pytest.raises(InvalidInvitationError):
@@ -768,5 +799,5 @@ class TestInvitationService:
                 invitation_code=created["invitation_code"],
                 user_id="user456",
                 username="invitee",
-                email="invitee@example.com"
+                email="cancel_test@example.com"
             )

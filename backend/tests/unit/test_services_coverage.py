@@ -260,11 +260,20 @@ class TestSpaceServiceCoverage:
 @mock_dynamodb
 class TestInvitationServiceCoverage:
     """Test missing coverage areas in Invitation service."""
-    
+
     def setup_method(self, method):
         """Set up mock DynamoDB table for each test."""
         # Create mock table
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+
+        # Delete table if it exists
+        try:
+            existing_table = dynamodb.Table('lifestyle-spaces-test')
+            existing_table.delete()
+            existing_table.wait_until_not_exists()
+        except Exception:
+            pass
+
         self.table = dynamodb.create_table(
             TableName='lifestyle-spaces-test',
             KeySchema=[
@@ -278,6 +287,13 @@ class TestInvitationServiceCoverage:
             BillingMode='PAY_PER_REQUEST'
         )
         self.table.wait_until_exists()
+
+    def teardown_method(self, method):
+        """Clean up DynamoDB table after each test."""
+        try:
+            self.table.delete()
+        except Exception:
+            pass
     
     def test_get_or_create_table_exception(self):
         """Test _get_or_create_table when table doesn't exist."""

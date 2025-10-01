@@ -4,8 +4,10 @@ Pytest configuration for backend tests.
 import os
 import sys
 import pytest
+import boto3
 from unittest.mock import patch, Mock
 from fastapi.testclient import TestClient
+from moto import mock_dynamodb
 
 # Add backend directory to path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -96,3 +98,19 @@ def test_environment():
     os.environ['ENVIRONMENT'] = 'test'
     os.environ['PYTEST_CURRENT_TEST'] = 'true'
     yield
+
+
+def pytest_runtest_teardown(item):
+    """Clean up moto state after each test to prevent pollution."""
+    # Import moto backend to clear state
+    try:
+        from moto.backends import get_backend
+        # Reset DynamoDB backend for us-east-1 region
+        backend = get_backend("dynamodb")["us-east-1"]
+        if backend:
+            backend.reset()
+    except Exception:
+        # If moto isn't available or backend can't be reset, that's fine
+        pass
+
+
