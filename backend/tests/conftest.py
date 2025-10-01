@@ -102,13 +102,17 @@ def test_environment():
 
 def pytest_runtest_teardown(item):
     """Clean up moto state after each test to prevent pollution."""
-    # Import moto backend to clear state
+    # Reset moto DynamoDB backend completely
     try:
         from moto.backends import get_backend
-        # Reset DynamoDB backend for us-east-1 region
-        backend = get_backend("dynamodb")["us-east-1"]
-        if backend:
-            backend.reset()
+        from moto.core import DEFAULT_ACCOUNT_ID as ACCOUNT_ID
+        # Reset DynamoDB backend for all regions
+        dynamodb_backends = get_backend("dynamodb")
+        for region_name in list(dynamodb_backends.keys()):
+            backend = dynamodb_backends[region_name]
+            if backend:
+                # Clear all tables
+                backend.tables = {}
     except Exception:
         # If moto isn't available or backend can't be reset, that's fine
         pass

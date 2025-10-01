@@ -22,9 +22,10 @@ def create_dynamodb_table():
 
     # Delete all existing tables in moto to ensure completely clean state
     try:
-        for table_obj in dynamodb.tables.all():
+        for table_obj in list(dynamodb.tables.all()):
             try:
                 table_obj.delete()
+                table_obj.wait_until_not_exists()
             except Exception:
                 pass
     except Exception:
@@ -546,6 +547,18 @@ class TestInvitationService:
 
     # Use unique table name for this test class to prevent pollution
     table_name = f"test-invitation-service-{uuid.uuid4().hex[:12]}"
+
+    def setup_method(self):
+        """Clear DynamoDB state before each test."""
+        try:
+            from moto.backends import get_backend
+            dynamodb_backends = get_backend("dynamodb")
+            for region_name in list(dynamodb_backends.keys()):
+                backend = dynamodb_backends[region_name]
+                if backend:
+                    backend.tables = {}
+        except Exception:
+            pass
 
     @mock_dynamodb
     def test_create_invitation(self):

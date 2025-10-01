@@ -263,6 +263,17 @@ class TestInvitationServiceCoverage:
 
     def setup_method(self, method):
         """Set up mock DynamoDB table for each test."""
+        # Clear moto backend state first
+        try:
+            from moto.backends import get_backend
+            dynamodb_backends = get_backend("dynamodb")
+            for region_name in list(dynamodb_backends.keys()):
+                backend = dynamodb_backends[region_name]
+                if backend:
+                    backend.tables = {}
+        except Exception:
+            pass
+
         # Create mock table
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 

@@ -471,7 +471,8 @@ class InvitationService:
         else:
             item = result
 
-        if not item:
+        # Check if item exists (handle empty dict, None, or missing)
+        if not item or (isinstance(item, dict) and not item.keys()):
             raise InvalidInvitationError("Invitation not found")
 
         if item.get("status") != InvitationStatus.PENDING.value:
