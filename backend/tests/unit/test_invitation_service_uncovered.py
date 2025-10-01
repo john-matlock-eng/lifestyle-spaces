@@ -27,7 +27,15 @@ from app.services.exceptions import (
 @pytest.fixture
 def invitation_service():
     """Create InvitationService with mocked dependencies."""
-    with patch('app.services.invitation.boto3.resource'):
+    with patch('app.services.invitation.boto3.resource') as mock_resource, \
+         patch('app.services.space.boto3.resource') as mock_space_resource:
+        # Setup mock before creating service
+        mock_dynamodb = Mock()
+        mock_resource.return_value = mock_dynamodb
+        mock_space_resource.return_value = mock_dynamodb
+        mock_table = Mock()
+        mock_dynamodb.Table.return_value = mock_table
+
         service = InvitationService()
         # Create fresh Mock instances for each test
         service.db_client = Mock()
@@ -36,7 +44,7 @@ def invitation_service():
         service.db_client.query = Mock(return_value={"Items": []})
         service.space_service = Mock()
         service.user_service = Mock()
-        return service
+        yield service
 
 
 class TestMapItemToInvitation:

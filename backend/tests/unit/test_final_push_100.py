@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from botocore.exceptions import ClientError
 from datetime import datetime, timezone, timedelta
 import json
+from moto import mock_dynamodb
 
 # Import modules to test
 from app.api.routes import user_profile as user_profile_routes
@@ -291,7 +292,7 @@ class TestUserProfileRouteErrors:
 
 class TestSpaceServiceErrors:
     """Test SpaceService error handling - Lines 73, 77-81, 92, 207, 215, 334-335, 357, 379, 402, 461-462, 484, 487, 498-516, 527-528"""
-    
+
     def test_get_table_resource_in_use_fallback(self):
         """Test line 71-72 - ResourceInUseException fallback"""
         # Mock boto3.resource to control table creation
@@ -528,7 +529,7 @@ class TestSpaceServiceErrors:
 
 class TestInvitationServiceErrors:
     """Test InvitationService error handling - Lines 82, 296-302"""
-    
+
     def test_get_table_resource_in_use_fallback(self):
         """Test line 80-81 - ResourceInUseException fallback in invitation service"""
         # Mock boto3.resource to control table creation
@@ -677,7 +678,7 @@ class TestMainLifespan:
 # Additional edge case tests for complete coverage
 class TestAdditionalEdgeCases:
     """Additional tests for edge cases and error conditions"""
-    
+
     @pytest.mark.asyncio
     async def test_update_profile_resource_in_use(self):
         """Test ResourceInUseException in update profile"""
