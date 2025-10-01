@@ -10,11 +10,10 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.config import settings
 
 # Password hashing context
-# Configure bcrypt to truncate passwords at 72 bytes (bcrypt limitation)
+# Configure bcrypt to handle long passwords (bcrypt has 72 byte limit)
 pwd_context = CryptContext(
     schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__truncate_error=False  # Automatically truncate long passwords
+    deprecated="auto"
 )
 
 # Bearer token scheme
@@ -24,28 +23,32 @@ bearer_scheme = HTTPBearer(auto_error=False)
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verify a plain password against a hashed password.
-    
+
     Args:
         plain_password: Plain text password
         hashed_password: Hashed password to compare against
-    
+
     Returns:
         bool: True if password matches, False otherwise
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    # Truncate password to 72 bytes for bcrypt compatibility
+    truncated_password = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+    return pwd_context.verify(truncated_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     """
     Hash a password.
-    
+
     Args:
         password: Plain text password to hash
-    
+
     Returns:
         str: Hashed password
     """
-    return pwd_context.hash(password)
+    # Truncate password to 72 bytes for bcrypt compatibility
+    truncated_password = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+    return pwd_context.hash(truncated_password)
 
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
