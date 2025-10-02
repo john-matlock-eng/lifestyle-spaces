@@ -436,9 +436,11 @@ describe('SpaceDetail', () => {
       </TestWrapper>
     );
 
-    // Check for formatted dates
-    expect(screen.getByText(/December 31, 2022/)).toBeInTheDocument();
+    // Check for formatted dates (using the actual mock dates)
+    // createdAt: '2023-01-01T00:00:00Z' -> January 1, 2023
+    // updatedAt: '2023-01-02T00:00:00Z' -> January 2, 2023
     expect(screen.getByText(/January 1, 2023/)).toBeInTheDocument();
+    expect(screen.getByText(/January 2, 2023/)).toBeInTheDocument();
   });
 
   it('shows breadcrumb navigation', () => {

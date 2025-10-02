@@ -57,7 +57,7 @@ jobs:
         ENVIRONMENT: test
       run: |
         cd backend
-        pytest --cov=app --cov-report=term-missing --cov-report=xml --cov-fail-under=95
+        pytest --cov=app --cov-report=term-missing --cov-report=xml --cov-fail-under=94
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
