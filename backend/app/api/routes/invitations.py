@@ -58,7 +58,7 @@ def create_invitation(
     """Create a new invitation to a space."""
     try:
         # Check if space exists and user has permission
-        space = space_service.get_space(space_id)
+        space = space_service.get_space(space_id, current_user["sub"])
         if not space:
             raise SpaceNotFoundError("Space not found")
 
@@ -103,7 +103,23 @@ def create_invitation(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except SpaceNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except RuntimeError as e:
+        # Handle database configuration errors
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Database configuration error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database configuration error: {str(e)}"
+        )
     except Exception as e:
+        # Always log the actual error for debugging
+        import logging
+        import traceback
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to create invitation: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+
         # In debug mode, show the actual error
         import os
         if os.getenv("DEBUG"):
@@ -140,7 +156,7 @@ def create_bulk_invitations(
             )
 
         # Check if space exists
-        space = space_service.get_space(space_id)
+        space = space_service.get_space(space_id, current_user["sub"])
         if not space:
             raise SpaceNotFoundError("Space not found")
 
@@ -204,6 +220,12 @@ def create_bulk_invitations(
     except SpaceNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
+        import logging
+        import traceback
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to create bulk invitations: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+
         import os
         if os.getenv("DEBUG"):
             detail = f"Failed to create bulk invitations: {str(e)}"
@@ -223,6 +245,11 @@ def get_invitations(
     try:
         return invitation_service.list_user_invitations(current_user["email"])
     except Exception as e:
+        import logging
+        import traceback
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to get invitations: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get invitations"
@@ -242,7 +269,7 @@ def get_space_invitations(
     """
     try:
         # Check if space exists
-        space = space_service.get_space(space_id)
+        space = space_service.get_space(space_id, current_user["sub"])
         if not space:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -266,6 +293,11 @@ def get_space_invitations(
     except HTTPException:
         raise
     except Exception as e:
+        import logging
+        import traceback
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to get space invitations: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get space invitations"
@@ -334,6 +366,11 @@ def accept_invitation(
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
     except Exception as e:
+        import logging
+        import traceback
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to accept invitation: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to accept invitation"

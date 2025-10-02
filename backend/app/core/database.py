@@ -45,14 +45,27 @@ class DynamoDBClient:
     def put_item(self, item: dict) -> dict:
         """
         Put an item into the DynamoDB table.
-        
+
         Args:
             item: Item to put into the table
-        
+
         Returns:
             dict: Response from DynamoDB
+
+        Raises:
+            RuntimeError: If DynamoDB table is not found
         """
-        return self.table.put_item(Item=item)
+        try:
+            return self.table.put_item(Item=item)
+        except Exception as e:
+            # Check if it's a ResourceNotFoundException
+            error_code = getattr(e, 'response', {}).get('Error', {}).get('Code', '')
+            if error_code == 'ResourceNotFoundException':
+                raise RuntimeError(
+                    f"DynamoDB table '{settings.dynamodb_table}' not found. "
+                    f"Please ensure the table exists and the table name is configured correctly."
+                ) from e
+            raise
     
     def get_item(self, pk: str, sk: str) -> Optional[dict]:
         """
