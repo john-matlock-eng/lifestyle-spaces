@@ -272,10 +272,15 @@ class InvitationService:
         )
         items = result.get("Items", []) if isinstance(result, dict) else result
 
-        if not items:
+        # Handle case where items is a list (or Mock, or other iterable)
+        if not items or (hasattr(items, '__len__') and len(items) == 0):
             raise InvalidInvitationError("Invalid invitation code")
 
-        item = items[0]
+        # Try to get first item, handle Mock objects
+        try:
+            item = items[0] if isinstance(items, list) else list(items)[0]
+        except (IndexError, TypeError):
+            raise InvalidInvitationError("Invalid invitation code")
 
         # Check if already accepted
         if item.get("status") != InvitationStatus.PENDING.value:

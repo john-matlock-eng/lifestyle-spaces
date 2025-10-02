@@ -38,7 +38,11 @@ class InvitationService {
    */
   async createInvitation(request: CreateInvitationRequest): Promise<Invitation> {
     try {
-      return await apiService.post<Invitation>(this.baseEndpoint, request);
+      const { spaceId, ...payload } = request;
+      return await apiService.post<Invitation>(
+        `/api/spaces/${spaceId}/invitations`,
+        payload
+      );
     } catch (error: unknown) {
       throw this.handleError(error, 'Failed to create invitation');
     }
@@ -51,9 +55,10 @@ class InvitationService {
     request: BulkCreateInvitationRequest
   ): Promise<BulkInvitationResponse> {
     try {
+      const { spaceId, ...payload } = request;
       return await apiService.post<BulkInvitationResponse>(
-        `${this.baseEndpoint}/bulk`,
-        request
+        `/api/spaces/${spaceId}/invitations/bulk`,
+        payload
       );
     } catch (error: unknown) {
       throw this.handleError(error, 'Failed to create bulk invitations');
