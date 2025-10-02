@@ -11,27 +11,27 @@ class TestSecurityAdditional:
     def test_verify_password(self):
         """Test password verification."""
         from app.core.security import get_password_hash, verify_password
-        
+
         plain_password = "SecurePassword123!"
         hashed = get_password_hash(plain_password)
-        
+
         # Test correct password
         assert verify_password(plain_password, hashed) is True
-        
+
         # Test incorrect password
         assert verify_password("WrongPassword", hashed) is False
-    
+
     def test_get_password_hash(self):
         """Test password hashing."""
         from app.core.security import get_password_hash
-        
+
         password = "TestPassword123"
         hash1 = get_password_hash(password)
         hash2 = get_password_hash(password)
-        
+
         # Hashes should be different (bcrypt adds salt)
         assert hash1 != hash2
-        
+
         # Both should be valid bcrypt hashes
         assert hash1.startswith('$2b$')
         assert hash2.startswith('$2b$')
