@@ -518,13 +518,18 @@ class SpaceService:
             response = self.table.get_item(
                 Key={'PK': f'SPACE#{space_id}', 'SK': f'MEMBER#{user_id}'}
             )
-            
+
             if 'Item' in response:
                 return response['Item']['role']
             return None
         except ClientError:
             return None
-    
+
+    def is_space_admin(self, space_id: str, user_id: str) -> bool:
+        """Check if user is an admin or owner of the space."""
+        role = self.get_space_member_role(space_id, user_id)
+        return role in ['owner', 'admin']
+
     def join_space_with_invite_code(self, invite_code: str, user_id: str) -> Dict[str, Any]:
         """Join a space using invite code."""
         # Look up invite code

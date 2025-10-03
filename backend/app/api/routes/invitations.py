@@ -268,17 +268,18 @@ def get_space_invitations(
     Only accessible by space owner and admins.
     """
     try:
-        # Check if space exists
-        space = space_service.get_space(space_id, current_user["sub"])
-        if not space:
+        # Check if user is a member of the space (get their role)
+        user_role = space_service.get_space_member_role(space_id, current_user["sub"])
+
+        # If user has no role, they're not a member (or space doesn't exist)
+        if not user_role:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Space not found"
             )
 
-        # Check if user has admin access
-        is_admin = space_service.is_space_admin(space_id, current_user["sub"])
-        if not is_admin:
+        # Check if user has admin access (owner or admin role)
+        if user_role not in ['owner', 'admin']:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only space admins can view invitations"

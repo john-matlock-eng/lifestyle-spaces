@@ -178,8 +178,7 @@ class TestInvitationAPIFixes:
 
             # Mock space service - user is admin
             mock_space_instance = Mock()
-            mock_space_instance.get_space.return_value = {"id": "space123", "name": "Test Space"}
-            mock_space_instance.is_space_admin.return_value = True
+            mock_space_instance.get_space_member_role.return_value = "admin"
             mock_space_service.return_value = mock_space_instance
 
             # Mock invitation service
@@ -217,8 +216,7 @@ class TestInvitationAPIFixes:
 
             # Mock space service - user is NOT admin
             mock_space_instance = Mock()
-            mock_space_instance.get_space.return_value = {"id": "space123", "name": "Test Space"}
-            mock_space_instance.is_space_admin.return_value = False
+            mock_space_instance.get_space_member_role.return_value = "member"
             mock_space_service.return_value = mock_space_instance
 
             response = self.client.get("/api/spaces/space123/invitations")
@@ -231,7 +229,7 @@ class TestInvitationAPIFixes:
         with patch('app.api.routes.invitations.SpaceService') as mock_space_service:
 
             mock_space_instance = Mock()
-            mock_space_instance.get_space.return_value = None
+            mock_space_instance.get_space_member_role.return_value = None
             mock_space_service.return_value = mock_space_instance
 
             response = self.client.get("/api/spaces/nonexistent/invitations")
