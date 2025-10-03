@@ -54,9 +54,22 @@ export const SpaceDetail: React.FC = () => {
   };
 
   const isOwner = currentSpace && user && currentSpace.ownerId === user.userId;
-  const isAdmin = members.some(member => 
+  // Check if user is admin OR owner (owner as fallback in case members array isn't loaded yet)
+  const isAdmin = isOwner || members.some(member =>
     member.userId === user?.userId && (member.role === 'admin' || member.role === 'owner')
   );
+
+  // Debug logging for invite code visibility
+  console.log('[SpaceDetail] Debug Info:', {
+    activeTab,
+    isAdmin,
+    isOwner,
+    hasInviteCode: !!currentSpace?.inviteCode,
+    inviteCode: currentSpace?.inviteCode,
+    membersCount: members.length,
+    currentUser: user?.userId,
+    spaceOwnerId: currentSpace?.ownerId
+  });
 
   const handleTabClick = (tab: 'content' | 'members' | 'settings') => {
     setActiveTab(tab);
