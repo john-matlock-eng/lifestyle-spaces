@@ -201,8 +201,12 @@ class SpaceService:
         }
 
         # Include invite_code only for owners and admins
-        if user_role in ['owner', 'admin']:
+        # Use is_owner check OR role check for maximum robustness
+        if is_owner or user_role in ['owner', 'admin']:
             result['invite_code'] = space.get('invite_code')
+            logger.info(f"Including invite_code for user {user_id} in space {space_id} (is_owner={is_owner}, role={user_role})")
+        else:
+            logger.debug(f"Excluding invite_code for user {user_id} in space {space_id} (is_owner={is_owner}, role={user_role})")
 
         return result
     
