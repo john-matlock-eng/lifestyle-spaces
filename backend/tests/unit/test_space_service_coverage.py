@@ -406,16 +406,16 @@ class TestSpaceServiceCoverage:
     def test_generate_invite_code(self):
         """Test invite code generation."""
         service = SpaceService()
-        
+
         # Generate multiple codes and check uniqueness
         codes = set()
         for _ in range(10):
             code = service._generate_invite_code()
             assert len(code) == 8
-            # Check it's uppercase and contains only allowed characters (alphanumeric, dash, underscore)
-            assert code.isupper()
-            assert all(c.isalnum() or c in '-_' for c in code)
+            # Check it's uppercase hex (0-9A-F only)
+            assert code.isupper() or code.isdigit() or all(c in '0123456789ABCDEF' for c in code)
+            assert all(c in '0123456789ABCDEF' for c in code)
             codes.add(code)
-        
+
         # All codes should be unique
         assert len(codes) == 10
