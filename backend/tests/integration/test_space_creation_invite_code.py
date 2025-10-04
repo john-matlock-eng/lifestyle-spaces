@@ -74,7 +74,8 @@ def test_create_space_generates_invite_code(dynamodb_table):
     assert 'invite_code' in result, "Result should contain invite_code"
     assert result['invite_code'] is not None, "Invite code should not be None"
     assert len(result['invite_code']) == 8, "Invite code should be 8 characters"
-    assert result['invite_code'].isupper(), "Invite code should be uppercase"
+    # Check it's valid hex (0-9A-F)
+    assert all(c in '0123456789ABCDEF' for c in result['invite_code']), "Invite code should be hex characters only"
 
     print(f"[OK] Space created with invite code: {result['invite_code']}")
 
