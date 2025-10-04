@@ -53,7 +53,8 @@ export const SpaceDetail: React.FC = () => {
     });
   };
 
-  const isOwner = currentSpace && user && currentSpace.ownerId === user.userId;
+  // Use isOwner from API response (backend already calculated this)
+  const isOwner = currentSpace?.isOwner ?? false;
   // Check if user is admin OR owner (owner as fallback in case members array isn't loaded yet)
   const isAdmin = isOwner || members.some(member =>
     member.userId === user?.userId && (member.role === 'admin' || member.role === 'owner')
@@ -67,8 +68,12 @@ export const SpaceDetail: React.FC = () => {
     hasInviteCode: !!currentSpace?.inviteCode,
     inviteCode: currentSpace?.inviteCode,
     membersCount: members.length,
-    currentUser: user?.userId,
-    spaceOwnerId: currentSpace?.ownerId
+    currentUserId: user?.userId,
+    spaceOwnerId: currentSpace?.ownerId,
+    ownerIdMatch: user?.userId === currentSpace?.ownerId,
+    hasCurrentSpace: !!currentSpace,
+    hasUser: !!user,
+    apiIsOwner: currentSpace?.isOwner
   });
 
   const handleTabClick = (tab: 'content' | 'members' | 'settings') => {
