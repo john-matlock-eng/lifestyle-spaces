@@ -37,17 +37,20 @@ export const JoinByCodeForm: React.FC<JoinByCodeFormProps> = ({
 
   // Validate code with debouncing
   const validateCode = useCallback(async (code: string) => {
-    if (!code || code.length < 6) {
+    if (!code || code.length < 8) {
       setState(prev => ({ ...prev, validation: null, error: null }));
       return;
     }
 
+    console.log('[JoinByCodeForm] Validating code:', code);
     setState(prev => ({ ...prev, isValidating: true, error: null }));
 
     try {
       const validation = await invitationService.validateCode(code);
+      console.log('[JoinByCodeForm] Validation result:', validation);
       setState(prev => ({ ...prev, validation, isValidating: false }));
     } catch (error: unknown) {
+      console.error('[JoinByCodeForm] Validation error:', error);
       setState(prev => ({
         ...prev,
         validation: null,
@@ -60,7 +63,7 @@ export const JoinByCodeForm: React.FC<JoinByCodeFormProps> = ({
   // Debounced validation effect
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (state.code && state.code.length >= 6) {
+      if (state.code && state.code.length === 8) {
         validateCode(state.code);
       }
     }, 500);

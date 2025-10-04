@@ -87,6 +87,15 @@ export const JoinSpace: React.FC = () => {
   const isValidInviteCode = state.inviteCode.trim().length > 0;
   const hasError = !!state.error;
 
+  console.log('[JoinSpace] Debug:', {
+    inviteCodeFromUrl: inviteCode,
+    stateInviteCode: state.inviteCode,
+    isValidInviteCode,
+    hasError,
+    error: state.error,
+    buttonDisabled: state.isJoining || !isValidInviteCode
+  });
+
   return (
     <AuthLayout>
       <div className="join-space-container" onKeyDown={handleKeyPress} tabIndex={-1}>

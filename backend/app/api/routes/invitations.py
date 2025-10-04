@@ -45,6 +45,73 @@ def list_pending_invitations(
     # Return wrapped format for frontend: {invitations: [...]}
     return {"invitations": [inv.model_dump(by_alias=True) if hasattr(inv, 'model_dump') else inv for inv in invitations]}
 
+
+@router.get("/invitations/validate/{code}")
+def validate_invite_code(
+    code: str,
+    space_service: SpaceService = Depends(get_space_service)
+):
+    """Validate an invite code and return space information."""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Look up space by invite code
+        from boto3.dynamodb.conditions import Key
+        table = space_service.table
+
+        logger.info(f"[VALIDATE_CODE] Validating code: {code}")
+
+        # Query for the invite code mapping
+        response = table.query(
+            KeyConditionExpression=Key('PK').eq(f'INVITE#{code}')
+        )
+
+        if not response.get('Items'):
+            logger.warning(f"[VALIDATE_CODE] Code not found: {code}")
+            return {
+                "valid": False,
+                "error": "Invalid or expired invitation code"
+            }
+
+        space_id = response['Items'][0].get('space_id')
+        if not space_id:
+            logger.error(f"[VALIDATE_CODE] No space_id in invite mapping for code: {code}")
+            return {
+                "valid": False,
+                "error": "Invalid invitation code"
+            }
+
+        # Get space details
+        space_response = table.get_item(
+            Key={'PK': f'SPACE#{space_id}', 'SK': 'METADATA'}
+        )
+
+        if 'Item' not in space_response:
+            logger.warning(f"[VALIDATE_CODE] Space not found for code: {code}")
+            return {
+                "valid": False,
+                "error": "Space no longer exists"
+            }
+
+        space = space_response['Item']
+        logger.info(f"[VALIDATE_CODE] Valid code for space: {space.get('name')}")
+
+        return {
+            "valid": True,
+            "spaceId": space_id,
+            "spaceName": space.get('name'),
+            "code": code
+        }
+
+    except Exception as e:
+        logger.error(f"[VALIDATE_CODE] Error validating code {code}: {str(e)}", exc_info=True)
+        return {
+            "valid": False,
+            "error": "Failed to validate code"
+        }
+
+
 # New routes expected by tests
 
 @router.post("/spaces/{space_id}/invitations", status_code=201)
