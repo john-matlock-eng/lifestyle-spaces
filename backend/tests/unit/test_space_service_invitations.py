@@ -66,8 +66,8 @@ class TestSpaceServiceInvitations:
         """Test successful invite code regeneration."""
         # Setup mocks
         mock_datetime.now.return_value.isoformat.return_value = '2024-01-01T00:00:00Z'
-        mock_secrets.token_urlsafe.return_value = 'NEWCODE123456'
-        
+        mock_secrets.token_hex.return_value = 'abcd1234'
+
         # Mock get_item for existing space
         self.mock_table.get_item.return_value = {
             'Item': {
@@ -76,15 +76,15 @@ class TestSpaceServiceInvitations:
                 'invite_code': 'OLDCODE'
             }
         }
-        
+
         # Mock update and put operations
         self.mock_table.update_item.return_value = {}
         self.mock_table.delete_item.return_value = {}
         self.mock_table.put_item.return_value = {}
-        
+
         result = self.service.regenerate_invite_code('space123')
-        
-        assert result == 'NEWCODE1'  # First 8 chars after upper()
+
+        assert result == 'ABCD1234'  # 8 hex chars after upper()
         
         # Verify space was fetched
         self.mock_table.get_item.assert_called_once_with(
@@ -105,7 +105,7 @@ class TestSpaceServiceInvitations:
         # Verify new invite mapping was created
         self.mock_table.put_item.assert_called_once()
         put_call = self.mock_table.put_item.call_args
-        assert put_call[1]['Item']['PK'] == 'INVITE#NEWCODE1'
+        assert put_call[1]['Item']['PK'] == 'INVITE#ABCD1234'
         assert put_call[1]['Item']['SK'] == 'SPACE#space123'
         assert put_call[1]['Item']['space_id'] == 'space123'
     
@@ -129,8 +129,8 @@ class TestSpaceServiceInvitations:
         """Test regenerating invite code when space has no existing code."""
         # Setup mocks
         mock_datetime.now.return_value.isoformat.return_value = '2024-01-01T00:00:00Z'
-        mock_secrets.token_urlsafe.return_value = 'FIRSTCODE123'
-        
+        mock_secrets.token_hex.return_value = '1234abcd'
+
         # Mock get_item for space without invite_code
         self.mock_table.get_item.return_value = {
             'Item': {
@@ -139,13 +139,13 @@ class TestSpaceServiceInvitations:
                 # No invite_code field
             }
         }
-        
+
         self.mock_table.update_item.return_value = {}
         self.mock_table.put_item.return_value = {}
-        
+
         result = self.service.regenerate_invite_code('space123')
-        
-        assert result == 'FIRSTCOD'  # First 8 chars
+
+        assert result == '1234ABCD'  # 8 hex chars
         
         # Verify delete was not called (no old code)
         self.mock_table.delete_item.assert_not_called()
@@ -154,13 +154,13 @@ class TestSpaceServiceInvitations:
         self.mock_table.put_item.assert_called_once()
     
     @patch('app.services.space.datetime')
-    @patch('app.services.space.secrets')  
+    @patch('app.services.space.secrets')
     def test_regenerate_invite_code_delete_old_fails(self, mock_secrets, mock_datetime):
         """Test that regeneration continues even if old code deletion fails."""
         # Setup mocks
         mock_datetime.now.return_value.isoformat.return_value = '2024-01-01T00:00:00Z'
-        mock_secrets.token_urlsafe.return_value = 'NEWCODE789'
-        
+        mock_secrets.token_hex.return_value = 'ef789abc'
+
         # Mock get_item for existing space
         self.mock_table.get_item.return_value = {
             'Item': {
@@ -169,16 +169,16 @@ class TestSpaceServiceInvitations:
                 'invite_code': 'OLDCODE'
             }
         }
-        
+
         # Mock delete to fail
         self.mock_table.delete_item.side_effect = Exception("Delete failed")
         self.mock_table.update_item.return_value = {}
         self.mock_table.put_item.return_value = {}
-        
+
         # Should not raise exception
         result = self.service.regenerate_invite_code('space123')
-        
-        assert result == 'NEWCODE7'  # First 8 chars
+
+        assert result == 'EF789ABC'  # 8 hex chars
         
         # Verify new invite mapping was still created
         self.mock_table.put_item.assert_called_once()
