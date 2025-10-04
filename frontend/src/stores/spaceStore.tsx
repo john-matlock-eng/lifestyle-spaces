@@ -166,14 +166,19 @@ export const SpaceProvider: React.FC<SpaceProviderProps> = ({ children }) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
-      
+
       const [space, membersResponse] = await Promise.all([
         getSpace(spaceId),
         getSpaceMembers(spaceId),
       ]);
-      
+
+      console.log('[spaceStore] Received space from API:', space);
+      console.log('[spaceStore] Space has inviteCode?', !!space.inviteCode, space.inviteCode);
+
       dispatch({ type: 'SET_CURRENT_SPACE', payload: space });
       dispatch({ type: 'SET_MEMBERS', payload: membersResponse.members || [] });
+
+      console.log('[spaceStore] After dispatch, checking state will update...');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load space';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });

@@ -88,8 +88,10 @@ class SpaceService:
             return False
     
     def _generate_invite_code(self) -> str:
-        """Generate a unique 8-character invite code."""
-        return secrets.token_urlsafe(6)[:8].upper()
+        """Generate a unique 8-character alphanumeric invite code."""
+        # Use token_hex for alphanumeric only (no hyphens or underscores)
+        # token_hex(4) generates 8 hex characters (0-9, a-f)
+        return secrets.token_hex(4).upper()
     
     def create_space(self, space: SpaceCreate, owner_id: str) -> Dict[str, Any]:
         """Create a new space with invite code generation."""
