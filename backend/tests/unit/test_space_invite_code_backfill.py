@@ -233,8 +233,8 @@ class TestInviteCodeBackfill:
 
             # Verify format
             assert len(code) == 8
-            assert code.isupper()
-            assert code.isalnum() or '-' in code or '_' in code  # URL-safe chars
+            # Hex codes: 0-9A-F only
+            assert all(c in '0123456789ABCDEF' for c in code)
 
         # Verify uniqueness (should be extremely unlikely to get duplicates)
         assert len(set(codes)) == len(codes)
