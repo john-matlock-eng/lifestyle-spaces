@@ -31,15 +31,19 @@ async def create_space(
 ):
     """Create a new space with invite code generation."""
     try:
+        logger.info(f"[API_CREATE_SPACE] Request received from user={current_user.get('sub')}, space_name={space.name}")
+
         service = SpaceService()
         result = service.create_space(
             space=space,
             owner_id=current_user.get("sub", "")
         )
-        
+
+        logger.info(f"[API_CREATE_SPACE] Service returned result with invite_code={result.get('invite_code')}")
+
         # Return SpaceResponse with proper field mapping
         # The model will handle the alias conversion (id -> spaceId)
-        return SpaceResponse(
+        response = SpaceResponse(
             id=result["id"],
             name=result["name"],
             description=result.get("description"),
@@ -52,6 +56,9 @@ async def create_space(
             is_owner=True,
             invite_code=result.get("invite_code")
         )
+
+        logger.info(f"[API_CREATE_SPACE] Returning response with invite_code={response.invite_code}")
+        return response
     except ValidationError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

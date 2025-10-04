@@ -93,12 +93,16 @@ class SpaceService:
     
     def create_space(self, space: SpaceCreate, owner_id: str) -> Dict[str, Any]:
         """Create a new space with invite code generation."""
+        logger.info(f"[CREATE_SPACE] Starting space creation for owner_id={owner_id}, space_name={space.name}")
+
         # Validate input
         if not space.name or not space.name.strip():
             raise ValidationError("Space name is required")
-        
+
         space_id = str(uuid.uuid4())
         invite_code = self._generate_invite_code()
+        logger.info(f"[CREATE_SPACE] Generated space_id={space_id}, invite_code={invite_code}")
+
         now = datetime.now(timezone.utc).isoformat()
         
         # Create space item
@@ -137,12 +141,15 @@ class SpaceService:
         }
         
         # Write all items
+        logger.info(f"[CREATE_SPACE] Writing to DynamoDB: space_item with invite_code={invite_code}")
         with self.table.batch_writer() as batch:
             batch.put_item(Item=space_item)
             batch.put_item(Item=member_item)
             batch.put_item(Item=invite_item)
-        
-        return {
+
+        logger.info(f"[CREATE_SPACE] DynamoDB write complete for space_id={space_id}")
+
+        result = {
             'id': space_id,
             'name': space.name.strip(),
             'description': space.description.strip() if space.description else None,
@@ -153,6 +160,9 @@ class SpaceService:
             'created_at': now,
             'updated_at': now
         }
+
+        logger.info(f"[CREATE_SPACE] Returning result with invite_code={result.get('invite_code')}")
+        return result
     
     def get_space(self, space_id: str, user_id: str) -> Dict[str, Any]:
         """Get space by ID (check membership or public)."""
