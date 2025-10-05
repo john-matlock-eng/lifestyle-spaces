@@ -307,9 +307,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   const [currentThemeId, setCurrentThemeId] = useState<string>(finalConfig.defaultTheme)
   const [darkMode, setDarkModeState] = useState<'light' | 'dark' | 'system'>('system')
 
-  // Get current theme
-  const currentTheme = allThemes.find(t => t.id === currentThemeId) || allThemes[0]
-
   // Calculate if dark mode is active
   const [isDark, setIsDark] = useState(() => {
     if (darkMode === 'system') {
@@ -325,6 +322,18 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     }
     return darkMode === 'dark'
   })
+
+  // Get current theme - automatically switch between light and dark variants
+  const currentTheme = useMemo(() => {
+    // If dark mode is active, use dark theme; otherwise use light theme
+    if (isDark) {
+      const darkTheme = allThemes.find(t => t.category === 'dark')
+      return darkTheme || allThemes[0]
+    } else {
+      const lightTheme = allThemes.find(t => t.category === 'light')
+      return lightTheme || allThemes[0]
+    }
+  }, [isDark, allThemes])
 
   // Load theme from localStorage on initialization
   useEffect(() => {
