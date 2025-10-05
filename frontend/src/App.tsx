@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from './theme/ThemeProvider';
 import { AuthProvider } from './stores/authStore';
 import { SpaceProvider } from './stores/spaceStore';
 import { InvitationProvider } from './stores/invitationStore';
@@ -12,12 +13,13 @@ import './App.css';
 
 function App() {
   return (
-    <AuthProvider>
-      <SpaceProvider>
-        <InvitationProvider>
-          <Router>
-            <div className="app">
-              <Routes>
+    <ThemeProvider>
+      <AuthProvider>
+        <SpaceProvider>
+          <InvitationProvider>
+            <Router>
+              <div className="app">
+                <Routes>
                 {/* Public routes */}
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
@@ -53,12 +55,13 @@ function App() {
 
                 {/* Catch all - redirect to dashboard */}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </div>
-          </Router>
-        </InvitationProvider>
-      </SpaceProvider>
-    </AuthProvider>
+                </Routes>
+              </div>
+            </Router>
+          </InvitationProvider>
+        </SpaceProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
