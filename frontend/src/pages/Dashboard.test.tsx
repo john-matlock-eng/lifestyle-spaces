@@ -5,11 +5,17 @@ import { MemoryRouter } from 'react-router-dom';
 import { Dashboard } from './Dashboard';
 import { useAuth } from '../stores/authStore';
 import { useSpace } from '../stores/spaceStore';
+import { ThemeProvider } from '../theme/ThemeProvider';
 import type { User, Space } from '../types';
 
 // Mock the stores
 vi.mock('../stores/authStore');
 vi.mock('../stores/spaceStore');
+
+// Mock theme toggle
+vi.mock('../components/theme', () => ({
+  ThemeToggle: () => <div data-testid="theme-toggle">Theme Toggle</div>
+}));
 
 // Mock Ellie components and hooks
 const mockSetMood = vi.fn();
@@ -160,9 +166,11 @@ describe('Dashboard', () => {
 
   const renderDashboard = () => {
     return render(
-      <MemoryRouter>
-        <Dashboard />
-      </MemoryRouter>
+      <ThemeProvider>
+        <MemoryRouter>
+          <Dashboard />
+        </MemoryRouter>
+      </ThemeProvider>
     );
   };
 

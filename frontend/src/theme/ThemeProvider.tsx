@@ -313,8 +313,13 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
   // Calculate if dark mode is active
   const [isDark, setIsDark] = useState(() => {
     if (darkMode === 'system') {
-      if (typeof window !== 'undefined') {
-        return window.matchMedia?.('(prefers-color-scheme: dark)').matches || false
+      if (typeof window !== 'undefined' && window.matchMedia) {
+        try {
+          const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+          return mediaQuery?.matches || false
+        } catch {
+          return false
+        }
       }
       return false
     }
@@ -345,18 +350,27 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 
   // Listen for system theme changes
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || !window.matchMedia) {
       return
     }
 
     if (darkMode === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      const handleChange = (e: MediaQueryListEvent) => {
-        setIsDark(e.matches)
+      try {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+        if (!mediaQuery) {
+          setIsDark(false)
+          return
+        }
+
+        const handleChange = (e: MediaQueryListEvent) => {
+          setIsDark(e.matches)
+        }
+        mediaQuery.addEventListener?.('change', handleChange)
+        setIsDark(mediaQuery.matches || false)
+        return () => mediaQuery.removeEventListener?.('change', handleChange)
+      } catch {
+        setIsDark(false)
       }
-      mediaQuery.addEventListener('change', handleChange)
-      setIsDark(mediaQuery.matches)
-      return () => mediaQuery.removeEventListener('change', handleChange)
     } else {
       setIsDark(darkMode === 'dark')
     }
