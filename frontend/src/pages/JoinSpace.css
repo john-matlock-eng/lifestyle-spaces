@@ -13,7 +13,7 @@
 .join-space-card {
   width: 100%;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--theme-border-light);
   border-radius: 0.75rem;
   padding: 2rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -26,14 +26,14 @@
 
 .join-space-header h2 {
   margin: 0 0 0.5rem 0;
-  color: #1f2937;
+  color: var(--theme-text-primary);
   font-size: 1.875rem;
   font-weight: 700;
 }
 
 .join-space-header p {
   margin: 0;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   font-size: 1rem;
   line-height: 1.5;
 }
@@ -57,18 +57,18 @@
   display: block;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--theme-text-primary);
   margin-bottom: 0.5rem;
 }
 
 .invite-code-value {
-  background-color: #f9fafb;
+  background-color: var(--theme-bg-base);
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
   padding: 0.75rem 1rem;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 1rem;
-  color: #1f2937;
+  color: var(--theme-text-primary);
   text-align: center;
   word-break: break-all;
 }
@@ -81,7 +81,7 @@
 
 .join-button {
   flex: 1;
-  background-color: #3b82f6;
+  background-color: var(--theme-primary-600);
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -97,7 +97,7 @@
 }
 
 .join-button:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: var(--theme-primary-700);
   transform: translateY(-1px);
 }
 
@@ -114,8 +114,8 @@
 
 .cancel-button {
   flex: 1;
-  background-color: #f9fafb;
-  color: #374151;
+  background-color: var(--theme-bg-base);
+  color: var(--theme-text-primary);
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
   padding: 0.75rem 1.5rem;
@@ -145,7 +145,7 @@
 
 .join-space-info {
   text-align: center;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   font-size: 0.875rem;
   line-height: 1.5;
   border-top: 1px solid #e5e7eb;

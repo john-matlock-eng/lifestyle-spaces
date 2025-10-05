@@ -1,5 +1,12 @@
 /* Spaces components shared styles */
 
+/* Theme transition support */
+* {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
+}
+
 /* Common Button Styles */
 .btn {
   display: inline-flex;
@@ -28,23 +35,23 @@
 }
 
 .btn-primary {
-  background-color: #3b82f6;
+  background-color: var(--theme-primary-600);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: var(--theme-primary-700);
 }
 
 .btn-secondary {
-  background-color: white;
-  color: #374151;
-  border-color: #d1d5db;
+  background-color: var(--theme-bg-surface);
+  color: var(--theme-text-primary);
+  border-color: var(--theme-border-light);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
+  background-color: var(--theme-bg-base);
+  border-color: var(--theme-text-muted);
 }
 
 .btn-danger {
@@ -77,7 +84,7 @@
 }
 
 .modal {
-  background: white;
+  background: var(--theme-bg-surface);
   border-radius: 0.75rem;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   width: 100%;
@@ -98,12 +105,12 @@
 .modal-title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--theme-text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .modal-description {
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   font-size: 0.875rem;
   margin: 0;
 }
@@ -127,7 +134,7 @@
 .form-label {
   display: block;
   font-weight: 500;
-  color: #374151;
+  color: var(--theme-text-primary);
   font-size: 0.875rem;
   margin-bottom: 0.25rem;
 }
@@ -161,7 +168,7 @@
 .form-group textarea:disabled,
 .form-group select:disabled {
   background-color: #f3f4f6;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   cursor: not-allowed;
 }
 
@@ -194,13 +201,13 @@
 
 .checkbox-label {
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--theme-text-primary);
   cursor: pointer;
 }
 
 .form-help-text {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   margin-top: 0.25rem;
 }
 
@@ -246,13 +253,13 @@
 .invitation-preview__title {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--theme-text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .invitation-preview__content {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   line-height: 1.4;
 }
 
@@ -260,11 +267,11 @@
 .invitation-preview__space,
 .invitation-preview__role {
   font-weight: 500;
-  color: #374151;
+  color: var(--theme-text-primary);
 }
 
 .recipient-count {
-  background-color: #3b82f6;
+  background-color: var(--theme-primary-600);
   color: white;
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
@@ -274,8 +281,8 @@
 
 /* Space Card Styles */
 .space-card {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--theme-bg-surface);
+  border: 1px solid var(--theme-border-light);
   border-radius: 0.75rem;
   padding: 1.5rem;
   cursor: pointer;
@@ -321,7 +328,7 @@
 .space-card__title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--theme-text-primary);
   margin: 0;
   line-height: 1.3;
   overflow: hidden;
@@ -356,7 +363,7 @@
 }
 
 .space-card__description {
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   font-size: 0.875rem;
   line-height: 1.5;
   margin: 0;
@@ -382,7 +389,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   font-size: 0.75rem;
 }
 
@@ -400,11 +407,11 @@
 
 .space-card__activity-label {
   font-weight: 500;
-  color: #9ca3af;
+  color: var(--theme-text-muted);
 }
 
 .space-card__activity-date {
-  color: #6b7280;
+  color: var(--theme-text-secondary);
 }
 
 .space-card__loading-overlay {
@@ -430,8 +437,8 @@
 
 /* Space Card Skeleton */
 .space-card-skeleton {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--theme-bg-surface);
+  border: 1px solid var(--theme-border-light);
   border-radius: 0.75rem;
   padding: 1.5rem;
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -519,7 +526,7 @@
   right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: var(--theme-text-muted);
   pointer-events: none;
 }
 
@@ -530,7 +537,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 0.25rem;
@@ -539,7 +546,7 @@
 
 .spaces-list__search-clear:hover {
   background-color: #f3f4f6;
-  color: #374151;
+  color: var(--theme-text-primary);
 }
 
 .spaces-list__controls {
@@ -572,7 +579,7 @@
 
 .spaces-list__sort-label {
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--theme-text-primary);
   font-weight: 500;
 }
 
@@ -581,7 +588,7 @@
 }
 
 .spaces-list__count {
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   font-size: 0.875rem;
 }
 
@@ -605,7 +612,7 @@
   justify-content: center;
   padding: 4rem 2rem;
   gap: 1rem;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
 }
 
 .spaces-list__loading-spinner {
@@ -633,12 +640,12 @@
 .spaces-list__error-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--theme-text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .spaces-list__error-message {
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   margin: 0 0 2rem 0;
   max-width: 24rem;
 }
@@ -650,7 +657,7 @@
 .spaces-list__empty {
   text-align: center;
   padding: 4rem 2rem;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
 }
 
 .spaces-list__empty-icon {
@@ -662,7 +669,7 @@
 .spaces-list__empty-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--theme-text-primary);
   margin: 0 0 0.5rem 0;
 }
 
@@ -724,13 +731,13 @@
 }
 
 .members-count {
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   font-size: 0.875rem;
   font-weight: 500;
 }
 
 .members-list {
-  background: white;
+  background: var(--theme-bg-surface);
   border-radius: 0.5rem;
   overflow: hidden;
 }
@@ -768,7 +775,7 @@
 }
 
 .members-list__item:hover {
-  background-color: #f9fafb;
+  background-color: var(--theme-bg-base);
 }
 
 .members-list__item--current-user {
@@ -800,7 +807,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #3b82f6;
+  background-color: var(--theme-primary-600);
   color: white;
   font-size: 0.875rem;
   font-weight: 600;
@@ -820,7 +827,7 @@
 
 .member-display-name {
   font-weight: 500;
-  color: #1f2937;
+  color: var(--theme-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -833,7 +840,7 @@
 }
 
 .member-email {
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   font-size: 0.875rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -845,7 +852,7 @@
 }
 
 .member-joined {
-  color: #9ca3af;
+  color: var(--theme-text-muted);
   font-size: 0.75rem;
 }
 
@@ -875,7 +882,7 @@
 
 .role-badge--member {
   background-color: #f3f4f6;
-  color: #374151;
+  color: var(--theme-text-primary);
 }
 
 .member-actions {
@@ -902,8 +909,8 @@
   font-size: 0.625rem;
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--theme-bg-surface);
+  border: 1px solid var(--theme-border-light);
 }
 
 .member-status--online {
@@ -911,7 +918,7 @@
 }
 
 .member-status--offline {
-  color: #6b7280;
+  color: var(--theme-text-secondary);
 }
 
 .member-status__indicator {
@@ -928,7 +935,7 @@
   justify-content: center;
   padding: 4rem 2rem;
   gap: 1rem;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
 }
 
 .members-list__loading-spinner {
@@ -956,12 +963,12 @@
 .members-list__error-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--theme-text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .members-list__error-message {
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   margin: 0 0 2rem 0;
   max-width: 24rem;
 }
@@ -969,7 +976,7 @@
 .members-list__empty {
   text-align: center;
   padding: 4rem 2rem;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
 }
 
 .members-list__empty-icon {
@@ -981,7 +988,7 @@
 .members-list__empty-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--theme-text-primary);
   margin: 0 0 0.5rem 0;
 }
 
@@ -1008,7 +1015,7 @@
 .pending-invitations__title {
   font-size: 1rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--theme-text-primary);
   margin: 0 0 1rem 0;
 }
 
@@ -1037,7 +1044,7 @@
 
 .pending-invitation__email {
   font-weight: 500;
-  color: #374151;
+  color: var(--theme-text-primary);
   margin-bottom: 0.25rem;
 }
 
@@ -1058,7 +1065,7 @@
 }
 
 .invitation-date {
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   font-size: 0.75rem;
 }
 

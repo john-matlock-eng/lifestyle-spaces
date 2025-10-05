@@ -1,4 +1,11 @@
 /* Authentication components shared styles */
+/* Theme transition support */
+* {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
+}
+
 
 .sign-up-form,
 .sign-in-form {
@@ -14,14 +21,14 @@
 
 .form-header h2 {
   margin: 0 0 0.5rem 0;
-  color: #1f2937;
+  color: var(--theme-text-primary);
   font-size: 1.875rem;
   font-weight: 700;
 }
 
 .form-header p {
   margin: 0;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   font-size: 1rem;
 }
 
@@ -59,7 +66,7 @@
 
 .form-group label {
   font-weight: 500;
-  color: #374151;
+  color: var(--theme-text-primary);
   font-size: 0.875rem;
 }
 
@@ -87,7 +94,7 @@
 
 .form-group input:disabled {
   background-color: #f3f4f6;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   cursor: not-allowed;
 }
 
@@ -121,12 +128,12 @@
 
 .checkbox-label {
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--theme-text-primary);
   cursor: pointer;
 }
 
 .submit-button {
-  background-color: #3b82f6;
+  background-color: var(--theme-primary-600);
   color: white;
   border: none;
   border-radius: 0.375rem;
@@ -138,7 +145,7 @@
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: var(--theme-primary-700);
 }
 
 .submit-button:focus {
@@ -153,7 +160,7 @@
 
 .loading-message {
   text-align: center;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   font-size: 0.875rem;
   margin-top: 0.5rem;
 }
@@ -165,7 +172,7 @@
 
 .form-footer p {
   margin: 0;
-  color: #6b7280;
+  color: var(--theme-text-secondary);
   font-size: 0.875rem;
 }
 
@@ -229,7 +236,7 @@
 }
 
 .auth-main > * {
-  background: white;
+  background: var(--theme-bg-surface);
   border-radius: 0.75rem;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 
               0 10px 10px -5px rgba(0, 0, 0, 0.04);

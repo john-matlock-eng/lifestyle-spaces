@@ -3,7 +3,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: none;
+  border: 1px solid var(--theme-border-light);
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
@@ -11,52 +11,64 @@
   transition: all 0.2s ease-in-out;
   font-family: inherit;
   line-height: 1.2;
+  background-color: var(--theme-bg-surface);
+  color: var(--theme-text-primary);
 }
 
 /* Button variants */
 .btn-primary {
-  background-color: #007bff;
+  background-color: var(--theme-primary-600);
   color: white;
+  border-color: var(--theme-primary-600);
 }
 
 .btn-primary:hover:not(.btn-disabled) {
-  background-color: #0056b3;
+  background-color: var(--theme-primary-700);
+  border-color: var(--theme-primary-700);
 }
 
 .btn-secondary {
-  background-color: #6c757d;
-  color: white;
+  background-color: var(--theme-bg-elevated);
+  color: var(--theme-text-primary);
+  border-color: var(--theme-border-base);
 }
 
 .btn-secondary:hover:not(.btn-disabled) {
-  background-color: #545b62;
+  background-color: var(--theme-bg-surface);
+  border-color: var(--theme-border-dark);
 }
 
 .btn-success {
   background-color: #28a745;
   color: white;
+  border-color: #28a745;
 }
 
 .btn-success:hover:not(.btn-disabled) {
   background-color: #1e7e34;
+  border-color: #1e7e34;
 }
 
 .btn-danger {
   background-color: #dc3545;
   color: white;
+  border-color: #dc3545;
 }
 
 .btn-danger:hover:not(.btn-disabled) {
   background-color: #c82333;
+  border-color: #c82333;
 }
 
 .btn-warning {
   background-color: #ffc107;
   color: #212529;
+  border-color: #ffc107;
 }
 
 .btn-warning:hover:not(.btn-disabled) {
   background-color: #e0a800;
+  border-color: #e0a800;
 }
 
 /* Button sizes */

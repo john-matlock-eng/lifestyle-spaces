@@ -18,6 +18,12 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Main app container */
+#root {
+  background-color: var(--theme-bg-base, #ffffff);
+  min-height: 100vh;
+}
+
 /* Light theme (default) */
 [data-theme="wellness-light"],
 :root:not(.dark) {
