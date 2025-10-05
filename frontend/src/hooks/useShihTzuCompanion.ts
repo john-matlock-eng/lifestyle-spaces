@@ -40,7 +40,6 @@ export interface UseShihTzuCompanionReturn {
 // Configuration constants
 const COMPANION_OFFSET = 80 // Distance from element edge
 const COMPANION_SIZE = 100 // Approximate size of companion
-const DEFAULT_TRANSITION_DURATION = 800 // Default animation duration in ms
 
 // Valid moods for runtime validation
 const VALID_MOODS: readonly Mood[] = [
@@ -56,9 +55,7 @@ const isValidMood = (mood: string): mood is Mood => {
 export function useShihTzuCompanion({
   initialMood,
   initialPosition,
-  onCelebrate,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  transitionDuration = DEFAULT_TRANSITION_DURATION
+  onCelebrate
 }: UseShihTzuCompanionParams): UseShihTzuCompanionReturn {
   // Validate initial mood
   if (!isValidMood(initialMood)) {
