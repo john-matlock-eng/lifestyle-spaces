@@ -95,12 +95,15 @@ export const MembersList: React.FC<MembersListProps> = ({
   };
 
   const getInitials = (displayName: string) => {
+    if (!displayName) return '??';
+
     return displayName
       .split(' ')
+      .filter(name => name.length > 0)
       .map(name => name.charAt(0))
       .join('')
       .toUpperCase()
-      .slice(0, 2);
+      .slice(0, 2) || '??';
   };
 
   const getRoleBadgeClass = (role: SpaceMemberRole) => {
