@@ -11,6 +11,28 @@ import type { User, Space } from '../types';
 vi.mock('../stores/authStore');
 vi.mock('../stores/spaceStore');
 
+// Mock Ellie components and hooks
+const mockSetMood = vi.fn();
+const mockCelebrate = vi.fn();
+vi.mock('../hooks', () => ({
+  useShihTzuCompanion: () => ({
+    mood: 'excited',
+    setMood: mockSetMood,
+    position: { x: 100, y: 100 },
+    celebrate: mockCelebrate,
+  }),
+}));
+
+vi.mock('../components/ellie', () => ({
+  Ellie: ({ mood, thoughtText, onClick }: { mood: string; thoughtText: string; onClick: () => void }) => (
+    <div data-testid="ellie-companion">
+      <div data-testid="ellie-mood">{mood}</div>
+      <div data-testid="ellie-thought">{thoughtText}</div>
+      <button data-testid="ellie-click" onClick={onClick}>Click Ellie</button>
+    </div>
+  ),
+}));
+
 // Mock the child components
 vi.mock('../components/spaces/SpaceList', () => ({
   SpaceList: ({ spaces, onSpaceClick, onRetry, isLoading, error }: { spaces: Space[], onSpaceClick: (space: Space) => void, onRetry?: () => void, isLoading?: boolean, error?: string | null }) => (
@@ -121,7 +143,9 @@ describe('Dashboard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+    mockSetMood.mockClear();
+    mockCelebrate.mockClear();
+
     mockUseAuth.mockReturnValue({
       user: mockUser,
     });
@@ -382,6 +406,76 @@ describe('Dashboard', () => {
       fireEvent.click(screen.getByTestId('join-cancel'));
       expect(screen.getByText('Have an invite code?')).toBeInTheDocument();
       expect(screen.queryByTestId('join-by-code-form')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Ellie companion integration', () => {
+    it('renders Ellie companion', () => {
+      renderDashboard();
+
+      expect(screen.getByTestId('ellie-companion')).toBeInTheDocument();
+      expect(screen.getByTestId('ellie-mood')).toHaveTextContent('excited');
+    });
+
+    it('shows welcome message for users with spaces', () => {
+      renderDashboard();
+
+      expect(screen.getByTestId('ellie-thought')).toHaveTextContent('Welcome back! Ready to manage your spaces? 😊');
+    });
+
+    it('shows first-time user message when no spaces', () => {
+      mockUseSpace.mockReturnValue({
+        spaces: [],
+        loadSpaces: mockLoadSpaces,
+        isLoading: false,
+        error: null,
+      });
+
+      renderDashboard();
+
+      expect(screen.getByTestId('ellie-thought')).toHaveTextContent('Welcome! Create your first space to get started! 🎉');
+    });
+
+    it('sets mood to curious when create space is clicked', () => {
+      renderDashboard();
+
+      const createButton = screen.getByText('Create Space');
+      fireEvent.click(createButton);
+
+      expect(mockSetMood).toHaveBeenCalledWith('curious');
+    });
+
+    it('celebrates when space is created', async () => {
+      renderDashboard();
+
+      // Open modal and create space
+      fireEvent.click(screen.getByText('Create Space'));
+      fireEvent.click(screen.getByTestId('modal-create'));
+
+      await waitFor(() => {
+        expect(mockCelebrate).toHaveBeenCalled();
+      });
+    });
+
+    it('celebrates when joining space by code', async () => {
+      renderDashboard();
+
+      // Show join form and submit
+      fireEvent.click(screen.getByText('Join with Code'));
+      fireEvent.click(screen.getByTestId('join-submit'));
+
+      await waitFor(() => {
+        expect(mockCelebrate).toHaveBeenCalled();
+      });
+    });
+
+    it('allows clicking Ellie to toggle mood', () => {
+      renderDashboard();
+
+      const ellieClickButton = screen.getByTestId('ellie-click');
+      fireEvent.click(ellieClickButton);
+
+      expect(mockSetMood).toHaveBeenCalled();
     });
   });
 });

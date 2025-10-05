@@ -18,6 +18,7 @@
     "@aws-amplify/auth": "^6.15.0",
     "@types/node": "^24.3.0",
     "aws-amplify": "^6.15.0",
+    "clsx": "^2.1.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.62.0",

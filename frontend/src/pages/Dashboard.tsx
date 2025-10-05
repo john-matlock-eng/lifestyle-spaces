@@ -5,6 +5,8 @@ import { useSpace } from '../stores/spaceStore';
 import { SpaceList } from '../components/spaces/SpaceList';
 import { CreateSpaceModal } from '../components/spaces/CreateSpaceModal';
 import { JoinByCodeForm } from '../components/invitations/JoinByCodeForm';
+import { Ellie } from '../components/ellie';
+import { useShihTzuCompanion } from '../hooks';
 import type { Space } from '../types';
 import './Dashboard.css';
 
@@ -14,6 +16,12 @@ export const Dashboard: React.FC = () => {
   const { spaces, loadSpaces, isLoading, error } = useSpace();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [showJoinByCode, setShowJoinByCode] = useState(false);
+
+  // Ellie companion
+  const { mood, setMood, position, celebrate } = useShihTzuCompanion({
+    initialMood: 'excited',
+    initialPosition: { x: window.innerWidth - 150, y: 100 }
+  });
 
   useEffect(() => {
     loadSpaces();
@@ -25,10 +33,12 @@ export const Dashboard: React.FC = () => {
 
   const handleCreateSpace = () => {
     setIsCreateModalOpen(true);
+    setMood('curious');
   };
 
   const handleSpaceCreated = (space: Space) => {
     setIsCreateModalOpen(false);
+    celebrate();
     // The spaces list is automatically updated via the store's ADD_SPACE action
     // Navigate to the newly created space
     navigate(`/space/${space.spaceId}`);
@@ -40,6 +50,7 @@ export const Dashboard: React.FC = () => {
 
   const handleJoinByCodeSuccess = (result: { spaceId: string; spaceName: string }) => {
     setShowJoinByCode(false);
+    celebrate();
     // Reload spaces to include the newly joined space
     loadSpaces();
     // Navigate to the newly joined space
@@ -141,6 +152,19 @@ export const Dashboard: React.FC = () => {
           onSpaceCreated={handleSpaceCreated}
         />
       )}
+
+      {/* Ellie companion */}
+      <Ellie
+        mood={mood}
+        position={position}
+        showThoughtBubble={true}
+        thoughtText={spaces.length === 0
+          ? "Welcome! Create your first space to get started! 🎉"
+          : "Welcome back! Ready to manage your spaces? 😊"}
+        size="md"
+        onClick={() => setMood(mood === 'playful' ? 'happy' : 'playful')}
+        particleEffect={mood === 'celebrating' ? 'hearts' : null}
+      />
     </div>
   );
 };
