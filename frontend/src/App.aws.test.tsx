@@ -60,14 +60,14 @@ describe('App Component - AWS Environment', () => {
 
   it('should render successfully when configured for AWS', async () => {
     render(<App />)
-    
-    // The app should render the sign-in form when not authenticated
+
+    // The app should render the landing page when not authenticated
     await waitFor(() => {
       expect(screen.getByText('Lifestyle Spaces')).toBeInTheDocument()
-      expect(screen.getByText('Sign In')).toBeInTheDocument()
-      expect(screen.getByLabelText(/Email Address/)).toBeInTheDocument()
+      expect(screen.getAllByText('Sign In').length).toBeGreaterThan(0)
+      expect(screen.getByText(/Your Wellness Journey/)).toBeInTheDocument()
     })
-    
+
     // Verify that health check was called with mocked API service
     expect(mockApiService.healthCheck).not.toHaveBeenCalled() // Health check only happens on dashboard
   })
