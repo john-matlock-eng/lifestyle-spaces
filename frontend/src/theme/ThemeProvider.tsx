@@ -3,8 +3,9 @@
  * Following the test requirements exactly
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import type { Theme, ThemeConfig, ThemeContextValue } from './theme.types'
+import { ThemeContext } from './ThemeContext'
 
 // Default theme data that matches test expectations
 const defaultWellnessTheme: Theme = {
@@ -272,18 +273,6 @@ const defaultConfig: ThemeConfig = {
   enableValidation: true
 }
 
-// Theme context
-const ThemeContext = createContext<ThemeContextValue | null>(null)
-
-// Export useTheme hook
-export const useTheme = () => {
-  const context = useContext(ThemeContext)
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider')
-  }
-  return context
-}
-
 // Theme provider props
 interface ThemeProviderProps {
   children: React.ReactNode
@@ -302,16 +291,17 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 }) => {
   const finalConfig = { ...defaultConfig, ...config }
 
-  // Filter and validate custom themes
-  const validCustomThemes = customThemes.filter(theme => {
-    if (!theme || typeof theme !== 'object' || !theme.id || !theme.name || !theme.colors) {
-      console.warn('Invalid theme provided:', theme)
-      return false
-    }
-    return true
-  })
-
-  const allThemes = [...defaultThemes, ...validCustomThemes]
+  // Filter and validate custom themes with useMemo to prevent recreation on every render
+  const allThemes = useMemo(() => {
+    const validCustomThemes = customThemes.filter(theme => {
+      if (!theme || typeof theme !== 'object' || !theme.id || !theme.name || !theme.colors) {
+        console.warn('Invalid theme provided:', theme)
+        return false
+      }
+      return true
+    })
+    return [...defaultThemes, ...validCustomThemes]
+  }, [customThemes])
 
   // State
   const [currentThemeId, setCurrentThemeId] = useState<string>(finalConfig.defaultTheme)
@@ -351,7 +341,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     } catch (err) {
       console.warn('Failed to load theme from storage:', err)
     }
-  }, [finalConfig.storageKey, finalConfig.darkModeKey])
+  }, [finalConfig.storageKey, finalConfig.darkModeKey, allThemes])
 
   // Listen for system theme changes
   useEffect(() => {

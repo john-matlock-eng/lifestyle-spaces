@@ -530,7 +530,7 @@ export interface UseThemeEffectsResult {
 
 export interface ThemeTestUtils {
   /** Render component in theme */
-  renderInTheme: (component: React.ReactElement, themeId?: string) => any
+  renderInTheme: (component: React.ReactElement, themeId?: string) => unknown
   /** Switch theme during test */
   switchTheme: (themeId: string) => Promise<void>
   /** Get computed styles */
@@ -632,21 +632,30 @@ export type CSSProperty = string
 export type ZIndexValue = number
 
 // Type guards
-export const isValidTheme = (theme: any): theme is Theme => {
+export const isValidTheme = (theme: unknown): theme is Theme => {
   return (
     typeof theme === 'object' &&
+    theme !== null &&
+    'id' in theme &&
     typeof theme.id === 'string' &&
+    'name' in theme &&
     typeof theme.name === 'string' &&
+    'colors' in theme &&
     typeof theme.colors === 'object' &&
+    'effects' in theme &&
     typeof theme.effects === 'object'
   )
 }
 
-export const isValidColorScale = (scale: any): scale is ColorScale => {
+export const isValidColorScale = (scale: unknown): scale is ColorScale => {
   return (
     typeof scale === 'object' &&
+    scale !== null &&
+    50 in scale &&
     typeof scale[50] === 'string' &&
+    500 in scale &&
     typeof scale[500] === 'string' &&
+    950 in scale &&
     typeof scale[950] === 'string'
   )
 }
