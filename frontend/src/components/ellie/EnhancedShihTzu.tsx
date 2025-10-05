@@ -102,7 +102,7 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
         clearTimeout(positionTimerRef.current);
       }
     };
-  }, [position.x, position.y, currentPosition.x, currentPosition.y, onPositionChange]);
+  }, [position, currentPosition.x, currentPosition.y, onPositionChange]);
 
   // Handle particle effects
   useEffect(() => {

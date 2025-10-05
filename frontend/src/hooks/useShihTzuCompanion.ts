@@ -57,6 +57,7 @@ export function useShihTzuCompanion({
   initialMood,
   initialPosition,
   onCelebrate,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   transitionDuration = DEFAULT_TRANSITION_DURATION
 }: UseShihTzuCompanionParams): UseShihTzuCompanionReturn {
   // Validate initial mood
@@ -69,9 +70,6 @@ export function useShihTzuCompanion({
 
   // Track if this is the first render to avoid initial transitions
   const isFirstRender = useRef(true)
-
-  // Store the transition duration for position changes
-  const transitionRef = useRef(transitionDuration)
 
   useEffect(() => {
     isFirstRender.current = false
@@ -108,15 +106,17 @@ export function useShihTzuCompanion({
         newY = rect.top - COMPANION_OFFSET - COMPANION_SIZE
         break
 
-      case 'bottom':
+      case 'bottom': {
         newX = rect.left + (rect.width / 2) - (COMPANION_SIZE / 2)
         newY = rect.bottom + COMPANION_OFFSET
         break
+      }
 
-      default:
+      default: {
         // TypeScript exhaustiveness check
         const exhaustiveCheck: never = side
         throw new Error(`Unknown side: ${exhaustiveCheck}`)
+      }
     }
 
     // Ensure position stays within viewport bounds with padding
