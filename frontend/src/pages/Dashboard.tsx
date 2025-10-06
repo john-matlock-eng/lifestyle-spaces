@@ -21,7 +21,10 @@ export const Dashboard: React.FC = () => {
   // Ellie companion
   const { mood, setMood, position, celebrate } = useShihTzuCompanion({
     initialMood: 'excited',
-    initialPosition: { x: window.innerWidth - 150, y: 100 }
+    initialPosition: {
+      x: Math.min(window.innerWidth * 0.75, window.innerWidth - 200),
+      y: 100
+    }
   });
 
   useEffect(() => {

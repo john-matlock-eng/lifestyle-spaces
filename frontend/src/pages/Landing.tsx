@@ -19,7 +19,10 @@ export function Landing() {
     celebrate,
   } = useShihTzuCompanion({
     initialMood: 'excited',
-    initialPosition: { x: window.innerWidth - 150, y: 200 }
+    initialPosition: {
+      x: Math.min(window.innerWidth * 0.75, window.innerWidth - 200),
+      y: 200
+    }
   })
 
   useEffect(() => {
