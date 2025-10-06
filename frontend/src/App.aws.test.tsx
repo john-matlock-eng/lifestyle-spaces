@@ -65,7 +65,8 @@ describe('App Component - AWS Environment', () => {
     await waitFor(() => {
       expect(screen.getByText('Lifestyle Spaces')).toBeInTheDocument()
       expect(screen.getAllByText('Sign In').length).toBeGreaterThan(0)
-      expect(screen.getByText(/Your Wellness Journey/)).toBeInTheDocument()
+      // Check for the main hero title specifically
+      expect(screen.getByRole('heading', { name: /Your Wellness Journey, Together/i })).toBeInTheDocument()
     })
 
     // Verify that health check was called with mocked API service

@@ -3,11 +3,13 @@ import { useAuth } from '../stores/authStore'
 import { Ellie } from '../components/ellie'
 import { useShihTzuCompanion } from '../hooks'
 import { ThemeToggle } from '../components/theme'
+import { useEffect, useState } from 'react'
 import './Landing.css'
 
 export function Landing() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const [isVisible, setIsVisible] = useState(false)
 
   // Use the companion hook for Ellie's behavior (must be called before any returns)
   const {
@@ -19,6 +21,10 @@ export function Landing() {
     initialMood: 'excited',
     initialPosition: { x: window.innerWidth - 150, y: 200 }
   })
+
+  useEffect(() => {
+    setIsVisible(true)
+  }, [])
 
   // If user is already logged in, redirect to dashboard
   if (user) {
@@ -56,8 +62,12 @@ export function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="landing-hero">
+      <section className={`landing-hero ${isVisible ? 'fade-in' : ''}`}>
         <div className="landing-hero__content">
+          <div className="landing-hero__badge">
+            <span className="badge-icon">✨</span>
+            <span>Start Your Wellness Journey Today</span>
+          </div>
           <h2 className="landing-hero__title">
             Your Wellness Journey, <span className="text-primary">Together</span>
           </h2>
@@ -75,6 +85,7 @@ export function Landing() {
               className="btn btn-primary btn-large"
             >
               Start Your Journey
+              <span className="btn-icon">→</span>
             </button>
             <button
               type="button"
@@ -83,6 +94,20 @@ export function Landing() {
             >
               Sign In
             </button>
+          </div>
+          <div className="landing-hero__stats">
+            <div className="stat-item">
+              <div className="stat-number">10K+</div>
+              <div className="stat-label">Active Users</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">50K+</div>
+              <div className="stat-label">Wellness Spaces</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">98%</div>
+              <div className="stat-label">Satisfaction Rate</div>
+            </div>
           </div>
         </div>
       </section>
@@ -122,22 +147,107 @@ export function Landing() {
         </div>
       </section>
 
+      {/* How It Works Section */}
+      <section className="landing-how-it-works">
+        <h3 className="landing-section-title">How It Works</h3>
+        <div className="steps-container">
+          <div className="step-card">
+            <div className="step-number">1</div>
+            <div className="step-icon">📝</div>
+            <h4 className="step-title">Create Your Space</h4>
+            <p className="step-description">
+              Set up a dedicated space for your wellness goals - fitness, nutrition, mindfulness, or any lifestyle aspect
+            </p>
+          </div>
+          <div className="step-arrow">→</div>
+          <div className="step-card">
+            <div className="step-number">2</div>
+            <div className="step-icon">👋</div>
+            <h4 className="step-title">Invite Your Crew</h4>
+            <p className="step-description">
+              Share invite codes with friends, family, or like-minded individuals to join your wellness journey
+            </p>
+          </div>
+          <div className="step-arrow">→</div>
+          <div className="step-card">
+            <div className="step-number">3</div>
+            <div className="step-icon">🚀</div>
+            <h4 className="step-title">Grow Together</h4>
+            <p className="step-description">
+              Track progress, share experiences, and celebrate wins as a supportive community
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="landing-testimonials">
+        <h3 className="landing-section-title">What Our Community Says</h3>
+        <div className="testimonials-grid">
+          <div className="testimonial-card">
+            <div className="testimonial-quote">"</div>
+            <p className="testimonial-text">
+              Lifestyle Spaces helped me stay accountable to my fitness goals. Having my friends in the same space keeps me motivated every day!
+            </p>
+            <div className="testimonial-author">
+              <div className="author-avatar">👤</div>
+              <div>
+                <div className="author-name">Sarah M.</div>
+                <div className="author-role">Fitness Enthusiast</div>
+              </div>
+            </div>
+          </div>
+          <div className="testimonial-card">
+            <div className="testimonial-quote">"</div>
+            <p className="testimonial-text">
+              The collaborative approach to wellness is game-changing. We share recipes, progress photos, and support each other through challenges.
+            </p>
+            <div className="testimonial-author">
+              <div className="author-avatar">👤</div>
+              <div>
+                <div className="author-name">Michael R.</div>
+                <div className="author-role">Nutrition Coach</div>
+              </div>
+            </div>
+          </div>
+          <div className="testimonial-card">
+            <div className="testimonial-quote">"</div>
+            <p className="testimonial-text">
+              I love how simple it is to create different spaces for different goals. One for meditation, one for running, one for meal prep!
+            </p>
+            <div className="testimonial-author">
+              <div className="author-avatar">👤</div>
+              <div>
+                <div className="author-name">Emily T.</div>
+                <div className="author-role">Wellness Advocate</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="landing-cta">
-        <h3 className="landing-cta__title">Ready to Get Started?</h3>
-        <p className="landing-cta__description">
-          Join thousands of others building healthier, happier lives together
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            celebrate()
-            navigate('/signup')
-          }}
-          className="btn btn-primary btn-large"
-        >
-          Create Your Free Account
-        </button>
+        <div className="landing-cta__content">
+          <h3 className="landing-cta__title">Ready to Get Started?</h3>
+          <p className="landing-cta__description">
+            Join thousands of others building healthier, happier lives together
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              celebrate()
+              navigate('/signup')
+            }}
+            className="btn btn-primary btn-large btn-pulse"
+          >
+            Create Your Free Account
+            <span className="btn-icon">→</span>
+          </button>
+          <p className="landing-cta__note">
+            No credit card required • Free forever • Cancel anytime
+          </p>
+        </div>
       </section>
 
       {/* Footer */}
