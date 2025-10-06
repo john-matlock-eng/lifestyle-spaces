@@ -9,13 +9,7 @@ export function Landing() {
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  // If user is already logged in, redirect to dashboard
-  if (user) {
-    navigate('/dashboard')
-    return null
-  }
-
-  // Use the companion hook for Ellie's behavior
+  // Use the companion hook for Ellie's behavior (must be called before any returns)
   const {
     mood,
     position,
@@ -25,6 +19,12 @@ export function Landing() {
     initialMood: 'excited',
     initialPosition: { x: window.innerWidth - 150, y: 200 }
   })
+
+  // If user is already logged in, redirect to dashboard
+  if (user) {
+    navigate('/dashboard')
+    return null
+  }
 
   return (
     <div className="landing">
