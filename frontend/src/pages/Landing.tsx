@@ -95,20 +95,6 @@ export function Landing() {
               Sign In
             </button>
           </div>
-          <div className="landing-hero__stats">
-            <div className="stat-item">
-              <div className="stat-number">10K+</div>
-              <div className="stat-label">Active Users</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">50K+</div>
-              <div className="stat-label">Wellness Spaces</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">98%</div>
-              <div className="stat-label">Satisfaction Rate</div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -180,58 +166,12 @@ export function Landing() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="landing-testimonials">
-        <h3 className="landing-section-title">What Our Community Says</h3>
-        <div className="testimonials-grid">
-          <div className="testimonial-card">
-            <div className="testimonial-quote">"</div>
-            <p className="testimonial-text">
-              Lifestyle Spaces helped me stay accountable to my fitness goals. Having my friends in the same space keeps me motivated every day!
-            </p>
-            <div className="testimonial-author">
-              <div className="author-avatar">👤</div>
-              <div>
-                <div className="author-name">Sarah M.</div>
-                <div className="author-role">Fitness Enthusiast</div>
-              </div>
-            </div>
-          </div>
-          <div className="testimonial-card">
-            <div className="testimonial-quote">"</div>
-            <p className="testimonial-text">
-              The collaborative approach to wellness is game-changing. We share recipes, progress photos, and support each other through challenges.
-            </p>
-            <div className="testimonial-author">
-              <div className="author-avatar">👤</div>
-              <div>
-                <div className="author-name">Michael R.</div>
-                <div className="author-role">Nutrition Coach</div>
-              </div>
-            </div>
-          </div>
-          <div className="testimonial-card">
-            <div className="testimonial-quote">"</div>
-            <p className="testimonial-text">
-              I love how simple it is to create different spaces for different goals. One for meditation, one for running, one for meal prep!
-            </p>
-            <div className="testimonial-author">
-              <div className="author-avatar">👤</div>
-              <div>
-                <div className="author-name">Emily T.</div>
-                <div className="author-role">Wellness Advocate</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="landing-cta">
         <div className="landing-cta__content">
           <h3 className="landing-cta__title">Ready to Get Started?</h3>
           <p className="landing-cta__description">
-            Join thousands of others building healthier, happier lives together
+            Start building healthier, happier habits with your community
           </p>
           <button
             type="button"
