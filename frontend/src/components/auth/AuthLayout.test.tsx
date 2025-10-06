@@ -1,11 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AuthLayout } from './AuthLayout';
+
+const renderWithTheme = (ui: React.ReactElement) => {
+  return render(
+    <ThemeProvider>
+      {ui}
+    </ThemeProvider>
+  );
+};
 
 describe('AuthLayout', () => {
   it('should render children content', () => {
     const testContent = 'Test authentication form';
-    render(
+    renderWithTheme(
       <AuthLayout>
         <div>{testContent}</div>
       </AuthLayout>
@@ -15,7 +24,7 @@ describe('AuthLayout', () => {
   });
 
   it('should render the application logo/title', () => {
-    render(
+    renderWithTheme(
       <AuthLayout>
         <div>Content</div>
       </AuthLayout>
@@ -25,7 +34,7 @@ describe('AuthLayout', () => {
   });
 
   it('should have proper semantic structure', () => {
-    render(
+    renderWithTheme(
       <AuthLayout>
         <div>Content</div>
       </AuthLayout>
@@ -37,7 +46,7 @@ describe('AuthLayout', () => {
   });
 
   it('should be responsive and accessible', () => {
-    render(
+    renderWithTheme(
       <AuthLayout>
         <div>Content</div>
       </AuthLayout>
