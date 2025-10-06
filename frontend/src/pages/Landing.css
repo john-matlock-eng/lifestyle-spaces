@@ -92,22 +92,10 @@
 .landing-hero {
   padding: 8rem 2rem 6rem;
   text-align: center;
-  background: linear-gradient(135deg, var(--theme-bg-base) 0%, var(--theme-bg-surface) 100%);
+  background: var(--theme-bg-base);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-}
-
-.landing-hero::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, var(--theme-primary-50) 0%, transparent 70%);
-  opacity: 0.3;
-  animation: pulse 8s ease-in-out infinite;
 }
 
 .landing-hero__content {
@@ -315,26 +303,12 @@
 .landing-cta {
   padding: 8rem 2rem;
   text-align: center;
-  background: linear-gradient(135deg, var(--theme-primary-50) 0%, var(--theme-bg-surface) 100%);
+  background: var(--theme-bg-surface);
   transition: background-color 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.landing-cta::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, var(--theme-primary-100) 0%, transparent 70%);
-  opacity: 0.2;
+  border-top: 1px solid var(--theme-border-light);
 }
 
 .landing-cta__content {
-  position: relative;
-  z-index: 1;
   max-width: 700px;
   margin: 0 auto;
 }
