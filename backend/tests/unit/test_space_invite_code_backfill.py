@@ -55,7 +55,7 @@ class TestInviteCodeBackfill:
         # Verify new code was generated
         assert new_code is not None
         assert len(new_code) == 8
-        assert new_code.isupper()
+        assert all(c in '0123456789ABCDEF' for c in new_code)
 
         # Verify space was updated with new code
         mock_table.update_item.assert_called_once()
