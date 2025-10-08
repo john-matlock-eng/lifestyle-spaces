@@ -42,7 +42,7 @@ def get_cors_headers(event):
         logger.info(f"Origin {request_origin} is explicitly allowed")
         return {
             'Access-Control-Allow-Origin': request_origin,
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-ID-Token',
             'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
             'Access-Control-Allow-Credentials': 'true',
             'Access-Control-Max-Age': '86400'
@@ -54,7 +54,7 @@ def get_cors_headers(event):
         logger.info(f"Origin {request_origin} matches dynamic domain pattern")
         return {
             'Access-Control-Allow-Origin': request_origin,
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-ID-Token',
             'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
             'Access-Control-Allow-Credentials': 'true',
             'Access-Control-Max-Age': '86400'
@@ -64,7 +64,7 @@ def get_cors_headers(event):
     logger.info(f"Origin {request_origin} not in allowed list, using wildcard")
     return {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+        'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-ID-Token',
         'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
         'Access-Control-Max-Age': '86400'
         # Note: no Access-Control-Allow-Credentials when using wildcard
