@@ -289,11 +289,8 @@ class TestGetCurrentUserDependency:
             # Missing 'sub' and 'userId'
         }
 
-        mock_request = Mock()
-        mock_request.headers = {}
-
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(mock_request, current_user)
+            get_current_user(current_user=current_user, x_id_token=None)
 
         assert exc_info.value.status_code == 401
         assert "User ID not found in token" in str(exc_info.value.detail)
@@ -307,15 +304,12 @@ class TestGetCurrentUserDependency:
             'username': 'testuser'
         }
 
-        mock_request = Mock()
-        mock_request.headers = {}
-
         with patch('app.core.dependencies.UserProfileService') as mock_service_class:
             mock_service = Mock()
             mock_service_class.return_value = mock_service
             mock_service.get_or_create_user_profile.return_value = {'id': user_id}
 
-            result = get_current_user(mock_request, current_user)
+            result = get_current_user(current_user=current_user, x_id_token=None)
 
         # Verify fallback email was applied
         call_args = mock_service.get_or_create_user_profile.call_args[1]
@@ -331,15 +325,12 @@ class TestGetCurrentUserDependency:
             'username': ''  # Empty username
         }
 
-        mock_request = Mock()
-        mock_request.headers = {}
-
         with patch('app.core.dependencies.UserProfileService') as mock_service_class:
             mock_service = Mock()
             mock_service_class.return_value = mock_service
             mock_service.get_or_create_user_profile.return_value = {'id': user_id}
 
-            result = get_current_user(mock_request, current_user)
+            result = get_current_user(current_user=current_user, x_id_token=None)
 
         # Verify username was generated from email
         call_args = mock_service.get_or_create_user_profile.call_args[1]
@@ -356,15 +347,12 @@ class TestGetCurrentUserDependency:
             'display_name': ''  # Empty display_name
         }
 
-        mock_request = Mock()
-        mock_request.headers = {}
-
         with patch('app.core.dependencies.UserProfileService') as mock_service_class:
             mock_service = Mock()
             mock_service_class.return_value = mock_service
             mock_service.get_or_create_user_profile.return_value = {'id': user_id}
 
-            result = get_current_user(mock_request, current_user)
+            result = get_current_user(current_user=current_user, x_id_token=None)
 
         # Verify display_name was generated from username
         call_args = mock_service.get_or_create_user_profile.call_args[1]
@@ -380,9 +368,6 @@ class TestGetCurrentUserDependency:
             'username': ''
         }
 
-        mock_request = Mock()
-        mock_request.headers = {'X-ID-Token': 'test-id-token'}
-
         with patch('app.core.dependencies.UserProfileService') as mock_service_class:
             with patch('app.core.dependencies.extract_user_attributes_from_id_token') as mock_extract:
                 mock_service = Mock()
@@ -395,7 +380,7 @@ class TestGetCurrentUserDependency:
                     'display_name': 'Custom Display'
                 }
 
-                result = get_current_user(mock_request, current_user)
+                result = get_current_user(current_user=current_user, x_id_token='test-id-token')
 
         # Verify custom attributes from ID token were used
         call_args = mock_service.get_or_create_user_profile.call_args[1]
@@ -413,16 +398,13 @@ class TestGetCurrentUserDependency:
             'username': 'testuser'
         }
 
-        mock_request = Mock()
-        mock_request.headers = {}  # No X-ID-Token header
-
         with patch('app.core.dependencies.UserProfileService') as mock_service_class:
             with patch('app.core.dependencies.extract_user_attributes_from_id_token') as mock_extract:
                 mock_service = Mock()
                 mock_service_class.return_value = mock_service
                 mock_service.get_or_create_user_profile.return_value = {'id': user_id}
 
-                result = get_current_user(mock_request, current_user)
+                result = get_current_user(current_user=current_user, x_id_token=None)
 
         # Verify ID token extraction was not called
         mock_extract.assert_not_called()

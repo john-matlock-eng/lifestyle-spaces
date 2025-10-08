@@ -1,23 +1,23 @@
 """
 Common dependencies for FastAPI routes.
 """
-from typing import Dict, Any
-from fastapi import Depends, HTTPException, status, Request
+from typing import Dict, Any, Optional
+from fastapi import Depends, HTTPException, status, Header
 from app.core.cognito_auth import get_current_user_cognito, extract_user_attributes_from_id_token
 from app.services.cognito import CognitoService
 from app.services.user_profile import UserProfileService
 
 
 def get_current_user(
-    request: Request,
-    current_user: Dict[str, Any] = Depends(get_current_user_cognito)
+    current_user: Dict[str, Any] = Depends(get_current_user_cognito),
+    x_id_token: Optional[str] = Header(None, alias="X-ID-Token")
 ) -> Dict[str, Any]:
     """
     Get the current authenticated user and ensure profile exists with complete data.
 
     Args:
-        request: FastAPI request object (to access headers for ID token)
         current_user: User data from JWT access token
+        x_id_token: Optional ID token from X-ID-Token header for enhanced attributes
 
     Returns:
         Dict: User information with complete profile
@@ -42,11 +42,6 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Try to extract ID token from request headers
-    # Frontend should send: Authorization: Bearer <access_token>
-    # And optionally: X-ID-Token: <id_token>
-    id_token = request.headers.get("X-ID-Token")
-
     # Build cognito_attributes from both sources
     cognito_attributes = {
         'email': current_user.get('email', ''),
@@ -56,9 +51,9 @@ def get_current_user(
     }
 
     # If we have ID token, extract custom attributes from it
-    if id_token:
+    if x_id_token:
         try:
-            id_token_attrs = extract_user_attributes_from_id_token(id_token)
+            id_token_attrs = extract_user_attributes_from_id_token(x_id_token)
             # Merge ID token attributes (they take precedence)
             if id_token_attrs:
                 cognito_attributes.update({
