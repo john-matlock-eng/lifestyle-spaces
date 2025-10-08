@@ -110,8 +110,29 @@ class CognitoService:
                     {'Name': 'preferred_username', 'Value': user.username}
                 ]
             )
+
+            user_sub = response['UserSub']
+
+            # Set custom attributes after signup using admin API
+            # Custom attributes must be defined in the user pool schema first
+            try:
+                self.client.admin_update_user_attributes(
+                    UserPoolId=self.user_pool_id,
+                    Username=user.email,
+                    UserAttributes=[
+                        {'Name': 'custom:username', 'Value': user.username},
+                        {'Name': 'custom:displayName', 'Value': user.username},
+                        {'Name': 'custom:userId', 'Value': user_sub}
+                    ]
+                )
+            except ClientError as attr_error:
+                # If custom attributes don't exist in schema, log but continue
+                import logging
+                logging.warning(f"Failed to set custom attributes: {attr_error}")
+                # This is not critical - the app will work with fallback values
+
             return {
-                'user_sub': response['UserSub'],
+                'user_sub': user_sub,
                 'username': user.username,
                 'email': user.email
             }
