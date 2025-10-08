@@ -301,7 +301,7 @@ describe('ApiService', () => {
             toString: () => 'mock-id-token',
           },
         },
-      } as any)
+      } as Awaited<ReturnType<typeof fetchAuthSession>>)
 
       const mockResponse = { data: 'test' }
       mockFetch.mockResolvedValueOnce({
