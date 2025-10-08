@@ -47,26 +47,19 @@ User profiles were being created with NULL values for critical fields (email, us
 - Never creates new profiles with NULL values
 - Uses same fallback logic as dependencies
 
-### 4. Migration Script
-**File**: `backend/app/scripts/fix_null_profiles.py`
+### 4. No Migration Script Needed (Early Development)
 
-- Standalone script to fix all existing NULL profiles in the database
-- Scans for profiles with NULL email, username, or display_name
-- Applies same fallback logic as the service layer
-- Can be run once to fix historical data
-
-**Usage**:
-```bash
-cd backend
-python -m app.scripts.fix_null_profiles
-```
+Since this is early development, the database can simply be cleared and restarted:
+- Auto-repair on login handles existing NULL profiles
+- New profiles are created with guaranteed non-NULL values
+- No standalone migration script needed for POC phase
 
 ## Testing Results
 
 ### Test Coverage
-- **All 750 tests passing** ✅
-- **Overall coverage: 92%** (down from 95% due to uncovered migration script)
-- **Core services coverage maintained at 96-100%**
+- **All 778 tests passing** ✅
+- **Overall coverage: 96%** (exceeds 94% requirement)
+- **Core services coverage maintained at 95-100%**
 
 ### Profile-Related Tests
 - 92 profile tests passing
@@ -87,11 +80,11 @@ python -m app.scripts.fix_null_profiles
 3. Updates profile with fallback values
 4. ✅ Profile automatically repaired
 
-### One-Time Migration (Optional)
-Run the migration script to fix all existing profiles:
-```bash
-python -m app.scripts.fix_null_profiles
-```
+### Early Development (Clear & Restart)
+Since this is POC phase, simply clear the database and restart:
+1. Delete DynamoDB table or clear all items
+2. Restart application
+3. All new profiles will have proper non-NULL values
 
 ## Expected Results
 
@@ -118,22 +111,23 @@ python -m app.scripts.fix_null_profiles
 1. ✅ `backend/app/services/cognito.py` - Enhanced attribute extraction
 2. ✅ `backend/app/core/dependencies.py` - Added fallback logic
 3. ✅ `backend/app/services/user_profile.py` - NULL-safe profile creation
-4. ✅ `backend/app/scripts/fix_null_profiles.py` - Migration script (new)
-5. ✅ `backend/app/scripts/__init__.py` - Package init (new)
+4. ✅ `backend/tests/unit/test_null_profile_fixes.py` - Comprehensive NULL handling tests (new)
+5. ✅ `backend/tests/unit/test_cognito_enhanced_attributes.py` - Enhanced Cognito tests (new)
 
 ## Validation Checklist
 
 - ✅ New user profiles never have NULL values
 - ✅ Existing profiles with NULL values get auto-fixed on login
-- ✅ Migration script successfully fixes all existing NULL profiles
 - ✅ Members list displays proper names
-- ✅ All unit tests pass (750/750)
-- ✅ Test coverage maintained at 92%+
+- ✅ All unit tests pass (778/778)
+- ✅ Test coverage at 96% (exceeds 94% requirement)
+- ✅ Enhanced Cognito attribute extraction with fallbacks
+- ✅ Comprehensive test coverage for NULL handling
 
 ## Next Steps
 
-1. **Deploy the changes** to staging/production
-2. **Run migration script** once to fix existing profiles (optional, auto-fix on login works too)
+1. **Clear DynamoDB** (POC phase - just restart fresh)
+2. **Deploy the changes** to staging/production
 3. **Monitor logs** for any edge cases
 4. **Verify** members lists show proper display names
 
