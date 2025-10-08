@@ -196,25 +196,69 @@ class CognitoService:
             pass  # Ignore sign out errors
     
     def get_user(self, access_token: str) -> Dict[str, Any]:
-        """Get user information."""
+        """
+        Get comprehensive user information from access token.
+        Fetches all available attributes from Cognito with fallbacks.
+
+        Args:
+            access_token: Cognito access token
+
+        Returns:
+            Dict: Complete user information with all attributes
+
+        Raises:
+            InvalidCredentialsError: If token is invalid
+        """
         try:
             response = self.client.get_user(AccessToken=access_token)
-            
+
             user_info = {
-                'username': response['Username']  # This will be the email
+                'id': None,
+                'username': response['Username'],  # This is the email when using email as username
+                'email': None,
+                'full_name': '',
+                'preferred_username': '',
+                'display_name': ''
             }
-            
+
+            # Extract all attributes
             for attr in response['UserAttributes']:
-                if attr['Name'] == 'email':
-                    user_info['email'] = attr['Value']
-                elif attr['Name'] == 'name':
-                    user_info['full_name'] = attr['Value']
-                elif attr['Name'] == 'sub':
-                    user_info['id'] = attr['Value']
-                elif attr['Name'] == 'preferred_username':
-                    user_info['preferred_username'] = attr['Value']
-            
+                name = attr['Name']
+                value = attr['Value']
+
+                if name == 'sub':
+                    user_info['id'] = value
+                elif name == 'email':
+                    user_info['email'] = value
+                elif name == 'name':
+                    user_info['full_name'] = value
+                elif name == 'preferred_username':
+                    user_info['preferred_username'] = value
+                # Support custom attributes if they exist
+                elif name == 'custom:username':
+                    user_info['preferred_username'] = value
+                elif name in ('custom:displayName', 'custom:display_name'):
+                    user_info['display_name'] = value
+
+            # Build sensible display_name with fallbacks
+            if not user_info['display_name']:
+                user_info['display_name'] = (
+                    user_info['preferred_username'] or
+                    user_info['full_name'] or
+                    (user_info['email'].split('@')[0] if user_info['email'] else '') or
+                    'User'
+                )
+
+            # Build username with fallbacks
+            if not user_info['preferred_username']:
+                user_info['preferred_username'] = (
+                    (user_info['email'].split('@')[0] if user_info['email'] else '') or
+                    (f"user_{user_info['id'][:8]}" if user_info['id'] else '') or
+                    'unknown'
+                )
+
             return user_info
+
         except ClientError as e:
             if e.response['Error']['Code'] == 'NotAuthorizedException':
                 raise InvalidCredentialsError("Invalid access token")

@@ -184,17 +184,18 @@ class UserProfileService:
     def get_or_create_user_profile(self, user_id: str, cognito_attributes: Dict[str, Any]) -> Dict[str, Any]:
         """
         Get existing user profile or create new one from Cognito attributes.
-        
+        Never creates profiles with NULL critical fields.
+
         Args:
             user_id: User ID from Cognito
-            cognito_attributes: Attributes from Cognito token
-            
+            cognito_attributes: Attributes from Cognito token (with fallbacks applied)
+
         Returns:
-            Dict: User profile data
+            Dict: User profile data with all required fields populated
         """
         # Try to get existing profile
         existing_profile = self.get_user_profile(user_id)
-        
+
         if existing_profile:
             # Update last_seen timestamp
             self.db.update_item(
@@ -202,17 +203,40 @@ class UserProfileService:
                 "PROFILE",
                 {'last_seen': datetime.now(timezone.utc).isoformat()}
             )
+
+            # Check if existing profile has NULL values and update them
+            needs_update = False
+            updates = {}
+
+            if not existing_profile.get('email'):
+                updates['email'] = cognito_attributes.get('email', f"user_{user_id}@temp.local")
+                needs_update = True
+
+            if not existing_profile.get('username'):
+                updates['username'] = cognito_attributes.get('username', f"user_{user_id[:8]}")
+                needs_update = True
+
+            if not existing_profile.get('display_name'):
+                updates['display_name'] = cognito_attributes.get('display_name', f"User {user_id[:8]}")
+                needs_update = True
+
+            if needs_update:
+                updates['updated_at'] = datetime.now(timezone.utc).isoformat()
+                self.db.update_item(f"USER#{user_id}", "PROFILE", updates)
+                # Refresh profile after update
+                existing_profile = self.get_user_profile(user_id)
+
             return existing_profile
-        
-        # Create new profile from Cognito attributes
+
+        # Create new profile from Cognito attributes with guaranteed non-NULL values
         profile_data = {
-            'email': cognito_attributes.get('email', ''),
-            'username': cognito_attributes.get('username', ''),
-            'display_name': cognito_attributes.get('display_name', cognito_attributes.get('username', '')),
+            'email': cognito_attributes.get('email') or f"user_{user_id}@temp.local",
+            'username': cognito_attributes.get('username') or f"user_{user_id[:8]}",
+            'display_name': cognito_attributes.get('display_name') or cognito_attributes.get('username') or f"User {user_id[:8]}",
             'full_name': cognito_attributes.get('full_name', ''),
             'last_seen': datetime.now(timezone.utc).isoformat()
         }
-        
+
         return self.create_user_profile(user_id, profile_data)
     
     def get_batch_user_profiles(self, user_ids: List[str]) -> Dict[str, Dict[str, Any]]:
