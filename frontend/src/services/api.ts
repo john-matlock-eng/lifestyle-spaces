@@ -94,15 +94,22 @@ class ApiServiceImpl implements ApiService {
       'Accept': 'application/json',
     }
 
-    // Try to get the auth token from AWS Amplify
+    // Try to get the auth tokens from AWS Amplify
     try {
       const session = await fetchAuthSession()
       const accessToken = session.tokens?.accessToken?.toString()
+      const idToken = session.tokens?.idToken?.toString()
+
       if (accessToken) {
         headers['Authorization'] = `Bearer ${accessToken}`
       }
+
+      // Add ID token header for custom Cognito attributes
+      if (idToken) {
+        headers['X-ID-Token'] = idToken
+      }
     } catch {
-      // User is not authenticated, continue without auth header
+      // User is not authenticated, continue without auth headers
     }
 
     return headers

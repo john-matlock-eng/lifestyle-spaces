@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createApiService } from './api'
 import type { ApiService } from './api'
 
+// Mock @aws-amplify/auth
+vi.mock('@aws-amplify/auth', () => ({
+  fetchAuthSession: vi.fn(),
+}))
+
 // Mock fetch globally
 global.fetch = vi.fn()
 const mockFetch = vi.mocked(fetch)
@@ -278,6 +283,81 @@ describe('ApiService', () => {
         }
       )
       expect(result).toEqual(mockResponse)
+    })
+  })
+
+  describe('authentication headers', () => {
+    it('should include Authorization and X-ID-Token headers when authenticated', async () => {
+      // Arrange
+      const { fetchAuthSession } = await import('@aws-amplify/auth')
+      const mockFetchAuthSession = vi.mocked(fetchAuthSession)
+
+      mockFetchAuthSession.mockResolvedValueOnce({
+        tokens: {
+          accessToken: {
+            toString: () => 'mock-access-token',
+          },
+          idToken: {
+            toString: () => 'mock-id-token',
+          },
+        },
+      } as any)
+
+      const mockResponse = { data: 'test' }
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        json: async () => mockResponse,
+      } as Response)
+
+      // Act
+      await apiService.get('/protected-endpoint')
+
+      // Assert
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://test-api.execute-api.us-east-1.amazonaws.com/prod/protected-endpoint',
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer mock-access-token',
+            'X-ID-Token': 'mock-id-token',
+          },
+        }
+      )
+    })
+
+    it('should not include auth headers when not authenticated', async () => {
+      // Arrange
+      const { fetchAuthSession } = await import('@aws-amplify/auth')
+      const mockFetchAuthSession = vi.mocked(fetchAuthSession)
+
+      mockFetchAuthSession.mockRejectedValueOnce(new Error('Not authenticated'))
+
+      const mockResponse = { data: 'test' }
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        json: async () => mockResponse,
+      } as Response)
+
+      // Act
+      await apiService.get('/public-endpoint')
+
+      // Assert
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://test-api.execute-api.us-east-1.amazonaws.com/prod/public-endpoint',
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        }
+      )
     })
   })
 })

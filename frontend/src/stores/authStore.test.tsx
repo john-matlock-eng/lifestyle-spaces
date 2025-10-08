@@ -42,13 +42,15 @@ describe('AuthStore', () => {
   describe('Initial State', () => {
     it('should have initial state with no user', async () => {
       mockAuthService.getCurrentUser.mockResolvedValue(null);
-      
+
       const { result } = renderHook(() => useAuth(), { wrapper });
 
       expect(result.current.user).toBeNull();
       expect(result.current.isAuthenticated).toBe(false);
       expect(result.current.isLoading).toBe(true); // Loading on mount to check existing session
       expect(result.current.error).toBeNull();
+      expect(result.current.accessToken).toBeNull();
+      expect(result.current.idToken).toBeNull();
 
       // Wait for the auth check to complete
       await waitFor(() => {
@@ -147,6 +149,8 @@ describe('AuthStore', () => {
       expect(result.current.isAuthenticated).toBe(true);
       expect(result.current.isLoading).toBe(false);
       expect(result.current.error).toBeNull();
+      expect(result.current.accessToken).toBe('access-token');
+      expect(result.current.idToken).toBe('id-token');
     });
 
     it('should handle sign in errors', async () => {
@@ -233,6 +237,8 @@ describe('AuthStore', () => {
       expect(result.current.user).toBeNull();
       expect(result.current.isAuthenticated).toBe(false);
       expect(result.current.error).toBeNull();
+      expect(result.current.accessToken).toBeNull();
+      expect(result.current.idToken).toBeNull();
     });
 
     it('should handle sign out errors', async () => {
@@ -265,6 +271,10 @@ describe('AuthStore', () => {
         updatedAt: '2023-12-01T00:00:00Z',
       };
       mockAuthService.getCurrentUser.mockResolvedValue(mockUser);
+      mockAuthService.refreshToken.mockResolvedValue({
+        accessToken: 'existing-access-token',
+        idToken: 'existing-id-token',
+      });
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -274,9 +284,12 @@ describe('AuthStore', () => {
       });
 
       expect(mockAuthService.getCurrentUser).toHaveBeenCalled();
+      expect(mockAuthService.refreshToken).toHaveBeenCalled();
       expect(result.current.user).toEqual(mockUser);
       expect(result.current.isAuthenticated).toBe(true);
       expect(result.current.isLoading).toBe(false);
+      expect(result.current.accessToken).toBe('existing-access-token');
+      expect(result.current.idToken).toBe('existing-id-token');
     });
 
     it('should handle no existing authentication', async () => {
@@ -387,6 +400,8 @@ describe('AuthStore', () => {
 
       expect(mockAuthService.refreshToken).toHaveBeenCalled();
       expect(result.current.error).toBeNull();
+      expect(result.current.accessToken).toBe('new-access-token');
+      expect(result.current.idToken).toBe('new-id-token');
     });
 
     it('should handle refresh token failure and sign out user', async () => {

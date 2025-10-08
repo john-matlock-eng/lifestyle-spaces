@@ -6,6 +6,7 @@ import type { SignInData, SignUpData, User, AuthState } from '../types';
 type AuthAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_USER'; payload: User | null }
+  | { type: 'SET_TOKENS'; payload: { accessToken: string | null; idToken: string | null } }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'CLEAR_ERROR' };
 
@@ -30,6 +31,8 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: true,
   error: null,
+  accessToken: null,
+  idToken: null,
 };
 
 // Auth reducer
@@ -47,6 +50,15 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: !!action.payload,
         isLoading: false,
         error: null,
+        // Clear tokens when user is set to null (logout)
+        accessToken: action.payload ? state.accessToken : null,
+        idToken: action.payload ? state.idToken : null,
+      };
+    case 'SET_TOKENS':
+      return {
+        ...state,
+        accessToken: action.payload.accessToken,
+        idToken: action.payload.idToken,
       };
     case 'SET_ERROR':
       return {
@@ -92,6 +104,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const user = await getCurrentUser();
+      if (user) {
+        // Get current tokens from Amplify session
+        const tokenResponse = await refreshToken();
+        dispatch({ type: 'SET_TOKENS', payload: {
+          accessToken: tokenResponse.accessToken,
+          idToken: tokenResponse.idToken
+        }});
+      }
       dispatch({ type: 'SET_USER', payload: user });
     } catch {
       dispatch({ type: 'SET_USER', payload: null });
@@ -107,8 +127,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
-      
+
       const authResponse = await signIn(data);
+      dispatch({ type: 'SET_TOKENS', payload: {
+        accessToken: authResponse.accessToken,
+        idToken: authResponse.idToken
+      }});
       dispatch({ type: 'SET_USER', payload: authResponse.user });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Sign in failed';
@@ -150,8 +174,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const handleRefreshTokens = async (): Promise<void> => {
     try {
-      await refreshToken();
-      // Tokens are handled automatically by Amplify
+      const tokenResponse = await refreshToken();
+      dispatch({ type: 'SET_TOKENS', payload: {
+        accessToken: tokenResponse.accessToken,
+        idToken: tokenResponse.idToken
+      }});
     } catch (error) {
       // If refresh fails, sign out the user
       dispatch({ type: 'SET_USER', payload: null });
