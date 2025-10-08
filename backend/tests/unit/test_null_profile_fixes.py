@@ -290,7 +290,7 @@ class TestGetCurrentUserDependency:
         }
 
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(current_user)
+            get_current_user(current_user, request=None)
 
         assert exc_info.value.status_code == 401
         assert "User ID not found in token" in str(exc_info.value.detail)
@@ -309,7 +309,7 @@ class TestGetCurrentUserDependency:
             mock_service_class.return_value = mock_service
             mock_service.get_or_create_user_profile.return_value = {'id': user_id}
 
-            result = get_current_user(current_user)
+            result = get_current_user(current_user, request=None)
 
         # Verify fallback email was applied
         call_args = mock_service.get_or_create_user_profile.call_args[1]
@@ -330,7 +330,7 @@ class TestGetCurrentUserDependency:
             mock_service_class.return_value = mock_service
             mock_service.get_or_create_user_profile.return_value = {'id': user_id}
 
-            result = get_current_user(current_user)
+            result = get_current_user(current_user, request=None)
 
         # Verify username was generated from email
         call_args = mock_service.get_or_create_user_profile.call_args[1]
@@ -352,9 +352,125 @@ class TestGetCurrentUserDependency:
             mock_service_class.return_value = mock_service
             mock_service.get_or_create_user_profile.return_value = {'id': user_id}
 
-            result = get_current_user(current_user)
+            result = get_current_user(current_user, request=None)
 
         # Verify display_name was generated from username
         call_args = mock_service.get_or_create_user_profile.call_args[1]
         cognito_attrs = call_args['cognito_attributes']
         assert cognito_attrs['display_name'] == 'testuser'
+
+    def test_fetches_from_cognito_when_attributes_missing(self):
+        """Test that missing attributes are fetched from Cognito GetUser API."""
+        user_id = "user-cognito"
+        current_user = {
+            'sub': user_id,
+            'email': '',  # Missing in JWT
+            'username': '',  # Missing in JWT
+            'display_name': ''  # Missing in JWT
+        }
+
+        # Mock request with Authorization header
+        mock_request = Mock()
+        mock_request.headers = {'Authorization': 'Bearer test-access-token'}
+
+        with patch('app.core.dependencies.UserProfileService') as mock_service_class:
+            with patch('app.core.dependencies.CognitoService') as mock_cognito_class:
+                mock_service = Mock()
+                mock_service_class.return_value = mock_service
+                mock_service.get_or_create_user_profile.return_value = {'id': user_id}
+
+                mock_cognito = Mock()
+                mock_cognito_class.return_value = mock_cognito
+                mock_cognito.get_user.return_value = {
+                    'id': user_id,
+                    'email': 'real@example.com',
+                    'preferred_username': 'realuser',
+                    'display_name': 'Real User',
+                    'full_name': 'Real Full Name'
+                }
+
+                result = get_current_user(current_user, request=mock_request)
+
+        # Verify Cognito GetUser was called
+        mock_cognito.get_user.assert_called_once_with('test-access-token')
+
+        # Verify profile was created with Cognito data
+        call_args = mock_service.get_or_create_user_profile.call_args[1]
+        cognito_attrs = call_args['cognito_attributes']
+        assert cognito_attrs['email'] == 'real@example.com'
+        assert cognito_attrs['username'] == 'realuser'
+        assert cognito_attrs['display_name'] == 'Real User'
+
+    def test_handles_cognito_fetch_error_gracefully(self):
+        """Test that Cognito fetch errors don't break the flow."""
+        user_id = "user-error"
+        current_user = {
+            'sub': user_id,
+            'email': '',  # Missing
+            'username': ''  # Missing
+        }
+
+        mock_request = Mock()
+        mock_request.headers = {'Authorization': 'Bearer test-token'}
+
+        with patch('app.core.dependencies.UserProfileService') as mock_service_class:
+            with patch('app.core.dependencies.CognitoService') as mock_cognito_class:
+                mock_service = Mock()
+                mock_service_class.return_value = mock_service
+                mock_service.get_or_create_user_profile.return_value = {'id': user_id}
+
+                mock_cognito = Mock()
+                mock_cognito_class.return_value = mock_cognito
+                mock_cognito.get_user.side_effect = Exception("Cognito error")
+
+                # Should not raise, should use fallbacks
+                result = get_current_user(current_user, request=mock_request)
+
+        # Verify fallback was used
+        call_args = mock_service.get_or_create_user_profile.call_args[1]
+        cognito_attrs = call_args['cognito_attributes']
+        assert cognito_attrs['email'] == f"user_{user_id}@temp.local"
+
+    def test_extracts_custom_attributes_from_jwt(self):
+        """Test that custom attributes from JWT token are used."""
+        user_id = "user-custom"
+        current_user = {
+            'sub': user_id,
+            'email': '',
+            'username': '',
+            'custom:username': 'customuser',
+            'custom:displayName': 'Custom Display'
+        }
+
+        with patch('app.core.dependencies.UserProfileService') as mock_service_class:
+            mock_service = Mock()
+            mock_service_class.return_value = mock_service
+            mock_service.get_or_create_user_profile.return_value = {'id': user_id}
+
+            result = get_current_user(current_user, request=None)
+
+        # Verify custom attributes were extracted
+        call_args = mock_service.get_or_create_user_profile.call_args[1]
+        cognito_attrs = call_args['cognito_attributes']
+        assert cognito_attrs['username'] == 'customuser'
+        assert cognito_attrs['display_name'] == 'Custom Display'
+
+    def test_no_cognito_call_when_request_is_none(self):
+        """Test that Cognito is not called when request is None."""
+        user_id = "user-no-request"
+        current_user = {
+            'sub': user_id,
+            'email': '',
+            'username': ''
+        }
+
+        with patch('app.core.dependencies.UserProfileService') as mock_service_class:
+            with patch('app.core.dependencies.CognitoService') as mock_cognito_class:
+                mock_service = Mock()
+                mock_service_class.return_value = mock_service
+                mock_service.get_or_create_user_profile.return_value = {'id': user_id}
+
+                result = get_current_user(current_user, request=None)
+
+        # Verify Cognito was not instantiated
+        mock_cognito_class.assert_not_called()
