@@ -12,10 +12,11 @@ class TestAuthEndpoints:
     def test_signup_success(self):
         """Test successful user signup."""
         from app.main import app
-        
+
         client = TestClient(app)
-        
-        with patch('app.api.routes.auth.CognitoService') as mock_cognito:
+
+        with patch('app.api.routes.auth.CognitoService') as mock_cognito, \
+             patch('app.services.user_profile.UserProfileService') as mock_profile_service:
             mock_service = Mock()
             mock_service.sign_up.return_value = {
                 'user_sub': 'sub123',
@@ -23,7 +24,12 @@ class TestAuthEndpoints:
                 'email': 'test@example.com'
             }
             mock_cognito.return_value = mock_service
-            
+
+            # Mock UserProfileService to prevent actual DynamoDB calls
+            mock_profile = Mock()
+            mock_profile_service.return_value = mock_profile
+            mock_profile.create_user_profile.return_value = {'id': 'sub123'}
+
             response = client.post(
                 "/api/auth/signup",
                 json={
@@ -33,7 +39,7 @@ class TestAuthEndpoints:
                     "full_name": "Test User"
                 }
             )
-            
+
             assert response.status_code == 201
             assert response.json()["email"] == "test@example.com"
             assert response.json()["username"] == "testuser"
@@ -202,14 +208,15 @@ class TestAuthEndpoints:
     def test_signup_generic_error(self):
         """Test signup with generic error."""
         from app.main import app
-        
+
         client = TestClient(app)
-        
-        with patch('app.api.routes.auth.CognitoService') as mock_cognito:
+
+        with patch('app.api.routes.auth.CognitoService') as mock_cognito, \
+             patch('app.services.user_profile.UserProfileService') as mock_profile_service:
             mock_service = Mock()
             mock_service.sign_up.side_effect = Exception("Database error")
             mock_cognito.return_value = mock_service
-            
+
             response = client.post(
                 "/api/auth/signup",
                 json={
@@ -219,7 +226,7 @@ class TestAuthEndpoints:
                     "full_name": "Test User"
                 }
             )
-            
+
             assert response.status_code == 500
             assert "Failed to sign up user" in response.json()["detail"]
     

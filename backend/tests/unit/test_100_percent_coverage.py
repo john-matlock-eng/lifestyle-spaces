@@ -301,10 +301,14 @@ class TestDependenciesEdgeCases:
     async def test_get_current_user_not_authenticated(self):
         """Test line 26: HTTPException when user is not authenticated."""
         from app.core.dependencies import get_current_user
-        
+        from unittest.mock import Mock
+
+        mock_request = Mock()
+        mock_request.headers = {}
+
         with pytest.raises(HTTPException) as exc_info:
-            await get_current_user(None)
-        
+            await get_current_user(mock_request, None)
+
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Not authenticated"
         assert exc_info.value.headers == {"WWW-Authenticate": "Bearer"}

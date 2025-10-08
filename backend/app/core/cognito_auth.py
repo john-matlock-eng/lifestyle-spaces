@@ -152,6 +152,64 @@ def verify_cognito_token(token: str) -> Dict[str, Any]:
         )
 
 
+def extract_user_attributes_from_id_token(id_token: str) -> Dict[str, Any]:
+    """
+    Extract user attributes from Cognito ID token.
+    ID tokens contain custom attributes, unlike access tokens.
+
+    Args:
+        id_token: Cognito ID token
+
+    Returns:
+        Dict: User attributes including custom attributes
+    """
+    settings = get_cognito_settings()
+
+    try:
+        # Decode ID token (similar to access token but different validation)
+        rsa_key = get_rsa_key(id_token)
+        if not rsa_key:
+            return {}
+
+        # Decode ID token - it has different claims than access token
+        payload = jwt.decode(
+            id_token,
+            rsa_key,
+            algorithms=['RS256'],
+            audience=settings.get('client_id'),
+            issuer=settings['issuer'],
+            options={
+                "verify_aud": True,
+                "verify_signature": True,
+                "verify_exp": True,
+                "verify_nbf": False,
+                "verify_iat": True,
+                "verify_iss": True,
+            }
+        )
+
+        # Extract attributes from ID token
+        return {
+            'sub': payload.get('sub'),
+            'email': payload.get('email'),
+            'email_verified': payload.get('email_verified', False),
+            'name': payload.get('name', ''),
+            'username': payload.get('custom:username') or payload.get('cognito:username') or payload.get('email', ''),
+            'display_name': payload.get('custom:displayName') or payload.get('custom:display_name') or payload.get('name', ''),
+            'full_name': payload.get('name', ''),
+            # Include all custom attributes
+            'custom:username': payload.get('custom:username'),
+            'custom:displayName': payload.get('custom:displayName'),
+            'custom:userId': payload.get('custom:userId'),
+        }
+
+    except Exception as e:
+        # Log error but don't fail - we'll fall back to access token or defaults
+        import logging
+        logging.warning(f"Failed to extract attributes from ID token: {e}")
+        return {}
+
+
 def get_current_user_cognito(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme)
 ) -> Dict[str, Any]:

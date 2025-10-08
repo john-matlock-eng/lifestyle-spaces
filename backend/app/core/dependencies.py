@@ -3,20 +3,21 @@ Common dependencies for FastAPI routes.
 """
 from typing import Dict, Any
 from fastapi import Depends, HTTPException, status, Request
-from app.core.cognito_auth import get_current_user_cognito
+from app.core.cognito_auth import get_current_user_cognito, extract_user_attributes_from_id_token
 from app.services.cognito import CognitoService
 from app.services.user_profile import UserProfileService
 
 
 def get_current_user(
-    current_user: Dict[str, Any] = Depends(get_current_user_cognito),
-    request: Request = None
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_user_cognito)
 ) -> Dict[str, Any]:
     """
     Get the current authenticated user and ensure profile exists with complete data.
 
     Args:
-        current_user: User data from JWT token
+        request: FastAPI request object (to access headers for ID token)
+        current_user: User data from JWT access token
 
     Returns:
         Dict: User information with complete profile
@@ -41,63 +42,54 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Build complete cognito_attributes with fallbacks
-    # Start with what we have from the JWT token
-    # Handle both empty strings and None values
+    # Try to extract ID token from request headers
+    # Frontend should send: Authorization: Bearer <access_token>
+    # And optionally: X-ID-Token: <id_token>
+    id_token = request.headers.get("X-ID-Token")
+
+    # Build cognito_attributes from both sources
     cognito_attributes = {
-        'email': current_user.get('email') or '',
-        'username': current_user.get('username') or current_user.get('custom:username') or '',
-        'display_name': current_user.get('display_name') or current_user.get('custom:displayName') or '',
-        'full_name': current_user.get('full_name') or ''
+        'email': current_user.get('email', ''),
+        'username': current_user.get('username', ''),
+        'display_name': current_user.get('display_name', ''),
+        'full_name': current_user.get('full_name', '')
     }
 
-    # If critical attributes are missing, try to fetch from Cognito GetUser API
-    # ID tokens don't include custom attributes, so we need to call GetUser
-    if not cognito_attributes['email'] or not cognito_attributes['username'] or not cognito_attributes['display_name']:
+    # If we have ID token, extract custom attributes from it
+    if id_token:
         try:
-            # Get access token from request headers
-            if request and hasattr(request, 'headers'):
-                auth_header = request.headers.get('Authorization', '')
-                if auth_header.startswith('Bearer '):
-                    access_token = auth_header[7:]
-                    cognito_service = CognitoService()
-                    # Get complete user info from Cognito
-                    user_info = cognito_service.get_user(access_token)
+            id_token_attrs = extract_user_attributes_from_id_token(id_token)
+            # Merge ID token attributes (they take precedence)
+            if id_token_attrs:
+                cognito_attributes.update({
+                    'email': id_token_attrs.get('email') or cognito_attributes['email'],
+                    'username': id_token_attrs.get('username') or cognito_attributes['username'],
+                    'display_name': id_token_attrs.get('display_name') or cognito_attributes['display_name'],
+                    'full_name': id_token_attrs.get('full_name') or cognito_attributes['full_name']
+                })
+        except Exception as e:
+            # Log but continue with what we have
+            import logging
+            logging.warning(f"Failed to parse ID token: {e}")
 
-                    # Update attributes with data from Cognito
-                    if user_info.get('email'):
-                        cognito_attributes['email'] = user_info['email']
-                    if user_info.get('preferred_username'):
-                        cognito_attributes['username'] = user_info['preferred_username']
-                    if user_info.get('display_name'):
-                        cognito_attributes['display_name'] = user_info['display_name']
-                    if user_info.get('full_name'):
-                        cognito_attributes['full_name'] = user_info['full_name']
-        except Exception:
-            # If Cognito call fails, continue with fallback logic
-            pass
-
-    # Apply sensible defaults if still empty
+    # Apply sensible defaults only if still empty
     if not cognito_attributes['email']:
         cognito_attributes['email'] = f"user_{user_id}@temp.local"
 
     if not cognito_attributes['username']:
-        # Generate from email or user_id
-        email = cognito_attributes['email']
-        if email and '@' in email and '@temp.local' not in email:
-            cognito_attributes['username'] = email.split('@')[0]
-        else:
-            cognito_attributes['username'] = f"user_{user_id[:8]}"
+        cognito_attributes['username'] = (
+            cognito_attributes['email'].split('@')[0] if cognito_attributes['email'] else
+            f"user_{user_id[:8]}"
+        )
 
     if not cognito_attributes['display_name']:
-        # Build from available data
         cognito_attributes['display_name'] = (
             cognito_attributes['full_name'] or
             cognito_attributes['username'] or
             f"User {user_id[:8]}"
         )
 
-    # Ensure user profile exists with complete data
+    # Get or create user profile
     user_profile_service = UserProfileService()
     profile = user_profile_service.get_or_create_user_profile(
         user_id=user_id,

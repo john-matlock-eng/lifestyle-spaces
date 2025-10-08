@@ -55,5 +55,7 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     """Token response model."""
     access_token: str
+    id_token: Optional[str] = None  # ID token contains custom attributes
+    refresh_token: Optional[str] = None  # Refresh token for obtaining new tokens
     token_type: str = "bearer"
     expires_in: int
