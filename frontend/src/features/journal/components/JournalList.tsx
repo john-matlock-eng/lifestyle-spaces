@@ -60,6 +60,16 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     }
   }
 
+  const handleDelete = async (journalId: string) => {
+    try {
+      await journalApi.deleteJournal(journalId)
+      // Reload journals after successful delete
+      await loadJournals()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete journal')
+    }
+  }
+
   if (loading) {
     return (
       <div className="journal-list-loading">
@@ -102,7 +112,11 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
 
       <div className="journal-list-grid">
         {journals.map((journal) => (
-          <JournalCard key={journal.journalId} journal={journal} />
+          <JournalCard
+            key={journal.journalId}
+            journal={journal}
+            onDelete={handleDelete}
+          />
         ))}
       </div>
 

@@ -1,20 +1,42 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../../stores/authStore'
 import type { JournalEntry } from '../types/journal.types'
 import '../styles/journal.css'
 
 interface JournalCardProps {
   journal: JournalEntry
+  onDelete?: (journalId: string) => void
 }
 
 /**
  * Card component for displaying a journal entry in a list
  */
-export const JournalCard: React.FC<JournalCardProps> = ({ journal }) => {
+export const JournalCard: React.FC<JournalCardProps> = ({ journal, onDelete }) => {
   const navigate = useNavigate()
+  const { user } = useAuth()
+
+  const isAuthor = user?.userId === journal.userId
 
   const handleClick = () => {
     navigate(`/journals/${journal.journalId}`)
+  }
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation() // Don't trigger card click
+    navigate(`/journals/${journal.journalId}/edit`)
+  }
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation() // Don't trigger card click
+
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this journal? This action cannot be undone.'
+    )
+
+    if (confirmed && onDelete) {
+      onDelete(journal.journalId)
+    }
   }
 
   // Extract plain text from markdown for excerpt
@@ -62,6 +84,28 @@ export const JournalCard: React.FC<JournalCardProps> = ({ journal }) => {
           {journal.title}
           {journal.isPinned && <span className="journal-card-pin">📌</span>}
         </h3>
+        {isAuthor && (
+          <div className="journal-card-actions">
+            <button
+              onClick={handleEdit}
+              className="journal-card-action-btn edit-btn"
+              title="Edit journal"
+              aria-label="Edit journal"
+            >
+              ✏️
+            </button>
+            {onDelete && (
+              <button
+                onClick={handleDelete}
+                className="journal-card-action-btn delete-btn"
+                title="Delete journal"
+                aria-label="Delete journal"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <p className="journal-card-excerpt">{getExcerpt(journal.content)}</p>

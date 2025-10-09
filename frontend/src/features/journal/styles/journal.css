@@ -280,6 +280,41 @@
   margin-left: 8px;
 }
 
+.journal-card-actions {
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.journal-card:hover .journal-card-actions {
+  opacity: 1;
+}
+
+.journal-card-action-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.journal-card-action-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.journal-card-action-btn.edit-btn:hover {
+  background-color: var(--theme-primary-100, #e0e7ff);
+}
+
+.journal-card-action-btn.delete-btn:hover {
+  background-color: var(--theme-error-100, #fee2e2);
+}
+
 .journal-card-excerpt {
   color: var(--theme-text-secondary, #6b7280);
   line-height: 1.6;
