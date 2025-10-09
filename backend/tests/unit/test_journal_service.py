@@ -323,6 +323,7 @@ class TestJournalService:
     def test_update_journal_entry_not_found(self, journal_service, mock_table):
         """Test updating journal entry - not found."""
         mock_table.query.return_value = {'Items': []}
+        mock_table.scan.return_value = {'Items': []}
 
         update_data = JournalUpdate(title='New Title')
 
@@ -387,6 +388,7 @@ class TestJournalService:
     def test_delete_journal_entry_not_found(self, journal_service, mock_table):
         """Test deleting journal entry - not found."""
         mock_table.query.return_value = {'Items': []}
+        mock_table.scan.return_value = {'Items': []}
 
         with pytest.raises(JournalNotFoundError):
             journal_service.delete_journal_entry('journal-456', 'user-123')

@@ -283,18 +283,27 @@ class JournalService:
         """
         logger.info(f"[UPDATE_JOURNAL] Updating journal={journal_id} by user={user_id}")
 
-        # Get existing journal
+        # Get existing journal - query user's journals first
         response = self.table.query(
             IndexName='GSI1',
-            KeyConditionExpression=Key('GSI1PK').begins_with('USER#') & Key('GSI1SK').begins_with(f'JOURNAL#{journal_id}#'),
-            Limit=100
+            KeyConditionExpression=Key('GSI1PK').eq(f'USER#{user_id}'),
+            FilterExpression=Attr('journal_id').eq(journal_id)
         )
 
         journal = None
-        for item in response.get('Items', []):
-            if item.get('journal_id') == journal_id:
-                journal = item
-                break
+        items = response.get('Items', [])
+        if items:
+            journal = items[0]
+
+        # Fallback: scan for journal if not found in user's journals
+        if not journal:
+            response = self.table.scan(
+                FilterExpression=Attr('journal_id').eq(journal_id),
+                Limit=1
+            )
+            items = response.get('Items', [])
+            if items:
+                journal = items[0]
 
         if not journal:
             raise JournalNotFoundError(f"Journal {journal_id} not found")
@@ -379,18 +388,27 @@ class JournalService:
         """
         logger.info(f"[DELETE_JOURNAL] Deleting journal={journal_id} by user={user_id}")
 
-        # Get existing journal
+        # Get existing journal - query user's journals first
         response = self.table.query(
             IndexName='GSI1',
-            KeyConditionExpression=Key('GSI1PK').begins_with('USER#') & Key('GSI1SK').begins_with(f'JOURNAL#{journal_id}#'),
-            Limit=100
+            KeyConditionExpression=Key('GSI1PK').eq(f'USER#{user_id}'),
+            FilterExpression=Attr('journal_id').eq(journal_id)
         )
 
         journal = None
-        for item in response.get('Items', []):
-            if item.get('journal_id') == journal_id:
-                journal = item
-                break
+        items = response.get('Items', [])
+        if items:
+            journal = items[0]
+
+        # Fallback: scan for journal if not found in user's journals
+        if not journal:
+            response = self.table.scan(
+                FilterExpression=Attr('journal_id').eq(journal_id),
+                Limit=1
+            )
+            items = response.get('Items', [])
+            if items:
+                journal = items[0]
 
         if not journal:
             raise JournalNotFoundError(f"Journal {journal_id} not found")
