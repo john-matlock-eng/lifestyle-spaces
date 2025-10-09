@@ -124,9 +124,11 @@ export const getCurrentUser = async (): Promise<User | null> => {
   try {
     const currentUser = await amplifyGetCurrentUser();
     const userAttributes = await fetchUserAttributes();
-    
+
+    // IMPORTANT: Use 'sub' as userId to match backend
+    // The backend uses Cognito 'sub' as the primary user identifier
     return {
-      userId: userAttributes['custom:userId'] || currentUser.userId,
+      userId: userAttributes.sub || currentUser.userId,
       email: userAttributes.email || currentUser.username,
       username: userAttributes['custom:username'] || currentUser.username,
       displayName: userAttributes['custom:displayName'] || currentUser.username,
