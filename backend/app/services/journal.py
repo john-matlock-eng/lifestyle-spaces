@@ -210,19 +210,31 @@ class JournalService:
         """
         logger.info(f"[GET_JOURNAL] Fetching journal={journal_id} for user={user_id}")
 
-        # Query for journal entry across all spaces
-        # We need to find it first, then verify permissions
+        # We need to scan for the journal since we don't know which space it's in
+        # Alternative: query all user's spaces and check each one
+        # For now, we'll use a simple approach: query the user's GSI to find journals
         response = self.table.query(
             IndexName='GSI1',
-            KeyConditionExpression=Key('GSI1PK').begins_with('USER#') & Key('GSI1SK').begins_with(f'JOURNAL#{journal_id}#'),
-            Limit=100  # Should only be one match
+            KeyConditionExpression=Key('GSI1PK').eq(f'USER#{user_id}'),
+            FilterExpression=Attr('journal_id').eq(journal_id)
         )
 
         journal = None
-        for item in response.get('Items', []):
-            if item.get('journal_id') == journal_id:
-                journal = item
-                break
+        items = response.get('Items', [])
+        if items:
+            journal = items[0]
+
+        # If not found in user's journals, they might be viewing someone else's journal in a shared space
+        # In that case, we need to scan (not ideal but necessary for cross-user journal access)
+        if not journal:
+            # Scan with filter for the specific journal_id
+            response = self.table.scan(
+                FilterExpression=Attr('journal_id').eq(journal_id),
+                Limit=1
+            )
+            items = response.get('Items', [])
+            if items:
+                journal = items[0]
 
         if not journal:
             raise JournalNotFoundError(f"Journal {journal_id} not found")

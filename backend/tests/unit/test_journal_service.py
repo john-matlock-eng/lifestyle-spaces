@@ -248,6 +248,7 @@ class TestJournalService:
     def test_get_journal_entry_not_found(self, journal_service, mock_table):
         """Test getting journal entry - not found."""
         mock_table.query.return_value = {'Items': []}
+        mock_table.scan.return_value = {'Items': []}
 
         with pytest.raises(JournalNotFoundError):
             journal_service.get_journal_entry('journal-456', 'user-123')
