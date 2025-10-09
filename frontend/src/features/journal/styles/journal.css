@@ -133,6 +133,11 @@
 .ProseMirror {
   outline: none;
   min-height: inherit;
+  text-align: left;
+}
+
+.ProseMirror > * {
+  text-align: left;
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {

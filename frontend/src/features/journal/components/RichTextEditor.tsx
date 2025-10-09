@@ -150,6 +150,25 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           <div className="toolbar-group">
             <button
               type="button"
+              onClick={() => editor.chain().focus().sinkListItem('listItem').run()}
+              disabled={!editor.can().sinkListItem('listItem') || disabled}
+              title="Indent"
+            >
+              → Indent
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().liftListItem('listItem').run()}
+              disabled={!editor.can().liftListItem('listItem') || disabled}
+              title="Unindent"
+            >
+              ← Unindent
+            </button>
+          </div>
+
+          <div className="toolbar-group">
+            <button
+              type="button"
               onClick={() => editor.chain().focus().toggleBlockquote().run()}
               className={editor.isActive('blockquote') ? 'is-active' : ''}
               disabled={disabled}
