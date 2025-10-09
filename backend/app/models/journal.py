@@ -17,8 +17,16 @@ class JournalBase(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+class JournalCreateRequest(JournalBase):
+    """Journal creation request model (without space_id - comes from URL)."""
+    template_id: Optional[str] = Field(None, alias="templateId")
+    template_data: Optional[Dict[str, Any]] = Field(None, alias="templateData")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class JournalCreate(JournalBase):
-    """Journal creation model."""
+    """Journal creation model (internal use with space_id)."""
     space_id: str = Field(..., alias="spaceId")
     template_id: Optional[str] = Field(None, alias="templateId")
     template_data: Optional[Dict[str, Any]] = Field(None, alias="templateData")

@@ -40,15 +40,16 @@ export interface JournalListResponse {
 }
 
 /**
- * Create journal request payload
+ * Create journal request payload (spaceId comes from URL, not body)
  */
 export interface CreateJournalRequest {
-  spaceId: string
   title: string
   content: string
   tags?: string[]
   mood?: string
   isPinned?: boolean
+  templateId?: string
+  templateData?: Record<string, unknown>
 }
 
 /**

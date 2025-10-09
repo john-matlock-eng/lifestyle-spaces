@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import Optional, List
 from botocore.exceptions import ClientError
 from app.models.journal import (
-    JournalCreate, JournalResponse, JournalUpdate, JournalListResponse
+    JournalCreate, JournalCreateRequest, JournalResponse, JournalUpdate, JournalListResponse
 )
 from app.models.common import SuccessResponse
 from app.services.journal import JournalService, JournalNotFoundError
@@ -24,18 +24,30 @@ router = APIRouter(prefix="/api", tags=["Journals"])
 @router.post("/spaces/{space_id}/journals", response_model=JournalResponse, status_code=status.HTTP_201_CREATED)
 async def create_journal(
     space_id: str,
-    journal: JournalCreate,
+    journal: JournalCreateRequest,
     current_user: dict = Depends(get_current_user)
 ):
     """Create a new journal entry in a space."""
     try:
         logger.info(f"[API_CREATE_JOURNAL] Request from user={current_user.get('sub')}, space={space_id}")
 
+        # Create JournalCreate with space_id from path
+        journal_data = JournalCreate(
+            space_id=space_id,
+            title=journal.title,
+            content=journal.content,
+            tags=journal.tags,
+            mood=journal.mood,
+            is_pinned=journal.is_pinned,
+            template_id=journal.template_id,
+            template_data=journal.template_data
+        )
+
         service = JournalService()
         result = service.create_journal_entry(
             space_id=space_id,
             user_id=current_user.get("sub", ""),
-            data=journal
+            data=journal_data
         )
 
         # Return JournalResponse with proper field mapping

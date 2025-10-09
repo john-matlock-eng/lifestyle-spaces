@@ -31,7 +31,6 @@ export const JournalCreatePage: React.FC = () => {
         .filter((tag) => tag.length > 0)
 
       const journal = await createJournal(spaceId, {
-        spaceId,
         title,
         content,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
