@@ -101,3 +101,8 @@ class UserNotFoundException(NotFoundError):
 class SpaceNotFoundException(NotFoundError):
     """Raised when a space is not found (alternative name for tests)."""
     pass
+
+
+class JournalNotFoundError(NotFoundError):
+    """Raised when a journal entry is not found."""
+    pass

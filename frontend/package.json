@@ -16,13 +16,21 @@
   },
   "dependencies": {
     "@aws-amplify/auth": "^6.15.0",
+    "@tiptap/extension-link": "^3.6.5",
+    "@tiptap/extension-placeholder": "^3.6.5",
+    "@tiptap/extension-task-item": "^3.6.5",
+    "@tiptap/extension-task-list": "^3.6.5",
+    "@tiptap/react": "^3.6.5",
+    "@tiptap/starter-kit": "^3.6.5",
     "@types/node": "^24.3.0",
     "aws-amplify": "^6.15.0",
     "clsx": "^2.1.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.62.0",
-    "react-router-dom": "^7.8.2"
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.8.2",
+    "tiptap-markdown": "^0.9.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

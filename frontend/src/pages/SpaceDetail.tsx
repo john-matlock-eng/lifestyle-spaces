@@ -5,6 +5,7 @@ import { useAuth } from '../stores/authStore';
 import { useInvitations } from '../hooks/useInvitations';
 import { MembersList } from '../components/spaces/MembersList';
 import { InviteMemberModal } from '../components/spaces/InviteMemberModal';
+import { JournalList } from '../features/journal/components/JournalList';
 import { regenerateInviteCode } from '../services/spaces';
 import type { SpaceMemberRole, SpaceMember } from '../types';
 import './SpaceDetail.css';
@@ -27,7 +28,7 @@ export const SpaceDetail: React.FC = () => {
     fetchSpaceInvitations
   } = useInvitations();
 
-  const [activeTab, setActiveTab] = useState<'content' | 'members' | 'settings'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'journals' | 'members' | 'settings'>('content');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
@@ -76,12 +77,12 @@ export const SpaceDetail: React.FC = () => {
     apiIsOwner: currentSpace?.isOwner
   });
 
-  const handleTabClick = (tab: 'content' | 'members' | 'settings') => {
+  const handleTabClick = (tab: 'content' | 'journals' | 'members' | 'settings') => {
     setActiveTab(tab);
   };
 
-  const handleTabKeyDown = (e: React.KeyboardEvent, tab: 'content' | 'members' | 'settings') => {
-    const tabs = ['content', 'members', 'settings'];
+  const handleTabKeyDown = (e: React.KeyboardEvent, tab: 'content' | 'journals' | 'members' | 'settings') => {
+    const tabs = ['content', 'journals', 'members', 'settings'];
     const currentIndex = tabs.indexOf(activeTab);
     
     switch (e.key) {
@@ -396,6 +397,18 @@ export const SpaceDetail: React.FC = () => {
           <button
             type="button"
             role="tab"
+            aria-selected={activeTab === 'journals'}
+            aria-controls="journals-panel"
+            id="journals-tab"
+            onClick={() => handleTabClick('journals')}
+            onKeyDown={(e) => handleTabKeyDown(e, 'journals')}
+            className={`tab ${activeTab === 'journals' ? 'tab--active' : ''}`}
+          >
+            Journals
+          </button>
+          <button
+            type="button"
+            role="tab"
             aria-selected={activeTab === 'members'}
             aria-controls="members-panel"
             id="members-tab"
@@ -464,6 +477,17 @@ export const SpaceDetail: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'journals' && spaceId && (
+          <div
+            role="tabpanel"
+            id="journals-panel"
+            aria-labelledby="journals-tab"
+            className="tab-panel"
+          >
+            <JournalList spaceId={spaceId} />
           </div>
         )}
 

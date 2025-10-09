@@ -10,6 +10,10 @@ import { SignUp } from './pages/SignUp';
 import { Dashboard } from './pages/Dashboard';
 import { SpaceDetail } from './pages/SpaceDetail';
 import { JoinSpace } from './pages/JoinSpace';
+import { JournalListPage } from './features/journal/pages/JournalListPage';
+import { JournalCreatePage } from './features/journal/pages/JournalCreatePage';
+import { JournalViewPage } from './features/journal/pages/JournalViewPage';
+import { JournalEditPage } from './features/journal/pages/JournalEditPage';
 import './App.css';
 
 function App() {
@@ -48,6 +52,40 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <JoinSpace />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Journal routes */}
+                <Route
+                  path="/spaces/:spaceId/journals"
+                  element={
+                    <ProtectedRoute>
+                      <JournalListPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/spaces/:spaceId/journals/new"
+                  element={
+                    <ProtectedRoute>
+                      <JournalCreatePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/journals/:journalId"
+                  element={
+                    <ProtectedRoute>
+                      <JournalViewPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/journals/:journalId/edit"
+                  element={
+                    <ProtectedRoute>
+                      <JournalEditPage />
                     </ProtectedRoute>
                   }
                 />
