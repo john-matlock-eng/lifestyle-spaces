@@ -1,0 +1,38 @@
+{
+  "id": "mood_tracker",
+  "name": "Mood Tracker",
+  "description": "Track and reflect on your emotional state",
+  "version": 1,
+  "icon": "💭",
+  "color": "#C084FC",
+  "sections": [
+    {
+      "id": "current_mood",
+      "title": "Current mood",
+      "type": "paragraph",
+      "placeholder": "How are you feeling right now? (Use the mood wheel to select)",
+      "defaultValue": ""
+    },
+    {
+      "id": "triggers",
+      "title": "What triggered this mood?",
+      "type": "paragraph",
+      "placeholder": "Describe what led to these feelings...",
+      "defaultValue": ""
+    },
+    {
+      "id": "physical_state",
+      "title": "Physical sensations",
+      "type": "paragraph",
+      "placeholder": "How does your body feel? Any tension, energy, fatigue?",
+      "defaultValue": ""
+    },
+    {
+      "id": "coping",
+      "title": "How I'm coping",
+      "type": "paragraph",
+      "placeholder": "What are you doing to manage these feelings?",
+      "defaultValue": ""
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "blank",
+  "name": "Blank Journal",
+  "description": "Start with a clean slate - write freely",
+  "version": 1,
+  "icon": "📄",
+  "color": "#9CA3AF",
+  "sections": [
+    {
+      "id": "content",
+      "title": "Write your thoughts...",
+      "type": "paragraph",
+      "placeholder": "Start writing...",
+      "defaultValue": ""
+    }
+  ]
+}

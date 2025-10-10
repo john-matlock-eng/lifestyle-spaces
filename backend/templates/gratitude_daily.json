@@ -1,0 +1,31 @@
+{
+  "id": "gratitude_daily",
+  "name": "Daily Gratitude",
+  "description": "Reflect on what you're grateful for today",
+  "version": 1,
+  "icon": "🙏",
+  "color": "#FBBF24",
+  "sections": [
+    {
+      "id": "gratitude_list",
+      "title": "Things I'm grateful for",
+      "type": "paragraph",
+      "placeholder": "List at least three things you're grateful for today...",
+      "defaultValue": ""
+    },
+    {
+      "id": "reflection",
+      "title": "Why they matter",
+      "type": "paragraph",
+      "placeholder": "Reflect on the meaning behind your gratitude...",
+      "defaultValue": ""
+    },
+    {
+      "id": "tomorrow",
+      "title": "Tomorrow's intention",
+      "type": "paragraph",
+      "placeholder": "What gratitude practice will you focus on tomorrow?",
+      "defaultValue": ""
+    }
+  ]
+}

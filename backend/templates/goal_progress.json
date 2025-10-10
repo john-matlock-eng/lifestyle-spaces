@@ -1,0 +1,38 @@
+{
+  "id": "goal_progress",
+  "name": "Goal Progress",
+  "description": "Track progress toward your goals",
+  "version": 1,
+  "icon": "🎯",
+  "color": "#34D399",
+  "sections": [
+    {
+      "id": "goal",
+      "title": "Goal",
+      "type": "paragraph",
+      "placeholder": "What goal are you working on?",
+      "defaultValue": ""
+    },
+    {
+      "id": "progress",
+      "title": "Today's progress",
+      "type": "paragraph",
+      "placeholder": "What did you accomplish today toward this goal?",
+      "defaultValue": ""
+    },
+    {
+      "id": "obstacles",
+      "title": "Obstacles",
+      "type": "paragraph",
+      "placeholder": "What's holding you back?",
+      "defaultValue": ""
+    },
+    {
+      "id": "next_steps",
+      "title": "Next steps",
+      "type": "paragraph",
+      "placeholder": "What will you do next to move forward?",
+      "defaultValue": ""
+    }
+  ]
+}

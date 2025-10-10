@@ -1,0 +1,38 @@
+{
+  "id": "daily_log",
+  "name": "Daily Log",
+  "description": "Quick notes about your day",
+  "version": 1,
+  "icon": "📝",
+  "color": "#60A5FA",
+  "sections": [
+    {
+      "id": "summary",
+      "title": "What happened today?",
+      "type": "paragraph",
+      "placeholder": "Summarize the key events of your day...",
+      "defaultValue": ""
+    },
+    {
+      "id": "highlights",
+      "title": "Highlights",
+      "type": "paragraph",
+      "placeholder": "What were the best moments?",
+      "defaultValue": ""
+    },
+    {
+      "id": "challenges",
+      "title": "Challenges",
+      "type": "paragraph",
+      "placeholder": "What challenges did you face?",
+      "defaultValue": ""
+    },
+    {
+      "id": "mood",
+      "title": "How I felt",
+      "type": "paragraph",
+      "placeholder": "Describe your overall mood and energy level...",
+      "defaultValue": ""
+    }
+  ]
+}
