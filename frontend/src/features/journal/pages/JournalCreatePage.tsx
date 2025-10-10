@@ -58,16 +58,29 @@ export const JournalCreatePage: React.FC = () => {
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0)
 
+      // Generate content from template data if using a template
+      let finalContent = content
+      if (selectedTemplate && templateData) {
+        finalContent = selectedTemplate.sections
+          .map((section) => {
+            const sectionContent = templateData[section.id] || ''
+            if (!sectionContent.trim()) return ''
+            return `## ${section.title}\n\n${sectionContent}`
+          })
+          .filter((section) => section.length > 0)
+          .join('\n\n')
+      }
+
       const journal = await createJournal(spaceId, {
         title,
-        content,
+        content: finalContent,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
         templateId: selectedTemplate?.id,
         templateData: selectedTemplate ? templateData : undefined
       })
 
-      navigate(`/journals/${journal.journalId}`)
+      navigate(`/spaces/${spaceId}/journals/${journal.journalId}`)
     } catch (err) {
       // Error is handled by the hook
       console.error('Failed to create journal:', err)

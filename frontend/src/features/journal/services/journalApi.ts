@@ -51,7 +51,10 @@ export const journalApi = {
       content: data.content,
       tags: data.tags || [],
       mood: data.mood,
-      isPinned: data.isPinned || false
+      emotions: data.emotions,
+      isPinned: data.isPinned || false,
+      templateId: data.templateId,
+      templateData: data.templateData
     })
 
     if (!response || typeof response !== 'object' || !('journalId' in response)) {
@@ -137,6 +140,7 @@ export const journalApi = {
     if (data.content !== undefined) updateData.content = data.content
     if (data.tags !== undefined) updateData.tags = data.tags
     if (data.mood !== undefined) updateData.mood = data.mood
+    if (data.emotions !== undefined) updateData.emotions = data.emotions
     if (data.isPinned !== undefined) updateData.isPinned = data.isPinned
 
     const response = await apiService.put(`/api/spaces/${spaceId}/journals/${journalId}`, updateData)
