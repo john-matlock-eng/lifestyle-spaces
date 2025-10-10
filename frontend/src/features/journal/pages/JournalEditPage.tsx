@@ -4,6 +4,8 @@ import { RichTextEditor } from '../components/RichTextEditor'
 import { EmotionSelector } from '../components/EmotionSelector'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
+import { getTemplateById } from '../utils/templates'
+import type { Template, TemplateData } from '../types/template.types'
 import '../styles/journal.css'
 
 /**
@@ -20,6 +22,8 @@ export const JournalEditPage: React.FC = () => {
   const [tags, setTags] = useState('')
   const [emotions, setEmotions] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [template, setTemplate] = useState<Template | null>(null)
+  const [templateData, setTemplateData] = useState<TemplateData>({})
 
   useEffect(() => {
     if (spaceId && journalId) {
@@ -33,8 +37,24 @@ export const JournalEditPage: React.FC = () => {
       setContent(journal.content)
       setTags(journal.tags.join(', '))
       setEmotions(journal.emotions || [])
+
+      // If journal has a template, load it and populate templateData
+      if (journal.templateId && journal.templateData) {
+        const loadedTemplate = getTemplateById(journal.templateId)
+        if (loadedTemplate) {
+          setTemplate(loadedTemplate)
+          setTemplateData(journal.templateData as TemplateData)
+        }
+      }
     }
   }, [journal])
+
+  const handleTemplateDataChange = (sectionId: string, value: string) => {
+    setTemplateData((prev) => ({
+      ...prev,
+      [sectionId]: value
+    }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,9 +71,22 @@ export const JournalEditPage: React.FC = () => {
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0)
 
+      // Generate content from template data if using a template
+      let finalContent = content
+      if (template && templateData) {
+        finalContent = template.sections
+          .map((section) => {
+            const sectionContent = templateData[section.id] || ''
+            if (!sectionContent.trim()) return ''
+            return `## ${section.title}\n\n${sectionContent}`
+          })
+          .filter((section) => section.length > 0)
+          .join('\n\n')
+      }
+
       await updateJournal(spaceId, journalId, {
         title,
-        content,
+        content: finalContent,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined
       })
@@ -119,6 +152,18 @@ export const JournalEditPage: React.FC = () => {
       <h1>Edit Journal</h1>
 
       <form onSubmit={handleSubmit} className="journal-form">
+        {template && (
+          <div className="selected-template-info">
+            <div className="selected-template-header">
+              <span className="template-icon-large">{template.icon}</span>
+              <div>
+                <h3>{template.name}</h3>
+                <p>{template.description}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="journal-form-group">
           <label htmlFor="title" className="journal-form-label">
             Title *
@@ -136,19 +181,41 @@ export const JournalEditPage: React.FC = () => {
           />
         </div>
 
-        <div className="journal-form-group">
-          <label htmlFor="content" className="journal-form-label">
-            Content *
-          </label>
-          <RichTextEditor
-            content={content}
-            onChange={setContent}
-            placeholder="Start writing your thoughts..."
-            minHeight="400px"
-            showToolbar={true}
-            disabled={isSubmitting}
-          />
-        </div>
+        {template ? (
+          // Render template sections
+          <div className="template-sections">
+            {template.sections.map((section) => (
+              <div key={section.id} className="journal-form-group">
+                <label htmlFor={section.id} className="journal-form-label">
+                  {section.title}
+                </label>
+                <RichTextEditor
+                  content={templateData[section.id] || ''}
+                  onChange={(value) => handleTemplateDataChange(section.id, value)}
+                  placeholder={section.placeholder}
+                  minHeight="200px"
+                  showToolbar={true}
+                  disabled={isSubmitting}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Free-form content editor
+          <div className="journal-form-group">
+            <label htmlFor="content" className="journal-form-label">
+              Content *
+            </label>
+            <RichTextEditor
+              content={content}
+              onChange={setContent}
+              placeholder="Start writing your thoughts..."
+              minHeight="400px"
+              showToolbar={true}
+              disabled={isSubmitting}
+            />
+          </div>
+        )}
 
         <div className="journal-form-group">
           <label htmlFor="tags" className="journal-form-label">
