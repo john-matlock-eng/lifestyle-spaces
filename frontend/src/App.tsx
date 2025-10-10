@@ -74,7 +74,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/journals/:journalId"
+                  path="/spaces/:spaceId/journals/:journalId"
                   element={
                     <ProtectedRoute>
                       <JournalViewPage />
@@ -82,7 +82,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/journals/:journalId/edit"
+                  path="/spaces/:spaceId/journals/:journalId/edit"
                   element={
                     <ProtectedRoute>
                       <JournalEditPage />

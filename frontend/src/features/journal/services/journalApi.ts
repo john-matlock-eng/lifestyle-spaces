@@ -92,12 +92,15 @@ export const journalApi = {
   /**
    * Get a single journal entry by ID
    */
-  getJournal: async (journalId: string): Promise<JournalEntry> => {
+  getJournal: async (spaceId: string, journalId: string): Promise<JournalEntry> => {
+    if (!spaceId || spaceId.trim() === '') {
+      throw new Error('Space ID is required')
+    }
     if (!journalId || journalId.trim() === '') {
       throw new Error('Journal ID is required')
     }
 
-    const response = await apiService.get(`/api/journals/${journalId}`)
+    const response = await apiService.get(`/api/spaces/${spaceId}/journals/${journalId}`)
 
     if (!response || typeof response !== 'object' || !('journalId' in response)) {
       throw new Error('Invalid journal data received from API')
@@ -110,9 +113,13 @@ export const journalApi = {
    * Update an existing journal entry
    */
   updateJournal: async (
+    spaceId: string,
     journalId: string,
     data: UpdateJournalRequest
   ): Promise<JournalEntry> => {
+    if (!spaceId || spaceId.trim() === '') {
+      throw new Error('Space ID is required')
+    }
     if (!journalId || journalId.trim() === '') {
       throw new Error('Journal ID is required')
     }
@@ -132,7 +139,7 @@ export const journalApi = {
     if (data.mood !== undefined) updateData.mood = data.mood
     if (data.isPinned !== undefined) updateData.isPinned = data.isPinned
 
-    const response = await apiService.put(`/api/journals/${journalId}`, updateData)
+    const response = await apiService.put(`/api/spaces/${spaceId}/journals/${journalId}`, updateData)
 
     if (!response || typeof response !== 'object' || !('journalId' in response)) {
       throw new Error('Invalid journal data received from API')
@@ -144,12 +151,15 @@ export const journalApi = {
   /**
    * Delete a journal entry
    */
-  deleteJournal: async (journalId: string): Promise<void> => {
+  deleteJournal: async (spaceId: string, journalId: string): Promise<void> => {
+    if (!spaceId || spaceId.trim() === '') {
+      throw new Error('Space ID is required')
+    }
     if (!journalId || journalId.trim() === '') {
       throw new Error('Journal ID is required')
     }
 
-    await apiService.delete(`/api/journals/${journalId}`)
+    await apiService.delete(`/api/spaces/${spaceId}/journals/${journalId}`)
   },
 
   /**

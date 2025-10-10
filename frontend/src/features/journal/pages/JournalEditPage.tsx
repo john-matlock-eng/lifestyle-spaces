@@ -11,7 +11,7 @@ import '../styles/journal.css'
  */
 export const JournalEditPage: React.FC = () => {
   const navigate = useNavigate()
-  const { journalId } = useParams<{ journalId: string }>()
+  const { spaceId, journalId } = useParams<{ spaceId: string; journalId: string }>()
   const { journal, loading, error, loadJournal, updateJournal } = useJournal()
   const { user } = useAuth()
 
@@ -22,10 +22,10 @@ export const JournalEditPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    if (journalId) {
-      loadJournal(journalId)
+    if (spaceId && journalId) {
+      loadJournal(spaceId, journalId)
     }
-  }, [journalId, loadJournal])
+  }, [spaceId, journalId, loadJournal])
 
   useEffect(() => {
     if (journal) {
@@ -39,7 +39,7 @@ export const JournalEditPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!journalId) {
+    if (!spaceId || !journalId) {
       return
     }
 
@@ -51,14 +51,14 @@ export const JournalEditPage: React.FC = () => {
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0)
 
-      await updateJournal(journalId, {
+      await updateJournal(spaceId, journalId, {
         title,
         content,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined
       })
 
-      navigate(`/journals/${journalId}`)
+      navigate(`/spaces/${spaceId}/journals/${journalId}`)
     } catch (err) {
       console.error('Failed to update journal:', err)
     } finally {
@@ -67,8 +67,8 @@ export const JournalEditPage: React.FC = () => {
   }
 
   const handleCancel = () => {
-    if (journalId) {
-      navigate(`/journals/${journalId}`)
+    if (spaceId && journalId) {
+      navigate(`/spaces/${spaceId}/journals/${journalId}`)
     }
   }
 

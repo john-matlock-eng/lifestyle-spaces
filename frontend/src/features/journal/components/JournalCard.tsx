@@ -19,12 +19,12 @@ export const JournalCard: React.FC<JournalCardProps> = ({ journal, onDelete }) =
   const isAuthor = user?.userId === journal.userId
 
   const handleClick = () => {
-    navigate(`/journals/${journal.journalId}`)
+    navigate(`/spaces/${journal.spaceId}/journals/${journal.journalId}`)
   }
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation() // Don't trigger card click
-    navigate(`/journals/${journal.journalId}/edit`)
+    navigate(`/spaces/${journal.spaceId}/journals/${journal.journalId}/edit`)
   }
 
   const handleDelete = async (e: React.MouseEvent) => {

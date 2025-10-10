@@ -10,25 +10,25 @@ import '../styles/journal.css'
  */
 export const JournalViewPage: React.FC = () => {
   const navigate = useNavigate()
-  const { journalId } = useParams<{ journalId: string }>()
+  const { spaceId, journalId } = useParams<{ spaceId: string; journalId: string }>()
   const { journal, loading, error, loadJournal, deleteJournal } = useJournal()
   const { user } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
-    if (journalId) {
-      loadJournal(journalId)
+    if (spaceId && journalId) {
+      loadJournal(spaceId, journalId)
     }
-  }, [journalId, loadJournal])
+  }, [spaceId, journalId, loadJournal])
 
   const handleEdit = () => {
-    if (journalId) {
-      navigate(`/journals/${journalId}/edit`)
+    if (spaceId && journalId) {
+      navigate(`/spaces/${spaceId}/journals/${journalId}/edit`)
     }
   }
 
   const handleDelete = async () => {
-    if (!journalId) return
+    if (!spaceId || !journalId) return
 
     const confirmed = window.confirm(
       'Are you sure you want to delete this journal? This action cannot be undone.'
@@ -38,8 +38,8 @@ export const JournalViewPage: React.FC = () => {
 
     try {
       setIsDeleting(true)
-      await deleteJournal(journalId)
-      navigate(`/spaces/${journal?.spaceId}`)
+      await deleteJournal(spaceId, journalId)
+      navigate(`/spaces/${spaceId}`)
     } catch (err) {
       console.error('Failed to delete journal:', err)
     } finally {

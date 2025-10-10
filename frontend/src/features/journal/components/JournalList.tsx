@@ -62,7 +62,7 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
 
   const handleDelete = async (journalId: string) => {
     try {
-      await journalApi.deleteJournal(journalId)
+      await journalApi.deleteJournal(spaceId, journalId)
       // Reload journals after successful delete
       await loadJournals()
     } catch (err) {

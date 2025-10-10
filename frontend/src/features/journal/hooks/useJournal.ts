@@ -17,11 +17,11 @@ export const useJournal = () => {
   /**
    * Load a journal entry by ID
    */
-  const loadJournal = useCallback(async (id: string) => {
+  const loadJournal = useCallback(async (spaceId: string, id: string) => {
     setLoading(true)
     setError(null)
     try {
-      const data = await journalApi.getJournal(id)
+      const data = await journalApi.getJournal(spaceId, id)
       setJournal(data)
       return data
     } catch (err) {
@@ -59,11 +59,11 @@ export const useJournal = () => {
    * Update an existing journal entry
    */
   const updateJournal = useCallback(
-    async (id: string, data: UpdateJournalRequest) => {
+    async (spaceId: string, id: string, data: UpdateJournalRequest) => {
       setLoading(true)
       setError(null)
       try {
-        const updated = await journalApi.updateJournal(id, data)
+        const updated = await journalApi.updateJournal(spaceId, id, data)
         setJournal(updated)
         return updated
       } catch (err) {
@@ -80,11 +80,11 @@ export const useJournal = () => {
   /**
    * Delete a journal entry
    */
-  const deleteJournal = useCallback(async (id: string) => {
+  const deleteJournal = useCallback(async (spaceId: string, id: string) => {
     setLoading(true)
     setError(null)
     try {
-      await journalApi.deleteJournal(id)
+      await journalApi.deleteJournal(spaceId, id)
       setJournal(null)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete journal'
