@@ -626,7 +626,7 @@ const EmotionWheel: React.FC<EmotionWheelProps> = ({
                       className="emotion-text-secondary"
                       style={{
                         fontSize: `${textPos.fontSize}px`,
-                        fill: 'white',
+                        fill: isSelected ? '#1a1a1a' : 'white',
                         fontWeight: isHovered || isSelected ? '600' : '500',
                         pointerEvents: 'none',
                       }}
@@ -699,7 +699,7 @@ const EmotionWheel: React.FC<EmotionWheelProps> = ({
                           className="emotion-text-tertiary"
                           style={{
                             fontSize: `${textPos.fontSize}px`,
-                            fill: 'white',
+                            fill: isSelected ? 'white' : '#1a1a1a',
                             fontWeight: isHovered || isSelected ? '600' : '400',
                             pointerEvents: 'none',
                           }}
