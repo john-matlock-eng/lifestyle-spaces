@@ -33,7 +33,7 @@ const EmotionWheel: React.FC<EmotionWheelProps> = ({
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [hoveredEmotion, setHoveredEmotion] = useState<string | null>(null)
-  const [wheelSize, setWheelSize] = useState(400)
+  const [wheelSize, setWheelSize] = useState(600)
   const [zoomLevel, setZoomLevel] = useState(1)
   const [tooltip, setTooltip] = useState<{
     x: number
@@ -167,8 +167,8 @@ const EmotionWheel: React.FC<EmotionWheelProps> = ({
     const handleResize = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth
-        const maxSize = Math.min(containerWidth - 40, 600)
-        setWheelSize(Math.max(400, maxSize))
+        const maxSize = Math.min(containerWidth - 40, 800)
+        setWheelSize(Math.max(500, maxSize))
       }
     }
 

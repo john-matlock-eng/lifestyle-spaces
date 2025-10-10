@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Circle, Grid } from 'lucide-react'
-import { getEmotionById, getCoreEmotions, getSecondaryEmotions } from '../data/emotionData'
+import { getEmotionById, getCoreEmotions, getSecondaryEmotions, getTertiaryEmotions } from '../data/emotionData'
 import EmotionWheel from './EmotionWheel'
 import '../styles/emotion-selector.css'
 import '../styles/emotion-wheel.css'
@@ -20,9 +20,11 @@ export const EmotionSelector: React.FC<EmotionSelectorProps> = ({
   onEmotionsChange,
   disabled = false,
 }) => {
-  const [viewMode, setViewMode] = useState<'grid' | 'wheel'>('grid')
+  const [viewMode, setViewMode] = useState<'grid' | 'wheel'>('wheel')
   const [selectedCore, setSelectedCore] = useState<string | null>(null)
+  const [selectedSecondary, setSelectedSecondary] = useState<string | null>(null)
   const [showSecondary, setShowSecondary] = useState(false)
+  const [showTertiary, setShowTertiary] = useState(false)
 
   // Handle emotion toggle
   const handleEmotionToggle = (emotionId: string) => {
@@ -55,6 +57,17 @@ export const EmotionSelector: React.FC<EmotionSelectorProps> = ({
   // Handle secondary emotion click in grid mode
   const handleSecondaryClick = (emotionId: string) => {
     if (disabled) return
+
+    setSelectedSecondary(emotionId)
+    setShowTertiary(true)
+
+    // Toggle selection
+    handleEmotionToggle(emotionId)
+  }
+
+  // Handle tertiary emotion click in grid mode
+  const handleTertiaryClick = (emotionId: string) => {
+    if (disabled) return
     handleEmotionToggle(emotionId)
   }
 
@@ -63,7 +76,9 @@ export const EmotionSelector: React.FC<EmotionSelectorProps> = ({
     if (disabled) return
     onEmotionsChange([])
     setSelectedCore(null)
+    setSelectedSecondary(null)
     setShowSecondary(false)
+    setShowTertiary(false)
   }
 
   // Get core emotions
@@ -71,6 +86,9 @@ export const EmotionSelector: React.FC<EmotionSelectorProps> = ({
 
   // Get secondary emotions for selected core
   const secondaryEmotions = selectedCore ? getSecondaryEmotions(selectedCore) : []
+
+  // Get tertiary emotions for selected secondary
+  const tertiaryEmotions = selectedSecondary ? getTertiaryEmotions(selectedSecondary) : []
 
   return (
     <div className="emotion-selector">
@@ -169,7 +187,11 @@ export const EmotionSelector: React.FC<EmotionSelectorProps> = ({
                 <h5>More specific feelings:</h5>
                 <button
                   type="button"
-                  onClick={() => setShowSecondary(false)}
+                  onClick={() => {
+                    setShowSecondary(false)
+                    setShowTertiary(false)
+                    setSelectedSecondary(null)
+                  }}
                   className="secondary-close-btn"
                   disabled={disabled}
                 >
@@ -188,6 +210,44 @@ export const EmotionSelector: React.FC<EmotionSelectorProps> = ({
                     style={{
                       backgroundColor: emotion.color,
                       opacity: selectedEmotions.includes(emotion.id) ? 1 : 0.7,
+                    }}
+                    disabled={disabled}
+                  >
+                    {emotion.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {showTertiary && tertiaryEmotions.length > 0 && (
+            <div className="tertiary-emotions-section">
+              <div className="tertiary-emotions-header">
+                <h5>Even more specific:</h5>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTertiary(false)
+                    setSelectedSecondary(null)
+                  }}
+                  className="tertiary-close-btn"
+                  disabled={disabled}
+                >
+                  ← Back
+                </button>
+              </div>
+              <div className="tertiary-emotions-grid">
+                {tertiaryEmotions.map((emotion) => (
+                  <button
+                    key={emotion.id}
+                    type="button"
+                    onClick={() => handleTertiaryClick(emotion.id)}
+                    className={`emotion-btn tertiary-emotion ${
+                      selectedEmotions.includes(emotion.id) ? 'selected' : ''
+                    }`}
+                    style={{
+                      backgroundColor: emotion.color,
+                      opacity: selectedEmotions.includes(emotion.id) ? 1 : 0.6,
                     }}
                     disabled={disabled}
                   >
