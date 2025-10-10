@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { RichTextEditor } from '../components/RichTextEditor'
 import { TemplatePicker } from '../components/TemplatePicker'
+import { EmotionSelector } from '../components/EmotionSelector'
 import { useJournal } from '../hooks/useJournal'
 import type { Template, TemplateData } from '../types/template.types'
 import '../styles/journal.css'
@@ -199,17 +200,14 @@ export const JournalCreatePage: React.FC = () => {
         </div>
 
         <div className="journal-form-group">
-          <label htmlFor="mood" className="journal-form-label">
+          <label className="journal-form-label">
             Mood (optional)
           </label>
-          <input
-            id="mood"
-            type="text"
-            value={mood}
-            onChange={(e) => setMood(e.target.value)}
-            className="journal-form-input"
-            placeholder="How are you feeling?"
-            maxLength={50}
+          <EmotionSelector
+            selectedEmotion={mood}
+            onSelectEmotion={(_emotionId, emotionLabel) => {
+              setMood(emotionLabel || '')
+            }}
             disabled={loading}
           />
         </div>
