@@ -58,18 +58,25 @@ export const JournalCreatePage: React.FC = () => {
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0)
 
-      // Generate content from template data if using a template
+      // For templated journals, store a simple text summary in content field
+      // The actual structured data is in templateData
       let finalContent = content
       if (selectedTemplate && templateData) {
+        // Create a simple plain text summary for search/preview purposes
         finalContent = selectedTemplate.sections
           .map((section) => {
             const sectionContent = templateData[section.id] || ''
             if (!sectionContent.trim()) return ''
-            return `## ${section.title}\n\n${sectionContent}`
+            // Strip HTML tags for plain text summary
+            const plainText = sectionContent.replace(/<[^>]*>/g, '').trim()
+            return `${section.title}: ${plainText}`
           })
           .filter((section) => section.length > 0)
-          .join('\n\n')
+          .join(' | ')
       }
+
+      console.log('[DEBUG] Emotions state before submission:', emotions)
+      console.log('[DEBUG] Emotions length:', emotions.length)
 
       const journal = await createJournal(spaceId, {
         title,

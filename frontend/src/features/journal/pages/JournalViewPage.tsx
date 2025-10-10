@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
+import { getTemplate } from '../services/templateApi'
 import ReactMarkdown from 'react-markdown'
+import type { Template } from '../types/template.types'
 import '../styles/journal.css'
 
 /**
@@ -14,12 +16,30 @@ export const JournalViewPage: React.FC = () => {
   const { journal, loading, error, loadJournal, deleteJournal } = useJournal()
   const { user } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
+  const [template, setTemplate] = useState<Template | null>(null)
 
   useEffect(() => {
     if (spaceId && journalId) {
       loadJournal(spaceId, journalId)
     }
   }, [spaceId, journalId, loadJournal])
+
+  useEffect(() => {
+    // Load template if journal has one
+    if (journal?.templateId) {
+      const loadTemplateData = async () => {
+        try {
+          const templateData = await getTemplate(journal.templateId!)
+          setTemplate(templateData)
+        } catch (err) {
+          console.error('Failed to load template:', err)
+        }
+      }
+      loadTemplateData()
+    } else {
+      setTemplate(null)
+    }
+  }, [journal])
 
   const handleEdit = () => {
     if (spaceId && journalId) {
@@ -157,7 +177,32 @@ export const JournalViewPage: React.FC = () => {
       </div>
 
       <div className="journal-view-content">
-        <ReactMarkdown>{journal.content}</ReactMarkdown>
+        {template && journal.templateData ? (
+          // Render template sections
+          <div className="template-content">
+            {template.icon && (
+              <div className="template-icon-display" style={{ fontSize: '2em', marginBottom: '1em' }}>
+                {template.icon}
+              </div>
+            )}
+            {template.sections.map((section) => {
+              const sectionContent = journal.templateData?.[section.id]
+              if (!sectionContent) return null
+
+              return (
+                <div key={section.id} className="template-section">
+                  <h3 className="template-section-title">{section.title}</h3>
+                  <div className="template-section-content">
+                    <ReactMarkdown>{sectionContent}</ReactMarkdown>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          // Render regular markdown content
+          <ReactMarkdown>{journal.content}</ReactMarkdown>
+        )}
       </div>
 
       {canEdit && (

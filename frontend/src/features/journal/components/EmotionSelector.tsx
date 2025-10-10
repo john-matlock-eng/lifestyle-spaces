@@ -32,10 +32,14 @@ export const EmotionSelector: React.FC<EmotionSelectorProps> = ({
 
     if (selectedEmotions.includes(emotionId)) {
       // Remove emotion
-      onEmotionsChange(selectedEmotions.filter((id) => id !== emotionId))
+      const newEmotions = selectedEmotions.filter((id) => id !== emotionId)
+      console.log('[DEBUG] Removing emotion:', emotionId, '| New emotions:', newEmotions)
+      onEmotionsChange(newEmotions)
     } else {
       // Add emotion
-      onEmotionsChange([...selectedEmotions, emotionId])
+      const newEmotions = [...selectedEmotions, emotionId]
+      console.log('[DEBUG] Adding emotion:', emotionId, '| New emotions:', newEmotions)
+      onEmotionsChange(newEmotions)
     }
   }
 
