@@ -36,17 +36,24 @@ def install_dependencies(build_dir: Path, requirements_file: Path):
 def copy_application_code(src_dir: Path, build_dir: Path):
     """Copy application code to build directory."""
     print("Copying application code...")
-    
+
     # Copy the app directory
     app_src = src_dir / "app"
     app_dst = build_dir / "app"
     shutil.copytree(app_src, app_dst)
-    
+
     # Copy the lambda handler
     handler_src = src_dir / "lambda_handler.py"
     handler_dst = build_dir / "lambda_handler.py"
     shutil.copy2(handler_src, handler_dst)
-    
+
+    # Copy the templates directory if it exists
+    templates_src = src_dir / "templates"
+    if templates_src.exists():
+        templates_dst = build_dir / "templates"
+        shutil.copytree(templates_src, templates_dst)
+        print(" Templates directory copied")
+
     print(" Application code copied")
 
 

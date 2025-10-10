@@ -348,6 +348,10 @@ jobs:
           pip install -r requirements.txt -t package/
           cp -r app package/
           cp lambda_handler.py package/
+          # Copy templates directory if it exists
+          if [ -d "templates" ]; then
+            cp -r templates package/
+          fi
           cd package && zip -r ../lambda.zip . \
             -x "*.pyc" "__pycache__/*" "*/__pycache__/*" \
             -x "tests/*" "*test*" "*.dist-info/*" \
