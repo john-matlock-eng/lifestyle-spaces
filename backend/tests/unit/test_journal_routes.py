@@ -254,7 +254,7 @@ class TestJournalRoutes:
             mock_service.return_value = mock_service_instance
             mock_service_instance.get_journal_entry.return_value = self.sample_journal_response
 
-            response = self.client.get("/api/journals/journal-123")
+            response = self.client.get("/api/spaces/space-123/journals/journal-123")
 
             assert response.status_code == 200
             data = response.json()
@@ -268,7 +268,7 @@ class TestJournalRoutes:
             mock_service.return_value = mock_service_instance
             mock_service_instance.get_journal_entry.side_effect = JournalNotFoundError("Journal not found")
 
-            response = self.client.get("/api/journals/journal-456")
+            response = self.client.get("/api/spaces/space-123/journals/journal-456")
 
             assert response.status_code == 404
 
@@ -279,7 +279,7 @@ class TestJournalRoutes:
             mock_service.return_value = mock_service_instance
             mock_service_instance.get_journal_entry.side_effect = UnauthorizedError("Not authorized")
 
-            response = self.client.get("/api/journals/journal-123")
+            response = self.client.get("/api/spaces/space-123/journals/journal-123")
 
             assert response.status_code == 403
 
@@ -290,7 +290,7 @@ class TestJournalRoutes:
             mock_service.return_value = mock_service_instance
             mock_service_instance.get_journal_entry.side_effect = Exception("Database error")
 
-            response = self.client.get("/api/journals/journal-123")
+            response = self.client.get("/api/spaces/space-123/journals/journal-123")
 
             assert response.status_code == 500
 
@@ -305,7 +305,7 @@ class TestJournalRoutes:
             mock_service_instance.update_journal_entry.return_value = updated_response
 
             response = self.client.put(
-                "/api/journals/journal-123",
+                "/api/spaces/space-123/journals/journal-123",
                 json={
                     "title": "Updated Title",
                     "content": "Updated content"
@@ -324,7 +324,7 @@ class TestJournalRoutes:
             mock_service_instance.update_journal_entry.side_effect = JournalNotFoundError("Journal not found")
 
             response = self.client.put(
-                "/api/journals/journal-456",
+                "/api/spaces/space-123/journals/journal-456",
                 json={"title": "Updated Title"}
             )
 
@@ -338,7 +338,7 @@ class TestJournalRoutes:
             mock_service_instance.update_journal_entry.side_effect = UnauthorizedError("Not authorized")
 
             response = self.client.put(
-                "/api/journals/journal-123",
+                "/api/spaces/space-123/journals/journal-123",
                 json={"title": "Updated Title"}
             )
 
@@ -352,7 +352,7 @@ class TestJournalRoutes:
             mock_service_instance.update_journal_entry.side_effect = ValidationError("Invalid data")
 
             response = self.client.put(
-                "/api/journals/journal-123",
+                "/api/spaces/space-123/journals/journal-123",
                 json={"title": ""}
             )
 
@@ -366,7 +366,7 @@ class TestJournalRoutes:
             mock_service_instance.update_journal_entry.side_effect = Exception("Database error")
 
             response = self.client.put(
-                "/api/journals/journal-123",
+                "/api/spaces/space-123/journals/journal-123",
                 json={"title": "Updated Title"}
             )
 
@@ -379,7 +379,7 @@ class TestJournalRoutes:
             mock_service.return_value = mock_service_instance
             mock_service_instance.delete_journal_entry.return_value = True
 
-            response = self.client.delete("/api/journals/journal-123")
+            response = self.client.delete("/api/spaces/space-123/journals/journal-123")
 
             assert response.status_code == 200
             data = response.json()
@@ -392,7 +392,7 @@ class TestJournalRoutes:
             mock_service.return_value = mock_service_instance
             mock_service_instance.delete_journal_entry.side_effect = JournalNotFoundError("Journal not found")
 
-            response = self.client.delete("/api/journals/journal-456")
+            response = self.client.delete("/api/spaces/space-123/journals/journal-456")
 
             assert response.status_code == 404
 
@@ -403,7 +403,7 @@ class TestJournalRoutes:
             mock_service.return_value = mock_service_instance
             mock_service_instance.delete_journal_entry.side_effect = UnauthorizedError("Not authorized")
 
-            response = self.client.delete("/api/journals/journal-123")
+            response = self.client.delete("/api/spaces/space-123/journals/journal-123")
 
             assert response.status_code == 403
 
@@ -414,7 +414,7 @@ class TestJournalRoutes:
             mock_service.return_value = mock_service_instance
             mock_service_instance.delete_journal_entry.side_effect = Exception("Database error")
 
-            response = self.client.delete("/api/journals/journal-123")
+            response = self.client.delete("/api/spaces/space-123/journals/journal-123")
 
             assert response.status_code == 500
 

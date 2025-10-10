@@ -195,11 +195,12 @@ class JournalService:
             'is_pinned': data.is_pinned
         }
 
-    def get_journal_entry(self, journal_id: str, user_id: str) -> Dict[str, Any]:
+    def get_journal_entry(self, space_id: str, journal_id: str, user_id: str) -> Dict[str, Any]:
         """
         Get a journal entry by ID.
 
         Args:
+            space_id: Space ID where the journal exists
             journal_id: Journal ID to retrieve
             user_id: User requesting the journal
 
@@ -210,49 +211,27 @@ class JournalService:
             JournalNotFoundError: If journal doesn't exist
             UnauthorizedError: If user doesn't have access
         """
-        logger.info(f"[GET_JOURNAL] Fetching journal={journal_id} for user={user_id}")
+        logger.info(f"[GET_JOURNAL] Fetching journal={journal_id} in space={space_id} for user={user_id}")
 
-        # We need to scan for the journal since we don't know which space it's in
-        # Alternative: query all user's spaces and check each one
-        # For now, we'll use a simple approach: query the user's GSI to find journals
-        response = self.table.query(
-            IndexName='GSI1',
-            KeyConditionExpression=Key('GSI1PK').eq(f'USER#{user_id}'),
-            FilterExpression=Attr('journal_id').eq(journal_id)
-        )
-
-        journal = None
-        items = response.get('Items', [])
-        if items:
-            journal = items[0]
-            logger.info(f"[GET_JOURNAL] Found journal in user's GSI")
-
-        # If not found in user's journals, they might be viewing someone else's journal in a shared space
-        # In that case, we need to scan (not ideal but necessary for cross-user journal access)
-        if not journal:
-            logger.info(f"[GET_JOURNAL] Journal not in user's GSI, scanning for journal_id={journal_id}")
-            # Scan with filter for the specific journal_id - remove Limit to ensure we find it
-            response = self.table.scan(
-                FilterExpression=Attr('journal_id').eq(journal_id)
-            )
-            items = response.get('Items', [])
-            if items:
-                journal = items[0]
-                logger.info(f"[GET_JOURNAL] Found journal via scan in space={journal.get('space_id')}")
-            else:
-                logger.error(f"[GET_JOURNAL] Journal {journal_id} not found via scan")
-
-        if not journal:
-            raise JournalNotFoundError(f"Journal {journal_id} not found")
-
-        space_id = journal['space_id']
-
-        # Verify user is space member
+        # Verify user is space member first
         if not self._is_space_member(space_id, user_id):
             logger.error(f"[GET_JOURNAL] User {user_id} is not a member of space {space_id}")
             raise UnauthorizedError("You don't have access to this journal")
 
-        logger.info(f"[GET_JOURNAL] User {user_id} authorized to view journal in space {space_id}")
+        # Direct key lookup - most efficient!
+        response = self.table.get_item(
+            Key={
+                'PK': f'SPACE#{space_id}',
+                'SK': f'JOURNAL#{journal_id}'
+            }
+        )
+
+        if 'Item' not in response:
+            logger.error(f"[GET_JOURNAL] Journal {journal_id} not found in space {space_id}")
+            raise JournalNotFoundError(f"Journal {journal_id} not found")
+
+        journal = response['Item']
+        logger.info(f"[GET_JOURNAL] Journal found via direct key lookup")
 
         # Get author info
         author_info = self._get_author_info(journal['user_id'])
@@ -275,11 +254,12 @@ class JournalService:
             'author': author_info
         }
 
-    def update_journal_entry(self, journal_id: str, user_id: str, data: JournalUpdate) -> Dict[str, Any]:
+    def update_journal_entry(self, space_id: str, journal_id: str, user_id: str, data: JournalUpdate) -> Dict[str, Any]:
         """
         Update a journal entry.
 
         Args:
+            space_id: Space ID where the journal exists
             journal_id: Journal ID to update
             user_id: User updating the journal
             data: Update data
@@ -291,32 +271,20 @@ class JournalService:
             JournalNotFoundError: If journal doesn't exist
             UnauthorizedError: If user is not the author
         """
-        logger.info(f"[UPDATE_JOURNAL] Updating journal={journal_id} by user={user_id}")
+        logger.info(f"[UPDATE_JOURNAL] Updating journal={journal_id} in space={space_id} by user={user_id}")
 
-        # Get existing journal - query user's journals first
-        response = self.table.query(
-            IndexName='GSI1',
-            KeyConditionExpression=Key('GSI1PK').eq(f'USER#{user_id}'),
-            FilterExpression=Attr('journal_id').eq(journal_id)
+        # Direct key lookup
+        response = self.table.get_item(
+            Key={
+                'PK': f'SPACE#{space_id}',
+                'SK': f'JOURNAL#{journal_id}'
+            }
         )
 
-        journal = None
-        items = response.get('Items', [])
-        if items:
-            journal = items[0]
-
-        # Fallback: scan for journal if not found in user's journals
-        if not journal:
-            response = self.table.scan(
-                FilterExpression=Attr('journal_id').eq(journal_id),
-                Limit=1
-            )
-            items = response.get('Items', [])
-            if items:
-                journal = items[0]
-
-        if not journal:
+        if 'Item' not in response:
             raise JournalNotFoundError(f"Journal {journal_id} not found")
+
+        journal = response['Item']
 
         # Verify user is the author
         if journal['user_id'] != user_id:
@@ -386,11 +354,12 @@ class JournalService:
             'author': author_info
         }
 
-    def delete_journal_entry(self, journal_id: str, user_id: str) -> bool:
+    def delete_journal_entry(self, space_id: str, journal_id: str, user_id: str) -> bool:
         """
         Delete a journal entry.
 
         Args:
+            space_id: Space ID where the journal exists
             journal_id: Journal ID to delete
             user_id: User deleting the journal
 
@@ -401,34 +370,21 @@ class JournalService:
             JournalNotFoundError: If journal doesn't exist
             UnauthorizedError: If user is not the author or space owner
         """
-        logger.info(f"[DELETE_JOURNAL] Deleting journal={journal_id} by user={user_id}")
+        logger.info(f"[DELETE_JOURNAL] Deleting journal={journal_id} in space={space_id} by user={user_id}")
 
-        # Get existing journal - query user's journals first
-        response = self.table.query(
-            IndexName='GSI1',
-            KeyConditionExpression=Key('GSI1PK').eq(f'USER#{user_id}'),
-            FilterExpression=Attr('journal_id').eq(journal_id)
+        # Direct key lookup
+        response = self.table.get_item(
+            Key={
+                'PK': f'SPACE#{space_id}',
+                'SK': f'JOURNAL#{journal_id}'
+            }
         )
 
-        journal = None
-        items = response.get('Items', [])
-        if items:
-            journal = items[0]
-
-        # Fallback: scan for journal if not found in user's journals
-        if not journal:
-            response = self.table.scan(
-                FilterExpression=Attr('journal_id').eq(journal_id),
-                Limit=1
-            )
-            items = response.get('Items', [])
-            if items:
-                journal = items[0]
-
-        if not journal:
+        if 'Item' not in response:
             raise JournalNotFoundError(f"Journal {journal_id} not found")
 
-        space_id = journal['space_id']
+        journal = response['Item']
+
         is_author = journal['user_id'] == user_id
         is_space_owner = self._get_user_role(space_id, user_id) == 'owner'
 

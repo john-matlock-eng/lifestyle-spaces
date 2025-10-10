@@ -210,9 +210,9 @@ class TestJournalService:
     @patch('app.services.journal.JournalService._is_space_member')
     def test_get_journal_entry_success(self, mock_is_member, journal_service, mock_table):
         """Test getting journal entry - success."""
-        # Mock query response
-        mock_table.query.return_value = {
-            'Items': [{
+        # Mock get_item response
+        mock_table.get_item.return_value = {
+            'Item': {
                 'PK': 'SPACE#space-123',
                 'SK': 'JOURNAL#journal-123',
                 'journal_id': 'journal-123',
@@ -226,7 +226,7 @@ class TestJournalService:
                 'updated_at': '2024-01-01T00:00:00Z',
                 'word_count': 2,
                 'is_pinned': False
-            }]
+            }
         }
 
         # Mock user is member
@@ -239,41 +239,35 @@ class TestJournalService:
                 'display_name': 'Test User'
             }
 
-            result = journal_service.get_journal_entry('journal-123', 'user-123')
+            result = journal_service.get_journal_entry('space-123', 'journal-123', 'user-123')
 
             assert result['journal_id'] == 'journal-123'
             assert result['title'] == 'Test Journal'
             assert result['author'] is not None
 
-    def test_get_journal_entry_not_found(self, journal_service, mock_table):
+    @patch('app.services.journal.JournalService._is_space_member')
+    def test_get_journal_entry_not_found(self, mock_is_member, journal_service, mock_table):
         """Test getting journal entry - not found."""
-        mock_table.query.return_value = {'Items': []}
-        mock_table.scan.return_value = {'Items': []}
+        mock_is_member.return_value = True
+        mock_table.get_item.return_value = {}
 
         with pytest.raises(JournalNotFoundError):
-            journal_service.get_journal_entry('journal-456', 'user-123')
+            journal_service.get_journal_entry('space-123', 'journal-456', 'user-123')
 
     @patch('app.services.journal.JournalService._is_space_member')
     def test_get_journal_entry_unauthorized(self, mock_is_member, journal_service, mock_table):
         """Test getting journal entry - unauthorized."""
-        mock_table.query.return_value = {
-            'Items': [{
-                'journal_id': 'journal-123',
-                'space_id': 'space-123',
-                'user_id': 'user-123'
-            }]
-        }
         mock_is_member.return_value = False
 
         with pytest.raises(UnauthorizedError):
-            journal_service.get_journal_entry('journal-123', 'user-456')
+            journal_service.get_journal_entry('space-123', 'journal-123', 'user-456')
 
     @patch('app.services.journal.JournalService._get_author_info')
     def test_update_journal_entry_success(self, mock_author, journal_service, mock_table):
         """Test updating journal entry - success."""
-        # Mock query response
-        mock_table.query.return_value = {
-            'Items': [{
+        # Mock get_item response
+        mock_table.get_item.return_value = {
+            'Item': {
                 'PK': 'SPACE#space-123',
                 'SK': 'JOURNAL#journal-123',
                 'journal_id': 'journal-123',
@@ -285,7 +279,7 @@ class TestJournalService:
                 'created_at': '2024-01-01T00:00:00Z',
                 'updated_at': '2024-01-01T00:00:00Z',
                 'word_count': 2
-            }]
+            }
         }
 
         # Mock update response
@@ -313,7 +307,7 @@ class TestJournalService:
             is_pinned=True
         )
 
-        result = journal_service.update_journal_entry('journal-123', 'user-123', update_data)
+        result = journal_service.update_journal_entry('space-123', 'journal-123', 'user-123', update_data)
 
         assert result['title'] == 'New Title'
         assert result['content'] == 'New content'
@@ -322,45 +316,44 @@ class TestJournalService:
 
     def test_update_journal_entry_not_found(self, journal_service, mock_table):
         """Test updating journal entry - not found."""
-        mock_table.query.return_value = {'Items': []}
-        mock_table.scan.return_value = {'Items': []}
+        mock_table.get_item.return_value = {}
 
         update_data = JournalUpdate(title='New Title')
 
         with pytest.raises(JournalNotFoundError):
-            journal_service.update_journal_entry('journal-456', 'user-123', update_data)
+            journal_service.update_journal_entry('space-123', 'journal-456', 'user-123', update_data)
 
     def test_update_journal_entry_not_author(self, journal_service, mock_table):
         """Test updating journal entry - not the author."""
-        mock_table.query.return_value = {
-            'Items': [{
+        mock_table.get_item.return_value = {
+            'Item': {
                 'journal_id': 'journal-123',
                 'user_id': 'user-123',
                 'space_id': 'space-123'
-            }]
+            }
         }
 
         update_data = JournalUpdate(title='New Title')
 
         with pytest.raises(UnauthorizedError):
-            journal_service.update_journal_entry('journal-123', 'user-456', update_data)
+            journal_service.update_journal_entry('space-123', 'journal-123', 'user-456', update_data)
 
     @patch('app.services.journal.JournalService._get_user_role')
     def test_delete_journal_entry_by_author(self, mock_role, journal_service, mock_table):
         """Test deleting journal entry - by author."""
-        mock_table.query.return_value = {
-            'Items': [{
+        mock_table.get_item.return_value = {
+            'Item': {
                 'PK': 'SPACE#space-123',
                 'SK': 'JOURNAL#journal-123',
                 'journal_id': 'journal-123',
                 'space_id': 'space-123',
                 'user_id': 'user-123'
-            }]
+            }
         }
 
         mock_role.return_value = 'member'
 
-        result = journal_service.delete_journal_entry('journal-123', 'user-123')
+        result = journal_service.delete_journal_entry('space-123', 'journal-123', 'user-123')
 
         assert result is True
         mock_table.delete_item.assert_called_once()
@@ -368,46 +361,45 @@ class TestJournalService:
     @patch('app.services.journal.JournalService._get_user_role')
     def test_delete_journal_entry_by_space_owner(self, mock_role, journal_service, mock_table):
         """Test deleting journal entry - by space owner."""
-        mock_table.query.return_value = {
-            'Items': [{
+        mock_table.get_item.return_value = {
+            'Item': {
                 'PK': 'SPACE#space-123',
                 'SK': 'JOURNAL#journal-123',
                 'journal_id': 'journal-123',
                 'space_id': 'space-123',
                 'user_id': 'user-123'
-            }]
+            }
         }
 
         mock_role.return_value = 'owner'
 
-        result = journal_service.delete_journal_entry('journal-123', 'user-456')
+        result = journal_service.delete_journal_entry('space-123', 'journal-123', 'user-456')
 
         assert result is True
         mock_table.delete_item.assert_called_once()
 
     def test_delete_journal_entry_not_found(self, journal_service, mock_table):
         """Test deleting journal entry - not found."""
-        mock_table.query.return_value = {'Items': []}
-        mock_table.scan.return_value = {'Items': []}
+        mock_table.get_item.return_value = {}
 
         with pytest.raises(JournalNotFoundError):
-            journal_service.delete_journal_entry('journal-456', 'user-123')
+            journal_service.delete_journal_entry('space-123', 'journal-456', 'user-123')
 
     @patch('app.services.journal.JournalService._get_user_role')
     def test_delete_journal_entry_unauthorized(self, mock_role, journal_service, mock_table):
         """Test deleting journal entry - unauthorized."""
-        mock_table.query.return_value = {
-            'Items': [{
+        mock_table.get_item.return_value = {
+            'Item': {
                 'journal_id': 'journal-123',
                 'space_id': 'space-123',
                 'user_id': 'user-123'
-            }]
+            }
         }
 
         mock_role.return_value = 'member'
 
         with pytest.raises(UnauthorizedError):
-            journal_service.delete_journal_entry('journal-123', 'user-456')
+            journal_service.delete_journal_entry('space-123', 'journal-123', 'user-456')
 
     @patch('app.services.journal.JournalService._get_author_info')
     @patch('app.services.journal.JournalService._is_space_member')
@@ -702,8 +694,8 @@ class TestJournalService:
     @patch('app.services.journal.JournalService._get_author_info')
     def test_update_journal_with_mood_only(self, mock_author, journal_service, mock_table):
         """Test updating journal with mood only."""
-        mock_table.query.return_value = {
-            'Items': [{
+        mock_table.get_item.return_value = {
+            'Item': {
                 'PK': 'SPACE#space-123',
                 'SK': 'JOURNAL#journal-123',
                 'journal_id': 'journal-123',
@@ -714,7 +706,7 @@ class TestJournalService:
                 'created_at': '2024-01-01T00:00:00Z',
                 'updated_at': '2024-01-01T00:00:00Z',
                 'word_count': 1
-            }]
+            }
         }
 
         mock_table.update_item.return_value = {
@@ -735,6 +727,46 @@ class TestJournalService:
         mock_author.return_value = {'user_id': 'user-123', 'username': 'testuser', 'display_name': 'Test User'}
 
         update_data = JournalUpdate(mood='excited')
-        result = journal_service.update_journal_entry('journal-123', 'user-123', update_data)
+        result = journal_service.update_journal_entry('space-123', 'journal-123', 'user-123', update_data)
 
         assert result['mood'] == 'excited'
+
+    @patch('app.services.journal.JournalService._get_author_info')
+    def test_update_journal_with_emotions(self, mock_author, journal_service, mock_table):
+        """Test updating journal with emotions only."""
+        mock_table.get_item.return_value = {
+            'Item': {
+                'PK': 'SPACE#space-123',
+                'SK': 'JOURNAL#journal-123',
+                'journal_id': 'journal-123',
+                'space_id': 'space-123',
+                'user_id': 'user-123',
+                'title': 'Title',
+                'content': 'Content',
+                'created_at': '2024-01-01T00:00:00Z',
+                'updated_at': '2024-01-01T00:00:00Z',
+                'word_count': 1
+            }
+        }
+
+        mock_table.update_item.return_value = {
+            'Attributes': {
+                'journal_id': 'journal-123',
+                'space_id': 'space-123',
+                'user_id': 'user-123',
+                'title': 'Title',
+                'content': 'Content',
+                'emotions': ['happy', 'excited'],
+                'created_at': '2024-01-01T00:00:00Z',
+                'updated_at': '2024-01-02T00:00:00Z',
+                'word_count': 1,
+                'is_pinned': False
+            }
+        }
+
+        mock_author.return_value = {'user_id': 'user-123', 'username': 'testuser', 'display_name': 'Test User'}
+
+        update_data = JournalUpdate(emotions=['happy', 'excited'])
+        result = journal_service.update_journal_entry('space-123', 'journal-123', 'user-123', update_data)
+
+        assert result['emotions'] == ['happy', 'excited']

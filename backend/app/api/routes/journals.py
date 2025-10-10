@@ -166,17 +166,19 @@ async def list_space_journals(
         )
 
 
-@router.get("/journals/{journal_id}", response_model=JournalResponse)
+@router.get("/spaces/{space_id}/journals/{journal_id}", response_model=JournalResponse)
 async def get_journal(
+    space_id: str,
     journal_id: str,
     current_user: dict = Depends(get_current_user)
 ):
     """Get a single journal entry by ID."""
     try:
-        logger.info(f"[API_GET_JOURNAL] journal={journal_id}, user={current_user.get('sub')}")
+        logger.info(f"[API_GET_JOURNAL] space={space_id}, journal={journal_id}, user={current_user.get('sub')}")
 
         service = JournalService()
         result = service.get_journal_entry(
+            space_id=space_id,
             journal_id=journal_id,
             user_id=current_user.get("sub", "")
         )
@@ -215,18 +217,20 @@ async def get_journal(
         )
 
 
-@router.put("/journals/{journal_id}", response_model=JournalResponse)
+@router.put("/spaces/{space_id}/journals/{journal_id}", response_model=JournalResponse)
 async def update_journal(
+    space_id: str,
     journal_id: str,
     update: JournalUpdate,
     current_user: dict = Depends(get_current_user)
 ):
     """Update a journal entry (author only)."""
     try:
-        logger.info(f"[API_UPDATE_JOURNAL] journal={journal_id}, user={current_user.get('sub')}")
+        logger.info(f"[API_UPDATE_JOURNAL] space={space_id}, journal={journal_id}, user={current_user.get('sub')}")
 
         service = JournalService()
         result = service.update_journal_entry(
+            space_id=space_id,
             journal_id=journal_id,
             user_id=current_user.get("sub", ""),
             data=update
@@ -271,17 +275,19 @@ async def update_journal(
         )
 
 
-@router.delete("/journals/{journal_id}", response_model=SuccessResponse)
+@router.delete("/spaces/{space_id}/journals/{journal_id}", response_model=SuccessResponse)
 async def delete_journal(
+    space_id: str,
     journal_id: str,
     current_user: dict = Depends(get_current_user)
 ):
     """Delete a journal entry (author or space owner only)."""
     try:
-        logger.info(f"[API_DELETE_JOURNAL] journal={journal_id}, user={current_user.get('sub')}")
+        logger.info(f"[API_DELETE_JOURNAL] space={space_id}, journal={journal_id}, user={current_user.get('sub')}")
 
         service = JournalService()
         service.delete_journal_entry(
+            space_id=space_id,
             journal_id=journal_id,
             user_id=current_user.get("sub", "")
         )
