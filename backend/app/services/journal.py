@@ -165,6 +165,7 @@ class JournalService:
             'template_data': data.template_data or {},
             'tags': data.tags,
             'mood': data.mood,
+            'emotions': data.emotions or [],
             'created_at': now,
             'updated_at': now,
             'is_encrypted': False,
@@ -187,6 +188,7 @@ class JournalService:
             'template_data': data.template_data or {},
             'tags': data.tags,
             'mood': data.mood,
+            'emotions': data.emotions or [],
             'created_at': now,
             'updated_at': now,
             'word_count': word_count,
@@ -223,18 +225,22 @@ class JournalService:
         items = response.get('Items', [])
         if items:
             journal = items[0]
+            logger.info(f"[GET_JOURNAL] Found journal in user's GSI")
 
         # If not found in user's journals, they might be viewing someone else's journal in a shared space
         # In that case, we need to scan (not ideal but necessary for cross-user journal access)
         if not journal:
-            # Scan with filter for the specific journal_id
+            logger.info(f"[GET_JOURNAL] Journal not in user's GSI, scanning for journal_id={journal_id}")
+            # Scan with filter for the specific journal_id - remove Limit to ensure we find it
             response = self.table.scan(
-                FilterExpression=Attr('journal_id').eq(journal_id),
-                Limit=1
+                FilterExpression=Attr('journal_id').eq(journal_id)
             )
             items = response.get('Items', [])
             if items:
                 journal = items[0]
+                logger.info(f"[GET_JOURNAL] Found journal via scan in space={journal.get('space_id')}")
+            else:
+                logger.error(f"[GET_JOURNAL] Journal {journal_id} not found via scan")
 
         if not journal:
             raise JournalNotFoundError(f"Journal {journal_id} not found")
@@ -243,7 +249,10 @@ class JournalService:
 
         # Verify user is space member
         if not self._is_space_member(space_id, user_id):
+            logger.error(f"[GET_JOURNAL] User {user_id} is not a member of space {space_id}")
             raise UnauthorizedError("You don't have access to this journal")
+
+        logger.info(f"[GET_JOURNAL] User {user_id} authorized to view journal in space {space_id}")
 
         # Get author info
         author_info = self._get_author_info(journal['user_id'])
@@ -258,6 +267,7 @@ class JournalService:
             'template_data': journal.get('template_data', {}),
             'tags': journal.get('tags', []),
             'mood': journal.get('mood'),
+            'emotions': journal.get('emotions', []),
             'created_at': journal['created_at'],
             'updated_at': journal['updated_at'],
             'word_count': journal.get('word_count', 0),
@@ -334,6 +344,10 @@ class JournalService:
             update_expr += ", mood = :mood"
             expr_values[':mood'] = data.mood
 
+        if data.emotions is not None:
+            update_expr += ", emotions = :emotions"
+            expr_values[':emotions'] = data.emotions
+
         if data.is_pinned is not None:
             update_expr += ", is_pinned = :is_pinned"
             expr_values[':is_pinned'] = data.is_pinned
@@ -364,6 +378,7 @@ class JournalService:
             'template_data': updated_journal.get('template_data', {}),
             'tags': updated_journal.get('tags', []),
             'mood': updated_journal.get('mood'),
+            'emotions': updated_journal.get('emotions', []),
             'created_at': updated_journal['created_at'],
             'updated_at': updated_journal['updated_at'],
             'word_count': updated_journal.get('word_count', 0),
@@ -509,6 +524,7 @@ class JournalService:
                 'template_data': journal.get('template_data', {}),
                 'tags': journal.get('tags', []),
                 'mood': journal.get('mood'),
+                'emotions': journal.get('emotions', []),
                 'created_at': journal['created_at'],
                 'updated_at': journal['updated_at'],
                 'word_count': journal.get('word_count', 0),
@@ -576,6 +592,7 @@ class JournalService:
                 'template_data': journal.get('template_data', {}),
                 'tags': journal.get('tags', []),
                 'mood': journal.get('mood'),
+                'emotions': journal.get('emotions', []),
                 'created_at': journal['created_at'],
                 'updated_at': journal['updated_at'],
                 'word_count': journal.get('word_count', 0),
