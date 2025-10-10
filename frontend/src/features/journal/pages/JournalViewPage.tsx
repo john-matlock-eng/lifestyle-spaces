@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
+import { getEmotionById } from '../data/emotionData'
 import ReactMarkdown from 'react-markdown'
 import type { Template } from '../types/template.types'
 import '../styles/journal.css'
@@ -131,46 +132,81 @@ export const JournalViewPage: React.FC = () => {
           {journal.isPinned && <span className="journal-card-pin">📌</span>}
         </h1>
 
+        {template && (
+          <div className="journal-template-badge">
+            <span className="template-icon">{template.icon}</span>
+            <span className="template-name">{template.name}</span>
+          </div>
+        )}
+
         <div className="journal-view-meta">
           {journal.author && (
-            <div className="journal-card-author">
-              <span>👤</span>
+            <div className="journal-meta-item">
+              <span className="meta-icon">👤</span>
               <span>{journal.author.displayName}</span>
             </div>
           )}
 
-          <div className="journal-card-date">
-            <span>📅</span>
+          <div className="journal-meta-item">
+            <span className="meta-icon">📅</span>
             <span>{formatDate(journal.createdAt)}</span>
           </div>
 
           {journal.updatedAt !== journal.createdAt && (
-            <div className="journal-card-date">
-              <span>✏️</span>
+            <div className="journal-meta-item">
+              <span className="meta-icon">✏️</span>
               <span>Updated {formatDate(journal.updatedAt)}</span>
             </div>
           )}
 
           {journal.wordCount > 0 && (
-            <div>
-              <span>📝 {journal.wordCount} words</span>
+            <div className="journal-meta-item">
+              <span className="meta-icon">📝</span>
+              <span>{journal.wordCount} words</span>
             </div>
           )}
 
-          {journal.mood && (
-            <div className="journal-card-mood">
-              <span>💭</span>
-              <span>{journal.mood}</span>
+          {journal.emotions && journal.emotions.length > 0 && (
+            <div className="journal-emotions-section">
+              <div className="journal-meta-label">
+                <span className="meta-icon">💭</span>
+                <span>Emotions:</span>
+              </div>
+              <div className="journal-emotions-list">
+                {journal.emotions.map((emotionId) => {
+                  const emotion = getEmotionById(emotionId)
+                  if (!emotion) return null
+                  return (
+                    <span
+                      key={emotionId}
+                      className="emotion-badge"
+                      style={{
+                        backgroundColor: emotion.color + '20',
+                        borderColor: emotion.color,
+                        color: emotion.color,
+                      }}
+                    >
+                      {emotion.label}
+                    </span>
+                  )
+                })}
+              </div>
             </div>
           )}
 
           {journal.tags && journal.tags.length > 0 && (
-            <div className="journal-card-tags">
-              {journal.tags.map((tag) => (
-                <span key={tag} className="journal-tag">
-                  {tag}
-                </span>
-              ))}
+            <div className="journal-tags-section">
+              <div className="journal-meta-label">
+                <span className="meta-icon">🏷️</span>
+                <span>Tags:</span>
+              </div>
+              <div className="journal-card-tags">
+                {journal.tags.map((tag) => (
+                  <span key={tag} className="journal-tag">
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </div>
