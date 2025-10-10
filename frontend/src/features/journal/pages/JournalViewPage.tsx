@@ -187,7 +187,7 @@ export const JournalViewPage: React.FC = () => {
             )}
             {template.sections.map((section) => {
               const sectionContent = journal.templateData?.[section.id]
-              if (!sectionContent) return null
+              if (!sectionContent || typeof sectionContent !== 'string') return null
 
               return (
                 <div key={section.id} className="template-section">
