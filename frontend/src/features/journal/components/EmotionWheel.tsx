@@ -1,6 +1,6 @@
 // EmotionWheel.tsx - Interactive circular emotion wheel with zoom, pan, and hierarchical selection
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
+import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
 import {
   getCoreEmotions,
   getSecondaryEmotions,
@@ -410,6 +410,20 @@ const EmotionWheel: React.FC<EmotionWheelProps> = ({
       className={`emotion-wheel-container ${className}`}
       data-empty={safeSelectedEmotions.length === 0}
     >
+      {/* Progress indicator - moved to top */}
+      {progressiveReveal && focusedCoreEmotion && (
+        <div className="emotion-progress">
+          <span>Selection progress:</span>
+          <div className="emotion-progress-steps">
+            <span className="step active">1. Core</span>
+            <span>→</span>
+            <span className={`step ${focusedSecondaryEmotion ? 'active' : ''}`}>2. Secondary</span>
+            <span>→</span>
+            <span className={`step ${showCompleteButton ? 'active' : ''}`}>3. Specific</span>
+          </div>
+        </div>
+      )}
+
       {/* Zoom controls */}
       <div className="emotion-wheel-zoom-controls">
         <button
@@ -738,20 +752,6 @@ const EmotionWheel: React.FC<EmotionWheelProps> = ({
         </div>
       )}
 
-      {/* Progress indicator */}
-      {progressiveReveal && focusedCoreEmotion && (
-        <div className="emotion-progress">
-          <span>Selection progress:</span>
-          <div className="emotion-progress-steps">
-            <span className="step active">1. Core</span>
-            <span>→</span>
-            <span className={`step ${focusedSecondaryEmotion ? 'active' : ''}`}>2. Secondary</span>
-            <span>→</span>
-            <span className={`step ${showCompleteButton ? 'active' : ''}`}>3. Specific</span>
-          </div>
-        </div>
-      )}
-
       {/* Complete/Add Another buttons */}
       {progressiveReveal && showCompleteButton && (
         <div className="emotion-complete-buttons">
@@ -776,84 +776,6 @@ const EmotionWheel: React.FC<EmotionWheelProps> = ({
           >
             Add Another Emotion
           </button>
-        </div>
-      )}
-
-      {/* Selected emotions display */}
-      {safeSelectedEmotions.length > 0 && (
-        <div className="emotion-selected">
-          <p>Selected emotions:</p>
-          <div className="emotion-pills">
-            {getCoreEmotions()
-              .filter((core) => safeSelectedEmotions.includes(core.id))
-              .map((coreEmotion) => {
-                const selectedSecondary = getSecondaryEmotions(coreEmotion.id).filter((e) =>
-                  safeSelectedEmotions.includes(e.id)
-                )
-                const selectedTertiary = selectedSecondary.flatMap((sec) =>
-                  getTertiaryEmotions(sec.id).filter((e) => safeSelectedEmotions.includes(e.id))
-                )
-
-                return (
-                  <div key={coreEmotion.id} className="emotion-pill-group">
-                    <span
-                      className="emotion-pill core"
-                      style={{
-                        backgroundColor: coreEmotion.color + '30',
-                        color: coreEmotion.color,
-                        border: `2px solid ${coreEmotion.color}`,
-                      }}
-                    >
-                      <span>{getEmotionEmoji(coreEmotion.id)}</span>
-                      {coreEmotion.label}
-                      <button onClick={() => handleEmotionSelect(coreEmotion.id)}>
-                        <X />
-                      </button>
-                    </span>
-
-                    {selectedSecondary.map((emotion) => (
-                      <span
-                        key={emotion.id}
-                        className="emotion-pill secondary"
-                        style={{
-                          backgroundColor: emotion.color + '20',
-                          color: emotion.color,
-                          border: `1px solid ${emotion.color}`,
-                        }}
-                      >
-                        <span>{getEmotionEmoji(emotion.id)}</span>
-                        {emotion.label}
-                        <button onClick={() => handleEmotionSelect(emotion.id)}>
-                          <X />
-                        </button>
-                      </span>
-                    ))}
-
-                    {selectedTertiary.length > 0 && (
-                      <div className="emotion-tertiary-group">
-                        {selectedTertiary.map((emotion) => (
-                          <span
-                            key={emotion.id}
-                            className="emotion-pill tertiary"
-                            style={{
-                              backgroundColor: emotion.color + '15',
-                              color: emotion.color,
-                              border: `1px solid ${emotion.color}80`,
-                            }}
-                          >
-                            <span>{getEmotionEmoji(emotion.id)}</span>
-                            {emotion.label}
-                            <button onClick={() => handleEmotionSelect(emotion.id)}>
-                              <X />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-          </div>
         </div>
       )}
     </div>

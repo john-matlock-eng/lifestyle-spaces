@@ -9,7 +9,6 @@
   padding: 32px;
   background: var(--color-background, #ffffff);
   border-radius: 8px;
-  min-height: 700px;
 }
 
 /* Zoom Controls */
@@ -119,7 +118,7 @@
 
 /* Progress Indicator */
 .emotion-progress {
-  margin-top: 16px;
+  margin-bottom: 16px;
   padding: 12px 16px;
   background: rgba(0, 0, 0, 0.03);
   border-radius: 8px;
