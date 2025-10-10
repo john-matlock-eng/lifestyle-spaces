@@ -575,6 +575,52 @@
   margin-top: 8px;
 }
 
+/* Template Integration Styles */
+.template-picker-section {
+  margin-bottom: 32px;
+}
+
+.selected-template-info {
+  background-color: var(--theme-bg-elevated, #f9f9f9);
+  border: 1px solid var(--theme-border-light, #e5e7eb);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.selected-template-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.template-icon-large {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.selected-template-header > div {
+  flex: 1;
+}
+
+.selected-template-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.25rem;
+  color: var(--theme-text-primary, #1a1a1a);
+}
+
+.selected-template-header p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--theme-text-secondary, #6b7280);
+}
+
+.template-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .journal-list-grid {
