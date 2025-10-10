@@ -4,7 +4,7 @@ import { RichTextEditor } from '../components/RichTextEditor'
 import { EmotionSelector } from '../components/EmotionSelector'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
-import { getTemplateById } from '../utils/templates'
+import { getTemplate } from '../services/templateApi'
 import type { Template, TemplateData } from '../types/template.types'
 import '../styles/journal.css'
 
@@ -40,11 +40,17 @@ export const JournalEditPage: React.FC = () => {
 
       // If journal has a template, load it and populate templateData
       if (journal.templateId && journal.templateData) {
-        const loadedTemplate = getTemplateById(journal.templateId)
-        if (loadedTemplate) {
-          setTemplate(loadedTemplate)
-          setTemplateData(journal.templateData as TemplateData)
+        const loadTemplate = async () => {
+          try {
+            const loadedTemplate = await getTemplate(journal.templateId!)
+            setTemplate(loadedTemplate)
+            setTemplateData(journal.templateData as TemplateData)
+          } catch (err) {
+            console.error('Failed to load template:', err)
+            // If template fails to load, fall back to content-only editing
+          }
         }
+        loadTemplate()
       }
     }
   }, [journal])
