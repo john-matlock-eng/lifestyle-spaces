@@ -471,7 +471,9 @@
 
 /* Journal View Page Styles */
 .journal-view-container {
-  max-width: 900px;
+  max-width: 1200px;
+  min-width: 320px;
+  width: 100%;
   margin: 0 auto;
   padding: 24px;
 }
