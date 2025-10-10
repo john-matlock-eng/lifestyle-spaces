@@ -11,7 +11,8 @@ class JournalBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     content: str = Field(...)
     tags: List[str] = Field(default_factory=list)
-    mood: Optional[str] = None
+    mood: Optional[str] = None  # Legacy field for backward compatibility
+    emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
     is_pinned: bool = Field(default=False, alias="isPinned")
 
     model_config = ConfigDict(populate_by_name=True)
@@ -62,7 +63,8 @@ class JournalUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     content: Optional[str] = None
     tags: Optional[List[str]] = None
-    mood: Optional[str] = None
+    mood: Optional[str] = None  # Legacy field for backward compatibility
+    emotions: Optional[List[str]] = None  # New field for multiple emotions
     is_pinned: Optional[bool] = Field(None, alias="isPinned")
 
     model_config = ConfigDict(populate_by_name=True)
@@ -104,7 +106,8 @@ class JournalEntry(BaseModel):
     template_id: Optional[str] = None
     template_data: Optional[Dict[str, Any]] = None
     tags: List[str] = Field(default_factory=list)
-    mood: Optional[str] = None
+    mood: Optional[str] = None  # Legacy field for backward compatibility
+    emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
     created_at: datetime
     updated_at: datetime
     is_encrypted: bool = False
@@ -122,7 +125,8 @@ class JournalResponse(BaseModel):
     template_id: Optional[str] = Field(None, alias="templateId")
     template_data: Optional[Dict[str, Any]] = Field(None, alias="templateData")
     tags: List[str] = Field(default_factory=list)
-    mood: Optional[str] = None
+    mood: Optional[str] = None  # Legacy field for backward compatibility
+    emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
     created_at: datetime = Field(..., alias="createdAt")
     updated_at: datetime = Field(..., alias="updatedAt")
     word_count: int = Field(..., alias="wordCount")
@@ -148,6 +152,7 @@ class JournalResponse(BaseModel):
                 "templateData": {"mood": "happy", "gratitude": ["family", "health"]},
                 "tags": ["daily", "reflection"],
                 "mood": "happy",
+                "emotions": ["happy", "playful", "joyful"],
                 "createdAt": "2024-01-01T00:00:00Z",
                 "updatedAt": "2024-01-01T00:00:00Z",
                 "wordCount": 25,

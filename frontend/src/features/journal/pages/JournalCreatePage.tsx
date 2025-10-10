@@ -20,7 +20,7 @@ export const JournalCreatePage: React.FC = () => {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
-  const [mood, setMood] = useState('')
+  const [emotions, setEmotions] = useState<string[]>([])
   const [showTemplatePicker, setShowTemplatePicker] = useState(true)
 
   const handleTemplateSelect = (template: Template | null) => {
@@ -62,7 +62,7 @@ export const JournalCreatePage: React.FC = () => {
         title,
         content,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
-        mood: mood || undefined,
+        emotions: emotions.length > 0 ? emotions : undefined,
         templateId: selectedTemplate?.id,
         templateData: selectedTemplate ? templateData : undefined
       })
@@ -201,13 +201,11 @@ export const JournalCreatePage: React.FC = () => {
 
         <div className="journal-form-group">
           <label className="journal-form-label">
-            Mood (optional)
+            Emotions (optional)
           </label>
           <EmotionSelector
-            selectedEmotion={mood}
-            onSelectEmotion={(_emotionId, emotionLabel) => {
-              setMood(emotionLabel || '')
-            }}
+            selectedEmotions={emotions}
+            onEmotionsChange={setEmotions}
             disabled={loading}
           />
         </div>

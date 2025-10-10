@@ -20,7 +20,8 @@ export interface JournalEntry {
   templateId?: string
   templateData?: Record<string, unknown>
   tags: string[]
-  mood?: string
+  mood?: string  // Legacy field for backward compatibility
+  emotions?: string[]  // New field for multiple emotion IDs
   createdAt: string
   updatedAt: string
   wordCount: number
@@ -46,7 +47,8 @@ export interface CreateJournalRequest {
   title: string
   content: string
   tags?: string[]
-  mood?: string
+  mood?: string  // Legacy field for backward compatibility
+  emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
   templateId?: string
   templateData?: Record<string, unknown>
@@ -59,7 +61,8 @@ export interface UpdateJournalRequest {
   title?: string
   content?: string
   tags?: string[]
-  mood?: string
+  mood?: string  // Legacy field for backward compatibility
+  emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
 }
 

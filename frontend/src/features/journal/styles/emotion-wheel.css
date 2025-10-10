@@ -1,0 +1,355 @@
+/* Emotion Wheel Styles */
+
+.emotion-wheel-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--color-background, #ffffff);
+  border-radius: 8px;
+}
+
+/* Zoom Controls */
+.emotion-wheel-zoom-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 20;
+  display: flex;
+  gap: 8px;
+}
+
+.emotion-wheel-zoom-controls button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-theme, #000);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.emotion-wheel-zoom-controls button:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(1.05);
+}
+
+.emotion-wheel-zoom-controls button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.emotion-wheel-zoom-controls button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Wheel Zoom Container */
+.emotion-wheel-zoom {
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--color-background, #ffffff);
+  position: relative;
+  user-select: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* SVG Styles */
+.emotion-wheel-svg {
+  background: var(--color-background, #ffffff);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Emotion Segments */
+.emotion-segment {
+  transition: all 0.2s ease-in-out;
+}
+
+.emotion-segment:hover {
+  filter: brightness(1.15) !important;
+}
+
+/* Text Styles */
+.emotion-text-core {
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.emotion-text-secondary {
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.emotion-text-tertiary {
+  font-weight: 400;
+  pointer-events: none;
+}
+
+.emotion-wheel-hint {
+  fill: var(--color-accent, #007bff);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Tooltip */
+.emotion-tooltip {
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Progress Indicator */
+.emotion-progress {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.emotion-progress-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.emotion-progress-steps .step {
+  padding: 4px 12px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.emotion-progress-steps .step.active {
+  background: rgba(59, 130, 246, 0.2);
+  color: rgb(59, 130, 246);
+  font-weight: 600;
+}
+
+/* Complete Buttons */
+.emotion-complete-buttons {
+  margin-top: 24px;
+  padding: 16px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.emotion-btn-complete,
+.emotion-btn-add {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.emotion-btn-complete {
+  background: rgb(59, 130, 246);
+  color: white;
+}
+
+.emotion-btn-complete:hover {
+  background: rgb(37, 99, 235);
+}
+
+.emotion-btn-add {
+  background: var(--color-background, #ffffff);
+  color: var(--color-theme, #000);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.emotion-btn-add:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Selected Emotions Display */
+.emotion-selected {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.emotion-selected > p {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--color-theme, #000);
+}
+
+.emotion-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.emotion-pill-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.emotion-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.emotion-pill button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin-left: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.emotion-pill button:hover {
+  opacity: 1;
+}
+
+.emotion-pill button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.emotion-pill.core {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.emotion-pill.secondary {
+  font-size: 13px;
+  margin-left: 8px;
+}
+
+.emotion-pill.tertiary {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.emotion-tertiary-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .emotion-wheel-container {
+    padding: 12px;
+  }
+
+  .emotion-wheel-zoom-controls {
+    top: 4px;
+    right: 4px;
+    gap: 4px;
+  }
+
+  .emotion-wheel-zoom-controls button {
+    width: 28px;
+    height: 28px;
+  }
+
+  .emotion-complete-buttons {
+    flex-direction: column;
+  }
+
+  .emotion-progress {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+
+  .emotion-progress-steps {
+    flex-wrap: wrap;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .emotion-wheel-container {
+    background: var(--color-background, #1a1a1a);
+  }
+
+  .emotion-wheel-zoom {
+    background: var(--color-background, #1a1a1a);
+  }
+
+  .emotion-wheel-svg {
+    background: var(--color-background, #1a1a1a);
+  }
+
+  .emotion-wheel-zoom-controls button {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-theme, #fff);
+  }
+
+  .emotion-wheel-zoom-controls button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .emotion-progress {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .emotion-selected {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .emotion-tooltip {
+    background: rgba(0, 0, 0, 0.9);
+  }
+}

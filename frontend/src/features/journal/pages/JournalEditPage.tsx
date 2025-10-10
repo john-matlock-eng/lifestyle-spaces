@@ -18,7 +18,7 @@ export const JournalEditPage: React.FC = () => {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
-  const [mood, setMood] = useState('')
+  const [emotions, setEmotions] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export const JournalEditPage: React.FC = () => {
       setTitle(journal.title)
       setContent(journal.content)
       setTags(journal.tags.join(', '))
-      setMood(journal.mood || '')
+      setEmotions(journal.emotions || [])
     }
   }, [journal])
 
@@ -55,7 +55,7 @@ export const JournalEditPage: React.FC = () => {
         title,
         content,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
-        mood: mood || undefined
+        emotions: emotions.length > 0 ? emotions : undefined
       })
 
       navigate(`/journals/${journalId}`)
@@ -167,13 +167,11 @@ export const JournalEditPage: React.FC = () => {
 
         <div className="journal-form-group">
           <label className="journal-form-label">
-            Mood (optional)
+            Emotions (optional)
           </label>
           <EmotionSelector
-            selectedEmotion={mood}
-            onSelectEmotion={(_emotionId, emotionLabel) => {
-              setMood(emotionLabel || '')
-            }}
+            selectedEmotions={emotions}
+            onEmotionsChange={setEmotions}
             disabled={isSubmitting}
           />
         </div>
