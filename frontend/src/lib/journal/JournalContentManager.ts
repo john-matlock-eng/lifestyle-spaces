@@ -1,7 +1,6 @@
-import { ParsedJournal, DisplaySection } from './types';
+import type { ParsedJournal, DisplaySection } from './types';
 
 export class JournalContentManager {
-  private static readonly METADATA_REGEX = /^<!--\s*@(\w+):\s*(.+?)\s*-->/;
   private static readonly SECTION_START_REGEX = /^<!--\s*section:(\w+)(.*?)-->/;
   private static readonly SECTION_END_REGEX = /^<!--\s*\/section:(\w+)\s*-->/;
 

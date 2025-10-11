@@ -78,7 +78,7 @@ export const JournalCreatePage: React.FC = () => {
         // Serialize everything into content with embedded metadata
         finalContent = JournalContentManager.serialize({
           template: selectedTemplate.id,
-          templateVersion: selectedTemplate.version || '1.0',
+          templateVersion: String(selectedTemplate.version || 1),
           metadata: {
             title,
             emotions: emotions.length > 0 ? emotions : undefined
