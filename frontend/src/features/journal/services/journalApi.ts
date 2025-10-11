@@ -48,13 +48,13 @@ export const journalApi = {
 
     const response = await apiService.post(`/api/spaces/${spaceId}/journals`, {
       title: data.title.trim(),
-      content: data.content,
+      content: data.content,  // Contains serialized template data via JournalContentManager
       tags: data.tags || [],
       mood: data.mood,
       emotions: data.emotions,
       isPinned: data.isPinned || false,
-      templateId: data.templateId,
-      templateData: data.templateData
+      templateId: data.templateId
+      // NO templateData field - it's embedded in content!
     })
 
     if (!response || typeof response !== 'object' || !('journalId' in response)) {
@@ -137,11 +137,13 @@ export const journalApi = {
 
     const updateData: Record<string, unknown> = {}
     if (data.title !== undefined) updateData.title = data.title.trim()
-    if (data.content !== undefined) updateData.content = data.content
+    if (data.content !== undefined) updateData.content = data.content  // Contains serialized template data
     if (data.tags !== undefined) updateData.tags = data.tags
     if (data.mood !== undefined) updateData.mood = data.mood
     if (data.emotions !== undefined) updateData.emotions = data.emotions
     if (data.isPinned !== undefined) updateData.isPinned = data.isPinned
+    if (data.templateId !== undefined) updateData.templateId = data.templateId
+    // NO templateData field - it's embedded in content!
 
     const response = await apiService.put(`/api/spaces/${spaceId}/journals/${journalId}`, updateData)
 

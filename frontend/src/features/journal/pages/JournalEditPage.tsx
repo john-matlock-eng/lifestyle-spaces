@@ -5,6 +5,7 @@ import { EmotionSelector } from '../components/EmotionSelector'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
+import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { Template, TemplateData } from '../types/template.types'
 import '../styles/journal.css'
 
@@ -34,23 +35,41 @@ export const JournalEditPage: React.FC = () => {
   useEffect(() => {
     if (journal) {
       setTitle(journal.title)
-      setContent(journal.content)
       setTags(journal.tags.join(', '))
       setEmotions(journal.emotions || [])
 
-      // If journal has a template, load it and populate templateData
-      if (journal.templateId && journal.templateData) {
-        const loadTemplate = async () => {
+      // Parse content to extract template data if it exists
+      if (journal.templateId) {
+        const loadTemplateAndParse = async () => {
           try {
+            // Load the template definition
             const loadedTemplate = await getTemplate(journal.templateId!)
             setTemplate(loadedTemplate)
-            setTemplateData(journal.templateData as TemplateData)
+
+            // Parse the content to extract embedded template data
+            const parsed = JournalContentManager.parse(journal.content)
+
+            console.log('[DEBUG EDIT LOAD] Parsed content:', parsed)
+            console.log('[DEBUG EDIT LOAD] Parsed sections:', Object.keys(parsed.sections))
+
+            // Convert parsed sections back to TemplateData format for editing
+            const parsedTemplateData: TemplateData = {}
+            Object.entries(parsed.sections).forEach(([sectionId, section]) => {
+              parsedTemplateData[sectionId] = section.content
+            })
+
+            setTemplateData(parsedTemplateData)
+            console.log('[DEBUG EDIT LOAD] Template data extracted:', parsedTemplateData)
           } catch (err) {
-            console.error('Failed to load template:', err)
+            console.error('Failed to load template or parse content:', err)
             // If template fails to load, fall back to content-only editing
+            setContent(journal.content)
           }
         }
-        loadTemplate()
+        loadTemplateAndParse()
+      } else {
+        // Non-templated journal, just set the content
+        setContent(journal.content)
       }
     }
   }, [journal])
@@ -77,35 +96,46 @@ export const JournalEditPage: React.FC = () => {
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0)
 
-      // For templated journals, store a simple text summary in content field
-      // The actual structured data is in templateData
+      // Use JournalContentManager to serialize template data into content field
       let finalContent = content
       if (template && templateData) {
-        // Create a simple plain text summary for search/preview purposes
-        finalContent = template.sections
-          .map((section) => {
-            const sectionContent = templateData[section.id] || ''
-            if (!sectionContent.trim()) return ''
-            // Strip HTML tags for plain text summary
-            const plainText = sectionContent.replace(/<[^>]*>/g, '').trim()
-            return `${section.title}: ${plainText}`
-          })
-          .filter((section) => section.length > 0)
-          .join(' | ')
+        // Convert templateData to the format expected by JournalContentManager
+        const sections: Record<string, { content: string; title: string; type: string }> = {}
+        template.sections.forEach((section) => {
+          const sectionContent = templateData[section.id] || ''
+          if (sectionContent.trim()) {
+            sections[section.id] = {
+              content: sectionContent,
+              title: section.title,
+              type: section.type
+            }
+          }
+        })
+
+        // Serialize everything into content with embedded metadata
+        finalContent = JournalContentManager.serialize({
+          template: template.id,
+          templateVersion: template.version || '1.0',
+          metadata: {
+            title,
+            emotions: emotions.length > 0 ? emotions : undefined
+          },
+          sections
+        })
+
+        console.log('[DEBUG EDIT] Serialized content length:', finalContent.length)
+        console.log('[DEBUG EDIT] Template data sections:', Object.keys(templateData))
       }
 
-      console.log('[DEBUG EDIT] Template:', template?.name)
-      console.log('[DEBUG EDIT] Template sections:', template?.sections.map(s => ({ id: s.id, title: s.title })))
-      console.log('[DEBUG EDIT] Template data being sent:', templateData)
-      console.log('[DEBUG EDIT] Final content:', finalContent)
+      console.log('[DEBUG EDIT] Updating journal with content only (no templateData field)')
 
       await updateJournal(spaceId, journalId, {
         title,
         content: finalContent,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
-        templateId: template?.id,
-        templateData: template ? templateData : undefined
+        templateId: template?.id
+        // NO templateData field!
       })
 
       navigate(`/spaces/${spaceId}/journals/${journalId}`)

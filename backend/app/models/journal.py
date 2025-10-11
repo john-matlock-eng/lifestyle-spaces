@@ -7,9 +7,14 @@ from pydantic import BaseModel, Field, field_validator, ConfigDict, field_serial
 
 
 class JournalBase(BaseModel):
-    """Base journal model."""
+    """
+    Base journal model.
+
+    NOTE: Template data is now embedded in the content field using HTML comments.
+    The content field contains markdown with embedded template metadata via JournalParser.
+    """
     title: str = Field(..., min_length=1, max_length=200)
-    content: str = Field(...)
+    content: str = Field(...)  # Contains markdown with embedded template metadata
     tags: List[str] = Field(default_factory=list)
     mood: Optional[str] = None  # Legacy field for backward compatibility
     emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
@@ -19,18 +24,27 @@ class JournalBase(BaseModel):
 
 
 class JournalCreateRequest(JournalBase):
-    """Journal creation request model (without space_id - comes from URL)."""
+    """
+    Journal creation request model (without space_id - comes from URL).
+
+    NOTE: content contains serialized template data via JournalContentManager.
+    templateId is kept for tracking which template was used, but templateData is removed.
+    """
     template_id: Optional[str] = Field(None, alias="templateId")
-    template_data: Optional[Dict[str, Any]] = Field(None, alias="templateData")
+    # REMOVED: template_data field - data is embedded in content
 
     model_config = ConfigDict(populate_by_name=True)
 
 
 class JournalCreate(JournalBase):
-    """Journal creation model (internal use with space_id)."""
+    """
+    Journal creation model (internal use with space_id).
+
+    NOTE: content contains serialized template data via JournalContentManager.
+    """
     space_id: str = Field(..., alias="spaceId")
     template_id: Optional[str] = Field(None, alias="templateId")
-    template_data: Optional[Dict[str, Any]] = Field(None, alias="templateData")
+    # REMOVED: template_data field - data is embedded in content
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -59,15 +73,19 @@ class JournalCreate(JournalBase):
 
 
 class JournalUpdate(BaseModel):
-    """Journal update model."""
+    """
+    Journal update model.
+
+    NOTE: content contains serialized template data via JournalContentManager.
+    """
     title: Optional[str] = Field(None, min_length=1, max_length=200)
-    content: Optional[str] = None
+    content: Optional[str] = None  # Contains markdown with embedded template metadata
     tags: Optional[List[str]] = None
     mood: Optional[str] = None  # Legacy field for backward compatibility
     emotions: Optional[List[str]] = None  # New field for multiple emotions
     is_pinned: Optional[bool] = Field(None, alias="isPinned")
     template_id: Optional[str] = Field(None, alias="templateId")
-    template_data: Optional[Dict[str, Any]] = Field(None, alias="templateData")
+    # REMOVED: template_data field - data is embedded in content
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -99,14 +117,18 @@ class JournalUpdate(BaseModel):
 
 
 class JournalEntry(BaseModel):
-    """Represents a journal entry for internal service use."""
+    """
+    Represents a journal entry for internal service use.
+
+    NOTE: content contains markdown with embedded template metadata.
+    """
     journal_id: str
     space_id: str
     user_id: str
     title: str
-    content: str
-    template_id: Optional[str] = None
-    template_data: Optional[Dict[str, Any]] = None
+    content: str  # Contains markdown with embedded template metadata
+    template_id: Optional[str] = None  # For tracking which template was used
+    # REMOVED: template_data field - data is embedded in content
     tags: List[str] = Field(default_factory=list)
     mood: Optional[str] = None  # Legacy field for backward compatibility
     emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
@@ -118,14 +140,19 @@ class JournalEntry(BaseModel):
 
 
 class JournalResponse(BaseModel):
-    """Journal response model."""
+    """
+    Journal response model for API responses.
+
+    NOTE: content contains markdown with embedded template metadata.
+    Frontend should use JournalContentManager to parse the content.
+    """
     journal_id: str = Field(..., alias="journalId")
     space_id: str = Field(..., alias="spaceId")
     user_id: str = Field(..., alias="userId")
     title: str
-    content: str
+    content: str  # Contains markdown with embedded template metadata
     template_id: Optional[str] = Field(None, alias="templateId")
-    template_data: Optional[Dict[str, Any]] = Field(None, alias="templateData")
+    # REMOVED: template_data field - data is embedded in content
     tags: List[str] = Field(default_factory=list)
     mood: Optional[str] = None  # Legacy field for backward compatibility
     emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
@@ -149,9 +176,8 @@ class JournalResponse(BaseModel):
                 "spaceId": "space-123",
                 "userId": "user-123",
                 "title": "My Daily Reflection",
-                "content": "Today was a great day...",
+                "content": "<!--\n@template: daily-reflection\n@metadata: {\"mood\":\"happy\"}\n-->\n\n<!-- section:gratitude @title:\"Gratitude\" -->\n- family\n- health\n<!-- /section:gratitude -->\n\nToday was a great day...",
                 "templateId": "daily-reflection",
-                "templateData": {"mood": "happy", "gratitude": ["family", "health"]},
                 "tags": ["daily", "reflection"],
                 "mood": "happy",
                 "emotions": ["happy", "playful", "joyful"],

@@ -4,6 +4,8 @@ import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
 import { getEmotionById } from '../data/emotionData'
+import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
+import type { DisplaySection } from '../../../lib/journal/types'
 import ReactMarkdown from 'react-markdown'
 import type { Template } from '../types/template.types'
 import '../styles/journal.css'
@@ -18,6 +20,7 @@ export const JournalViewPage: React.FC = () => {
   const { user } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
   const [template, setTemplate] = useState<Template | null>(null)
+  const [displaySections, setDisplaySections] = useState<DisplaySection[]>([])
 
   useEffect(() => {
     if (spaceId && journalId) {
@@ -26,19 +29,27 @@ export const JournalViewPage: React.FC = () => {
   }, [spaceId, journalId, loadJournal])
 
   useEffect(() => {
-    // Load template if journal has one
+    // Load template and parse content if journal has one
     if (journal?.templateId) {
-      const loadTemplateData = async () => {
+      const loadTemplateAndParse = async () => {
         try {
           const templateData = await getTemplate(journal.templateId!)
           setTemplate(templateData)
+
+          // Parse the content to extract template sections
+          const sections = JournalContentManager.extractDisplaySections(journal.content)
+          setDisplaySections(sections)
+
+          console.log('[DEBUG VIEW] Parsed sections:', sections)
         } catch (err) {
-          console.error('Failed to load template:', err)
+          console.error('Failed to load template or parse content:', err)
+          setDisplaySections([])
         }
       }
-      loadTemplateData()
+      loadTemplateAndParse()
     } else {
       setTemplate(null)
+      setDisplaySections([])
     }
   }, [journal])
 
@@ -213,31 +224,30 @@ export const JournalViewPage: React.FC = () => {
       </div>
 
       <div className="journal-view-content">
-        {template && journal.templateData ? (
-          // Render template sections
+        {template && displaySections.length > 0 ? (
+          // Render template sections parsed from content
           <div className="template-content">
             {template.icon && (
               <div className="template-icon-display" style={{ fontSize: '2em', marginBottom: '1em' }}>
                 {template.icon}
               </div>
             )}
-            {template.sections.map((section) => {
-              const sectionContent = journal.templateData?.[section.id]
-              if (!sectionContent || typeof sectionContent !== 'string') return null
-
-              return (
-                <div key={section.id} className="template-section">
-                  <h3 className="template-section-title">{section.title}</h3>
-                  <div className="template-section-content">
-                    <ReactMarkdown>{sectionContent}</ReactMarkdown>
-                  </div>
+            {displaySections.map((section) => (
+              <div key={section.id} className="template-section">
+                <h3 className="template-section-title">{section.title}</h3>
+                <div className="template-section-content">
+                  <ReactMarkdown>{section.content}</ReactMarkdown>
                 </div>
-              )
-            })}
+              </div>
+            ))}
           </div>
         ) : (
-          // Render regular markdown content
-          <ReactMarkdown>{journal.content}</ReactMarkdown>
+          // Render regular markdown content (or clean markdown if no sections)
+          <ReactMarkdown>
+            {template
+              ? JournalContentManager.extractCleanMarkdown(journal.content)
+              : journal.content}
+          </ReactMarkdown>
         )}
       </div>
 

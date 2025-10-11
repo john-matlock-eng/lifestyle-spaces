@@ -150,7 +150,7 @@ class JournalService:
         # Calculate word count
         word_count = self._calculate_word_count(data.content)
 
-        # Create journal item
+        # Create journal item (NO template_data - data is embedded in content)
         journal_item = {
             'PK': f'SPACE#{space_id}',
             'SK': f'JOURNAL#{journal_id}',
@@ -162,7 +162,7 @@ class JournalService:
             'title': data.title.strip(),
             'content': data.content,
             'template_id': data.template_id,
-            'template_data': data.template_data or {},
+            # REMOVED: template_data - data is embedded in content
             'tags': data.tags,
             'mood': data.mood,
             'emotions': data.emotions or [],
@@ -185,7 +185,7 @@ class JournalService:
             'title': data.title.strip(),
             'content': data.content,
             'template_id': data.template_id,
-            'template_data': data.template_data or {},
+            # REMOVED: template_data - data is embedded in content
             'tags': data.tags,
             'mood': data.mood,
             'emotions': data.emotions or [],
@@ -243,7 +243,7 @@ class JournalService:
             'title': journal['title'],
             'content': journal['content'],
             'template_id': journal.get('template_id'),
-            'template_data': journal.get('template_data', {}),
+            # REMOVED: template_data - data is embedded in content
             'tags': journal.get('tags', []),
             'mood': journal.get('mood'),
             'emotions': journal.get('emotions', []),
@@ -324,10 +324,7 @@ class JournalService:
             update_expr += ", template_id = :template_id"
             expr_values[':template_id'] = data.template_id
 
-        if data.template_data is not None:
-            logger.info(f"[UPDATE_JOURNAL] Updating template_data: {data.template_data}")
-            update_expr += ", template_data = :template_data"
-            expr_values[':template_data'] = data.template_data
+        # REMOVED: template_data update - data is embedded in content
 
         # Update the journal
         update_params = {
@@ -352,7 +349,7 @@ class JournalService:
             'title': updated_journal['title'],
             'content': updated_journal['content'],
             'template_id': updated_journal.get('template_id'),
-            'template_data': updated_journal.get('template_data', {}),
+            # REMOVED: template_data - data is embedded in content
             'tags': updated_journal.get('tags', []),
             'mood': updated_journal.get('mood'),
             'emotions': updated_journal.get('emotions', []),
@@ -486,7 +483,7 @@ class JournalService:
                 'title': journal['title'],
                 'content': journal['content'],
                 'template_id': journal.get('template_id'),
-                'template_data': journal.get('template_data', {}),
+                # REMOVED: template_data - data is embedded in content
                 'tags': journal.get('tags', []),
                 'mood': journal.get('mood'),
                 'emotions': journal.get('emotions', []),
@@ -554,7 +551,7 @@ class JournalService:
                 'title': journal['title'],
                 'content': journal['content'],
                 'template_id': journal.get('template_id'),
-                'template_data': journal.get('template_data', {}),
+                # REMOVED: template_data - data is embedded in content
                 'tags': journal.get('tags', []),
                 'mood': journal.get('mood'),
                 'emotions': journal.get('emotions', []),

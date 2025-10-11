@@ -10,15 +10,15 @@ export interface JournalAuthor {
 
 /**
  * Journal entry interface matching backend response format
+ * NOTE: Template data is now embedded in the content field using JournalContentManager
  */
 export interface JournalEntry {
   journalId: string
   spaceId: string
   userId: string
   title: string
-  content: string
-  templateId?: string
-  templateData?: Record<string, unknown>
+  content: string  // Contains embedded template metadata via HTML comments
+  templateId?: string  // For identifying which template was used
   tags: string[]
   mood?: string  // Legacy field for backward compatibility
   emotions?: string[]  // New field for multiple emotion IDs
@@ -42,30 +42,30 @@ export interface JournalListResponse {
 
 /**
  * Create journal request payload (spaceId comes from URL, not body)
+ * NOTE: content should contain serialized template data via JournalContentManager
  */
 export interface CreateJournalRequest {
   title: string
-  content: string
+  content: string  // Serialized with JournalContentManager.serialize()
   tags?: string[]
   mood?: string  // Legacy field for backward compatibility
   emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
-  templateId?: string
-  templateData?: Record<string, unknown>
+  templateId?: string  // For identifying which template was used
 }
 
 /**
  * Update journal request payload
+ * NOTE: content should contain serialized template data via JournalContentManager
  */
 export interface UpdateJournalRequest {
   title?: string
-  content?: string
+  content?: string  // Serialized with JournalContentManager.serialize()
   tags?: string[]
   mood?: string  // Legacy field for backward compatibility
   emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
-  templateId?: string
-  templateData?: Record<string, unknown>
+  templateId?: string  // For identifying which template was used
 }
 
 /**

@@ -4,6 +4,7 @@ import { RichTextEditor } from '../components/RichTextEditor'
 import { TemplatePicker } from '../components/TemplatePicker'
 import { EmotionSelector } from '../components/EmotionSelector'
 import { useJournal } from '../hooks/useJournal'
+import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { Template, TemplateData } from '../types/template.types'
 import '../styles/journal.css'
 
@@ -58,35 +59,46 @@ export const JournalCreatePage: React.FC = () => {
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0)
 
-      // For templated journals, store a simple text summary in content field
-      // The actual structured data is in templateData
+      // Use JournalContentManager to serialize template data into content field
       let finalContent = content
       if (selectedTemplate && templateData) {
-        // Create a simple plain text summary for search/preview purposes
-        finalContent = selectedTemplate.sections
-          .map((section) => {
-            const sectionContent = templateData[section.id] || ''
-            if (!sectionContent.trim()) return ''
-            // Strip HTML tags for plain text summary
-            const plainText = sectionContent.replace(/<[^>]*>/g, '').trim()
-            return `${section.title}: ${plainText}`
-          })
-          .filter((section) => section.length > 0)
-          .join(' | ')
+        // Convert templateData to the format expected by JournalContentManager
+        const sections: Record<string, { content: string; title: string; type: string }> = {}
+        selectedTemplate.sections.forEach((section) => {
+          const sectionContent = templateData[section.id] || ''
+          if (sectionContent.trim()) {
+            sections[section.id] = {
+              content: sectionContent,
+              title: section.title,
+              type: section.type
+            }
+          }
+        })
+
+        // Serialize everything into content with embedded metadata
+        finalContent = JournalContentManager.serialize({
+          template: selectedTemplate.id,
+          templateVersion: selectedTemplate.version || '1.0',
+          metadata: {
+            title,
+            emotions: emotions.length > 0 ? emotions : undefined
+          },
+          sections
+        })
+
+        console.log('[DEBUG] Serialized content with embedded metadata:', finalContent.substring(0, 200))
       }
 
       console.log('[DEBUG] Emotions state before submission:', emotions)
       console.log('[DEBUG] Emotions length:', emotions.length)
-      console.log('[DEBUG] Template data being sent:', templateData)
-      console.log('[DEBUG] Template sections:', selectedTemplate?.sections.map(s => ({ id: s.id, title: s.title })))
 
       const journal = await createJournal(spaceId, {
         title,
         content: finalContent,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
-        templateId: selectedTemplate?.id,
-        templateData: selectedTemplate ? templateData : undefined
+        templateId: selectedTemplate?.id
+        // NO templateData field!
       })
 
       navigate(`/spaces/${spaceId}/journals/${journal.journalId}`)

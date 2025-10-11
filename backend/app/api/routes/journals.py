@@ -40,8 +40,8 @@ async def create_journal(
             mood=journal.mood,
             emotions=journal.emotions,
             is_pinned=journal.is_pinned,
-            template_id=journal.template_id,
-            template_data=journal.template_data
+            template_id=journal.template_id
+            # REMOVED: template_data - data is embedded in content
         )
 
         service = JournalService()
@@ -59,7 +59,7 @@ async def create_journal(
             title=result["title"],
             content=result["content"],
             template_id=result.get("template_id"),
-            template_data=result.get("template_data", {}),
+            # REMOVED: template_data - data is embedded in content
             tags=result.get("tags", []),
             mood=result.get("mood"),
             emotions=result.get("emotions", []),
@@ -133,7 +133,7 @@ async def list_space_journals(
                 title=journal["title"],
                 content=journal["content"],
                 template_id=journal.get("template_id"),
-                template_data=journal.get("template_data", {}),
+                # REMOVED: template_data - data is embedded in content
                 tags=journal.get("tags", []),
                 mood=journal.get("mood"),
                 emotions=journal.get("emotions", []),
@@ -193,7 +193,7 @@ async def get_journal(
             title=result["title"],
             content=result["content"],
             template_id=result.get("template_id"),
-            template_data=result.get("template_data", {}),
+            # REMOVED: template_data - data is embedded in content
             tags=result.get("tags", []),
             mood=result.get("mood"),
             emotions=result.get("emotions", []),
@@ -247,7 +247,7 @@ async def update_journal(
             title=result["title"],
             content=result["content"],
             template_id=result.get("template_id"),
-            template_data=result.get("template_data", {}),
+            # REMOVED: template_data - data is embedded in content
             tags=result.get("tags", []),
             mood=result.get("mood"),
             emotions=result.get("emotions", []),
@@ -345,7 +345,7 @@ async def list_user_journals(
                 title=journal["title"],
                 content=journal["content"],
                 template_id=journal.get("template_id"),
-                template_data=journal.get("template_data", {}),
+                # REMOVED: template_data - data is embedded in content
                 tags=journal.get("tags", []),
                 mood=journal.get("mood"),
                 emotions=journal.get("emotions", []),
