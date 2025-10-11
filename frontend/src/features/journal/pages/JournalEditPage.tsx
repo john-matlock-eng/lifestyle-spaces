@@ -94,6 +94,11 @@ export const JournalEditPage: React.FC = () => {
           .join(' | ')
       }
 
+      console.log('[DEBUG EDIT] Template:', template?.name)
+      console.log('[DEBUG EDIT] Template sections:', template?.sections.map(s => ({ id: s.id, title: s.title })))
+      console.log('[DEBUG EDIT] Template data being sent:', templateData)
+      console.log('[DEBUG EDIT] Final content:', finalContent)
+
       await updateJournal(spaceId, journalId, {
         title,
         content: finalContent,
