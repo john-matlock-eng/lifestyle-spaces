@@ -325,6 +325,7 @@ class JournalService:
             expr_values[':template_id'] = data.template_id
 
         if data.template_data is not None:
+            logger.info(f"[UPDATE_JOURNAL] Updating template_data: {data.template_data}")
             update_expr += ", template_data = :template_data"
             expr_values[':template_data'] = data.template_data
 
