@@ -77,6 +77,8 @@ export const JournalCreatePage: React.FC = () => {
 
       console.log('[DEBUG] Emotions state before submission:', emotions)
       console.log('[DEBUG] Emotions length:', emotions.length)
+      console.log('[DEBUG] Template data being sent:', templateData)
+      console.log('[DEBUG] Template sections:', selectedTemplate?.sections.map(s => ({ id: s.id, title: s.title })))
 
       const journal = await createJournal(spaceId, {
         title,
