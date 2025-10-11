@@ -1,4 +1,4 @@
-import { ParsedJournal, SectionContent, DisplaySection } from './types';
+import { ParsedJournal, DisplaySection } from './types';
 
 export class JournalContentManager {
   private static readonly METADATA_REGEX = /^<!--\s*@(\w+):\s*(.+?)\s*-->/;
@@ -19,7 +19,7 @@ export class JournalContentManager {
     let inMetadataBlock = false;
     let currentSection: string | null = null;
     let sectionContent: string[] = [];
-    let sectionAttributes: Record<string, any> = {};
+    let sectionAttributes: Record<string, string | number | boolean> = {};
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -106,7 +106,7 @@ export class JournalContentManager {
   static serialize(data: {
     template: string;
     templateVersion: string;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
     sections: Record<string, { content: string; title: string; type: string }>;
   }): string {
     const lines: string[] = [];
@@ -135,7 +135,6 @@ export class JournalContentManager {
     const lines = content.split('\n');
     const cleanLines: string[] = [];
     let inMetadataBlock = false;
-    let inSection = false;
 
     for (const line of lines) {
       // Skip metadata blocks
@@ -151,11 +150,9 @@ export class JournalContentManager {
 
       // Skip section markers but keep content
       if (line.match(this.SECTION_START_REGEX)) {
-        inSection = true;
         continue;
       }
       if (line.match(this.SECTION_END_REGEX)) {
-        inSection = false;
         cleanLines.push(''); // Add spacing between sections
         continue;
       }
@@ -188,8 +185,8 @@ export class JournalContentManager {
     return sections;
   }
 
-  private static parseAttributes(attrString: string): Record<string, any> {
-    const attrs: Record<string, any> = {};
+  private static parseAttributes(attrString: string): Record<string, string | number | boolean> {
+    const attrs: Record<string, string> = {};
     const regex = /@(\w+):"([^"]+)"|@(\w+):(\S+)/g;
     let match;
 

@@ -14,7 +14,7 @@ export interface ParsedJournal {
   template: string | null;
   templateVersion: string | null;
   created: string | null;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   sections: Record<string, SectionContent>;
   rawContent: string;
 }
@@ -23,7 +23,7 @@ export interface SectionContent {
   content: string;
   title?: string;
   type?: string;
-  attributes?: Record<string, any>;
+  attributes?: Record<string, string | number | boolean>;
 }
 
 export interface DisplaySection {

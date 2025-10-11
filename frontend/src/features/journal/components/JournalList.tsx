@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { JournalCard } from './JournalCard'
 import { journalApi } from '../services/journalApi'
@@ -22,11 +22,7 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
   const [hasMore, setHasMore] = useState(false)
   const pageSize = 9
 
-  useEffect(() => {
-    loadJournals()
-  }, [spaceId, currentPage])
-
-  const loadJournals = async () => {
+  const loadJournals = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -42,7 +38,11 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [spaceId, currentPage, pageSize])
+
+  useEffect(() => {
+    loadJournals()
+  }, [loadJournals])
 
   const handleNewJournal = () => {
     navigate(`/spaces/${spaceId}/journals/new`)
