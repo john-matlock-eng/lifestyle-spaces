@@ -320,6 +320,14 @@ class JournalService:
             update_expr += ", is_pinned = :is_pinned"
             expr_values[':is_pinned'] = data.is_pinned
 
+        if data.template_id is not None:
+            update_expr += ", template_id = :template_id"
+            expr_values[':template_id'] = data.template_id
+
+        if data.template_data is not None:
+            update_expr += ", template_data = :template_data"
+            expr_values[':template_data'] = data.template_data
+
         # Update the journal
         update_params = {
             'Key': {'PK': journal['PK'], 'SK': journal['SK']},

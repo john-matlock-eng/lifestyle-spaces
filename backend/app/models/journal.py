@@ -66,6 +66,8 @@ class JournalUpdate(BaseModel):
     mood: Optional[str] = None  # Legacy field for backward compatibility
     emotions: Optional[List[str]] = None  # New field for multiple emotions
     is_pinned: Optional[bool] = Field(None, alias="isPinned")
+    template_id: Optional[str] = Field(None, alias="templateId")
+    template_data: Optional[Dict[str, Any]] = Field(None, alias="templateData")
 
     model_config = ConfigDict(populate_by_name=True)
 

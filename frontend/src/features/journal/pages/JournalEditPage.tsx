@@ -98,7 +98,9 @@ export const JournalEditPage: React.FC = () => {
         title,
         content: finalContent,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
-        emotions: emotions.length > 0 ? emotions : undefined
+        emotions: emotions.length > 0 ? emotions : undefined,
+        templateId: template?.id,
+        templateData: template ? templateData : undefined
       })
 
       navigate(`/spaces/${spaceId}/journals/${journalId}`)
