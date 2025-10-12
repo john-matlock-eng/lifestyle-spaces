@@ -10,6 +10,7 @@ import ReactMarkdown from 'react-markdown'
 import type { Template } from '../types/template.types'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
+import '../styles/dynamic-sections.css'
 
 /**
  * Page for viewing a single journal entry
@@ -256,6 +257,25 @@ export const JournalViewPage: React.FC = () => {
                               </div>
                             ))}
                           </div>
+                        )
+                      } catch {
+                        // If parsing fails, fall back to markdown
+                        return <ReactMarkdown>{section.content}</ReactMarkdown>
+                      }
+                    })()
+                  ) : section.type === 'list' ? (
+                    // Render List section
+                    (() => {
+                      try {
+                        const listItems = JSON.parse(section.content)
+                        return (
+                          <ul className="list-view-section">
+                            {listItems.map((item: any, index: number) => (
+                              <li key={item.id || index} className="list-view-item">
+                                {item.text}
+                              </li>
+                            ))}
+                          </ul>
                         )
                       } catch {
                         // If parsing fails, fall back to markdown

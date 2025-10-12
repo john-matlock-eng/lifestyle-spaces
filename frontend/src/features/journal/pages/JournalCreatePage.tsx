@@ -4,11 +4,15 @@ import { RichTextEditor } from '../components/RichTextEditor'
 import { TemplatePicker } from '../components/TemplatePicker'
 import { EmotionSelector } from '../components/EmotionSelector'
 import { QASection } from '../components/sections/QASection'
+import { AddSectionButton } from '../components/AddSectionButton'
+import { ListSection } from '../components/sections/ListSection'
 import { useJournal } from '../hooks/useJournal'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { Template, TemplateData } from '../types/template.types'
+import { Trash2, Edit2 } from 'lucide-react'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
+import '../styles/dynamic-sections.css'
 
 /**
  * Page for creating a new journal entry
@@ -25,6 +29,28 @@ export const JournalCreatePage: React.FC = () => {
   const [tags, setTags] = useState('')
   const [emotions, setEmotions] = useState<string[]>([])
   const [showTemplatePicker, setShowTemplatePicker] = useState(true)
+  const [customSections, setCustomSections] = useState<Array<{
+    id: string
+    title: string
+    type: string
+    content: any
+    config?: any
+    isEditing?: boolean
+  }>>([])
+
+  const handleAddCustomSection = (section: any) => {
+    setCustomSections([...customSections, { ...section, isEditing: false }])
+  }
+
+  const handleRemoveCustomSection = (id: string) => {
+    setCustomSections(customSections.filter(s => s.id !== id))
+  }
+
+  const handleUpdateCustomSection = (id: string, updates: any) => {
+    setCustomSections(customSections.map(s =>
+      s.id === id ? { ...s, ...updates } : s
+    ))
+  }
 
   const handleTemplateSelect = (template: Template | null) => {
     setSelectedTemplate(template)
@@ -63,27 +89,63 @@ export const JournalCreatePage: React.FC = () => {
 
       // Use JournalContentManager to serialize template data into content field
       let finalContent = content
-      if (selectedTemplate && templateData) {
+      if (selectedTemplate || customSections.length > 0) {
         // Convert templateData to the format expected by JournalContentManager
         const sections: Record<string, { content: string; title: string; type: string }> = {}
-        selectedTemplate.sections.forEach((section) => {
-          const sectionContent = templateData[section.id]
 
-          // Handle different section types
-          if (section.type === 'q_and_a') {
-            // Q&A sections store arrays of QAPair objects
-            if (Array.isArray(sectionContent) && sectionContent.length > 0) {
+        // Add template sections
+        if (selectedTemplate) {
+          selectedTemplate.sections.forEach((section) => {
+            const sectionContent = templateData[section.id]
+
+            // Handle different section types
+            if (section.type === 'q_and_a') {
+              // Q&A sections store arrays of QAPair objects
+              if (Array.isArray(sectionContent) && sectionContent.length > 0) {
+                sections[section.id] = {
+                  content: JSON.stringify(sectionContent),
+                  title: section.title,
+                  type: section.type
+                }
+              }
+            } else if (section.type === 'list') {
+              // List sections store arrays of ListItem objects
+              if (Array.isArray(sectionContent) && sectionContent.length > 0) {
+                sections[section.id] = {
+                  content: JSON.stringify(sectionContent),
+                  title: section.title,
+                  type: section.type
+                }
+              }
+            } else {
+              // Other sections store strings
+              if (sectionContent && typeof sectionContent === 'string' && sectionContent.trim()) {
+                sections[section.id] = {
+                  content: sectionContent,
+                  title: section.title,
+                  type: section.type
+                }
+              }
+            }
+          })
+        }
+
+        // Add custom sections
+        customSections.forEach(section => {
+          if (section.type === 'q_and_a' || section.type === 'list') {
+            // Q&A and List sections store arrays
+            if (Array.isArray(section.content) && section.content.length > 0) {
               sections[section.id] = {
-                content: JSON.stringify(sectionContent),
+                content: JSON.stringify(section.content),
                 title: section.title,
                 type: section.type
               }
             }
           } else {
-            // Other sections store strings
-            if (sectionContent && typeof sectionContent === 'string' && sectionContent.trim()) {
+            // Other section types store strings
+            if (section.content && typeof section.content === 'string' && section.content.trim()) {
               sections[section.id] = {
-                content: sectionContent,
+                content: section.content,
                 title: section.title,
                 type: section.type
               }
@@ -93,8 +155,8 @@ export const JournalCreatePage: React.FC = () => {
 
         // Serialize everything into content with embedded metadata
         finalContent = JournalContentManager.serialize({
-          template: selectedTemplate.id,
-          templateVersion: String(selectedTemplate.version || 1),
+          template: selectedTemplate?.id || 'blank',
+          templateVersion: String(selectedTemplate?.version || 1),
           metadata: {
             title,
             emotions: emotions.length > 0 ? emotions : undefined
@@ -214,6 +276,13 @@ export const JournalCreatePage: React.FC = () => {
                       disabled={loading}
                       config={section.config}
                     />
+                  ) : section.type === 'list' ? (
+                    <ListSection
+                      value={templateData[section.id] || section.defaultValue || []}
+                      onChange={(value) => handleTemplateDataChange(section.id, value)}
+                      placeholder={section.placeholder}
+                      disabled={loading}
+                    />
                   ) : (
                     <RichTextEditor
                       content={templateData[section.id] || ''}
@@ -243,6 +312,88 @@ export const JournalCreatePage: React.FC = () => {
               />
             </div>
           )}
+
+          {/* Custom Sections */}
+          {customSections.map(section => (
+            <div key={section.id} className="journal-custom-section">
+              <div className="custom-section-header">
+                {section.isEditing ? (
+                  <input
+                    type="text"
+                    value={section.title}
+                    onChange={(e) => handleUpdateCustomSection(section.id, { title: e.target.value })}
+                    onBlur={() => handleUpdateCustomSection(section.id, { isEditing: false })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleUpdateCustomSection(section.id, { isEditing: false })
+                      }
+                    }}
+                    className="custom-section-title-input"
+                    autoFocus
+                  />
+                ) : (
+                  <h3 className="custom-section-title">{section.title}</h3>
+                )}
+
+                <div className="custom-section-actions">
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateCustomSection(section.id, { isEditing: true })}
+                    className="custom-section-edit"
+                    title="Edit title"
+                    disabled={loading}
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveCustomSection(section.id)}
+                    className="custom-section-remove"
+                    title="Remove section"
+                    disabled={loading}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="custom-section-content">
+                {section.type === 'paragraph' && (
+                  <RichTextEditor
+                    content={section.content}
+                    onChange={(content) => handleUpdateCustomSection(section.id, { content })}
+                    placeholder="Write here..."
+                    minHeight="200px"
+                    showToolbar={true}
+                    disabled={loading}
+                  />
+                )}
+                {section.type === 'q_and_a' && (
+                  <QASection
+                    value={section.content}
+                    onChange={(content) => handleUpdateCustomSection(section.id, { content })}
+                    config={section.config}
+                    disabled={loading}
+                  />
+                )}
+                {section.type === 'list' && (
+                  <ListSection
+                    value={section.content}
+                    onChange={(content) => handleUpdateCustomSection(section.id, { content })}
+                    disabled={loading}
+                  />
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* Add Section Button */}
+          <AddSectionButton
+            onAddSection={handleAddCustomSection}
+            currentSectionCount={(selectedTemplate?.sections.length || 0) + customSections.length}
+            maxSections={15}
+            disabled={loading}
+          />
 
         <div className="journal-form-group">
           <label htmlFor="tags" className="journal-form-label">

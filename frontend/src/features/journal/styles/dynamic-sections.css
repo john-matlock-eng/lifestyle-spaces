@@ -1,0 +1,305 @@
+/* Add Section Button */
+.add-section-container {
+  margin: 24px 0;
+  position: relative;
+}
+
+.add-section-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  border: 2px dashed var(--color-border-light, #e0e0e0);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-secondary, #666);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-section-button:hover:not(:disabled) {
+  border-color: var(--color-primary, #3b82f6);
+  color: var(--color-primary, #3b82f6);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+/* Section Type Menu */
+.section-type-menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: white;
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.section-type-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border-light, #f0f0f0);
+}
+
+.section-type-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.close-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary, #666);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-menu-btn:hover {
+  background: var(--color-background-secondary, #f5f5f5);
+}
+
+.section-type-list {
+  padding: 8px;
+}
+
+.section-type-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.section-type-option:hover:not(:disabled) {
+  background: var(--color-background-secondary, #f5f5f5);
+}
+
+.section-type-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--color-primary-light, #eff6ff);
+  color: var(--color-primary, #3b82f6);
+  border-radius: 8px;
+}
+
+.section-type-info {
+  flex: 1;
+}
+
+.section-type-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text, #333);
+  margin-bottom: 2px;
+}
+
+.section-type-description {
+  font-size: 12px;
+  color: var(--color-text-secondary, #666);
+}
+
+/* Custom Section Styles */
+.journal-custom-section {
+  margin: 24px 0;
+  padding: 20px;
+  background: var(--color-background-secondary, #fafafa);
+  border: 1px solid var(--color-border-light, #e0e0e0);
+  border-radius: 8px;
+  position: relative;
+}
+
+.custom-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.custom-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text, #333);
+  margin: 0;
+}
+
+.custom-section-title-input {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text, #333);
+  border: 1px solid var(--color-primary, #3b82f6);
+  border-radius: 4px;
+  padding: 4px 8px;
+  background: white;
+}
+
+.custom-section-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.custom-section-edit,
+.custom-section-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary, #666);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.custom-section-edit:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-primary, #3b82f6);
+}
+
+.custom-section-remove:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger, #ef4444);
+}
+
+.custom-section-content {
+  background: white;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+/* List Section Styles */
+.list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.list-item-drag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary, #999);
+  cursor: grab;
+}
+
+.list-item-drag:active {
+  cursor: grabbing;
+}
+
+.list-item-bullet {
+  color: var(--color-primary, #3b82f6);
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.list-item-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border-light, #e0e0e0);
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+  transition: all 0.2s;
+}
+
+.list-item-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.list-item-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary, #999);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.list-item-remove:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger, #ef4444);
+}
+
+.list-add-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px dashed var(--color-border-light, #e0e0e0);
+  background: transparent;
+  color: var(--color-text-secondary, #666);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.list-add-button:hover {
+  border-color: var(--color-primary, #3b82f6);
+  color: var(--color-primary, #3b82f6);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+/* List View Styles (read-only) */
+.list-view-section {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list-view-item {
+  position: relative;
+  padding: 8px 0 8px 24px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text, #333);
+}
+
+.list-view-item::before {
+  content: '•';
+  position: absolute;
+  left: 8px;
+  color: var(--color-primary, #3b82f6);
+  font-size: 16px;
+  font-weight: bold;
+}

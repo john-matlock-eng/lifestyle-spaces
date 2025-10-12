@@ -3,13 +3,17 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { RichTextEditor } from '../components/RichTextEditor'
 import { EmotionSelector } from '../components/EmotionSelector'
 import { QASection } from '../components/sections/QASection'
+import { AddSectionButton } from '../components/AddSectionButton'
+import { ListSection } from '../components/sections/ListSection'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { Template, TemplateData } from '../types/template.types'
+import { Trash2, Edit2 } from 'lucide-react'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
+import '../styles/dynamic-sections.css'
 
 /**
  * Page for editing an existing journal entry
@@ -27,6 +31,28 @@ export const JournalEditPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [template, setTemplate] = useState<Template | null>(null)
   const [templateData, setTemplateData] = useState<TemplateData>({})
+  const [customSections, setCustomSections] = useState<Array<{
+    id: string
+    title: string
+    type: string
+    content: any
+    config?: any
+    isEditing?: boolean
+  }>>([])
+
+  const handleAddCustomSection = (section: any) => {
+    setCustomSections([...customSections, { ...section, isEditing: false }])
+  }
+
+  const handleRemoveCustomSection = (id: string) => {
+    setCustomSections(customSections.filter(s => s.id !== id))
+  }
+
+  const handleUpdateCustomSection = (id: string, updates: any) => {
+    setCustomSections(customSections.map(s =>
+      s.id === id ? { ...s, ...updates } : s
+    ))
+  }
 
   useEffect(() => {
     if (spaceId && journalId) {
@@ -56,24 +82,53 @@ export const JournalEditPage: React.FC = () => {
 
             // Convert parsed sections back to TemplateData format for editing
             const parsedTemplateData: TemplateData = {}
+            const parsedCustomSections: Array<{
+              id: string
+              title: string
+              type: string
+              content: any
+              config?: any
+              isEditing?: boolean
+            }> = []
+
             Object.entries(parsed.sections).forEach(([sectionId, section]) => {
-              // Check if this is a Q&A section
-              if (section.type === 'q_and_a') {
+              // Check if this is a custom section (starts with 'custom_')
+              const isCustomSection = sectionId.startsWith('custom_')
+
+              // Parse content based on section type
+              let parsedContent: any
+              if (section.type === 'q_and_a' || section.type === 'list') {
                 try {
-                  // Parse JSON string back to QAPair array
-                  parsedTemplateData[sectionId] = JSON.parse(section.content)
+                  // Parse JSON string back to array
+                  parsedContent = JSON.parse(section.content)
                 } catch {
                   // If parsing fails, default to empty array
-                  parsedTemplateData[sectionId] = []
+                  parsedContent = []
                 }
               } else {
                 // Other sections are plain strings
-                parsedTemplateData[sectionId] = section.content
+                parsedContent = section.content
+              }
+
+              if (isCustomSection) {
+                // Add to custom sections
+                parsedCustomSections.push({
+                  id: sectionId,
+                  title: section.title,
+                  type: section.type,
+                  content: parsedContent,
+                  isEditing: false
+                })
+              } else {
+                // Add to template data
+                parsedTemplateData[sectionId] = parsedContent
               }
             })
 
             setTemplateData(parsedTemplateData)
+            setCustomSections(parsedCustomSections)
             console.log('[DEBUG EDIT LOAD] Template data extracted:', parsedTemplateData)
+            console.log('[DEBUG EDIT LOAD] Custom sections extracted:', parsedCustomSections)
           } catch (err) {
             console.error('Failed to load template or parse content:', err)
             // If template fails to load, fall back to content-only editing
@@ -112,27 +167,63 @@ export const JournalEditPage: React.FC = () => {
 
       // Use JournalContentManager to serialize template data into content field
       let finalContent = content
-      if (template && templateData) {
+      if (template || customSections.length > 0) {
         // Convert templateData to the format expected by JournalContentManager
         const sections: Record<string, { content: string; title: string; type: string }> = {}
-        template.sections.forEach((section) => {
-          const sectionContent = templateData[section.id]
 
-          // Handle different section types
-          if (section.type === 'q_and_a') {
-            // Q&A sections store arrays of QAPair objects
-            if (Array.isArray(sectionContent) && sectionContent.length > 0) {
+        // Add template sections
+        if (template) {
+          template.sections.forEach((section) => {
+            const sectionContent = templateData[section.id]
+
+            // Handle different section types
+            if (section.type === 'q_and_a') {
+              // Q&A sections store arrays of QAPair objects
+              if (Array.isArray(sectionContent) && sectionContent.length > 0) {
+                sections[section.id] = {
+                  content: JSON.stringify(sectionContent),
+                  title: section.title,
+                  type: section.type
+                }
+              }
+            } else if (section.type === 'list') {
+              // List sections store arrays of ListItem objects
+              if (Array.isArray(sectionContent) && sectionContent.length > 0) {
+                sections[section.id] = {
+                  content: JSON.stringify(sectionContent),
+                  title: section.title,
+                  type: section.type
+                }
+              }
+            } else {
+              // Other sections store strings
+              if (sectionContent && typeof sectionContent === 'string' && sectionContent.trim()) {
+                sections[section.id] = {
+                  content: sectionContent,
+                  title: section.title,
+                  type: section.type
+                }
+              }
+            }
+          })
+        }
+
+        // Add custom sections
+        customSections.forEach(section => {
+          if (section.type === 'q_and_a' || section.type === 'list') {
+            // Q&A and List sections store arrays
+            if (Array.isArray(section.content) && section.content.length > 0) {
               sections[section.id] = {
-                content: JSON.stringify(sectionContent),
+                content: JSON.stringify(section.content),
                 title: section.title,
                 type: section.type
               }
             }
           } else {
-            // Other sections store strings
-            if (sectionContent && typeof sectionContent === 'string' && sectionContent.trim()) {
+            // Other section types store strings
+            if (section.content && typeof section.content === 'string' && section.content.trim()) {
               sections[section.id] = {
-                content: sectionContent,
+                content: section.content,
                 title: section.title,
                 type: section.type
               }
@@ -142,8 +233,8 @@ export const JournalEditPage: React.FC = () => {
 
         // Serialize everything into content with embedded metadata
         finalContent = JournalContentManager.serialize({
-          template: template.id,
-          templateVersion: String(template.version || 1),
+          template: template?.id || 'blank',
+          templateVersion: String(template?.version || 1),
           metadata: {
             title,
             emotions: emotions.length > 0 ? emotions : undefined
@@ -272,6 +363,13 @@ export const JournalEditPage: React.FC = () => {
                     disabled={isSubmitting}
                     config={section.config}
                   />
+                ) : section.type === 'list' ? (
+                  <ListSection
+                    value={templateData[section.id] || section.defaultValue || []}
+                    onChange={(value) => handleTemplateDataChange(section.id, value)}
+                    placeholder={section.placeholder}
+                    disabled={isSubmitting}
+                  />
                 ) : (
                   <RichTextEditor
                     content={templateData[section.id] || ''}
@@ -301,6 +399,88 @@ export const JournalEditPage: React.FC = () => {
             />
           </div>
         )}
+
+        {/* Custom Sections */}
+        {customSections.map(section => (
+          <div key={section.id} className="journal-custom-section">
+            <div className="custom-section-header">
+              {section.isEditing ? (
+                <input
+                  type="text"
+                  value={section.title}
+                  onChange={(e) => handleUpdateCustomSection(section.id, { title: e.target.value })}
+                  onBlur={() => handleUpdateCustomSection(section.id, { isEditing: false })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleUpdateCustomSection(section.id, { isEditing: false })
+                    }
+                  }}
+                  className="custom-section-title-input"
+                  autoFocus
+                />
+              ) : (
+                <h3 className="custom-section-title">{section.title}</h3>
+              )}
+
+              <div className="custom-section-actions">
+                <button
+                  type="button"
+                  onClick={() => handleUpdateCustomSection(section.id, { isEditing: true })}
+                  className="custom-section-edit"
+                  title="Edit title"
+                  disabled={isSubmitting}
+                >
+                  <Edit2 size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveCustomSection(section.id)}
+                  className="custom-section-remove"
+                  title="Remove section"
+                  disabled={isSubmitting}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+
+            <div className="custom-section-content">
+              {section.type === 'paragraph' && (
+                <RichTextEditor
+                  content={section.content}
+                  onChange={(content) => handleUpdateCustomSection(section.id, { content })}
+                  placeholder="Write here..."
+                  minHeight="200px"
+                  showToolbar={true}
+                  disabled={isSubmitting}
+                />
+              )}
+              {section.type === 'q_and_a' && (
+                <QASection
+                  value={section.content}
+                  onChange={(content) => handleUpdateCustomSection(section.id, { content })}
+                  config={section.config}
+                  disabled={isSubmitting}
+                />
+              )}
+              {section.type === 'list' && (
+                <ListSection
+                  value={section.content}
+                  onChange={(content) => handleUpdateCustomSection(section.id, { content })}
+                  disabled={isSubmitting}
+                />
+              )}
+            </div>
+          </div>
+        ))}
+
+        {/* Add Section Button */}
+        <AddSectionButton
+          onAddSection={handleAddCustomSection}
+          currentSectionCount={(template?.sections.length || 0) + customSections.length}
+          maxSections={15}
+          disabled={isSubmitting}
+        />
 
         <div className="journal-form-group">
           <label htmlFor="tags" className="journal-form-label">
