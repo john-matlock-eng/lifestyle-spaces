@@ -16,9 +16,23 @@
     {
       "id": "deep_dive",
       "title": "Examine",
-      "type": "paragraph",
-      "placeholder": "Explore the roots by asking yourself the hard questions. Use a 'Question:' and 'Answer:' format to dig into what's beneath the surface, what triggered the response, old patterns, unmet needs, and where the shame or fear is hiding.",
-      "defaultValue": ""
+      "type": "q_and_a",
+      "placeholder": "Explore the roots by asking yourself the hard questions.",
+      "defaultValue": [],
+      "config": {
+        "min_pairs": 1,
+        "max_pairs": 10,
+        "suggested_questions": [
+          "What triggered this feeling or response?",
+          "What's beneath the surface emotion?",
+          "What old pattern am I repeating?",
+          "What unmet need is driving this?",
+          "Where is the shame or fear hiding?",
+          "What would I tell a friend in this situation?",
+          "What am I afraid will happen if I let this go?",
+          "What story am I telling myself about this?"
+        ]
+      }
     },
     {
       "id": "action_plan",

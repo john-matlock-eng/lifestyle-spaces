@@ -3,10 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { RichTextEditor } from '../components/RichTextEditor'
 import { TemplatePicker } from '../components/TemplatePicker'
 import { EmotionSelector } from '../components/EmotionSelector'
+import { QASection } from '../components/sections/QASection'
 import { useJournal } from '../hooks/useJournal'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { Template, TemplateData } from '../types/template.types'
 import '../styles/journal.css'
+import '../styles/qa-section.css'
 
 /**
  * Page for creating a new journal entry
@@ -39,7 +41,7 @@ export const JournalCreatePage: React.FC = () => {
     }
   }
 
-  const handleTemplateDataChange = (sectionId: string, value: string) => {
+  const handleTemplateDataChange = (sectionId: string, value: string | any) => {
     setTemplateData((prev) => ({
       ...prev,
       [sectionId]: value
@@ -65,12 +67,26 @@ export const JournalCreatePage: React.FC = () => {
         // Convert templateData to the format expected by JournalContentManager
         const sections: Record<string, { content: string; title: string; type: string }> = {}
         selectedTemplate.sections.forEach((section) => {
-          const sectionContent = templateData[section.id] || ''
-          if (sectionContent.trim()) {
-            sections[section.id] = {
-              content: sectionContent,
-              title: section.title,
-              type: section.type
+          const sectionContent = templateData[section.id]
+
+          // Handle different section types
+          if (section.type === 'q_and_a') {
+            // Q&A sections store arrays of QAPair objects
+            if (Array.isArray(sectionContent) && sectionContent.length > 0) {
+              sections[section.id] = {
+                content: JSON.stringify(sectionContent),
+                title: section.title,
+                type: section.type
+              }
+            }
+          } else {
+            // Other sections store strings
+            if (sectionContent && typeof sectionContent === 'string' && sectionContent.trim()) {
+              sections[section.id] = {
+                content: sectionContent,
+                title: section.title,
+                type: section.type
+              }
             }
           }
         })
@@ -190,14 +206,24 @@ export const JournalCreatePage: React.FC = () => {
                   <label htmlFor={section.id} className="journal-form-label">
                     {section.title}
                   </label>
-                  <RichTextEditor
-                    content={templateData[section.id] || ''}
-                    onChange={(value) => handleTemplateDataChange(section.id, value)}
-                    placeholder={section.placeholder}
-                    minHeight="200px"
-                    showToolbar={true}
-                    disabled={loading}
-                  />
+                  {section.type === 'q_and_a' ? (
+                    <QASection
+                      value={templateData[section.id] || section.defaultValue || []}
+                      onChange={(value) => handleTemplateDataChange(section.id, value)}
+                      placeholder={section.placeholder}
+                      disabled={loading}
+                      config={section.config}
+                    />
+                  ) : (
+                    <RichTextEditor
+                      content={templateData[section.id] || ''}
+                      onChange={(value) => handleTemplateDataChange(section.id, value)}
+                      placeholder={section.placeholder}
+                      minHeight="200px"
+                      showToolbar={true}
+                      disabled={loading}
+                    />
+                  )}
                 </div>
               ))}
             </div>

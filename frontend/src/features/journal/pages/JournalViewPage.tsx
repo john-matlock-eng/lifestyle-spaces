@@ -9,6 +9,7 @@ import type { DisplaySection } from '../../../lib/journal/types'
 import ReactMarkdown from 'react-markdown'
 import type { Template } from '../types/template.types'
 import '../styles/journal.css'
+import '../styles/qa-section.css'
 
 /**
  * Page for viewing a single journal entry
@@ -236,7 +237,35 @@ export const JournalViewPage: React.FC = () => {
               <div key={section.id} className="template-section">
                 <h3 className="template-section-title">{section.title}</h3>
                 <div className="template-section-content">
-                  <ReactMarkdown>{section.content}</ReactMarkdown>
+                  {section.type === 'q_and_a' ? (
+                    // Render Q&A section
+                    (() => {
+                      try {
+                        const qaPairs = JSON.parse(section.content)
+                        return (
+                          <div className="qa-view-section">
+                            {qaPairs.map((pair: any, index: number) => (
+                              <div key={pair.id || index} className="qa-view-pair">
+                                <div className="qa-view-question">
+                                  <span className="qa-number">Q{index + 1}</span>
+                                  <strong>{pair.question}</strong>
+                                </div>
+                                <div className="qa-view-answer">
+                                  <ReactMarkdown>{pair.answer}</ReactMarkdown>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      } catch {
+                        // If parsing fails, fall back to markdown
+                        return <ReactMarkdown>{section.content}</ReactMarkdown>
+                      }
+                    })()
+                  ) : (
+                    // Render other section types as markdown
+                    <ReactMarkdown>{section.content}</ReactMarkdown>
+                  )}
                 </div>
               </div>
             ))}
