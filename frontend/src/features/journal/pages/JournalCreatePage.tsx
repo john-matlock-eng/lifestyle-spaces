@@ -9,6 +9,7 @@ import { ListSection } from '../components/sections/ListSection'
 import { useJournal } from '../hooks/useJournal'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { Template, TemplateData } from '../types/template.types'
+import type { CustomSection } from '../types/customSection.types'
 import { Trash2, Edit2 } from 'lucide-react'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
@@ -29,16 +30,9 @@ export const JournalCreatePage: React.FC = () => {
   const [tags, setTags] = useState('')
   const [emotions, setEmotions] = useState<string[]>([])
   const [showTemplatePicker, setShowTemplatePicker] = useState(true)
-  const [customSections, setCustomSections] = useState<Array<{
-    id: string
-    title: string
-    type: string
-    content: any
-    config?: any
-    isEditing?: boolean
-  }>>([])
+  const [customSections, setCustomSections] = useState<CustomSection[]>([])
 
-  const handleAddCustomSection = (section: any) => {
+  const handleAddCustomSection = (section: Omit<CustomSection, 'isEditing'>) => {
     setCustomSections([...customSections, { ...section, isEditing: false }])
   }
 
@@ -46,7 +40,7 @@ export const JournalCreatePage: React.FC = () => {
     setCustomSections(customSections.filter(s => s.id !== id))
   }
 
-  const handleUpdateCustomSection = (id: string, updates: any) => {
+  const handleUpdateCustomSection = (id: string, updates: Partial<CustomSection>) => {
     setCustomSections(customSections.map(s =>
       s.id === id ? { ...s, ...updates } : s
     ))
@@ -67,7 +61,7 @@ export const JournalCreatePage: React.FC = () => {
     }
   }
 
-  const handleTemplateDataChange = (sectionId: string, value: string | any) => {
+  const handleTemplateDataChange = (sectionId: string, value: string | unknown[]) => {
     setTemplateData((prev) => ({
       ...prev,
       [sectionId]: value

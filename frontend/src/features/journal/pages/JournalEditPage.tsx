@@ -10,6 +10,7 @@ import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { Template, TemplateData } from '../types/template.types'
+import type { CustomSection } from '../types/customSection.types'
 import { Trash2, Edit2 } from 'lucide-react'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
@@ -31,16 +32,9 @@ export const JournalEditPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [template, setTemplate] = useState<Template | null>(null)
   const [templateData, setTemplateData] = useState<TemplateData>({})
-  const [customSections, setCustomSections] = useState<Array<{
-    id: string
-    title: string
-    type: string
-    content: any
-    config?: any
-    isEditing?: boolean
-  }>>([])
+  const [customSections, setCustomSections] = useState<CustomSection[]>([])
 
-  const handleAddCustomSection = (section: any) => {
+  const handleAddCustomSection = (section: Omit<CustomSection, 'isEditing'>) => {
     setCustomSections([...customSections, { ...section, isEditing: false }])
   }
 
@@ -48,7 +42,7 @@ export const JournalEditPage: React.FC = () => {
     setCustomSections(customSections.filter(s => s.id !== id))
   }
 
-  const handleUpdateCustomSection = (id: string, updates: any) => {
+  const handleUpdateCustomSection = (id: string, updates: Partial<CustomSection>) => {
     setCustomSections(customSections.map(s =>
       s.id === id ? { ...s, ...updates } : s
     ))
@@ -82,21 +76,14 @@ export const JournalEditPage: React.FC = () => {
 
             // Convert parsed sections back to TemplateData format for editing
             const parsedTemplateData: TemplateData = {}
-            const parsedCustomSections: Array<{
-              id: string
-              title: string
-              type: string
-              content: any
-              config?: any
-              isEditing?: boolean
-            }> = []
+            const parsedCustomSections: CustomSection[] = []
 
             Object.entries(parsed.sections).forEach(([sectionId, section]) => {
               // Check if this is a custom section (starts with 'custom_')
               const isCustomSection = sectionId.startsWith('custom_')
 
               // Parse content based on section type
-              let parsedContent: any
+              let parsedContent: string | unknown[]
               if (section.type === 'q_and_a' || section.type === 'list') {
                 try {
                   // Parse JSON string back to array
@@ -143,7 +130,7 @@ export const JournalEditPage: React.FC = () => {
     }
   }, [journal])
 
-  const handleTemplateDataChange = (sectionId: string, value: string | any) => {
+  const handleTemplateDataChange = (sectionId: string, value: string | unknown[]) => {
     setTemplateData((prev) => ({
       ...prev,
       [sectionId]: value

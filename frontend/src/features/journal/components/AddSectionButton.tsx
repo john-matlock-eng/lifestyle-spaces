@@ -1,15 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Plus, X, FileText, HelpCircle, List, CheckSquare, BarChart } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
+import type { NewCustomSection } from '../types/customSection.types'
 
 interface AddSectionButtonProps {
-  onAddSection: (section: {
-    id: string
-    title: string
-    type: string
-    content: any
-    config?: any
-  }) => void
+  onAddSection: (section: NewCustomSection) => void
   disabled?: boolean
   currentSectionCount?: number
   maxSections?: number

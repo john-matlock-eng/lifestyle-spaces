@@ -24,7 +24,6 @@ interface QASectionProps {
 export const QASection: React.FC<QASectionProps> = ({
   value,
   onChange,
-  placeholder = "Add a question to explore...",
   disabled = false,
   config = {}
 }) => {

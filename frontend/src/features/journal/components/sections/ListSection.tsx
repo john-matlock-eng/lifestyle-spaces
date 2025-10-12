@@ -38,13 +38,6 @@ export const ListSection: React.FC<ListSectionProps> = ({
     onChange(items.filter(item => item.id !== id))
   }
 
-  const moveItem = (fromIndex: number, toIndex: number) => {
-    const newItems = [...items]
-    const [movedItem] = newItems.splice(fromIndex, 1)
-    newItems.splice(toIndex, 0, movedItem)
-    onChange(newItems)
-  }
-
   // Auto-add new item when typing in last empty item
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
     if (e.key === 'Enter' && index === items.length - 1 && items[index].text) {
@@ -61,9 +54,7 @@ export const ListSection: React.FC<ListSectionProps> = ({
             type="button"
             className="list-item-drag"
             disabled={disabled}
-            onMouseDown={(e) => {
-              // Implement drag logic here if needed
-            }}
+            title="Drag to reorder (coming soon)"
           >
             <GripVertical size={14} />
           </button>

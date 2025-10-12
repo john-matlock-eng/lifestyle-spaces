@@ -242,10 +242,14 @@ export const JournalViewPage: React.FC = () => {
                     // Render Q&A section
                     (() => {
                       try {
-                        const qaPairs = JSON.parse(section.content)
+                        const qaPairs = JSON.parse(section.content) as Array<{
+                          id?: string
+                          question: string
+                          answer: string
+                        }>
                         return (
                           <div className="qa-view-section">
-                            {qaPairs.map((pair: any, index: number) => (
+                            {qaPairs.map((pair, index: number) => (
                               <div key={pair.id || index} className="qa-view-pair">
                                 <div className="qa-view-question">
                                   <span className="qa-number">Q{index + 1}</span>
@@ -267,10 +271,13 @@ export const JournalViewPage: React.FC = () => {
                     // Render List section
                     (() => {
                       try {
-                        const listItems = JSON.parse(section.content)
+                        const listItems = JSON.parse(section.content) as Array<{
+                          id?: string
+                          text: string
+                        }>
                         return (
                           <ul className="list-view-section">
-                            {listItems.map((item: any, index: number) => (
+                            {listItems.map((item, index: number) => (
                               <li key={item.id || index} className="list-view-item">
                                 {item.text}
                               </li>
