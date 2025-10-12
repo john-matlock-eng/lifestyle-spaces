@@ -50,7 +50,6 @@ export const journalApi = {
       title: data.title.trim(),
       content: data.content,  // Contains serialized template data via JournalContentManager
       tags: data.tags || [],
-      mood: data.mood,
       emotions: data.emotions,
       isPinned: data.isPinned || false,
       templateId: data.templateId
@@ -79,7 +78,6 @@ export const journalApi = {
     if (params?.page) queryParams.append('page', params.page.toString())
     if (params?.pageSize) queryParams.append('pageSize', params.pageSize.toString())
     if (params?.tags) queryParams.append('tags', params.tags)
-    if (params?.mood) queryParams.append('mood', params.mood)
     if (params?.authorId) queryParams.append('authorId', params.authorId)
 
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ''
@@ -139,7 +137,6 @@ export const journalApi = {
     if (data.title !== undefined) updateData.title = data.title.trim()
     if (data.content !== undefined) updateData.content = data.content  // Contains serialized template data
     if (data.tags !== undefined) updateData.tags = data.tags
-    if (data.mood !== undefined) updateData.mood = data.mood
     if (data.emotions !== undefined) updateData.emotions = data.emotions
     if (data.isPinned !== undefined) updateData.isPinned = data.isPinned
     if (data.templateId !== undefined) updateData.templateId = data.templateId

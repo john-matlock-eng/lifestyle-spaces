@@ -200,7 +200,7 @@ class TestJournalRoutes:
             }
 
             response = self.client.get(
-                "/api/spaces/space-123/journals?tags=test,daily&mood=happy&authorId=user-123&page=1&pageSize=10"
+                "/api/spaces/space-123/journals?tags=test,daily&authorId=user-123&page=1&pageSize=10"
             )
 
             assert response.status_code == 200
@@ -210,7 +210,6 @@ class TestJournalRoutes:
                 page=1,
                 page_size=10,
                 tags=['test', 'daily'],
-                mood='happy',
                 author_id='user-123'
             )
 

@@ -37,7 +37,6 @@ async def create_journal(
             title=journal.title,
             content=journal.content,
             tags=journal.tags,
-            mood=journal.mood,
             emotions=journal.emotions,
             is_pinned=journal.is_pinned,
             template_id=journal.template_id
@@ -61,7 +60,6 @@ async def create_journal(
             template_id=result.get("template_id"),
             # REMOVED: template_data - data is embedded in content
             tags=result.get("tags", []),
-            mood=result.get("mood"),
             emotions=result.get("emotions", []),
             created_at=result["created_at"],
             updated_at=result["updated_at"],
@@ -102,7 +100,6 @@ async def list_space_journals(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100, alias="pageSize"),
     tags: Optional[str] = Query(None),
-    mood: Optional[str] = Query(None),
     author_id: Optional[str] = Query(None, alias="authorId")
 ):
     """List all journals in a space with optional filtering."""
@@ -119,7 +116,6 @@ async def list_space_journals(
             page=page,
             page_size=page_size,
             tags=tags_list,
-            mood=mood,
             author_id=author_id
         )
 
@@ -135,7 +131,6 @@ async def list_space_journals(
                 template_id=journal.get("template_id"),
                 # REMOVED: template_data - data is embedded in content
                 tags=journal.get("tags", []),
-                mood=journal.get("mood"),
                 emotions=journal.get("emotions", []),
                 created_at=journal["created_at"],
                 updated_at=journal["updated_at"],
@@ -195,7 +190,6 @@ async def get_journal(
             template_id=result.get("template_id"),
             # REMOVED: template_data - data is embedded in content
             tags=result.get("tags", []),
-            mood=result.get("mood"),
             emotions=result.get("emotions", []),
             created_at=result["created_at"],
             updated_at=result["updated_at"],
@@ -249,7 +243,6 @@ async def update_journal(
             template_id=result.get("template_id"),
             # REMOVED: template_data - data is embedded in content
             tags=result.get("tags", []),
-            mood=result.get("mood"),
             emotions=result.get("emotions", []),
             created_at=result["created_at"],
             updated_at=result["updated_at"],
@@ -347,7 +340,6 @@ async def list_user_journals(
                 template_id=journal.get("template_id"),
                 # REMOVED: template_data - data is embedded in content
                 tags=journal.get("tags", []),
-                mood=journal.get("mood"),
                 emotions=journal.get("emotions", []),
                 created_at=journal["created_at"],
                 updated_at=journal["updated_at"],

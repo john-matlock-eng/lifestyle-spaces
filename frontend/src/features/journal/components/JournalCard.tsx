@@ -129,13 +129,6 @@ export const JournalCard: React.FC<JournalCardProps> = ({ journal, onDelete }) =
           </div>
         )}
 
-        {journal.mood && (
-          <div className="journal-card-mood">
-            <span>💭</span>
-            <span>{journal.mood}</span>
-          </div>
-        )}
-
         {journal.tags && journal.tags.length > 0 && (
           <div className="journal-card-tags">
             {journal.tags.slice(0, 3).map((tag) => (

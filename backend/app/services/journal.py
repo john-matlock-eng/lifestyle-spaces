@@ -164,7 +164,6 @@ class JournalService:
             'template_id': data.template_id,
             # REMOVED: template_data - data is embedded in content
             'tags': data.tags,
-            'mood': data.mood,
             'emotions': data.emotions or [],
             'created_at': now,
             'updated_at': now,
@@ -187,7 +186,6 @@ class JournalService:
             'template_id': data.template_id,
             # REMOVED: template_data - data is embedded in content
             'tags': data.tags,
-            'mood': data.mood,
             'emotions': data.emotions or [],
             'created_at': now,
             'updated_at': now,
@@ -245,7 +243,6 @@ class JournalService:
             'template_id': journal.get('template_id'),
             # REMOVED: template_data - data is embedded in content
             'tags': journal.get('tags', []),
-            'mood': journal.get('mood'),
             'emotions': journal.get('emotions', []),
             'created_at': journal['created_at'],
             'updated_at': journal['updated_at'],
@@ -308,10 +305,6 @@ class JournalService:
             update_expr += ", tags = :tags"
             expr_values[':tags'] = data.tags
 
-        if data.mood is not None:
-            update_expr += ", mood = :mood"
-            expr_values[':mood'] = data.mood
-
         if data.emotions is not None:
             update_expr += ", emotions = :emotions"
             expr_values[':emotions'] = data.emotions
@@ -351,7 +344,6 @@ class JournalService:
             'template_id': updated_journal.get('template_id'),
             # REMOVED: template_data - data is embedded in content
             'tags': updated_journal.get('tags', []),
-            'mood': updated_journal.get('mood'),
             'emotions': updated_journal.get('emotions', []),
             'created_at': updated_journal['created_at'],
             'updated_at': updated_journal['updated_at'],
@@ -413,7 +405,6 @@ class JournalService:
         page: int = 1,
         page_size: int = 20,
         tags: Optional[List[str]] = None,
-        mood: Optional[str] = None,
         author_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
@@ -425,7 +416,6 @@ class JournalService:
             page: Page number (1-indexed)
             page_size: Number of items per page
             tags: Filter by tags
-            mood: Filter by mood
             author_id: Filter by author
 
         Returns:
@@ -457,9 +447,6 @@ class JournalService:
         if tags:
             journals = [j for j in journals if any(tag in j.get('tags', []) for tag in tags)]
 
-        if mood:
-            journals = [j for j in journals if j.get('mood') == mood]
-
         if author_id:
             journals = [j for j in journals if j.get('user_id') == author_id]
 
@@ -485,7 +472,6 @@ class JournalService:
                 'template_id': journal.get('template_id'),
                 # REMOVED: template_data - data is embedded in content
                 'tags': journal.get('tags', []),
-                'mood': journal.get('mood'),
                 'emotions': journal.get('emotions', []),
                 'created_at': journal['created_at'],
                 'updated_at': journal['updated_at'],
@@ -553,7 +539,6 @@ class JournalService:
                 'template_id': journal.get('template_id'),
                 # REMOVED: template_data - data is embedded in content
                 'tags': journal.get('tags', []),
-                'mood': journal.get('mood'),
                 'emotions': journal.get('emotions', []),
                 'created_at': journal['created_at'],
                 'updated_at': journal['updated_at'],

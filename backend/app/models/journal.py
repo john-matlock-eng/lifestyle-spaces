@@ -16,7 +16,6 @@ class JournalBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     content: str = Field(...)  # Contains markdown with embedded template metadata
     tags: List[str] = Field(default_factory=list)
-    mood: Optional[str] = None  # Legacy field for backward compatibility
     emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
     is_pinned: bool = Field(default=False, alias="isPinned")
 
@@ -81,7 +80,6 @@ class JournalUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     content: Optional[str] = None  # Contains markdown with embedded template metadata
     tags: Optional[List[str]] = None
-    mood: Optional[str] = None  # Legacy field for backward compatibility
     emotions: Optional[List[str]] = None  # New field for multiple emotions
     is_pinned: Optional[bool] = Field(None, alias="isPinned")
     template_id: Optional[str] = Field(None, alias="templateId")
@@ -130,7 +128,6 @@ class JournalEntry(BaseModel):
     template_id: Optional[str] = None  # For tracking which template was used
     # REMOVED: template_data field - data is embedded in content
     tags: List[str] = Field(default_factory=list)
-    mood: Optional[str] = None  # Legacy field for backward compatibility
     emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
     created_at: datetime
     updated_at: datetime
@@ -154,7 +151,6 @@ class JournalResponse(BaseModel):
     template_id: Optional[str] = Field(None, alias="templateId")
     # REMOVED: template_data field - data is embedded in content
     tags: List[str] = Field(default_factory=list)
-    mood: Optional[str] = None  # Legacy field for backward compatibility
     emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
     created_at: datetime = Field(..., alias="createdAt")
     updated_at: datetime = Field(..., alias="updatedAt")
@@ -176,10 +172,9 @@ class JournalResponse(BaseModel):
                 "spaceId": "space-123",
                 "userId": "user-123",
                 "title": "My Daily Reflection",
-                "content": "<!--\n@template: daily-reflection\n@metadata: {\"mood\":\"happy\"}\n-->\n\n<!-- section:gratitude @title:\"Gratitude\" -->\n- family\n- health\n<!-- /section:gratitude -->\n\nToday was a great day...",
+                "content": "<!--\n@template: daily-reflection\n@metadata: {\"emotions\":[\"happy\",\"playful\",\"joyful\"]}\n-->\n\n<!-- section:gratitude @title:\"Gratitude\" -->\n- family\n- health\n<!-- /section:gratitude -->\n\nToday was a great day...",
                 "templateId": "daily-reflection",
                 "tags": ["daily", "reflection"],
-                "mood": "happy",
                 "emotions": ["happy", "playful", "joyful"],
                 "createdAt": "2024-01-01T00:00:00Z",
                 "updatedAt": "2024-01-01T00:00:00Z",

@@ -46,7 +46,7 @@ class TestJournalService:
             title="My Daily Journal",
             content="Today was a great day. I learned a lot.",
             tags=["daily", "learning"],
-            mood="happy",
+            emotions=["happy", "grateful"],
             is_pinned=False
         )
 
@@ -177,7 +177,7 @@ class TestJournalService:
         assert result['word_count'] == 9  # "Today was a great day. I learned a lot."
         # Tags are stored as a set, so order may vary
         assert set(result['tags']) == {'daily', 'learning'}
-        assert result['mood'] == 'happy'
+        assert result['emotions'] == ['happy', 'grateful']
         assert result['is_pinned'] is False
         mock_table.put_item.assert_called_once()
 
@@ -497,11 +497,6 @@ class TestJournalService:
         assert result['total'] == 1
         assert result['journals'][0]['journal_id'] == 'journal-1'
 
-        # Filter by mood
-        result = journal_service.list_space_journals('space-123', 'user-123', mood='sad')
-        assert result['total'] == 1
-        assert result['journals'][0]['journal_id'] == 'journal-2'
-
         # Filter by author
         result = journal_service.list_space_journals('space-123', 'user-123', author_id='user-456')
         assert result['total'] == 1
@@ -692,8 +687,8 @@ class TestJournalService:
             assert result['display_name'] == 'Unknown'
 
     @patch('app.services.journal.JournalService._get_author_info')
-    def test_update_journal_with_mood_only(self, mock_author, journal_service, mock_table):
-        """Test updating journal with mood only."""
+    def test_update_journal_with_tags_only(self, mock_author, journal_service, mock_table):
+        """Test updating journal with tags only."""
         mock_table.get_item.return_value = {
             'Item': {
                 'PK': 'SPACE#space-123',
@@ -716,7 +711,7 @@ class TestJournalService:
                 'user_id': 'user-123',
                 'title': 'Title',
                 'content': 'Content',
-                'mood': 'excited',
+                'tags': ['work', 'important'],
                 'created_at': '2024-01-01T00:00:00Z',
                 'updated_at': '2024-01-02T00:00:00Z',
                 'word_count': 1,
@@ -726,10 +721,10 @@ class TestJournalService:
 
         mock_author.return_value = {'user_id': 'user-123', 'username': 'testuser', 'display_name': 'Test User'}
 
-        update_data = JournalUpdate(mood='excited')
+        update_data = JournalUpdate(tags=['work', 'important'])
         result = journal_service.update_journal_entry('space-123', 'journal-123', 'user-123', update_data)
 
-        assert result['mood'] == 'excited'
+        assert result['tags'] == ['work', 'important']
 
     @patch('app.services.journal.JournalService._get_author_info')
     def test_update_journal_with_emotions(self, mock_author, journal_service, mock_table):

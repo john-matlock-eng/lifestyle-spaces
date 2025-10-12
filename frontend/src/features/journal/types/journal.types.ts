@@ -20,7 +20,6 @@ export interface JournalEntry {
   content: string  // Contains embedded template metadata via HTML comments
   templateId?: string  // For identifying which template was used
   tags: string[]
-  mood?: string  // Legacy field for backward compatibility
   emotions?: string[]  // New field for multiple emotion IDs
   createdAt: string
   updatedAt: string
@@ -48,7 +47,6 @@ export interface CreateJournalRequest {
   title: string
   content: string  // Serialized with JournalContentManager.serialize()
   tags?: string[]
-  mood?: string  // Legacy field for backward compatibility
   emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
   templateId?: string  // For identifying which template was used
@@ -62,7 +60,6 @@ export interface UpdateJournalRequest {
   title?: string
   content?: string  // Serialized with JournalContentManager.serialize()
   tags?: string[]
-  mood?: string  // Legacy field for backward compatibility
   emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
   templateId?: string  // For identifying which template was used
@@ -75,6 +72,5 @@ export interface JournalListParams {
   page?: number
   pageSize?: number
   tags?: string
-  mood?: string
   authorId?: string
 }

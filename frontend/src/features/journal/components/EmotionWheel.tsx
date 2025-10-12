@@ -703,24 +703,40 @@ const EmotionWheel: React.FC<EmotionWheelProps> = ({
                           filter: isSelected ? 'brightness(1.1)' : 'none',
                         }}
                       />
-                      {(zoomLevel > 1.1 || isHovered || isSelected) && (
-                        <text
-                          x={textPos.x}
-                          y={textPos.y}
-                          transform={`rotate(${textPos.rotation}, ${textPos.x}, ${textPos.y})`}
-                          textAnchor={textPos.anchor}
-                          dominantBaseline="middle"
-                          className="emotion-text-tertiary"
-                          style={{
-                            fontSize: `${textPos.fontSize}px`,
-                            fill: 'white',
-                            fontWeight: isHovered || isSelected ? '600' : '400',
-                            pointerEvents: 'none',
-                          }}
-                        >
-                          {emotion.label}
-                        </text>
-                      )}
+                      <text
+                        x={textPos.x}
+                        y={textPos.y}
+                        transform={`rotate(${textPos.rotation}, ${textPos.x}, ${textPos.y})`}
+                        textAnchor={textPos.anchor}
+                        dominantBaseline="middle"
+                        className="emotion-text-tertiary"
+                        style={{
+                          fontSize: `${textPos.fontSize}px`,
+                          // Progressive opacity based on state
+                          opacity: (() => {
+                            if (isSelected) return 1
+                            if (isHovered) return 0.9
+                            if (zoomLevel > 1.5) return 0.8
+                            if (zoomLevel > 1.1) return 0.7
+                            return 0.5 // Always at least 50% visible
+                          })(),
+                          // Dynamic fill for better contrast
+                          fill: (() => {
+                            if (isSelected) return '#ffffff'
+                            if (isHovered) return '#f8f8f8'
+                            return '#e0e0e0' // Slightly gray when inactive
+                          })(),
+                          fontWeight: isSelected ? '600' : isHovered ? '500' : '400',
+                          pointerEvents: 'none',
+                          // Add text shadow for better readability
+                          textShadow: isHovered || isSelected
+                            ? '0 1px 3px rgba(0, 0, 0, 0.6)'
+                            : '0 1px 2px rgba(0, 0, 0, 0.4)',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {emotion.label}
+                      </text>
                     </g>
                   )
                 })
