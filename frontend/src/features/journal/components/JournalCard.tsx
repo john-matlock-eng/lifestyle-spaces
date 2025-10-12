@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../stores/authStore'
+import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { JournalEntry } from '../types/journal.types'
 import '../styles/journal.css'
 
@@ -39,21 +40,92 @@ export const JournalCard: React.FC<JournalCardProps> = ({ journal, onDelete }) =
     }
   }
 
-  // Extract plain text from markdown for excerpt
-  const getExcerpt = (content: string, maxLength: number = 200): string => {
-    // Remove markdown formatting (basic cleanup)
-    const plainText = content
-      .replace(/#+\s/g, '') // Remove headers
-      .replace(/\*\*(.+?)\*\*/g, '$1') // Remove bold
-      .replace(/\*(.+?)\*/g, '$1') // Remove italic
-      .replace(/\[(.+?)\]\(.+?\)/g, '$1') // Remove links
-      .replace(/`(.+?)`/g, '$1') // Remove inline code
-      .replace(/```[\s\S]*?```/g, '') // Remove code blocks
-      .trim()
+  // Extract clean preview text from journal content
+  const getJournalPreview = (content: string, maxLength: number = 150): string => {
+    try {
+      // First, try to extract clean markdown (for non-templated journals)
+      const cleanContent = JournalContentManager.extractCleanMarkdown(content)
 
-    return plainText.length > maxLength
-      ? plainText.substring(0, maxLength) + '...'
-      : plainText
+      // If no clean content, parse sections instead
+      if (!cleanContent || cleanContent.trim().length === 0) {
+        const sections = JournalContentManager.extractDisplaySections(content)
+
+        if (sections.length > 0) {
+          // Build preview from sections
+          const sectionPreviews = sections
+            .map(section => {
+              const cleanSection = section.content
+                .replace(/[#*`[\]()]/g, '') // Remove markdown formatting
+                .replace(/\n+/g, ' ') // Replace newlines with spaces
+                .trim()
+
+              if (cleanSection) {
+                // For Q&A sections, try to parse and show question/answer
+                if (section.type === 'q_and_a') {
+                  try {
+                    const qaPairs = JSON.parse(section.content)
+                    if (Array.isArray(qaPairs) && qaPairs.length > 0) {
+                      const firstPair = qaPairs[0]
+                      return `${section.title}: ${firstPair.question}...`
+                    }
+                  } catch {
+                    // Fall through to regular section display
+                  }
+                }
+
+                // For list sections, try to parse and show items
+                if (section.type === 'list') {
+                  try {
+                    const listItems = JSON.parse(section.content)
+                    if (Array.isArray(listItems) && listItems.length > 0) {
+                      return `${section.title}: ${listItems.map((item: { text: string }) => item.text).join(', ')}`
+                    }
+                  } catch {
+                    // Fall through to regular section display
+                  }
+                }
+
+                return `${section.title}: ${cleanSection.substring(0, 50)}`
+              }
+              return ''
+            })
+            .filter(Boolean)
+
+          if (sectionPreviews.length > 0) {
+            const fullPreview = sectionPreviews.join(' | ')
+            return fullPreview.length > maxLength
+              ? fullPreview.substring(0, maxLength) + '...'
+              : fullPreview
+          }
+        }
+
+        return 'No content available'
+      }
+
+      // Clean up the content
+      const plainText = cleanContent
+        .replace(/<!--[\s\S]*?-->/g, '') // Remove any HTML comments
+        .replace(/[#*`[\]()]/g, '') // Remove markdown symbols
+        .replace(/\n+/g, ' ') // Replace newlines with spaces
+        .trim()
+
+      // Truncate smartly (don't cut mid-word)
+      if (plainText.length > maxLength) {
+        const truncated = plainText.substring(0, maxLength)
+        const lastSpace = truncated.lastIndexOf(' ')
+        return (lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated) + '...'
+      }
+
+      return plainText || 'No content'
+    } catch (error) {
+      console.error('Error parsing journal content:', error)
+      // Fallback: remove obvious metadata patterns
+      return content
+        .replace(/<!--[\s\S]*?-->/g, '') // Remove HTML comments
+        .replace(/@\w+:[^\n]*/g, '') // Remove @metadata lines
+        .trim()
+        .substring(0, maxLength) + '...'
+    }
   }
 
   const formatDate = (dateString: string): string => {
@@ -108,7 +180,7 @@ export const JournalCard: React.FC<JournalCardProps> = ({ journal, onDelete }) =
         )}
       </div>
 
-      <p className="journal-card-excerpt">{getExcerpt(journal.content)}</p>
+      <p className="journal-card-excerpt">{getJournalPreview(journal.content)}</p>
 
       <div className="journal-card-meta">
         {journal.author && (
