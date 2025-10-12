@@ -3,7 +3,7 @@ import { ThemeProvider } from './theme/ThemeProvider';
 import { AuthProvider } from './stores/authStore';
 import { SpaceProvider } from './stores/spaceStore';
 import { InvitationProvider } from './stores/invitationStore';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { AuthenticatedLayout } from './components/layout/AuthenticatedLayout';
 import { Landing } from './pages/Landing';
 import { SignIn } from './pages/SignIn';
 import { SignUp } from './pages/SignUp';
@@ -15,6 +15,7 @@ import { JournalCreatePage } from './features/journal/pages/JournalCreatePage';
 import { JournalViewPage } from './features/journal/pages/JournalViewPage';
 import { JournalEditPage } from './features/journal/pages/JournalEditPage';
 import './App.css';
+import './styles/layout.css';
 
 function App() {
   return (
@@ -23,77 +24,28 @@ function App() {
         <SpaceProvider>
           <InvitationProvider>
             <Router>
-              <div className="app">
-                <Routes>
+              <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Landing />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
 
-                {/* Protected routes */}
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/space/:spaceId"
-                  element={
-                    <ProtectedRoute>
-                      <SpaceDetail />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/join/:inviteCode"
-                  element={
-                    <ProtectedRoute>
-                      <JoinSpace />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Protected routes with layout */}
+                <Route element={<AuthenticatedLayout />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/space/:spaceId" element={<SpaceDetail />} />
+                  <Route path="/join/:inviteCode" element={<JoinSpace />} />
 
-                {/* Journal routes */}
-                <Route
-                  path="/spaces/:spaceId/journals"
-                  element={
-                    <ProtectedRoute>
-                      <JournalListPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/spaces/:spaceId/journals/new"
-                  element={
-                    <ProtectedRoute>
-                      <JournalCreatePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/spaces/:spaceId/journals/:journalId"
-                  element={
-                    <ProtectedRoute>
-                      <JournalViewPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/spaces/:spaceId/journals/:journalId/edit"
-                  element={
-                    <ProtectedRoute>
-                      <JournalEditPage />
-                    </ProtectedRoute>
-                  }
-                />
+                  {/* Journal routes */}
+                  <Route path="/spaces/:spaceId/journals" element={<JournalListPage />} />
+                  <Route path="/spaces/:spaceId/journals/new" element={<JournalCreatePage />} />
+                  <Route path="/spaces/:spaceId/journals/:journalId" element={<JournalViewPage />} />
+                  <Route path="/spaces/:spaceId/journals/:journalId/edit" element={<JournalEditPage />} />
+                </Route>
 
                 {/* Catch all - redirect to landing */}
                 <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </div>
+              </Routes>
             </Router>
           </InvitationProvider>
         </SpaceProvider>
