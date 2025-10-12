@@ -8,7 +8,7 @@ import { AddSectionButton } from '../components/AddSectionButton'
 import { ListSection } from '../components/sections/ListSection'
 import { useJournal } from '../hooks/useJournal'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
-import type { Template, TemplateData } from '../types/template.types'
+import type { Template, TemplateData, QAPair, ListItem } from '../types/template.types'
 import type { CustomSection } from '../types/customSection.types'
 import { Trash2, Edit2 } from 'lucide-react'
 import '../styles/journal.css'
@@ -49,10 +49,29 @@ export const JournalCreatePage: React.FC = () => {
   const handleTemplateSelect = (template: Template | null) => {
     setSelectedTemplate(template)
     if (template) {
-      // Initialize template data with empty strings for each section
+      // Initialize template data with appropriate default values based on section type
       const initialData: TemplateData = {}
       template.sections.forEach((section) => {
-        initialData[section.id] = section.defaultValue || ''
+        if (section.defaultValue !== undefined) {
+          // Cast default value based on section type
+          if (section.type === 'q_and_a') {
+            initialData[section.id] = (Array.isArray(section.defaultValue) ? section.defaultValue : []) as QAPair[]
+          } else if (section.type === 'list') {
+            initialData[section.id] = (Array.isArray(section.defaultValue) ? section.defaultValue : []) as ListItem[]
+          } else if (section.type === 'scale') {
+            initialData[section.id] = typeof section.defaultValue === 'number' ? section.defaultValue : 5
+          } else {
+            initialData[section.id] = typeof section.defaultValue === 'string' ? section.defaultValue : ''
+          }
+        } else if (section.type === 'q_and_a') {
+          initialData[section.id] = [] as QAPair[]
+        } else if (section.type === 'list') {
+          initialData[section.id] = [] as ListItem[]
+        } else if (section.type === 'scale') {
+          initialData[section.id] = 5
+        } else {
+          initialData[section.id] = ''
+        }
       })
       setTemplateData(initialData)
       setShowTemplatePicker(false)
@@ -61,7 +80,7 @@ export const JournalCreatePage: React.FC = () => {
     }
   }
 
-  const handleTemplateDataChange = (sectionId: string, value: string | unknown[]) => {
+  const handleTemplateDataChange = (sectionId: string, value: string | QAPair[] | ListItem[] | number) => {
     setTemplateData((prev) => ({
       ...prev,
       [sectionId]: value
@@ -264,7 +283,9 @@ export const JournalCreatePage: React.FC = () => {
                   </label>
                   {section.type === 'q_and_a' ? (
                     <QASection
-                      value={templateData[section.id] || section.defaultValue || []}
+                      value={(Array.isArray(templateData[section.id]) ? templateData[section.id] :
+                        Array.isArray(section.defaultValue) ? section.defaultValue :
+                        []) as QAPair[]}
                       onChange={(value) => handleTemplateDataChange(section.id, value)}
                       placeholder={section.placeholder}
                       disabled={loading}
@@ -272,14 +293,18 @@ export const JournalCreatePage: React.FC = () => {
                     />
                   ) : section.type === 'list' ? (
                     <ListSection
-                      value={templateData[section.id] || section.defaultValue || []}
+                      value={(Array.isArray(templateData[section.id]) ? templateData[section.id] :
+                        Array.isArray(section.defaultValue) ? section.defaultValue :
+                        []) as ListItem[]}
                       onChange={(value) => handleTemplateDataChange(section.id, value)}
                       placeholder={section.placeholder}
                       disabled={loading}
                     />
                   ) : (
                     <RichTextEditor
-                      content={templateData[section.id] || ''}
+                      content={typeof templateData[section.id] === 'string' ? templateData[section.id] as string :
+                        typeof section.defaultValue === 'string' ? section.defaultValue :
+                        ''}
                       onChange={(value) => handleTemplateDataChange(section.id, value)}
                       placeholder={section.placeholder}
                       minHeight="200px"
@@ -354,7 +379,7 @@ export const JournalCreatePage: React.FC = () => {
               <div className="custom-section-content">
                 {section.type === 'paragraph' && (
                   <RichTextEditor
-                    content={section.content}
+                    content={typeof section.content === 'string' ? section.content : ''}
                     onChange={(content) => handleUpdateCustomSection(section.id, { content })}
                     placeholder="Write here..."
                     minHeight="200px"
@@ -364,7 +389,7 @@ export const JournalCreatePage: React.FC = () => {
                 )}
                 {section.type === 'q_and_a' && (
                   <QASection
-                    value={section.content}
+                    value={Array.isArray(section.content) ? section.content as QAPair[] : []}
                     onChange={(content) => handleUpdateCustomSection(section.id, { content })}
                     config={section.config}
                     disabled={loading}
@@ -372,7 +397,7 @@ export const JournalCreatePage: React.FC = () => {
                 )}
                 {section.type === 'list' && (
                   <ListSection
-                    value={section.content}
+                    value={Array.isArray(section.content) ? section.content as ListItem[] : []}
                     onChange={(content) => handleUpdateCustomSection(section.id, { content })}
                     disabled={loading}
                   />

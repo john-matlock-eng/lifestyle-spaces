@@ -9,7 +9,7 @@ import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
-import type { Template, TemplateData } from '../types/template.types'
+import type { Template, TemplateData, QAPair, ListItem } from '../types/template.types'
 import type { CustomSection } from '../types/customSection.types'
 import { Trash2, Edit2 } from 'lucide-react'
 import '../styles/journal.css'
@@ -83,17 +83,25 @@ export const JournalEditPage: React.FC = () => {
               const isCustomSection = sectionId.startsWith('custom_')
 
               // Parse content based on section type
-              let parsedContent: string | unknown[]
-              if (section.type === 'q_and_a' || section.type === 'list') {
+              let parsedContent: string | QAPair[] | ListItem[] | number
+              if (section.type === 'q_and_a') {
                 try {
-                  // Parse JSON string back to array
-                  parsedContent = JSON.parse(section.content)
+                  // Parse JSON string back to QAPair array
+                  parsedContent = JSON.parse(section.content) as QAPair[]
+                } catch {
+                  // If parsing fails, default to empty array
+                  parsedContent = []
+                }
+              } else if (section.type === 'list') {
+                try {
+                  // Parse JSON string back to ListItem array
+                  parsedContent = JSON.parse(section.content) as ListItem[]
                 } catch {
                   // If parsing fails, default to empty array
                   parsedContent = []
                 }
               } else {
-                // Other sections are plain strings
+                // Other sections are plain strings or numbers
                 parsedContent = section.content
               }
 
@@ -101,8 +109,8 @@ export const JournalEditPage: React.FC = () => {
                 // Add to custom sections
                 parsedCustomSections.push({
                   id: sectionId,
-                  title: section.title,
-                  type: section.type,
+                  title: section.title || 'Untitled Section',
+                  type: section.type || 'paragraph',
                   content: parsedContent,
                   isEditing: false
                 })
@@ -130,7 +138,7 @@ export const JournalEditPage: React.FC = () => {
     }
   }, [journal])
 
-  const handleTemplateDataChange = (sectionId: string, value: string | unknown[]) => {
+  const handleTemplateDataChange = (sectionId: string, value: string | QAPair[] | ListItem[] | number) => {
     setTemplateData((prev) => ({
       ...prev,
       [sectionId]: value
@@ -344,7 +352,9 @@ export const JournalEditPage: React.FC = () => {
                 </label>
                 {section.type === 'q_and_a' ? (
                   <QASection
-                    value={templateData[section.id] || section.defaultValue || []}
+                    value={(Array.isArray(templateData[section.id]) ? templateData[section.id] :
+                      Array.isArray(section.defaultValue) ? section.defaultValue :
+                      []) as QAPair[]}
                     onChange={(value) => handleTemplateDataChange(section.id, value)}
                     placeholder={section.placeholder}
                     disabled={isSubmitting}
@@ -352,14 +362,18 @@ export const JournalEditPage: React.FC = () => {
                   />
                 ) : section.type === 'list' ? (
                   <ListSection
-                    value={templateData[section.id] || section.defaultValue || []}
+                    value={(Array.isArray(templateData[section.id]) ? templateData[section.id] :
+                      Array.isArray(section.defaultValue) ? section.defaultValue :
+                      []) as ListItem[]}
                     onChange={(value) => handleTemplateDataChange(section.id, value)}
                     placeholder={section.placeholder}
                     disabled={isSubmitting}
                   />
                 ) : (
                   <RichTextEditor
-                    content={templateData[section.id] || ''}
+                    content={typeof templateData[section.id] === 'string' ? templateData[section.id] as string :
+                      typeof section.defaultValue === 'string' ? section.defaultValue :
+                      ''}
                     onChange={(value) => handleTemplateDataChange(section.id, value)}
                     placeholder={section.placeholder}
                     minHeight="200px"
@@ -434,7 +448,7 @@ export const JournalEditPage: React.FC = () => {
             <div className="custom-section-content">
               {section.type === 'paragraph' && (
                 <RichTextEditor
-                  content={section.content}
+                  content={typeof section.content === 'string' ? section.content : ''}
                   onChange={(content) => handleUpdateCustomSection(section.id, { content })}
                   placeholder="Write here..."
                   minHeight="200px"
@@ -444,7 +458,7 @@ export const JournalEditPage: React.FC = () => {
               )}
               {section.type === 'q_and_a' && (
                 <QASection
-                  value={section.content}
+                  value={Array.isArray(section.content) ? section.content as QAPair[] : []}
                   onChange={(content) => handleUpdateCustomSection(section.id, { content })}
                   config={section.config}
                   disabled={isSubmitting}
@@ -452,7 +466,7 @@ export const JournalEditPage: React.FC = () => {
               )}
               {section.type === 'list' && (
                 <ListSection
-                  value={section.content}
+                  value={Array.isArray(section.content) ? section.content as ListItem[] : []}
                   onChange={(content) => handleUpdateCustomSection(section.id, { content })}
                   disabled={isSubmitting}
                 />
