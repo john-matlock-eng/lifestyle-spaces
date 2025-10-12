@@ -1,0 +1,31 @@
+{
+  "id": "express_examine_evolve",
+  "name": "Express, Examine, Evolve",
+  "description": "A deep-dive tool for self-reflection and growth",
+  "version": 1,
+  "icon": "🔬",
+  "color": "#A855F7",
+  "sections": [
+    {
+      "id": "raw_thoughts",
+      "title": "Express",
+      "type": "paragraph",
+      "placeholder": "Let it all out. Raw, unfiltered, true feelings. No judgment, no editing, just release.",
+      "defaultValue": ""
+    },
+    {
+      "id": "deep_dive",
+      "title": "Examine",
+      "type": "paragraph",
+      "placeholder": "Explore the roots by asking yourself the hard questions. Use a 'Question:' and 'Answer:' format to dig into what's beneath the surface, what triggered the response, old patterns, unmet needs, and where the shame or fear is hiding.",
+      "defaultValue": ""
+    },
+    {
+      "id": "action_plan",
+      "title": "Evolve",
+      "type": "paragraph",
+      "placeholder": "Create the change. Design new responses, reframe your perspective, set actionable steps, and identify your growth edge.",
+      "defaultValue": ""
+    }
+  ]
+}
