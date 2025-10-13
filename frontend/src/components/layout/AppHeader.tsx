@@ -102,9 +102,11 @@ export const AppHeader: React.FC = () => {
   }
 
   const cycleTheme = () => {
+    console.log('🔘 [AppHeader] Theme button clicked! Current:', darkMode)
     const themes: ('light' | 'dark' | 'system')[] = ['light', 'dark', 'system']
     const currentIndex = themes.indexOf(darkMode)
     const nextTheme = themes[(currentIndex + 1) % themes.length]
+    console.log('➡️ [AppHeader] Cycling to:', nextTheme)
     setDarkMode(nextTheme)
   }
 

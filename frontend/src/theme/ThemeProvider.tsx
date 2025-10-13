@@ -428,6 +428,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 
   // Enhanced system theme preference detection with proper cleanup
   useEffect(() => {
+    console.log('🔄 [ThemeProvider] darkMode changed to:', darkMode)
+
     if (typeof window === 'undefined' || !window.matchMedia) {
       return
     }
@@ -445,7 +447,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
         }
 
         // Set initial value
-        setIsDark(mediaQuery.matches || false)
+        const systemPrefersDark = mediaQuery.matches || false
+        console.log('💻 [ThemeProvider] System prefers dark:', systemPrefersDark)
+        setIsDark(systemPrefersDark)
 
         // Add listener with proper event handler
         if (mediaQuery.addEventListener) {
@@ -467,7 +471,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
         setIsDark(false)
       }
     } else {
-      setIsDark(darkMode === 'dark')
+      const newIsDark = darkMode === 'dark'
+      console.log('⚡ [ThemeProvider] Setting isDark to:', newIsDark)
+      setIsDark(newIsDark)
     }
   }, [darkMode])
 
@@ -486,10 +492,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 
     // Apply dark class
     if (isDark) {
+      console.log('🌙 [ThemeProvider] Adding dark class to <html>')
       root.classList.add('dark')
     } else {
+      console.log('☀️ [ThemeProvider] Removing dark class from <html>')
       root.classList.remove('dark')
     }
+
+    // Log applied theme
+    console.log('🎨 [ThemeProvider] Current theme:', currentTheme.id, '- isDark:', isDark)
 
     // Add transition class for smooth theme changes (skip in tests)
     if (finalConfig.enableTransitions && !prefersReducedMotion && !isTestEnv) {
@@ -562,8 +573,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 
   // Dark mode setter with persistence
   const setDarkMode = useCallback((mode: 'light' | 'dark' | 'system') => {
+    console.log('🎨 [ThemeProvider] setDarkMode called with:', mode)
     setDarkModeState(mode)
     safeLocalStorage.setItem(finalConfig.darkModeKey, mode)
+    console.log('✅ [ThemeProvider] State and localStorage updated')
   }, [finalConfig.darkModeKey])
 
   // Toggle between first two themes
