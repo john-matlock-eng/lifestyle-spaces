@@ -442,7 +442,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 
         const handleChange = (e: MediaQueryListEvent) => {
           setIsDark(e.matches)
-          console.info(`System theme changed to: ${e.matches ? 'dark' : 'light'}`)
         }
 
         // Set initial value
