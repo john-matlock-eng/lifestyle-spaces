@@ -7,54 +7,54 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import type { Theme, ThemeConfig, ThemeContextValue } from './theme.types'
 import { ThemeContext } from './ThemeContext'
 
-// Default theme data that matches test expectations
+// Default theme data with vibrant teal, purple, and pink accents
 const defaultWellnessTheme: Theme = {
   id: 'wellness',
   name: 'Wellness',
-  description: 'Calming wellness theme',
+  description: 'Vibrant wellness theme with teal, purple, and pink accents',
   category: 'light',
   colors: {
     primary: {
-      50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5',
-      400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
-      800: '#991b1b', 900: '#7f1d1d', 950: '#450a0a'
+      50: '#f0fdfa', 100: '#ccfbf1', 200: '#99f6e4', 300: '#5eead4',
+      400: '#2dd4bf', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e',
+      800: '#115e59', 900: '#134e4a', 950: '#042f2e'
     },
     secondary: {
-      50: '#fafafa', 100: '#f5f5f5', 200: '#e5e5e5', 300: '#d4d4d4',
-      400: '#a3a3a3', 500: '#737373', 600: '#525252', 700: '#404040',
-      800: '#262626', 900: '#171717', 950: '#0a0a0a'
+      50: '#faf5ff', 100: '#f3e8ff', 200: '#e9d5ff', 300: '#d8b4fe',
+      400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 700: '#7e22ce',
+      800: '#6b21a8', 900: '#581c87', 950: '#3b0764'
     },
     accent: {
-      50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5',
-      400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
-      800: '#991b1b', 900: '#7f1d1d', 950: '#450a0a'
+      50: '#fdf2f8', 100: '#fce7f3', 200: '#fbcfe8', 300: '#f9a8d4',
+      400: '#f472b6', 500: '#ec4899', 600: '#db2777', 700: '#be185d',
+      800: '#9d174d', 900: '#831843', 950: '#500724'
     },
     background: {
       base: '#ffffff',
-      surface: '#fafafa',
+      surface: '#f8fafc',
       elevated: '#ffffff',
       overlay: '#000000',
       overlayOpacity: 0.5
     },
     text: {
-      primary: '#1f2937',
-      secondary: '#6b7280',
-      muted: '#9ca3af',
+      primary: '#1e293b',
+      secondary: '#64748b',
+      muted: '#94a3b8',
       inverse: '#ffffff',
-      link: '#ef4444',
-      linkHover: '#dc2626'
+      link: '#0d9488',
+      linkHover: '#0f766e'
     },
     border: {
-      base: '#e5e7eb',
-      light: '#f3f4f6',
-      dark: '#d1d5db',
-      focus: '#ef4444'
+      base: '#e2e8f0',
+      light: '#f1f5f9',
+      dark: '#cbd5e1',
+      focus: '#14b8a6'
     },
     status: {
       success: '#10b981',
       warning: '#f59e0b',
       error: '#ef4444',
-      info: '#3b82f6'
+      info: '#0ea5e9'
     }
   },
   effects: {
@@ -122,47 +122,47 @@ const defaultWellnessTheme: Theme = {
   components: {
     input: {
       background: '#ffffff',
-      border: '#e5e7eb',
-      focusBorder: '#ef4444',
-      text: '#1f2937',
-      placeholder: '#9ca3af',
-      disabledBackground: '#f3f4f6',
+      border: '#e2e8f0',
+      focusBorder: '#14b8a6',
+      text: '#1e293b',
+      placeholder: '#94a3b8',
+      disabledBackground: '#f1f5f9',
       errorBorder: '#ef4444',
       height: { sm: '2rem', md: '2.5rem', lg: '3rem' }
     },
     button: {
       primary: {
-        background: '#ef4444', text: '#ffffff', border: '#ef4444',
-        hoverBackground: '#dc2626', hoverText: '#ffffff', hoverBorder: '#dc2626',
-        activeBackground: '#b91c1c', disabledBackground: '#9ca3af', disabledText: '#ffffff'
+        background: '#14b8a6', text: '#ffffff', border: '#14b8a6',
+        hoverBackground: '#0d9488', hoverText: '#ffffff', hoverBorder: '#0d9488',
+        activeBackground: '#0f766e', disabledBackground: '#94a3b8', disabledText: '#ffffff'
       },
       secondary: {
-        background: '#f3f4f6', text: '#1f2937', border: '#e5e7eb',
-        hoverBackground: '#e5e7eb', hoverText: '#1f2937', hoverBorder: '#d1d5db',
-        activeBackground: '#d1d5db', disabledBackground: '#f9fafb', disabledText: '#9ca3af'
+        background: '#f1f5f9', text: '#1e293b', border: '#e2e8f0',
+        hoverBackground: '#e2e8f0', hoverText: '#1e293b', hoverBorder: '#cbd5e1',
+        activeBackground: '#cbd5e1', disabledBackground: '#f8fafc', disabledText: '#94a3b8'
       },
       outline: {
-        background: 'transparent', text: '#ef4444', border: '#ef4444',
-        hoverBackground: '#ef4444', hoverText: '#ffffff', hoverBorder: '#ef4444',
-        activeBackground: '#dc2626', disabledBackground: 'transparent', disabledText: '#9ca3af'
+        background: 'transparent', text: '#14b8a6', border: '#14b8a6',
+        hoverBackground: '#14b8a6', hoverText: '#ffffff', hoverBorder: '#14b8a6',
+        activeBackground: '#0d9488', disabledBackground: 'transparent', disabledText: '#94a3b8'
       },
       ghost: {
-        background: 'transparent', text: '#ef4444', border: 'transparent',
-        hoverBackground: '#fef2f2', hoverText: '#dc2626', hoverBorder: 'transparent',
-        activeBackground: '#fee2e2', disabledBackground: 'transparent', disabledText: '#9ca3af'
+        background: 'transparent', text: '#0d9488', border: 'transparent',
+        hoverBackground: '#f0fdfa', hoverText: '#0f766e', hoverBorder: 'transparent',
+        activeBackground: '#ccfbf1', disabledBackground: 'transparent', disabledText: '#94a3b8'
       },
       danger: {
         background: '#ef4444', text: '#ffffff', border: '#ef4444',
         hoverBackground: '#dc2626', hoverText: '#ffffff', hoverBorder: '#dc2626',
-        activeBackground: '#b91c1c', disabledBackground: '#9ca3af', disabledText: '#ffffff'
+        activeBackground: '#b91c1c', disabledBackground: '#94a3b8', disabledText: '#ffffff'
       }
     },
     navigation: {
       background: '#ffffff',
-      text: '#1f2937',
-      activeBackground: '#fef2f2',
-      activeText: '#ef4444',
-      hoverBackground: '#f9fafb',
+      text: '#1e293b',
+      activeBackground: '#f0fdfa',
+      activeText: '#0d9488',
+      hoverBackground: '#f8fafc',
       mobile: {
         background: '#ffffff',
         backdrop: '#000000',
@@ -172,13 +172,13 @@ const defaultWellnessTheme: Theme = {
     modal: {
       backdrop: '#000000',
       background: '#ffffff',
-      border: '#e5e7eb',
+      border: '#e2e8f0',
       shadow: '0 25px 50px -12px rgb(0 0 0 / 0.25)',
       zIndex: 1050
     },
     card: {
       background: '#ffffff',
-      border: '#e5e7eb',
+      border: '#e2e8f0',
       shadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
       hoverShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
     }
@@ -187,7 +187,7 @@ const defaultWellnessTheme: Theme = {
     created: new Date('2024-01-01'),
     modified: new Date('2024-01-01'),
     version: '1.0.0',
-    tags: ['wellness', 'light', 'calm'],
+    tags: ['wellness', 'light', 'vibrant', 'teal', 'purple', 'pink'],
     accessibility: {
       wcagAA: true,
       wcagAAA: false,
