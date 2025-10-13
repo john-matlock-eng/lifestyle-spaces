@@ -29,15 +29,20 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     editable: !disabled,
     onUpdate: ({ editor }) => {
       // Get properly formatted markdown from storage
-      const markdown = editor.storage.markdown.getMarkdown()
+      // @ts-expect-error - markdown storage is added by tiptap-markdown extension
+      const markdown = editor.storage.markdown.getMarkdown() as string
       onChange(markdown)
     }
   })
 
   // Update editor content when prop changes
   useEffect(() => {
-    if (editor && content !== editor.storage.markdown.getMarkdown()) {
-      editor.commands.setContent(content)
+    if (editor) {
+      // @ts-expect-error - markdown storage is added by tiptap-markdown extension
+      const currentMarkdown = editor.storage.markdown.getMarkdown() as string
+      if (content !== currentMarkdown) {
+        editor.commands.setContent(content)
+      }
     }
   }, [content, editor])
 
