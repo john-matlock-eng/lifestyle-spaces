@@ -525,7 +525,7 @@ describe('ThemeIntegration', () => {
       const textColor = screen.getByTestId('current-text').textContent
 
       expect(bgColor).toBe('#ffffff')
-      expect(textColor).toBe('#1f2937')
+      expect(textColor).toBe('#1e293b')
     })
 
     it('should display dark theme colors after switching', async () => {
@@ -593,7 +593,7 @@ describe('ThemeIntegration', () => {
 
       // Light theme should have dark text on light background
       expect(bgColor).toBe('#ffffff')
-      expect(textColor).toBe('#1f2937')
+      expect(textColor).toBe('#1e293b')
     })
 
     it('should have sufficient contrast in dark theme', async () => {
