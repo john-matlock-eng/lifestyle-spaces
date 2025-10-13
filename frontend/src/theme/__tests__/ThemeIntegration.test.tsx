@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { act } from 'react'
 import userEvent from '@testing-library/user-event'
 import { ThemeProvider } from '../ThemeProvider'
@@ -669,7 +669,7 @@ describe('ThemeIntegration', () => {
     it('should handle missing localStorage gracefully', () => {
       // Temporarily remove localStorage
       const originalLocalStorage = window.localStorage
-      // @ts-ignore
+      // @ts-expect-error - Intentionally deleting localStorage to test error handling
       delete window.localStorage
 
       render(
