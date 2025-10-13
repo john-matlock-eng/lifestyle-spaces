@@ -141,6 +141,19 @@
   color: var(--theme-text-primary);
 }
 
+/* Theme Toggle Button */
+.header-action-btn.theme-toggle {
+  width: auto;
+  padding: 0 12px;
+  gap: 8px;
+}
+
+.theme-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: inherit;
+}
+
 /* Profile Menu */
 .profile-menu-container {
   position: relative;
@@ -284,6 +297,73 @@
   height: 1px;
   background: var(--theme-border-base);
   margin: 8px 0;
+}
+
+/* Theme Section in Profile Dropdown */
+.theme-section {
+  padding: 4px 0;
+}
+
+.theme-section-header {
+  padding: 8px 12px;
+  margin-bottom: 4px;
+}
+
+.theme-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--theme-text-secondary);
+}
+
+.theme-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--theme-text-primary);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  position: relative;
+}
+
+.theme-option:hover {
+  background: var(--theme-bg-surface);
+}
+
+.theme-option.active {
+  background: var(--theme-primary-50);
+  color: var(--theme-primary-600);
+}
+
+.dark .theme-option.active {
+  background: rgba(96, 165, 250, 0.15);
+  color: var(--theme-primary-400);
+}
+
+.theme-option-check {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--theme-primary-600);
+}
+
+.dark .theme-option-check {
+  color: var(--theme-primary-400);
 }
 
 /* App Body */

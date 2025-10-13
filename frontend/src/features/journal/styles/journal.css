@@ -6,7 +6,7 @@
 /* Button Styles */
 .button-primary {
   padding: 10px 20px;
-  background-color: var(--theme-primary-600, #646cff);
+  background-color: var(--theme-primary-600);
   color: white;
   border: none;
   border-radius: 8px;
@@ -17,7 +17,7 @@
 }
 
 .button-primary:hover:not(:disabled) {
-  background-color: var(--theme-primary-700, #535bf2);
+  background-color: var(--theme-primary-700);
 }
 
 .button-primary:disabled {
@@ -27,9 +27,9 @@
 
 .button-secondary {
   padding: 10px 20px;
-  background-color: var(--theme-bg-surface, #ffffff);
-  color: var(--theme-text-primary, #1a1a1a);
-  border: 1px solid var(--theme-border-light, #e5e7eb);
+  background-color: var(--theme-bg-surface);
+  color: var(--theme-text-primary);
+  border: 1px solid var(--theme-border-light);
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -38,8 +38,8 @@
 }
 
 .button-secondary:hover:not(:disabled) {
-  background-color: var(--theme-bg-hover, #f3f4f6);
-  border-color: var(--theme-primary-500, #646cff);
+  background-color: var(--theme-bg-hover);
+  border-color: var(--theme-primary-500);
 }
 
 .button-secondary:disabled {
@@ -49,7 +49,7 @@
 
 .button-danger {
   padding: 10px 20px;
-  background-color: var(--theme-error-600, #dc2626);
+  background-color: var(--theme-error-600);
   color: white;
   border: none;
   border-radius: 8px;
@@ -60,7 +60,7 @@
 }
 
 .button-danger:hover:not(:disabled) {
-  background-color: var(--theme-error-700, #b91c1c);
+  background-color: var(--theme-error-700);
 }
 
 .button-danger:disabled {
@@ -70,9 +70,9 @@
 
 /* Rich Text Editor Styles */
 .rich-text-editor {
-  border: 1px solid var(--theme-border-light, #e5e7eb);
+  border: 1px solid var(--theme-border-light);
   border-radius: 8px;
-  background-color: var(--theme-bg-surface, #ffffff);
+  background-color: var(--theme-bg-surface);
   overflow: hidden;
 }
 
@@ -81,15 +81,15 @@
   flex-wrap: wrap;
   gap: 8px;
   padding: 12px;
-  border-bottom: 1px solid var(--theme-border-light, #e5e7eb);
-  background-color: var(--theme-bg-elevated, #f9f9f9);
+  border-bottom: 1px solid var(--theme-border-light);
+  background-color: var(--theme-bg-elevated);
 }
 
 .toolbar-group {
   display: flex;
   gap: 4px;
   padding: 0 8px;
-  border-right: 1px solid var(--theme-border-light, #e5e7eb);
+  border-right: 1px solid var(--theme-border-light);
 }
 
 .toolbar-group:last-child {
@@ -98,9 +98,9 @@
 
 .editor-toolbar button {
   padding: 6px 10px;
-  border: 1px solid var(--theme-border-light, #e5e7eb);
-  background-color: var(--theme-bg-surface, #ffffff);
-  color: var(--theme-text-primary, #1a1a1a);
+  border: 1px solid var(--theme-border-light);
+  background-color: var(--theme-bg-surface);
+  color: var(--theme-text-primary);
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
@@ -108,8 +108,8 @@
 }
 
 .editor-toolbar button:hover:not(:disabled) {
-  background-color: var(--theme-bg-hover, #f3f4f6);
-  border-color: var(--theme-primary-500, #646cff);
+  background-color: var(--theme-bg-hover);
+  border-color: var(--theme-primary-500);
 }
 
 .editor-toolbar button:disabled {
@@ -118,15 +118,15 @@
 }
 
 .editor-toolbar button.is-active {
-  background-color: var(--theme-primary-100, #e0e7ff);
-  border-color: var(--theme-primary-500, #646cff);
-  color: var(--theme-primary-700, #4338ca);
+  background-color: var(--theme-primary-100);
+  border-color: var(--theme-primary-500);
+  color: var(--theme-primary-700);
 }
 
 .editor-content {
   padding: 16px;
-  background-color: var(--theme-bg-surface, #ffffff);
-  color: var(--theme-text-primary, #1a1a1a);
+  background-color: var(--theme-bg-surface);
+  color: var(--theme-text-primary);
 }
 
 /* TipTap Editor Content Styles */
@@ -141,7 +141,7 @@
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
-  color: var(--theme-text-secondary, #6b7280);
+  color: var(--theme-text-secondary);
   content: attr(data-placeholder);
   float: left;
   height: 0;
@@ -152,21 +152,21 @@
   font-size: 2em;
   font-weight: 700;
   margin: 1em 0 0.5em;
-  color: var(--theme-text-primary, #1a1a1a);
+  color: var(--theme-text-primary);
 }
 
 .ProseMirror h2 {
   font-size: 1.5em;
   font-weight: 600;
   margin: 0.83em 0;
-  color: var(--theme-text-primary, #1a1a1a);
+  color: var(--theme-text-primary);
 }
 
 .ProseMirror h3 {
   font-size: 1.17em;
   font-weight: 600;
   margin: 1em 0;
-  color: var(--theme-text-primary, #1a1a1a);
+  color: var(--theme-text-primary);
 }
 
 .ProseMirror ul,
@@ -197,25 +197,25 @@
 }
 
 .ProseMirror blockquote {
-  border-left: 3px solid var(--theme-primary-500, #646cff);
+  border-left: 3px solid var(--theme-primary-500);
   padding-left: 1em;
   margin: 1em 0;
-  color: var(--theme-text-secondary, #6b7280);
+  color: var(--theme-text-secondary);
   font-style: italic;
 }
 
 .ProseMirror code {
-  background-color: var(--theme-bg-elevated, #f3f4f6);
+  background-color: var(--theme-bg-elevated);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'Courier New', monospace;
   font-size: 0.9em;
-  color: var(--theme-text-primary, #1a1a1a);
+  color: var(--theme-text-primary);
 }
 
 .ProseMirror pre {
-  background-color: var(--theme-bg-elevated, #1e1e1e);
-  color: var(--theme-text-inverse, #e5e7eb);
+  background-color: var(--theme-bg-elevated);
+  color: var(--theme-text-inverse);
   padding: 1em;
   border-radius: 8px;
   overflow-x: auto;
@@ -229,25 +229,25 @@
 }
 
 .ProseMirror a.journal-link {
-  color: var(--theme-primary-600, #646cff);
+  color: var(--theme-primary-600);
   text-decoration: underline;
   cursor: pointer;
 }
 
 .ProseMirror a.journal-link:hover {
-  color: var(--theme-primary-700, #535bf2);
+  color: var(--theme-primary-700);
 }
 
 .ProseMirror hr {
   border: none;
-  border-top: 2px solid var(--theme-border-medium, #d1d5db);
+  border-top: 2px solid var(--theme-border-medium);
   margin: 2em 0;
 }
 
 /* Journal Card Styles */
 .journal-card {
-  background-color: var(--theme-bg-surface, #ffffff);
-  border: 1px solid var(--theme-border-light, #e5e7eb);
+  background-color: var(--theme-bg-surface);
+  border: 1px solid var(--theme-border-light);
   border-radius: 12px;
   padding: 20px;
   transition: all 0.2s ease;
@@ -255,7 +255,7 @@
 }
 
 .journal-card:hover {
-  border-color: var(--theme-primary-500, #646cff);
+  border-color: var(--theme-primary-500);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
 }
@@ -270,13 +270,13 @@
 .journal-card-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--theme-text-primary, #1a1a1a);
+  color: var(--theme-text-primary);
   margin: 0;
   flex: 1;
 }
 
 .journal-card-pin {
-  color: var(--theme-warning-600, #d97706);
+  color: var(--theme-warning-600);
   margin-left: 8px;
 }
 
@@ -308,15 +308,15 @@
 }
 
 .journal-card-action-btn.edit-btn:hover {
-  background-color: var(--theme-primary-100, #e0e7ff);
+  background-color: var(--theme-primary-100);
 }
 
 .journal-card-action-btn.delete-btn:hover {
-  background-color: var(--theme-error-100, #fee2e2);
+  background-color: var(--theme-error-100);
 }
 
 .journal-card-excerpt {
-  color: var(--theme-text-secondary, #6b7280);
+  color: var(--theme-text-secondary);
   line-height: 1.6;
   margin: 12px 0;
   display: -webkit-box;
@@ -332,9 +332,9 @@
   align-items: center;
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px solid var(--theme-border-light, #e5e7eb);
+  border-top: 1px solid var(--theme-border-light);
   font-size: 0.875rem;
-  color: var(--theme-text-secondary, #6b7280);
+  color: var(--theme-text-secondary);
 }
 
 .journal-card-author {
@@ -357,8 +357,8 @@
 }
 
 .journal-tag {
-  background-color: var(--theme-primary-100, #e0e7ff);
-  color: var(--theme-primary-700, #4338ca);
+  background-color: var(--theme-primary-100);
+  color: var(--theme-primary-700);
   padding: 2px 8px;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -370,7 +370,7 @@
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  background-color: var(--theme-bg-elevated, #f3f4f6);
+  background-color: var(--theme-bg-elevated);
   border-radius: 12px;
   font-size: 0.875rem;
 }
@@ -395,7 +395,7 @@
 .journal-list-title {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--theme-text-primary, #1a1a1a);
+  color: var(--theme-text-primary);
   margin: 0;
 }
 
@@ -415,7 +415,7 @@
 .journal-list-empty {
   text-align: center;
   padding: 60px 20px;
-  color: var(--theme-text-secondary, #6b7280);
+  color: var(--theme-text-secondary);
 }
 
 .journal-list-empty-icon {
@@ -432,7 +432,7 @@
 .journal-list-loading {
   text-align: center;
   padding: 40px;
-  color: var(--theme-text-secondary, #6b7280);
+  color: var(--theme-text-secondary);
 }
 
 /* Pagination Styles */
@@ -446,17 +446,17 @@
 
 .journal-pagination button {
   padding: 8px 16px;
-  border: 1px solid var(--theme-border-light, #e5e7eb);
-  background-color: var(--theme-bg-surface, #ffffff);
-  color: var(--theme-text-primary, #1a1a1a);
+  border: 1px solid var(--theme-border-light);
+  background-color: var(--theme-bg-surface);
+  color: var(--theme-text-primary);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .journal-pagination button:hover:not(:disabled) {
-  background-color: var(--theme-primary-100, #e0e7ff);
-  border-color: var(--theme-primary-500, #646cff);
+  background-color: var(--theme-primary-100);
+  border-color: var(--theme-primary-500);
 }
 
 .journal-pagination button:disabled {
@@ -465,7 +465,7 @@
 }
 
 .journal-pagination-info {
-  color: var(--theme-text-secondary, #6b7280);
+  color: var(--theme-text-secondary);
   font-size: 0.875rem;
 }
 
@@ -485,7 +485,7 @@
 .journal-view-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: var(--theme-text-primary, #1a1a1a);
+  color: var(--theme-text-primary);
   margin: 0 0 16px 0;
   text-align: left;
 }
@@ -495,8 +495,8 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background-color: var(--theme-bg-elevated, #f3f4f6);
-  border: 1px solid var(--theme-border-light, #e5e7eb);
+  background-color: var(--theme-bg-elevated);
+  border: 1px solid var(--theme-border-light);
   border-radius: 20px;
   margin-bottom: 16px;
 }
@@ -508,17 +508,17 @@
 .journal-template-badge .template-name {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--theme-text-secondary, #6b7280);
+  color: var(--theme-text-secondary);
 }
 
 .journal-view-meta {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  color: var(--theme-text-secondary, #6b7280);
+  color: var(--theme-text-secondary);
   font-size: 0.875rem;
   padding: 20px 0;
-  border-bottom: 1px solid var(--theme-border-light, #e5e7eb);
+  border-bottom: 1px solid var(--theme-border-light);
 }
 
 .journal-meta-item {
@@ -537,7 +537,7 @@
   align-items: center;
   gap: 6px;
   font-weight: 500;
-  color: var(--theme-text-primary, #1a1a1a);
+  color: var(--theme-text-primary);
   margin-bottom: 8px;
 }
 
@@ -563,13 +563,13 @@
 }
 
 .journal-view-content {
-  background-color: var(--theme-bg-surface, #ffffff);
+  background-color: var(--theme-bg-surface);
   padding: 32px;
   border-radius: 12px;
-  border: 1px solid var(--theme-border-light, #e5e7eb);
+  border: 1px solid var(--theme-border-light);
   margin-bottom: 24px;
   line-height: 1.8;
-  color: var(--theme-text-primary, #1a1a1a);
+  color: var(--theme-text-primary);
   text-align: left;
 }
 
@@ -580,20 +580,20 @@
 }
 
 .template-section {
-  border-left: 3px solid var(--theme-primary-500, #646cff);
+  border-left: 3px solid var(--theme-primary-500);
   padding-left: 20px;
 }
 
 .template-section-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--theme-text-primary, #1a1a1a);
+  color: var(--theme-text-primary);
   margin: 0 0 12px 0;
   text-align: left;
 }
 
 .template-section-content {
-  color: var(--theme-text-primary, #1a1a1a);
+  color: var(--theme-text-primary);
   text-align: left;
 }
 
@@ -616,10 +616,10 @@
 }
 
 .journal-form {
-  background-color: var(--theme-bg-surface, #ffffff);
+  background-color: var(--theme-bg-surface);
   padding: 32px;
   border-radius: 12px;
-  border: 1px solid var(--theme-border-light, #e5e7eb);
+  border: 1px solid var(--theme-border-light);
 }
 
 .journal-form-group {
@@ -630,23 +630,23 @@
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: var(--theme-text-primary, #1a1a1a);
+  color: var(--theme-text-primary);
 }
 
 .journal-form-input {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid var(--theme-border-light, #e5e7eb);
+  border: 1px solid var(--theme-border-light);
   border-radius: 8px;
-  background-color: var(--theme-bg-surface, #ffffff);
-  color: var(--theme-text-primary, #1a1a1a);
+  background-color: var(--theme-bg-surface);
+  color: var(--theme-text-primary);
   font-size: 1rem;
   transition: border-color 0.2s ease;
 }
 
 .journal-form-input:focus {
   outline: none;
-  border-color: var(--theme-primary-500, #646cff);
+  border-color: var(--theme-primary-500);
 }
 
 .journal-form-input.title-input {
@@ -660,11 +660,11 @@
   justify-content: flex-end;
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid var(--theme-border-light, #e5e7eb);
+  border-top: 1px solid var(--theme-border-light);
 }
 
 .journal-form-error {
-  color: var(--theme-error-600, #dc2626);
+  color: var(--theme-error-600);
   font-size: 0.875rem;
   margin-top: 8px;
 }
@@ -675,8 +675,8 @@
 }
 
 .selected-template-info {
-  background-color: var(--theme-bg-elevated, #f9f9f9);
-  border: 1px solid var(--theme-border-light, #e5e7eb);
+  background-color: var(--theme-bg-elevated);
+  border: 1px solid var(--theme-border-light);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 24px;
@@ -700,13 +700,13 @@
 .selected-template-header h3 {
   margin: 0 0 4px 0;
   font-size: 1.25rem;
-  color: var(--theme-text-primary, #1a1a1a);
+  color: var(--theme-text-primary);
 }
 
 .selected-template-header p {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--theme-text-secondary, #6b7280);
+  color: var(--theme-text-secondary);
 }
 
 .template-sections {

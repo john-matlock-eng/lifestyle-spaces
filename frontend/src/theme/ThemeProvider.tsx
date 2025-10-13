@@ -1,9 +1,9 @@
 /**
- * ThemeProvider - TDD Implementation
- * Following the test requirements exactly
+ * ThemeProvider - Enhanced with better persistence and animations
+ * Features: localStorage recovery, system preference detection, smooth transitions
  */
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import type { Theme, ThemeConfig, ThemeContextValue } from './theme.types'
 import { ThemeContext } from './ThemeContext'
 
@@ -273,6 +273,53 @@ const defaultConfig: ThemeConfig = {
   enableValidation: true
 }
 
+// Enhanced localStorage utility with error recovery
+const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return null
+    }
+    try {
+      return localStorage.getItem(key)
+    } catch (error) {
+      console.warn(`Failed to read from localStorage (${key}):`, error)
+      return null
+    }
+  },
+  setItem: (key: string, value: string): boolean => {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return false
+    }
+    try {
+      localStorage.setItem(key, value)
+      return true
+    } catch (error) {
+      console.warn(`Failed to write to localStorage (${key}):`, error)
+      // Try to clear space if quota exceeded
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
+        try {
+          localStorage.clear()
+          localStorage.setItem(key, value)
+          return true
+        } catch {
+          return false
+        }
+      }
+      return false
+    }
+  },
+  removeItem: (key: string): void => {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return
+    }
+    try {
+      localStorage.removeItem(key)
+    } catch (error) {
+      console.warn(`Failed to remove from localStorage (${key}):`, error)
+    }
+  }
+}
+
 // Theme provider props
 interface ThemeProviderProps {
   children: React.ReactNode
@@ -302,6 +349,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     })
     return [...defaultThemes, ...validCustomThemes]
   }, [customThemes])
+
+  // Detect prefers-reduced-motion
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
 
   // State
   const [currentThemeId, setCurrentThemeId] = useState<string>(finalConfig.defaultTheme)
@@ -335,29 +385,48 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     }
   }, [isDark, allThemes])
 
-  // Load theme from localStorage on initialization
+  // Detect prefers-reduced-motion on mount
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    if (typeof window === 'undefined' || !window.matchMedia) {
       return
     }
 
     try {
-      const storedTheme = localStorage.getItem(finalConfig.storageKey)
-      const storedDarkMode = localStorage.getItem(finalConfig.darkModeKey)
-
-      if (storedTheme && allThemes.find(t => t.id === storedTheme)) {
-        setCurrentThemeId(storedTheme)
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+      if (!mediaQuery) {
+        return
       }
 
-      if (storedDarkMode && ['light', 'dark', 'system'].includes(storedDarkMode)) {
-        setDarkModeState(storedDarkMode as 'light' | 'dark' | 'system')
+      setPrefersReducedMotion(mediaQuery.matches || false)
+
+      const handleChange = (e: MediaQueryListEvent) => {
+        setPrefersReducedMotion(e.matches)
       }
-    } catch (err) {
-      console.warn('Failed to load theme from storage:', err)
+
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', handleChange)
+        return () => mediaQuery.removeEventListener('change', handleChange)
+      }
+    } catch (error) {
+      console.warn('Failed to detect prefers-reduced-motion:', error)
+    }
+  }, [])
+
+  // Load theme from localStorage on initialization
+  useEffect(() => {
+    const storedTheme = safeLocalStorage.getItem(finalConfig.storageKey)
+    const storedDarkMode = safeLocalStorage.getItem(finalConfig.darkModeKey)
+
+    if (storedTheme && allThemes.find(t => t.id === storedTheme)) {
+      setCurrentThemeId(storedTheme)
+    }
+
+    if (storedDarkMode && ['light', 'dark', 'system'].includes(storedDarkMode)) {
+      setDarkModeState(storedDarkMode as 'light' | 'dark' | 'system')
     }
   }, [finalConfig.storageKey, finalConfig.darkModeKey, allThemes])
 
-  // Listen for system theme changes
+  // Enhanced system theme preference detection with proper cleanup
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) {
       return
@@ -373,11 +442,29 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 
         const handleChange = (e: MediaQueryListEvent) => {
           setIsDark(e.matches)
+          console.info(`System theme changed to: ${e.matches ? 'dark' : 'light'}`)
         }
-        mediaQuery.addEventListener?.('change', handleChange)
+
+        // Set initial value
         setIsDark(mediaQuery.matches || false)
-        return () => mediaQuery.removeEventListener?.('change', handleChange)
-      } catch {
+
+        // Add listener with proper event handler
+        if (mediaQuery.addEventListener) {
+          mediaQuery.addEventListener('change', handleChange)
+        } else if (mediaQuery.addListener) {
+          // Fallback for older browsers
+          mediaQuery.addListener(handleChange)
+        }
+
+        return () => {
+          if (mediaQuery.removeEventListener) {
+            mediaQuery.removeEventListener('change', handleChange)
+          } else if (mediaQuery.removeListener) {
+            mediaQuery.removeListener(handleChange)
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to setup system theme listener:', error)
         setIsDark(false)
       }
     } else {
@@ -385,13 +472,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     }
   }, [darkMode])
 
-  // Apply theme to document
+  // Apply theme to document with enhanced transitions
   useEffect(() => {
     if (typeof document === 'undefined') {
       return
     }
 
     const root = document.documentElement
+    const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test'
+    const transitionDuration = prefersReducedMotion || !finalConfig.enableTransitions || isTestEnv ? '0ms' : '300ms'
 
     // Set theme attribute
     root.setAttribute('data-theme', currentTheme.id)
@@ -401,6 +490,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
       root.classList.add('dark')
     } else {
       root.classList.remove('dark')
+    }
+
+    // Add transition class for smooth theme changes (skip in tests)
+    if (finalConfig.enableTransitions && !prefersReducedMotion && !isTestEnv) {
+      root.style.setProperty('--theme-transition-duration', transitionDuration)
+      root.classList.add('theme-transitioning')
+
+      // Remove transition class after transition completes
+      const timeoutId = setTimeout(() => {
+        root.classList.remove('theme-transitioning')
+      }, 300)
+
+      return () => clearTimeout(timeoutId)
     }
 
     // Apply CSS variables
@@ -424,44 +526,55 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
       root.style.setProperty('--theme-border-base', theme.colors.border.base)
       root.style.setProperty('--theme-border-light', theme.colors.border.light)
       root.style.setProperty('--theme-border-dark', theme.colors.border.dark)
+
+      // Error colors
+      if (theme.colors.status) {
+        root.style.setProperty('--theme-error-50', '#fef2f2')
+        root.style.setProperty('--theme-error-400', '#f87171')
+        root.style.setProperty('--theme-error-600', theme.colors.status.error)
+        root.style.setProperty('--theme-error-700', '#b91c1c')
+      }
+
+      // Warning colors
+      if (theme.colors.status) {
+        root.style.setProperty('--theme-warning-400', '#fbbf24')
+        root.style.setProperty('--theme-warning-600', theme.colors.status.warning)
+      }
     }
 
     applyThemeVariables(currentTheme)
 
     // Call onThemeLoad callback
     onThemeLoad?.(currentTheme)
-  }, [currentTheme, isDark, onThemeLoad])
+  }, [currentTheme, isDark, prefersReducedMotion, finalConfig.enableTransitions, onThemeLoad])
 
-  // Theme switching function
-  const setTheme = async (themeId: string) => {
+  // Theme switching function with persistence
+  const setTheme = useCallback(async (themeId: string) => {
     const theme = allThemes.find(t => t.id === themeId)
     if (!theme) {
+      console.warn(`Theme not found: ${themeId}`)
       return
     }
 
     setCurrentThemeId(themeId)
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(finalConfig.storageKey, themeId)
-    }
+    safeLocalStorage.setItem(finalConfig.storageKey, themeId)
     onThemeChange?.(theme)
-  }
+  }, [allThemes, finalConfig.storageKey, onThemeChange])
 
-  // Dark mode setter
-  const setDarkMode = (mode: 'light' | 'dark' | 'system') => {
+  // Dark mode setter with persistence
+  const setDarkMode = useCallback((mode: 'light' | 'dark' | 'system') => {
     setDarkModeState(mode)
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(finalConfig.darkModeKey, mode)
-    }
-  }
+    safeLocalStorage.setItem(finalConfig.darkModeKey, mode)
+  }, [finalConfig.darkModeKey])
 
   // Toggle between first two themes
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     const currentIndex = allThemes.findIndex(t => t.id === currentThemeId)
     const nextIndex = currentIndex === 0 ? 1 : 0
     setTheme(allThemes[nextIndex].id)
-  }
+  }, [allThemes, currentThemeId, setTheme])
 
-  const contextValue: ThemeContextValue = {
+  const contextValue: ThemeContextValue = useMemo(() => ({
     currentTheme,
     availableThemes: allThemes,
     darkMode,
@@ -480,7 +593,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
       bundleSize: 0,
       lastCheck: new Date()
     }
-  }
+  }), [currentTheme, allThemes, darkMode, isDark, setTheme, setDarkMode, toggleTheme, finalConfig.defaultTheme])
 
   return (
     <ThemeContext.Provider value={contextValue}>

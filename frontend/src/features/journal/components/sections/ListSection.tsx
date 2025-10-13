@@ -1,6 +1,7 @@
 import React from 'react'
 import { Plus, X, GripVertical } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
+import '../../styles/sections.css'
 
 interface ListItem {
   id: string

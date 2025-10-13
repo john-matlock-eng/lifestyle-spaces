@@ -12,11 +12,6 @@ import type { User, Space } from '../types';
 vi.mock('../stores/authStore');
 vi.mock('../stores/spaceStore');
 
-// Mock theme toggle
-vi.mock('../components/theme', () => ({
-  ThemeToggle: () => <div data-testid="theme-toggle">Theme Toggle</div>
-}));
-
 // Mock Ellie components and hooks
 const mockSetMood = vi.fn();
 const mockCelebrate = vi.fn();

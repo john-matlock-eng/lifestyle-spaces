@@ -11,8 +11,8 @@
 }
 
 .qa-pair {
-  background: var(--color-background-secondary, #f9f9f9);
-  border: 1px solid var(--color-border, #e0e0e0);
+  background: var(--theme-bg-surface);
+  border: 1px solid var(--theme-border-base);
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.2s ease;
@@ -22,13 +22,17 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+.dark .qa-pair:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
 .qa-pair-header {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: var(--color-background, white);
-  border-bottom: 1px solid var(--color-border, #e0e0e0);
+  background: var(--theme-bg-elevated);
+  border-bottom: 1px solid var(--theme-border-base);
 }
 
 .qa-collapse-btn {
@@ -39,13 +43,13 @@
   height: 24px;
   border: none;
   background: transparent;
-  color: var(--color-text-secondary, #666);
+  color: var(--theme-text-secondary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .qa-collapse-btn:hover {
-  color: var(--color-primary, #3b82f6);
+  color: var(--theme-primary-600);
 }
 
 .qa-number {
@@ -55,7 +59,7 @@
   min-width: 32px;
   height: 32px;
   padding: 0 8px;
-  background: var(--color-primary, #3b82f6);
+  background: var(--theme-primary-600);
   color: white;
   font-weight: 600;
   font-size: 12px;
@@ -65,18 +69,23 @@
 .qa-question-input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid var(--color-border, #e0e0e0);
+  border: 1px solid var(--theme-border-base);
   border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
-  background: white;
+  background: var(--theme-bg-base);
+  color: var(--theme-text-primary);
   transition: all 0.2s;
 }
 
 .qa-question-input:focus {
   outline: none;
-  border-color: var(--color-primary, #3b82f6);
+  border-color: var(--theme-primary-600);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.dark .qa-question-input:focus {
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
 }
 
 .qa-remove-btn {
@@ -87,13 +96,13 @@
   height: 24px;
   border: none;
   background: transparent;
-  color: var(--color-text-secondary, #999);
+  color: var(--theme-text-secondary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .qa-remove-btn:hover:not(:disabled) {
-  color: var(--color-danger, #ef4444);
+  color: #ef4444;
   background: rgba(239, 68, 68, 0.1);
   border-radius: 4px;
 }
@@ -110,20 +119,25 @@
 .qa-answer-input {
   width: 100%;
   padding: 12px;
-  border: 1px solid var(--color-border, #e0e0e0);
+  border: 1px solid var(--theme-border-base);
   border-radius: 4px;
   font-size: 14px;
   line-height: 1.6;
   resize: vertical;
   min-height: 100px;
-  background: white;
+  background: var(--theme-bg-base);
+  color: var(--theme-text-primary);
   transition: all 0.2s;
 }
 
 .qa-answer-input:focus {
   outline: none;
-  border-color: var(--color-primary, #3b82f6);
+  border-color: var(--theme-primary-600);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.dark .qa-answer-input:focus {
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
 }
 
 .qa-add-btn {
@@ -132,19 +146,23 @@
   justify-content: center;
   gap: 8px;
   padding: 12px 24px;
-  border: 2px dashed var(--color-border, #e0e0e0);
+  border: 2px dashed var(--theme-border-base);
   border-radius: 8px;
   background: transparent;
-  color: var(--color-text-secondary, #666);
+  color: var(--theme-text-secondary);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .qa-add-btn:hover:not(:disabled) {
-  border-color: var(--color-primary, #3b82f6);
-  color: var(--color-primary, #3b82f6);
-  background: rgba(59, 130, 246, 0.05);
+  border-color: var(--theme-primary-600);
+  color: var(--theme-primary-600);
+  background: var(--theme-primary-50);
+}
+
+.dark .qa-add-btn:hover:not(:disabled) {
+  background: rgba(96, 165, 250, 0.1);
 }
 
 .qa-add-btn:disabled {
@@ -161,19 +179,19 @@
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border: 1px solid var(--color-border, #e0e0e0);
+  border: 1px solid var(--theme-border-base);
   border-radius: 4px;
-  background: var(--color-background-secondary, #f9f9f9);
-  color: var(--color-text-secondary, #666);
+  background: var(--theme-bg-surface);
+  color: var(--theme-text-secondary);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .qa-suggestions-toggle:hover {
-  background: var(--color-primary, #3b82f6);
+  background: var(--theme-primary-600);
   color: white;
-  border-color: var(--color-primary, #3b82f6);
+  border-color: var(--theme-primary-600);
 }
 
 .qa-suggestions-list {
@@ -182,7 +200,7 @@
   gap: 4px;
   margin-top: 8px;
   padding: 8px;
-  background: var(--color-background-secondary, #f9f9f9);
+  background: var(--theme-bg-surface);
   border-radius: 4px;
 }
 
@@ -190,23 +208,27 @@
   padding: 8px 12px;
   border: 1px solid transparent;
   border-radius: 4px;
-  background: white;
+  background: var(--theme-bg-elevated);
   text-align: left;
   font-size: 13px;
-  color: var(--color-text, #333);
+  color: var(--theme-text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .qa-suggestion-item:hover:not(:disabled) {
-  border-color: var(--color-primary, #3b82f6);
-  background: rgba(59, 130, 246, 0.05);
+  border-color: var(--theme-primary-600);
+  background: var(--theme-primary-50);
   transform: translateX(4px);
+}
+
+.dark .qa-suggestion-item:hover:not(:disabled) {
+  background: rgba(96, 165, 250, 0.1);
 }
 
 .qa-helper-text {
   font-size: 13px;
-  color: var(--color-warning, #f59e0b);
+  color: #f59e0b;
   font-style: italic;
 }
 
@@ -218,8 +240,8 @@
 }
 
 .qa-view-pair {
-  background: var(--color-background-secondary, #f9f9f9);
-  border: 1px solid var(--color-border, #e0e0e0);
+  background: var(--theme-bg-surface);
+  border: 1px solid var(--theme-border-base);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -229,16 +251,17 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: var(--color-background, white);
-  border-bottom: 1px solid var(--color-border, #e0e0e0);
+  background: var(--theme-bg-elevated);
+  border-bottom: 1px solid var(--theme-border-base);
   font-size: 15px;
+  color: var(--theme-text-primary);
 }
 
 .qa-view-answer {
   padding: 16px;
   font-size: 14px;
   line-height: 1.6;
-  color: var(--color-text, #333);
+  color: var(--theme-text-primary);
 }
 
 .qa-view-answer p:first-child {

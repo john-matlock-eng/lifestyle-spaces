@@ -48,7 +48,8 @@ export const AppHeader: React.FC = () => {
     icon?: typeof User
     onClick?: () => void
     className?: string
-    type?: 'divider'
+    type?: 'divider' | 'theme-section'
+    isActive?: boolean
   }
 
   const profileMenuItems: MenuItem[] = [
@@ -69,6 +70,8 @@ export const AppHeader: React.FC = () => {
       }
     },
     { type: 'divider' },
+    { type: 'theme-section' },
+    { type: 'divider' },
     {
       label: 'Sign Out',
       icon: LogOut,
@@ -80,10 +83,22 @@ export const AppHeader: React.FC = () => {
     }
   ]
 
+  const themeOptions = [
+    { mode: 'light' as const, icon: Sun, label: 'Light' },
+    { mode: 'dark' as const, icon: Moon, label: 'Dark' },
+    { mode: 'system' as const, icon: Monitor, label: 'System' }
+  ]
+
   const getThemeIcon = () => {
     if (darkMode === 'dark') return <Sun size={18} />
     if (darkMode === 'light') return <Moon size={18} />
     return <Monitor size={18} />
+  }
+
+  const getThemeLabel = () => {
+    if (darkMode === 'dark') return 'Dark'
+    if (darkMode === 'light') return 'Light'
+    return 'System'
   }
 
   const cycleTheme = () => {
@@ -142,10 +157,12 @@ export const AppHeader: React.FC = () => {
           {/* Theme Toggle */}
           <button
             className="header-action-btn theme-toggle"
-            title={`Current: ${darkMode} theme (click to change)`}
+            title={`Theme: ${getThemeLabel()} (click to cycle)`}
             onClick={cycleTheme}
+            aria-label={`Current theme: ${getThemeLabel()}. Click to cycle themes.`}
           >
             {getThemeIcon()}
+            <span className="theme-label desktop-only">{getThemeLabel()}</span>
           </button>
 
           {/* Profile Dropdown */}
@@ -174,6 +191,37 @@ export const AppHeader: React.FC = () => {
                   {profileMenuItems.map((item, index) => {
                     if (item.type === 'divider') {
                       return <div key={index} className="menu-divider" />
+                    }
+
+                    if (item.type === 'theme-section') {
+                      return (
+                        <div key="theme-section" className="theme-section">
+                          <div className="theme-section-header">
+                            <span className="theme-section-title">Theme</span>
+                          </div>
+                          <div className="theme-options">
+                            {themeOptions.map((option) => {
+                              const Icon = option.icon
+                              const isActive = darkMode === option.mode
+                              return (
+                                <button
+                                  key={option.mode}
+                                  className={`theme-option ${isActive ? 'active' : ''}`}
+                                  onClick={() => setDarkMode(option.mode)}
+                                  aria-label={`Switch to ${option.label} theme`}
+                                  aria-pressed={isActive}
+                                >
+                                  <Icon size={16} />
+                                  <span>{option.label}</span>
+                                  {isActive && (
+                                    <span className="theme-option-check">✓</span>
+                                  )}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
                     }
 
                     const Icon = item.icon!

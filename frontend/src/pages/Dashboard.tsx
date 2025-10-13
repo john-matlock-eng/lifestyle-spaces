@@ -7,7 +7,6 @@ import { CreateSpaceModal } from '../components/spaces/CreateSpaceModal';
 import { JoinByCodeForm } from '../components/invitations/JoinByCodeForm';
 import { Ellie } from '../components/ellie';
 import { useShihTzuCompanion } from '../hooks';
-import { ThemeToggle } from '../components/theme';
 import type { Space } from '../types';
 import './Dashboard.css';
 
@@ -70,7 +69,6 @@ export const Dashboard: React.FC = () => {
             <p>Manage your spaces and connect with others.</p>
           </div>
           <div className="dashboard-header__actions">
-            <ThemeToggle showLabel={false} />
             <button
               type="button"
               onClick={handleCreateSpace}
