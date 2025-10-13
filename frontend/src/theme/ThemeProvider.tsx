@@ -502,19 +502,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     // Log applied theme
     console.log('🎨 [ThemeProvider] Current theme:', currentTheme.id, '- isDark:', isDark)
 
-    // Add transition class for smooth theme changes (skip in tests)
-    if (finalConfig.enableTransitions && !prefersReducedMotion && !isTestEnv) {
-      root.style.setProperty('--theme-transition-duration', transitionDuration)
-      root.classList.add('theme-transitioning')
-
-      // Remove transition class after transition completes
-      const timeoutId = setTimeout(() => {
-        root.classList.remove('theme-transitioning')
-      }, 300)
-
-      return () => clearTimeout(timeoutId)
-    }
-
     // Apply CSS variables
     const applyThemeVariables = (theme: Theme) => {
       // Primary colors
@@ -556,6 +543,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 
     // Call onThemeLoad callback
     onThemeLoad?.(currentTheme)
+
+    // Add transition class for smooth theme changes (skip in tests)
+    if (finalConfig.enableTransitions && !prefersReducedMotion && !isTestEnv) {
+      root.style.setProperty('--theme-transition-duration', transitionDuration)
+      root.classList.add('theme-transitioning')
+
+      // Remove transition class after transition completes
+      const timeoutId = setTimeout(() => {
+        root.classList.remove('theme-transitioning')
+      }, 300)
+
+      return () => clearTimeout(timeoutId)
+    }
   }, [currentTheme, isDark, prefersReducedMotion, finalConfig.enableTransitions, onThemeLoad])
 
   // Theme switching function with persistence
