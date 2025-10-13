@@ -738,3 +738,163 @@
     padding: 0 4px;
   }
 }
+
+/* Markdown Rendering Styles - for ReactMarkdown in journal view */
+.journal-view-content h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin: 1em 0 0.5em;
+  color: var(--theme-text-primary);
+  text-align: left;
+}
+
+.journal-view-content h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 0.83em 0;
+  color: var(--theme-text-primary);
+  text-align: left;
+}
+
+.journal-view-content h3 {
+  font-size: 1.17em;
+  font-weight: 600;
+  margin: 1em 0;
+  color: var(--theme-text-primary);
+  text-align: left;
+}
+
+.journal-view-content ul,
+.journal-view-content ol {
+  list-style-position: outside;
+  padding-left: 2em;
+  margin: 0.5em 0;
+  text-align: left;
+}
+
+.journal-view-content ul {
+  list-style-type: disc;
+}
+
+.journal-view-content ol {
+  list-style-type: decimal;
+}
+
+.journal-view-content li {
+  margin: 0.25em 0;
+}
+
+.journal-view-content blockquote {
+  border-left: 4px solid var(--theme-primary-500);
+  padding-left: 1em;
+  margin: 1em 0;
+  color: var(--theme-text-secondary);
+  font-style: italic;
+}
+
+.journal-view-content code {
+  background-color: var(--theme-bg-elevated);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', Consolas, Monaco, monospace;
+  font-size: 0.9em;
+  color: var(--theme-text-primary);
+}
+
+.journal-view-content pre {
+  background-color: var(--theme-bg-elevated);
+  padding: 1em;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.journal-view-content pre code {
+  background: none;
+  padding: 0;
+  color: var(--theme-text-primary);
+}
+
+.journal-view-content a {
+  color: var(--theme-primary-600);
+  text-decoration: underline;
+}
+
+.journal-view-content a:hover {
+  color: var(--theme-primary-700);
+}
+
+.journal-view-content hr {
+  border: none;
+  border-top: 2px solid var(--theme-border-medium);
+  margin: 2em 0;
+}
+
+.journal-view-content p {
+  margin: 1em 0;
+  text-align: left;
+}
+
+.journal-view-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.journal-view-content th,
+.journal-view-content td {
+  border: 1px solid var(--theme-border-light);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.journal-view-content th {
+  background-color: var(--theme-bg-elevated);
+  font-weight: 600;
+}
+
+.journal-view-content strong {
+  font-weight: 700;
+}
+
+.journal-view-content em {
+  font-style: italic;
+}
+
+.journal-view-content del {
+  text-decoration: line-through;
+}
+
+/* Task lists (GitHub-flavored markdown) */
+.journal-view-content input[type="checkbox"] {
+  margin-right: 0.5em;
+}
+
+/* Template section markdown styles */
+.template-section-content h1,
+.template-section-content h2,
+.template-section-content h3,
+.template-section-content h4,
+.template-section-content h5,
+.template-section-content h6 {
+  text-align: left;
+  color: var(--theme-text-primary);
+}
+
+.template-section-content p {
+  text-align: left;
+  margin: 0.5em 0;
+}
+
+.template-section-content ul,
+.template-section-content ol {
+  text-align: left;
+  padding-left: 2em;
+}
+
+.template-section-content blockquote {
+  border-left: 4px solid var(--theme-primary-500);
+  padding-left: 1em;
+  margin: 1em 0;
+  color: var(--theme-text-secondary);
+}

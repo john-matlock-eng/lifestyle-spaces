@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
-import { Markdown } from 'tiptap-markdown'
 import { getEditorExtensions } from './extensions'
 import '../styles/journal.css'
 
@@ -25,19 +24,19 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   disabled = false
 }) => {
   const editor = useEditor({
-    extensions: [...getEditorExtensions(placeholder), Markdown],
+    extensions: getEditorExtensions(placeholder),
     content,
     editable: !disabled,
     onUpdate: ({ editor }) => {
-      // Get content as markdown
-      const markdown = editor.getText()
+      // Get properly formatted markdown from storage
+      const markdown = editor.storage.markdown.getMarkdown()
       onChange(markdown)
     }
   })
 
   // Update editor content when prop changes
   useEffect(() => {
-    if (editor && content !== editor.getText()) {
+    if (editor && content !== editor.storage.markdown.getMarkdown()) {
       editor.commands.setContent(content)
     }
   }, [content, editor])

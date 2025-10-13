@@ -7,6 +7,7 @@ import { getEmotionById } from '../data/emotionData'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { DisplaySection } from '../../../lib/journal/types'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { Template } from '../types/template.types'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
@@ -98,6 +99,41 @@ export const JournalViewPage: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  const handleExportMarkdown = () => {
+    if (!journal) return
+
+    // Create filename from title and date
+    const safeTitle = journal.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()
+    const dateStr = new Date(journal.createdAt).toISOString().split('T')[0]
+    const filename = `${safeTitle}_${dateStr}.md`
+
+    // Get the markdown content
+    const content = template
+      ? JournalContentManager.extractCleanMarkdown(journal.content)
+      : journal.content
+
+    // Create markdown file with metadata
+    const markdown = `# ${journal.title}
+
+**Date:** ${formatDate(journal.createdAt)}
+${journal.author ? `**Author:** ${journal.author.displayName}\n` : ''}${journal.tags && journal.tags.length > 0 ? `**Tags:** ${journal.tags.join(', ')}\n` : ''}
+---
+
+${content}
+`
+
+    // Create blob and download
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   if (loading) {
@@ -256,7 +292,7 @@ export const JournalViewPage: React.FC = () => {
                                   <strong>{pair.question}</strong>
                                 </div>
                                 <div className="qa-view-answer">
-                                  <ReactMarkdown>{pair.answer}</ReactMarkdown>
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{pair.answer}</ReactMarkdown>
                                 </div>
                               </div>
                             ))}
@@ -264,7 +300,7 @@ export const JournalViewPage: React.FC = () => {
                         )
                       } catch {
                         // If parsing fails, fall back to markdown
-                        return <ReactMarkdown>{section.content}</ReactMarkdown>
+                        return <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
                       }
                     })()
                   ) : section.type === 'list' ? (
@@ -286,12 +322,12 @@ export const JournalViewPage: React.FC = () => {
                         )
                       } catch {
                         // If parsing fails, fall back to markdown
-                        return <ReactMarkdown>{section.content}</ReactMarkdown>
+                        return <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
                       }
                     })()
                   ) : (
                     // Render other section types as markdown
-                    <ReactMarkdown>{section.content}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
                   )}
                 </div>
               </div>
@@ -299,7 +335,7 @@ export const JournalViewPage: React.FC = () => {
           </div>
         ) : (
           // Render regular markdown content (or clean markdown if no sections)
-          <ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {template
               ? JournalContentManager.extractCleanMarkdown(journal.content)
               : journal.content}
@@ -307,20 +343,29 @@ export const JournalViewPage: React.FC = () => {
         )}
       </div>
 
-      {canEdit && (
-        <div className="journal-view-actions">
-          <button
-            onClick={handleDelete}
-            className="button-danger"
-            disabled={isDeleting}
-          >
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </button>
-          <button onClick={handleEdit} className="button-primary">
-            Edit
-          </button>
-        </div>
-      )}
+      <div className="journal-view-actions">
+        <button
+          onClick={handleExportMarkdown}
+          className="button-secondary"
+          title="Export as Markdown"
+        >
+          📥 Export
+        </button>
+        {canEdit && (
+          <>
+            <button
+              onClick={handleDelete}
+              className="button-danger"
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </button>
+            <button onClick={handleEdit} className="button-primary">
+              Edit
+            </button>
+          </>
+        )}
+      </div>
     </div>
   )
 }
