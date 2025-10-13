@@ -667,11 +667,28 @@ describe('ThemeIntegration', () => {
     })
 
     it('should handle missing localStorage gracefully', () => {
-      // Temporarily remove localStorage
+      // Mock localStorage to throw errors
       const originalLocalStorage = window.localStorage
-      // @ts-expect-error - Intentionally deleting localStorage to test error handling
-      delete window.localStorage
+      const mockStorage = {
+        getItem: vi.fn(() => {
+          throw new Error('localStorage is not available')
+        }),
+        setItem: vi.fn(() => {
+          throw new Error('localStorage is not available')
+        }),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+        length: 0,
+        key: vi.fn()
+      }
 
+      Object.defineProperty(window, 'localStorage', {
+        value: mockStorage,
+        writable: true,
+        configurable: true
+      })
+
+      // Should not crash even when localStorage throws
       render(
         <ThemeProvider>
           <ThemeConsumer />
@@ -683,7 +700,8 @@ describe('ThemeIntegration', () => {
       // Restore localStorage
       Object.defineProperty(window, 'localStorage', {
         value: originalLocalStorage,
-        writable: true
+        writable: true,
+        configurable: true
       })
     })
 
