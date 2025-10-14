@@ -3,6 +3,7 @@ import { ThemeProvider } from './theme/ThemeProvider';
 import { AuthProvider } from './stores/authStore';
 import { SpaceProvider } from './stores/spaceStore';
 import { InvitationProvider } from './stores/invitationStore';
+import { EllieCustomizationProvider } from './contexts/EllieCustomizationContext';
 import { AuthenticatedLayout } from './components/layout/AuthenticatedLayout';
 import { Landing } from './pages/Landing';
 import { SignIn } from './pages/SignIn';
@@ -23,7 +24,8 @@ function App() {
       <AuthProvider>
         <SpaceProvider>
           <InvitationProvider>
-            <Router>
+            <EllieCustomizationProvider>
+              <Router>
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Landing />} />
@@ -46,7 +48,8 @@ function App() {
                 {/* Catch all - redirect to landing */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-            </Router>
+              </Router>
+            </EllieCustomizationProvider>
           </InvitationProvider>
         </SpaceProvider>
       </AuthProvider>

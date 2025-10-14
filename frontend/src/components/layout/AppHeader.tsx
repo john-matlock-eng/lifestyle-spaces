@@ -15,14 +15,14 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../stores/authStore'
 import { useTheme } from '../../theme/useTheme'
-import { useEllieCustomization } from '../../hooks/useEllieCustomization'
+import { useEllieCustomizationContext } from '../../contexts/EllieCustomizationContext'
 
 export const AppHeader: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, signOut } = useAuth()
   const { darkMode, setDarkMode } = useTheme()
-  const { customization, updateCustomization } = useEllieCustomization()
+  const { customization, updateCustomization } = useEllieCustomizationContext()
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)

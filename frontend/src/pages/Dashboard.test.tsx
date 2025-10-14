@@ -22,7 +22,11 @@ vi.mock('../hooks', () => ({
     position: { x: 100, y: 100 },
     celebrate: mockCelebrate,
   }),
-  useEllieCustomization: () => ({
+}));
+
+// Mock Ellie customization context
+vi.mock('../contexts/EllieCustomizationContext', () => ({
+  useEllieCustomizationContext: () => ({
     customization: {
       furColor: undefined,
       collarStyle: 'none' as const,

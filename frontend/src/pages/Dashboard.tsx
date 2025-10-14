@@ -6,7 +6,8 @@ import { SpaceList } from '../components/spaces/SpaceList';
 import { CreateSpaceModal } from '../components/spaces/CreateSpaceModal';
 import { JoinByCodeForm } from '../components/invitations/JoinByCodeForm';
 import { Ellie } from '../components/ellie';
-import { useShihTzuCompanion, useEllieCustomization } from '../hooks';
+import { useShihTzuCompanion } from '../hooks';
+import { useEllieCustomizationContext } from '../contexts/EllieCustomizationContext';
 import type { Space } from '../types';
 import './Dashboard.css';
 
@@ -27,7 +28,7 @@ export const Dashboard: React.FC = () => {
   });
 
   // Ellie customization
-  const { customization } = useEllieCustomization();
+  const { customization } = useEllieCustomizationContext();
 
   useEffect(() => {
     loadSpaces();
