@@ -15,6 +15,9 @@ interface EnhancedShihTzuProps {
   variant?: "default" | "winter" | "party" | "workout" | "balloon";
   className?: string;
   style?: React.CSSProperties;
+  collarColor?: string;
+  collarTag?: boolean;
+  collarStyle?: "leather" | "fabric" | "chain" | "bowtie" | "bandana";
 }
 
 const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
@@ -31,11 +34,17 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
   variant = "default",
   className,
   style,
+  collarColor = "#8B4513",
+  collarTag = false,
+  collarStyle = "leather",
 }) => {
   const [currentPosition, setCurrentPosition] = useState(position);
   const [isMoving, setIsMoving] = useState(false);
   const [currentMood, setCurrentMood] = useState(mood);
   const [isPetting, setIsPetting] = useState(false);
+  const [hoveredZone, setHoveredZone] = useState<string | null>(null);
+  const [pettedZone, setPettedZone] = useState<string | null>(null);
+  const [petCount, setPetCount] = useState(0);
   const [particles, setParticles] = useState<
     Array<{ id: number; x: number; y: number }>
   >([]);
@@ -141,6 +150,16 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
 
   const handleMouseUp = () => {
     setIsPetting(false);
+    setPettedZone(null);
+  };
+
+  // Handle zone-specific petting
+  const handleZonePet = (zone: string) => {
+    setPettedZone(zone);
+    setPetCount(prev => prev + 1);
+    if (onPet) {
+      onPet();
+    }
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -296,9 +315,38 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
           <style>
             {`
               @keyframes wag-enhanced {
-                0%, 100% { transform: rotate(-45deg); }
-                25% { transform: rotate(-65deg); }
-                75% { transform: rotate(-25deg); }
+                0% { transform: rotate(0deg); }
+                25% { transform: rotate(-20deg); }
+                50% { transform: rotate(0deg); }
+                75% { transform: rotate(20deg); }
+                100% { transform: rotate(0deg); }
+              }
+
+              @keyframes tail-sway {
+                0%, 100% { transform: rotate(0deg); }
+                50% { transform: rotate(5deg); }
+              }
+
+              @keyframes tag-jingle {
+                0%, 100% { transform: rotate(0deg); }
+                25% { transform: rotate(-5deg); }
+                75% { transform: rotate(5deg); }
+              }
+
+              @keyframes walk-body {
+                0%, 100% { transform: translateY(0) rotate(0deg); }
+                25% { transform: translateY(-2px) rotate(-1deg); }
+                75% { transform: translateY(-2px) rotate(1deg); }
+              }
+
+              @keyframes walk-front-leg {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(3px); }
+              }
+
+              @keyframes walk-back-leg {
+                0%, 100% { transform: translateY(3px); }
+                50% { transform: translateY(0); }
               }
 
               @keyframes wiggle {
@@ -358,8 +406,30 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
               }
 
               .animate-wag-enhanced {
-                animation: wag-enhanced 0.6s ease-in-out infinite;
-                transform-origin: 30px 57px;
+                animation: wag-enhanced 0.5s ease-in-out infinite;
+                transform-origin: 25px 57px;
+              }
+
+              .animate-tail-sway {
+                animation: tail-sway 3s ease-in-out infinite;
+                transform-origin: 25px 57px;
+              }
+
+              .animate-tag-jingle {
+                animation: tag-jingle 4s ease-in-out infinite;
+                transform-origin: 50px 48px;
+              }
+
+              .animate-walk-body {
+                animation: walk-body 0.6s ease-in-out infinite;
+              }
+
+              .animate-walk-front-leg {
+                animation: walk-front-leg 0.6s ease-in-out infinite;
+              }
+
+              .animate-walk-back-leg {
+                animation: walk-back-leg 0.6s ease-in-out infinite;
               }
 
               .animate-wiggle {
@@ -412,32 +482,156 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
           className={isMoving ? "opacity-50" : "opacity-100"}
         />
 
-        {/* Body */}
+        {/* Body - improved Shih Tzu proportions */}
         <ellipse
           cx="50"
           cy="60"
-          rx="25"
-          ry="20"
+          rx="28"
+          ry="22"
           fill="url(#bodyGradient)"
           stroke={colors.secondary}
           strokeWidth="1"
           filter="url(#softshadow)"
           className={
-            currentMood === "sleeping" || currentMood === "zen"
+            currentMood === "walking"
+              ? "animate-walk-body"
+              : currentMood === "sleeping" || currentMood === "zen"
               ? "animate-breathe"
               : ""
           }
         />
 
-        {/* Chest fluff */}
+        {/* Side fluff details */}
+        <ellipse
+          cx="28"
+          cy="58"
+          rx="8"
+          ry="14"
+          fill={colors.primary}
+          opacity="0.6"
+        />
+        <ellipse
+          cx="72"
+          cy="58"
+          rx="8"
+          ry="14"
+          fill={colors.primary}
+          opacity="0.6"
+        />
+
+        {/* Chest fluff - enhanced */}
         <ellipse
           cx="50"
-          cy="65"
-          rx="12"
-          ry="8"
+          cy="68"
+          rx="15"
+          ry="10"
           fill={colors.primary}
           opacity="0.7"
         />
+
+        {/* Belly curve detail */}
+        <ellipse
+          cx="50"
+          cy="72"
+          rx="18"
+          ry="6"
+          fill={colors.primary}
+          opacity="0.5"
+        />
+
+        {/* Collar - positioned at neck */}
+        <g>
+          {collarStyle === "leather" || collarStyle === "fabric" || collarStyle === "chain" ? (
+            <>
+              {/* Basic collar band */}
+              <ellipse
+                cx="50"
+                cy="48"
+                rx="18"
+                ry="4"
+                fill={collarColor}
+                stroke={collarStyle === "chain" ? "#C0C0C0" : "#654321"}
+                strokeWidth="0.5"
+                filter="url(#softshadow)"
+              />
+
+              {/* Collar buckle */}
+              <rect
+                x="47"
+                y="46"
+                width="6"
+                height="4"
+                rx="0.5"
+                fill="#FFD700"
+                stroke="#B8860B"
+                strokeWidth="0.5"
+              />
+
+              {/* Name tag (optional) */}
+              {collarTag && (
+                <g className="animate-tag-jingle">
+                  <ellipse
+                    cx="50"
+                    cy="53"
+                    rx="5"
+                    ry="4"
+                    fill="#FFD700"
+                    stroke="#B8860B"
+                    strokeWidth="0.5"
+                  />
+                  <text
+                    x="50"
+                    y="54"
+                    fontSize="3"
+                    textAnchor="middle"
+                    fill="#8B4513"
+                    fontWeight="bold"
+                  >
+                    ELLIE
+                  </text>
+                </g>
+              )}
+            </>
+          ) : collarStyle === "bowtie" ? (
+            <>
+              {/* Collar band for bowtie */}
+              <ellipse
+                cx="50"
+                cy="48"
+                rx="18"
+                ry="3"
+                fill={collarColor}
+                stroke="#654321"
+                strokeWidth="0.5"
+              />
+              {/* Bowtie */}
+              <g>
+                <path
+                  d="M 45 48 L 40 45 L 40 51 Z"
+                  fill="#FF69B4"
+                  stroke="#FF1493"
+                  strokeWidth="0.5"
+                />
+                <path
+                  d="M 55 48 L 60 45 L 60 51 Z"
+                  fill="#FF69B4"
+                  stroke="#FF1493"
+                  strokeWidth="0.5"
+                />
+                <rect x="48" y="47" width="4" height="2" fill="#FF1493" />
+              </g>
+            </>
+          ) : collarStyle === "bandana" ? (
+            /* Bandana */
+            <path
+              d="M 35 50 L 50 55 L 65 50 L 50 48 Z"
+              fill="#FF6B6B"
+              stroke="#DC143C"
+              strokeWidth="0.5"
+              opacity="0.9"
+            />
+          ) : null}
+        </g>
 
         {/* Head group */}
         <g
@@ -583,8 +777,89 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
             </>
           )}
 
+          {/* Facial fur patterns - Shih Tzu style */}
+          <ellipse
+            cx="42"
+            cy="38"
+            rx="6"
+            ry="8"
+            fill={colors.primary}
+            opacity="0.8"
+          />
+          <ellipse
+            cx="58"
+            cy="38"
+            rx="6"
+            ry="8"
+            fill={colors.primary}
+            opacity="0.8"
+          />
+
+          {/* Top knot fur detail */}
+          <circle
+            cx="50"
+            cy="18"
+            r="6"
+            fill={colors.primary}
+            opacity="0.7"
+          />
+
           {/* Nose */}
           <ellipse cx="50" cy="42" rx="3" ry="2" fill={colors.accent} />
+
+          {/* Whiskers */}
+          <g opacity="0.6">
+            {/* Left whiskers */}
+            <line
+              x1="35"
+              y1="40"
+              x2="25"
+              y2="38"
+              stroke={colors.accent}
+              strokeWidth="0.5"
+            />
+            <line
+              x1="35"
+              y1="42"
+              x2="24"
+              y2="42"
+              stroke={colors.accent}
+              strokeWidth="0.5"
+            />
+            <line
+              x1="35"
+              y1="44"
+              x2="25"
+              y2="46"
+              stroke={colors.accent}
+              strokeWidth="0.5"
+            />
+            {/* Right whiskers */}
+            <line
+              x1="65"
+              y1="40"
+              x2="75"
+              y2="38"
+              stroke={colors.accent}
+              strokeWidth="0.5"
+            />
+            <line
+              x1="65"
+              y1="42"
+              x2="76"
+              y2="42"
+              stroke={colors.accent}
+              strokeWidth="0.5"
+            />
+            <line
+              x1="65"
+              y1="44"
+              x2="75"
+              y2="46"
+              stroke={colors.accent}
+              strokeWidth="0.5"
+            />
+          </g>
 
           {/* Mouth */}
           {currentMood === "happy" ||
@@ -635,50 +910,90 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
           )}
         </g>
 
-        {/* Tail */}
-        <ellipse
-          cx="25"
-          cy="55"
-          rx="10"
-          ry="5"
-          fill={colors.primary}
-          stroke={colors.secondary}
-          strokeWidth="1"
-          transform="rotate(-45 25 55)"
+        {/* Tail - enhanced with curved path */}
+        <g
           className={
             currentMood === "happy" ||
             currentMood === "excited" ||
             currentMood === "playful" ||
             currentMood === "celebrating"
               ? "animate-wag-enhanced"
+              : currentMood === "idle" || currentMood === "zen"
+              ? "animate-tail-sway"
               : ""
           }
-          filter="url(#softshadow)"
-        />
+          style={{ transformOrigin: "25px 57px" }}
+        >
+          <path
+            d="M 25 57 Q 15 50 10 45 Q 8 42 10 40 Q 12 42 15 45 Q 20 50 25 57"
+            fill={colors.primary}
+            stroke={colors.secondary}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            filter="url(#softshadow)"
+          />
+          {/* Fluffy tail tip */}
+          <circle cx="10" cy="42" r="4" fill={colors.primary} opacity="0.8" />
+          <circle cx="12" cy="40" r="2.5" fill={colors.primary} opacity="0.6" />
+        </g>
 
-        {/* Legs */}
-        <rect
-          x="40"
-          y="70"
-          width="6"
-          height="15"
-          rx="3"
-          fill={colors.primary}
-          stroke={colors.secondary}
-          strokeWidth="1"
-          className={currentMood === "walking" ? "animate-walk-front-leg" : ""}
-        />
-        <rect
-          x="54"
-          y="70"
-          width="6"
-          height="15"
-          rx="3"
-          fill={colors.primary}
-          stroke={colors.secondary}
-          strokeWidth="1"
-          className={currentMood === "walking" ? "animate-walk-back-leg" : ""}
-        />
+        {/* Legs with paw pads */}
+        {/* Front left leg */}
+        <g>
+          <rect
+            x="40"
+            y="70"
+            width="6"
+            height="15"
+            rx="3"
+            fill={colors.primary}
+            stroke={colors.secondary}
+            strokeWidth="1"
+            className={currentMood === "walking" ? "animate-walk-front-leg" : ""}
+          />
+          {/* Paw pad */}
+          <ellipse
+            cx="43"
+            cy="83"
+            rx="3.5"
+            ry="2.5"
+            fill={colors.accent}
+            opacity="0.8"
+          />
+          {/* Toe pads */}
+          <circle cx="41" cy="82" r="0.8" fill={colors.accent} opacity="0.7" />
+          <circle cx="43" cy="81.5" r="0.8" fill={colors.accent} opacity="0.7" />
+          <circle cx="45" cy="82" r="0.8" fill={colors.accent} opacity="0.7" />
+        </g>
+
+        {/* Front right leg */}
+        <g>
+          <rect
+            x="54"
+            y="70"
+            width="6"
+            height="15"
+            rx="3"
+            fill={colors.primary}
+            stroke={colors.secondary}
+            strokeWidth="1"
+            className={currentMood === "walking" ? "animate-walk-back-leg" : ""}
+          />
+          {/* Paw pad */}
+          <ellipse
+            cx="57"
+            cy="83"
+            rx="3.5"
+            ry="2.5"
+            fill={colors.accent}
+            opacity="0.8"
+          />
+          {/* Toe pads */}
+          <circle cx="55" cy="82" r="0.8" fill={colors.accent} opacity="0.7" />
+          <circle cx="57" cy="81.5" r="0.8" fill={colors.accent} opacity="0.7" />
+          <circle cx="59" cy="82" r="0.8" fill={colors.accent} opacity="0.7" />
+        </g>
 
         {/* Accessories */}
         {accessories.includes("party-hat") && (
@@ -752,6 +1067,44 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
           </g>
         )}
 
+        {/* Interactive Petting Zones - invisible hit areas */}
+        <g>
+          {/* Head zone */}
+          <circle
+            cx="50"
+            cy="35"
+            r="22"
+            fill="transparent"
+            style={{ cursor: "pointer" }}
+            onMouseEnter={() => setHoveredZone("head")}
+            onMouseLeave={() => setHoveredZone(null)}
+            onMouseDown={() => handleZonePet("head")}
+          />
+          {/* Belly zone */}
+          <ellipse
+            cx="50"
+            cy="65"
+            rx="20"
+            ry="15"
+            fill="transparent"
+            style={{ cursor: "pointer" }}
+            onMouseEnter={() => setHoveredZone("belly")}
+            onMouseLeave={() => setHoveredZone(null)}
+            onMouseDown={() => handleZonePet("belly")}
+          />
+          {/* Tail zone */}
+          <circle
+            cx="15"
+            cy="45"
+            r="12"
+            fill="transparent"
+            style={{ cursor: "pointer" }}
+            onMouseEnter={() => setHoveredZone("tail")}
+            onMouseLeave={() => setHoveredZone(null)}
+            onMouseDown={() => handleZonePet("tail")}
+          />
+        </g>
+
         {/* Mood effects */}
         {currentMood === "happy" && (
           <>
@@ -799,11 +1152,35 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
         )}
       </svg>
 
-      {/* Petting feedback */}
-      {isPetting && (
+      {/* Petting feedback with zone-specific messages */}
+      {isPetting && pettedZone && (
         <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 pointer-events-none">
           <span className="text-xs bg-gray-800 text-white px-2 py-1 rounded-full whitespace-nowrap">
-            Good dog! 🥰
+            {pettedZone === "head" && "Loves head scratches! 🥰"}
+            {pettedZone === "belly" && "Belly rubs are the best! 😊"}
+            {pettedZone === "tail" && "Wagging with joy! 🎉"}
+          </span>
+        </div>
+      )}
+
+      {/* Hover zone indicator */}
+      {hoveredZone && !isPetting && (
+        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 pointer-events-none">
+          <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded-full whitespace-nowrap opacity-75">
+            Pet {hoveredZone}
+          </span>
+        </div>
+      )}
+
+      {/* Pet count achievement badges */}
+      {petCount >= 10 && (
+        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 pointer-events-none">
+          <span className="text-sm bg-amber-500 text-white px-2 py-1 rounded-full whitespace-nowrap">
+            {petCount >= 50
+              ? "🏆 Master Petter!"
+              : petCount >= 25
+              ? "⭐ Super Petter!"
+              : "✨ Good Petter!"}
           </span>
         </div>
       )}
