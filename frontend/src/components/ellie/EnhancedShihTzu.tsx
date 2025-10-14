@@ -15,9 +15,6 @@ interface EnhancedShihTzuProps {
   variant?: "default" | "winter" | "party" | "workout" | "balloon";
   className?: string;
   style?: React.CSSProperties;
-  collarColor?: string;
-  collarTag?: boolean;
-  collarStyle?: "leather" | "fabric" | "chain" | "bowtie" | "bandana";
 }
 
 const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
@@ -31,20 +28,14 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
   showThoughtBubble = false,
   thoughtText = "",
   particleEffect = null,
-  variant = "default",
+  variant = "balloon",
   className,
   style,
-  collarColor = "#8B4513",
-  collarTag = false,
-  collarStyle = "leather",
 }) => {
   const [currentPosition, setCurrentPosition] = useState(position);
   const [isMoving, setIsMoving] = useState(false);
   const [currentMood, setCurrentMood] = useState(mood);
   const [isPetting, setIsPetting] = useState(false);
-  const [hoveredZone, setHoveredZone] = useState<string | null>(null);
-  const [pettedZone, setPettedZone] = useState<string | null>(null);
-  const [petCount, setPetCount] = useState(0);
   const [particles, setParticles] = useState<
     Array<{ id: number; x: number; y: number }>
   >([]);
@@ -53,37 +44,29 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
   const positionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Responsive size map - smaller on mobile
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 640);
-
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   const sizeMap = {
     sm: {
-      width: windowWidth < 640 ? 50 : 60,
-      height: windowWidth < 640 ? 50 : 60,
+      width: window.innerWidth < 640 ? 50 : 60,
+      height: window.innerWidth < 640 ? 50 : 60,
     },
     md: {
-      width: windowWidth < 640 ? 60 : 80,
-      height: windowWidth < 640 ? 60 : 80,
+      width: window.innerWidth < 640 ? 60 : 80,
+      height: window.innerWidth < 640 ? 60 : 80,
     },
     lg: {
-      width: windowWidth < 640 ? 80 : 100,
-      height: windowWidth < 640 ? 80 : 100,
+      width: window.innerWidth < 640 ? 80 : 100,
+      height: window.innerWidth < 640 ? 80 : 100,
     },
   };
 
-  const currentSize = sizeMap[size] || sizeMap.md; // Fallback to medium size
+  const currentSize = sizeMap[size];
 
   // Sync mood changes
   useEffect(() => {
     if (mood !== currentMood) {
       setCurrentMood(mood);
     }
-  }, [mood, currentMood]);
+  }, [mood]);
 
   // Handle position changes with smoother transitions
   useEffect(() => {
@@ -111,7 +94,7 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
         clearTimeout(positionTimerRef.current);
       }
     };
-  }, [position, currentPosition.x, currentPosition.y, onPositionChange]);
+  }, [position.x, position.y]);
 
   // Handle particle effects
   useEffect(() => {
@@ -150,16 +133,6 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
 
   const handleMouseUp = () => {
     setIsPetting(false);
-    setPettedZone(null);
-  };
-
-  // Handle zone-specific petting
-  const handleZonePet = (zone: string) => {
-    setPettedZone(zone);
-    setPetCount(prev => prev + 1);
-    if (onPet) {
-      onPet();
-    }
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -216,14 +189,7 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
         <div
           className="absolute left-1/2 transform -translate-x-1/2 pointer-events-none whitespace-nowrap"
           style={{
-            // Dynamic positioning based on screen position
-            ...(currentPosition.y < 150 ? {
-              // If near top, show bubble below
-              top: `${currentSize.height + 10}px`,
-            } : {
-              // If not near top, show bubble above
-              bottom: `${currentSize.height + 10}px`,
-            }),
+            bottom: `${currentSize.height + 10}px`, // Position above companion with consistent spacing
             maxWidth: "250px", // Maximum width for longer thoughts
             zIndex: 110, // Higher than companion to ensure visibility
           }}
@@ -235,18 +201,10 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
                 {thoughtText}
               </p>
             </div>
-            {/* Dynamic tail positioning */}
-            {currentPosition.y < 150 ? (
-              // Tail pointing up when bubble is below
-              <div className="absolute left-1/2 transform -translate-x-1/2 -top-2">
-                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-b-[8px] border-b-white/95 border-r-[6px] border-r-transparent"></div>
-              </div>
-            ) : (
-              // Tail pointing down when bubble is above
-              <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-2">
-                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-t-[8px] border-t-white/95 border-r-[6px] border-r-transparent"></div>
-              </div>
-            )}
+            {/* Improved tail with better positioning */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-2">
+              <div className="w-0 h-0 border-l-[6px] border-l-transparent border-t-[8px] border-t-white/95 border-r-[6px] border-r-transparent"></div>
+            </div>
           </div>
         </div>
       )}
@@ -320,28 +278,6 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
                 75% { transform: rotate(-25deg); }
               }
 
-              @keyframes tag-jingle {
-                0%, 100% { transform: rotate(0deg); }
-                25% { transform: rotate(-5deg); }
-                75% { transform: rotate(5deg); }
-              }
-
-              @keyframes walk-body {
-                0%, 100% { transform: translateY(0) rotate(0deg); }
-                25% { transform: translateY(-2px) rotate(-1deg); }
-                75% { transform: translateY(-2px) rotate(1deg); }
-              }
-
-              @keyframes walk-front-leg {
-                0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(3px); }
-              }
-
-              @keyframes walk-back-leg {
-                0%, 100% { transform: translateY(3px); }
-                50% { transform: translateY(0); }
-              }
-
               @keyframes wiggle {
                 0%, 100% { transform: rotate(0deg); }
                 25% { transform: rotate(-5deg); }
@@ -401,23 +337,6 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
               .animate-wag-enhanced {
                 animation: wag-enhanced 0.6s ease-in-out infinite;
                 transform-origin: 30px 57px;
-              }
-
-              .animate-tag-jingle {
-                animation: tag-jingle 4s ease-in-out infinite;
-                transform-origin: 50px 48px;
-              }
-
-              .animate-walk-body {
-                animation: walk-body 0.6s ease-in-out infinite;
-              }
-
-              .animate-walk-front-leg {
-                animation: walk-front-leg 0.6s ease-in-out infinite;
-              }
-
-              .animate-walk-back-leg {
-                animation: walk-back-leg 0.6s ease-in-out infinite;
               }
 
               .animate-wiggle {
@@ -481,9 +400,7 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
           strokeWidth="1"
           filter="url(#softshadow)"
           className={
-            currentMood === "walking"
-              ? "animate-walk-body"
-              : currentMood === "sleeping" || currentMood === "zen"
+            currentMood === "sleeping" || currentMood === "zen"
               ? "animate-breathe"
               : ""
           }
@@ -498,100 +415,6 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
           fill={colors.primary}
           opacity="0.7"
         />
-
-        {/* Collar - positioned at neck */}
-        <g>
-          {collarStyle === "leather" || collarStyle === "fabric" || collarStyle === "chain" ? (
-            <>
-              {/* Basic collar band */}
-              <ellipse
-                cx="50"
-                cy="48"
-                rx="18"
-                ry="4"
-                fill={collarColor}
-                stroke={collarStyle === "chain" ? "#C0C0C0" : "#654321"}
-                strokeWidth="0.5"
-                filter="url(#softshadow)"
-              />
-
-              {/* Collar buckle */}
-              <rect
-                x="47"
-                y="46"
-                width="6"
-                height="4"
-                rx="0.5"
-                fill="#FFD700"
-                stroke="#B8860B"
-                strokeWidth="0.5"
-              />
-
-              {/* Name tag (optional) */}
-              {collarTag && (
-                <g className="animate-tag-jingle">
-                  <ellipse
-                    cx="50"
-                    cy="53"
-                    rx="5"
-                    ry="4"
-                    fill="#FFD700"
-                    stroke="#B8860B"
-                    strokeWidth="0.5"
-                  />
-                  <text
-                    x="50"
-                    y="54"
-                    fontSize="3"
-                    textAnchor="middle"
-                    fill="#8B4513"
-                    fontWeight="bold"
-                  >
-                    ELLIE
-                  </text>
-                </g>
-              )}
-            </>
-          ) : collarStyle === "bowtie" ? (
-            <>
-              {/* Collar band for bowtie */}
-              <ellipse
-                cx="50"
-                cy="48"
-                rx="18"
-                ry="3"
-                fill={collarColor}
-                stroke="#654321"
-                strokeWidth="0.5"
-              />
-              {/* Bowtie */}
-              <g>
-                <path
-                  d="M 45 48 L 40 45 L 40 51 Z"
-                  fill="#FF69B4"
-                  stroke="#FF1493"
-                  strokeWidth="0.5"
-                />
-                <path
-                  d="M 55 48 L 60 45 L 60 51 Z"
-                  fill="#FF69B4"
-                  stroke="#FF1493"
-                  strokeWidth="0.5"
-                />
-                <rect x="48" y="47" width="4" height="2" fill="#FF1493" />
-              </g>
-            </>
-          ) : collarStyle === "bandana" ? (
-            /* Bandana */
-            <path
-              d="M 35 50 L 50 55 L 65 50 L 50 48 Z"
-              fill="#FF6B6B"
-              stroke="#DC143C"
-              strokeWidth="0.5"
-              opacity="0.9"
-            />
-          ) : null}
-        </g>
 
         {/* Head group */}
         <g
@@ -906,44 +729,6 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
           </g>
         )}
 
-        {/* Interactive Petting Zones - invisible hit areas */}
-        <g>
-          {/* Head zone */}
-          <circle
-            cx="50"
-            cy="35"
-            r="22"
-            fill="transparent"
-            style={{ cursor: "pointer" }}
-            onMouseEnter={() => setHoveredZone("head")}
-            onMouseLeave={() => setHoveredZone(null)}
-            onMouseDown={() => handleZonePet("head")}
-          />
-          {/* Belly zone */}
-          <ellipse
-            cx="50"
-            cy="65"
-            rx="20"
-            ry="15"
-            fill="transparent"
-            style={{ cursor: "pointer" }}
-            onMouseEnter={() => setHoveredZone("belly")}
-            onMouseLeave={() => setHoveredZone(null)}
-            onMouseDown={() => handleZonePet("belly")}
-          />
-          {/* Tail zone */}
-          <circle
-            cx="15"
-            cy="45"
-            r="12"
-            fill="transparent"
-            style={{ cursor: "pointer" }}
-            onMouseEnter={() => setHoveredZone("tail")}
-            onMouseLeave={() => setHoveredZone(null)}
-            onMouseDown={() => handleZonePet("tail")}
-          />
-        </g>
-
         {/* Mood effects */}
         {currentMood === "happy" && (
           <>
@@ -991,35 +776,11 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
         )}
       </svg>
 
-      {/* Petting feedback with zone-specific messages */}
-      {isPetting && pettedZone && (
+      {/* Petting feedback */}
+      {isPetting && (
         <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 pointer-events-none">
           <span className="text-xs bg-gray-800 text-white px-2 py-1 rounded-full whitespace-nowrap">
-            {pettedZone === "head" && "Loves head scratches! 🥰"}
-            {pettedZone === "belly" && "Belly rubs are the best! 😊"}
-            {pettedZone === "tail" && "Wagging with joy! 🎉"}
-          </span>
-        </div>
-      )}
-
-      {/* Hover zone indicator */}
-      {hoveredZone && !isPetting && (
-        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 pointer-events-none">
-          <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded-full whitespace-nowrap opacity-75">
-            Pet {hoveredZone}
-          </span>
-        </div>
-      )}
-
-      {/* Pet count achievement badges */}
-      {petCount >= 10 && (
-        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 pointer-events-none">
-          <span className="text-sm bg-amber-500 text-white px-2 py-1 rounded-full whitespace-nowrap">
-            {petCount >= 50
-              ? "🏆 Master Petter!"
-              : petCount >= 25
-              ? "⭐ Super Petter!"
-              : "✨ Good Petter!"}
+            Good dog! 🥰
           </span>
         </div>
       )}
