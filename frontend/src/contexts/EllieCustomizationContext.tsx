@@ -4,7 +4,7 @@ import { EllieCustomizationContext, type EllieCustomization } from './EllieCusto
 const STORAGE_KEY = 'ellie-customization'
 
 const DEFAULT_CUSTOMIZATION: EllieCustomization = {
-  furColor: undefined,
+  furColor: '#FFFFFF',
   collarStyle: 'none',
   collarColor: '#8B4513',
   collarTag: false
