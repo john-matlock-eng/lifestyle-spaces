@@ -97,7 +97,7 @@ export const EllieCustomizer: React.FC<EllieCustomizerProps> = ({ onCustomizatio
             <button
               key={style.value}
               className={`collar-style-button ${customization.collarStyle === style.value ? 'active' : ''}`}
-              onClick={() => updateCustomization({ collarStyle: style.value as any })}
+              onClick={() => updateCustomization({ collarStyle: style.value as EllieCustomization['collarStyle'] })}
               title={style.label}
             >
               <span className="text-2xl">{style.icon}</span>
