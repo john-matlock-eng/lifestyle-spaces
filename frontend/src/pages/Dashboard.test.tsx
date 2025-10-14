@@ -22,6 +22,16 @@ vi.mock('../hooks', () => ({
     position: { x: 100, y: 100 },
     celebrate: mockCelebrate,
   }),
+  useEllieCustomization: () => ({
+    customization: {
+      furColor: undefined,
+      collarStyle: 'none' as const,
+      collarColor: '#8B4513',
+      collarTag: false,
+    },
+    updateCustomization: vi.fn(),
+    resetCustomization: vi.fn(),
+  }),
 }));
 
 vi.mock('../components/ellie', () => ({
