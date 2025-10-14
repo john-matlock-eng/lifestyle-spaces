@@ -7,6 +7,9 @@ import { MembersList } from '../components/spaces/MembersList';
 import { InviteMemberModal } from '../components/spaces/InviteMemberModal';
 import { JournalList } from '../features/journal/components/JournalList';
 import { regenerateInviteCode } from '../services/spaces';
+import { Ellie } from '../components/ellie';
+import { useShihTzuCompanion } from '../hooks';
+import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationContext';
 import type { SpaceMemberRole, SpaceMember } from '../types';
 import './SpaceDetail.css';
 
@@ -34,6 +37,18 @@ export const SpaceDetail: React.FC = () => {
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+
+  // Ellie companion
+  const { mood, setMood, position } = useShihTzuCompanion({
+    initialMood: 'happy',
+    initialPosition: {
+      x: Math.min(window.innerWidth * 0.75, window.innerWidth - 150),
+      y: 120
+    }
+  });
+
+  // Ellie customization
+  const { customization } = useEllieCustomizationContext();
 
   // Load space data when component mounts or spaceId changes
   useEffect(() => {
@@ -710,6 +725,26 @@ export const SpaceDetail: React.FC = () => {
           onClick={() => setIsActionsMenuOpen(false)}
         />
       )}
+
+      {/* Ellie companion */}
+      <Ellie
+        mood={mood}
+        position={position}
+        showThoughtBubble={true}
+        thoughtText={
+          activeTab === 'journals'
+            ? "Check out your journals! 📖"
+            : activeTab === 'members'
+            ? `${members.length} ${members.length === 1 ? 'member' : 'members'} in this space! 👥`
+            : `Welcome to ${currentSpace.name}! 🏠`
+        }
+        size="md"
+        onClick={() => setMood(mood === 'playful' ? 'happy' : 'playful')}
+        furColor={customization.furColor}
+        collarStyle={customization.collarStyle}
+        collarColor={customization.collarColor}
+        collarTag={customization.collarTag}
+      />
     </div>
   );
 };

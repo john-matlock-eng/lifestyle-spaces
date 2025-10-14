@@ -9,6 +9,9 @@ import type { DisplaySection } from '../../../lib/journal/types'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Template } from '../types/template.types'
+import { Ellie } from '../../../components/ellie'
+import { useShihTzuCompanion } from '../../../hooks'
+import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -24,6 +27,18 @@ export const JournalViewPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false)
   const [template, setTemplate] = useState<Template | null>(null)
   const [displaySections, setDisplaySections] = useState<DisplaySection[]>([])
+
+  // Ellie companion
+  const { mood, setMood, position } = useShihTzuCompanion({
+    initialMood: 'happy',
+    initialPosition: {
+      x: Math.min(window.innerWidth * 0.8, window.innerWidth - 150),
+      y: 120
+    }
+  })
+
+  // Ellie customization
+  const { customization } = useEllieCustomizationContext()
 
   useEffect(() => {
     if (spaceId && journalId) {
@@ -366,6 +381,20 @@ ${content}
           </>
         )}
       </div>
+
+      {/* Ellie companion */}
+      <Ellie
+        mood={mood}
+        position={position}
+        showThoughtBubble={true}
+        thoughtText={journal.wordCount > 500 ? "Great writing! 📝" : "Nice entry! 😊"}
+        size="md"
+        onClick={() => setMood(mood === 'playful' ? 'happy' : 'playful')}
+        furColor={customization.furColor}
+        collarStyle={customization.collarStyle}
+        collarColor={customization.collarColor}
+        collarTag={customization.collarTag}
+      />
     </div>
   )
 }
