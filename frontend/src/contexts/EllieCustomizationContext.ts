@@ -14,3 +14,6 @@ export interface EllieCustomizationContextType {
 }
 
 export const EllieCustomizationContext = createContext<EllieCustomizationContextType | undefined>(undefined)
+
+// Re-export the provider component
+export { EllieCustomizationProvider } from './EllieCustomizationContext.tsx'
