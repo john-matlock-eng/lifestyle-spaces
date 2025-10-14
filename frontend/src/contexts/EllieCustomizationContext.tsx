@@ -1,17 +1,5 @@
-import React, { createContext, useState, useEffect } from 'react'
-
-export interface EllieCustomization {
-  furColor?: string
-  collarStyle: 'none' | 'leather' | 'fabric' | 'bowtie' | 'bandana'
-  collarColor: string
-  collarTag: boolean
-}
-
-interface EllieCustomizationContextType {
-  customization: EllieCustomization
-  updateCustomization: (updates: Partial<EllieCustomization>) => void
-  resetCustomization: () => void
-}
+import React, { useState, useEffect } from 'react'
+import { EllieCustomizationContext, type EllieCustomization } from './EllieCustomizationContext'
 
 const STORAGE_KEY = 'ellie-customization'
 
@@ -21,8 +9,6 @@ const DEFAULT_CUSTOMIZATION: EllieCustomization = {
   collarColor: '#8B4513',
   collarTag: false
 }
-
-export const EllieCustomizationContext = createContext<EllieCustomizationContextType | undefined>(undefined)
 
 export const EllieCustomizationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [customization, setCustomization] = useState<EllieCustomization>(() => {
