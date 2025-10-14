@@ -27,7 +27,7 @@ export const Ellie: React.FC<EllieProps> = ({
   showThoughtBubble = false,
   thoughtText = '',
   particleEffect = null,
-  variant = 'default',
+  variant = 'balloon',
   className = '',
   style = {},
   tabIndex
