@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../stores/authStore'
 import { useTheme } from '../../theme/useTheme'
-import { useEllieCustomizationContext } from '../../contexts/EllieCustomizationContext'
+import { useEllieCustomizationContext } from '../../hooks/useEllieCustomizationContext'
 
 export const AppHeader: React.FC = () => {
   const navigate = useNavigate()

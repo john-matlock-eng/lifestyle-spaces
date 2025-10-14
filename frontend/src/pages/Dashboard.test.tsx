@@ -25,7 +25,7 @@ vi.mock('../hooks', () => ({
 }));
 
 // Mock Ellie customization context
-vi.mock('../contexts/EllieCustomizationContext', () => ({
+vi.mock('../hooks/useEllieCustomizationContext', () => ({
   useEllieCustomizationContext: () => ({
     customization: {
       furColor: undefined,

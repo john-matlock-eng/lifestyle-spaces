@@ -7,7 +7,7 @@ import { CreateSpaceModal } from '../components/spaces/CreateSpaceModal';
 import { JoinByCodeForm } from '../components/invitations/JoinByCodeForm';
 import { Ellie } from '../components/ellie';
 import { useShihTzuCompanion } from '../hooks';
-import { useEllieCustomizationContext } from '../contexts/EllieCustomizationContext';
+import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationContext';
 import type { Space } from '../types';
 import './Dashboard.css';
 

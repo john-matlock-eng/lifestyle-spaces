@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useState, useEffect } from 'react'
 
 export interface EllieCustomization {
   furColor?: string
@@ -22,7 +22,7 @@ const DEFAULT_CUSTOMIZATION: EllieCustomization = {
   collarTag: false
 }
 
-const EllieCustomizationContext = createContext<EllieCustomizationContextType | undefined>(undefined)
+export const EllieCustomizationContext = createContext<EllieCustomizationContextType | undefined>(undefined)
 
 export const EllieCustomizationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [customization, setCustomization] = useState<EllieCustomization>(() => {
@@ -56,12 +56,4 @@ export const EllieCustomizationProvider: React.FC<{ children: React.ReactNode }>
       {children}
     </EllieCustomizationContext.Provider>
   )
-}
-
-export const useEllieCustomizationContext = () => {
-  const context = useContext(EllieCustomizationContext)
-  if (context === undefined) {
-    throw new Error('useEllieCustomizationContext must be used within an EllieCustomizationProvider')
-  }
-  return context
 }
