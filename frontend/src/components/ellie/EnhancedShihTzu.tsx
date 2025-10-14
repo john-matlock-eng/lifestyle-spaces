@@ -455,36 +455,55 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
         {/* Collar - positioned at neck between head and body */}
         {collarStyle !== "none" && (
           <g>
-            {(collarStyle === "leather" || collarStyle === "fabric") && (
+            {collarStyle === "leather" && (
               <>
-                {/* Collar band - positioned at the base of the neck */}
+                {/* Thick leather collar with studs */}
                 <ellipse
                   cx="50"
                   cy="52"
                   rx="16"
-                  ry="5"
+                  ry="6"
                   fill={collarColor}
-                  stroke={collarStyle === "leather" ? "#654321" : collarColor}
-                  strokeWidth="1"
+                  stroke="#2C1810"
+                  strokeWidth="1.5"
                   filter="url(#softshadow)"
                 />
-                {/* Buckle */}
+                {/* Leather texture lines */}
+                <path
+                  d="M 36 52 L 64 52"
+                  stroke="#2C1810"
+                  strokeWidth="0.5"
+                  opacity="0.4"
+                />
+                {/* Metal studs */}
+                <circle cx="38" cy="52" r="1.5" fill="#C0C0C0" />
+                <circle cx="44" cy="52" r="1.5" fill="#C0C0C0" />
+                <circle cx="56" cy="52" r="1.5" fill="#C0C0C0" />
+                <circle cx="62" cy="52" r="1.5" fill="#C0C0C0" />
+                {/* Large buckle */}
                 <rect
-                  x="47"
-                  y="50"
-                  width="6"
-                  height="4"
-                  rx="0.5"
+                  x="46"
+                  y="49"
+                  width="8"
+                  height="6"
+                  rx="1"
                   fill="#FFD700"
                   stroke="#B8860B"
-                  strokeWidth="0.5"
+                  strokeWidth="0.8"
+                />
+                <rect
+                  x="47.5"
+                  y="50.5"
+                  width="5"
+                  height="3"
+                  fill={collarColor}
                 />
                 {/* Name tag (optional) */}
                 {collarTag && (
                   <g>
                     <ellipse
                       cx="50"
-                      cy="58"
+                      cy="59"
                       rx="6"
                       ry="5"
                       fill="#FFD700"
@@ -492,10 +511,69 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
                       strokeWidth="0.5"
                       filter="url(#softshadow)"
                     />
+                    <circle cx="50" cy="56" r="1" fill="#B8860B" />
                     <text
                       x="50"
-                      y="60"
-                      fontSize="4"
+                      y="61"
+                      fontSize="3.5"
+                      textAnchor="middle"
+                      fill="#8B4513"
+                      fontWeight="bold"
+                    >
+                      ELLIE
+                    </text>
+                  </g>
+                )}
+              </>
+            )}
+            {collarStyle === "fabric" && (
+              <>
+                {/* Soft fabric collar with pattern */}
+                <ellipse
+                  cx="50"
+                  cy="52"
+                  rx="15"
+                  ry="4"
+                  fill={collarColor}
+                  stroke={collarColor}
+                  strokeWidth="0.5"
+                  opacity="0.9"
+                  filter="url(#softshadow)"
+                />
+                {/* Fabric pattern - small dots */}
+                <circle cx="38" cy="52" r="0.8" fill="#FFFFFF" opacity="0.6" />
+                <circle cx="42" cy="52" r="0.8" fill="#FFFFFF" opacity="0.6" />
+                <circle cx="46" cy="52" r="0.8" fill="#FFFFFF" opacity="0.6" />
+                <circle cx="54" cy="52" r="0.8" fill="#FFFFFF" opacity="0.6" />
+                <circle cx="58" cy="52" r="0.8" fill="#FFFFFF" opacity="0.6" />
+                <circle cx="62" cy="52" r="0.8" fill="#FFFFFF" opacity="0.6" />
+                {/* Small decorative bow */}
+                <path
+                  d="M 48 52 L 45 50 L 45 54 Z"
+                  fill="#FFFFFF"
+                  opacity="0.8"
+                />
+                <path
+                  d="M 52 52 L 55 50 L 55 54 Z"
+                  fill="#FFFFFF"
+                  opacity="0.8"
+                />
+                <circle cx="50" cy="52" r="1.5" fill="#FFFFFF" opacity="0.8" />
+                {/* Name tag (optional) */}
+                {collarTag && (
+                  <g>
+                    <path
+                      d="M 44 58 L 56 58 L 56 64 L 50 66 L 44 64 Z"
+                      fill="#FFD700"
+                      stroke="#B8860B"
+                      strokeWidth="0.5"
+                      filter="url(#softshadow)"
+                    />
+                    <circle cx="50" cy="58" r="1" fill="#B8860B" />
+                    <text
+                      x="50"
+                      y="62"
+                      fontSize="3"
                       textAnchor="middle"
                       fill="#8B4513"
                       fontWeight="bold"
@@ -508,50 +586,60 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
             )}
             {collarStyle === "bowtie" && (
               <>
-                {/* Collar band for bowtie */}
+                {/* Thin formal collar band */}
                 <ellipse
                   cx="50"
                   cy="52"
-                  rx="16"
-                  ry="4"
-                  fill={collarColor}
-                  stroke="#654321"
+                  rx="15"
+                  ry="2.5"
+                  fill="#FFFFFF"
+                  stroke="#E5E5E5"
                   strokeWidth="0.5"
                   filter="url(#softshadow)"
                 />
-                {/* Bowtie - positioned on the collar */}
+                {/* Large decorative bowtie */}
                 <g>
+                  {/* Left bow */}
                   <path
-                    d="M 45 52 L 42 48 L 42 56 Z"
+                    d="M 45 52 Q 40 48 38 52 Q 40 56 45 52"
                     fill={collarColor}
-                    stroke="#654321"
-                    strokeWidth="0.5"
+                    stroke="#000000"
+                    strokeWidth="0.6"
+                    opacity="0.95"
                   />
+                  {/* Right bow */}
                   <path
-                    d="M 55 52 L 58 48 L 58 56 Z"
+                    d="M 55 52 Q 60 48 62 52 Q 60 56 55 52"
                     fill={collarColor}
-                    stroke="#654321"
-                    strokeWidth="0.5"
+                    stroke="#000000"
+                    strokeWidth="0.6"
+                    opacity="0.95"
                   />
-                  <ellipse cx="50" cy="52" rx="2" ry="3" fill="#654321" />
+                  {/* Center knot */}
+                  <ellipse cx="50" cy="52" rx="3" ry="4" fill={collarColor} stroke="#000000" strokeWidth="0.6" />
+                  {/* Bow details */}
+                  <path d="M 42 52 L 45 52" stroke="#000000" strokeWidth="0.4" opacity="0.5" />
+                  <path d="M 55 52 L 58 52" stroke="#000000" strokeWidth="0.4" opacity="0.5" />
                 </g>
                 {/* Name tag (optional) */}
                 {collarTag && (
                   <g>
-                    <ellipse
-                      cx="50"
-                      cy="58"
-                      rx="6"
-                      ry="5"
+                    <rect
+                      x="44"
+                      y="57"
+                      width="12"
+                      height="6"
+                      rx="1"
                       fill="#FFD700"
                       stroke="#B8860B"
                       strokeWidth="0.5"
                       filter="url(#softshadow)"
                     />
+                    <circle cx="50" cy="57" r="0.8" fill="#B8860B" />
                     <text
                       x="50"
-                      y="60"
-                      fontSize="4"
+                      y="61.5"
+                      fontSize="3"
                       textAnchor="middle"
                       fill="#8B4513"
                       fontWeight="bold"
@@ -563,15 +651,31 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
               </>
             )}
             {collarStyle === "bandana" && (
-              /* Bandana - triangular style around neck */
-              <path
-                d="M 35 52 L 50 60 L 65 52 L 50 50 Z"
-                fill={collarColor}
-                stroke={collarColor}
-                strokeWidth="1"
-                opacity="0.95"
-                filter="url(#softshadow)"
-              />
+              <>
+                {/* Bandana - triangular style with pattern */}
+                <path
+                  d="M 34 51 L 50 62 L 66 51 L 50 49 Z"
+                  fill={collarColor}
+                  stroke="#000000"
+                  strokeWidth="0.8"
+                  opacity="0.95"
+                  filter="url(#softshadow)"
+                />
+                {/* Bandana pattern - paisley dots */}
+                <circle cx="42" cy="53" r="1.5" fill="#FFFFFF" opacity="0.7" />
+                <circle cx="50" cy="56" r="1.5" fill="#FFFFFF" opacity="0.7" />
+                <circle cx="58" cy="53" r="1.5" fill="#FFFFFF" opacity="0.7" />
+                <circle cx="46" cy="55" r="1" fill="#FFFFFF" opacity="0.5" />
+                <circle cx="54" cy="55" r="1" fill="#FFFFFF" opacity="0.5" />
+                {/* Bandana fold/shadow */}
+                <path
+                  d="M 40 52 L 50 58 L 60 52"
+                  stroke="#000000"
+                  strokeWidth="0.5"
+                  fill="none"
+                  opacity="0.3"
+                />
+              </>
             )}
           </g>
         )}
