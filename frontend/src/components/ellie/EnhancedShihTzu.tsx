@@ -151,12 +151,35 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
     }
   };
 
-  // Get variant colors
-  const getVariantColors = () => {
+  // Get nose color based on fur color
+  const getNoseColor = (furColorValue?: string) => {
+    if (!furColorValue) return "#8B4513"; // Default brown nose
+
+    const lightColors = ["#FFFFFF", "#F5DEB3", "#D2691E"];
+    const darkColors = ["#8B4513", "#696969", "#000000"];
+
+    // Light fur -> dark nose
+    if (lightColors.includes(furColorValue.toUpperCase())) {
+      return "#000000"; // Black nose for light fur
+    }
+    // Dark fur -> lighter nose
+    if (darkColors.includes(furColorValue.toUpperCase())) {
+      return "#D2691E"; // Chocolate/tan nose for dark fur
+    }
+
+    return "#8B4513"; // Default brown nose
+  };
+
+  // Get variant colors - using useMemo to ensure it updates when dependencies change
+  const colors = React.useMemo(() => {
     // If custom fur color is provided, use it
     if (furColor) {
       // Generate lighter and darker shades
-      return { primary: furColor, secondary: furColor, accent: "#8B4513" };
+      return {
+        primary: furColor,
+        secondary: furColor,
+        accent: getNoseColor(furColor)
+      };
     }
 
     switch (variant) {
@@ -172,9 +195,7 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
       default:
         return { primary: "white", secondary: "#e5e7eb", accent: "#8B4513" };
     }
-  };
-
-  const colors = getVariantColors();
+  }, [furColor, variant]);
 
   return (
     <div
@@ -431,26 +452,26 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
           opacity="0.7"
         />
 
-        {/* Collar */}
+        {/* Collar - positioned at neck between head and body */}
         {collarStyle !== "none" && (
           <g>
             {(collarStyle === "leather" || collarStyle === "fabric") && (
               <>
-                {/* Collar band */}
+                {/* Collar band - positioned at the base of the neck */}
                 <ellipse
                   cx="50"
-                  cy="48"
-                  rx="18"
-                  ry="4"
+                  cy="52"
+                  rx="16"
+                  ry="5"
                   fill={collarColor}
-                  stroke={collarStyle === "leather" ? "#654321" : colors.secondary}
-                  strokeWidth="0.5"
+                  stroke={collarStyle === "leather" ? "#654321" : collarColor}
+                  strokeWidth="1"
                   filter="url(#softshadow)"
                 />
                 {/* Buckle */}
                 <rect
                   x="47"
-                  y="46"
+                  y="50"
                   width="6"
                   height="4"
                   rx="0.5"
@@ -463,17 +484,18 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
                   <g>
                     <ellipse
                       cx="50"
-                      cy="53"
-                      rx="5"
-                      ry="4"
+                      cy="58"
+                      rx="6"
+                      ry="5"
                       fill="#FFD700"
                       stroke="#B8860B"
                       strokeWidth="0.5"
+                      filter="url(#softshadow)"
                     />
                     <text
                       x="50"
-                      y="54"
-                      fontSize="3"
+                      y="60"
+                      fontSize="4"
                       textAnchor="middle"
                       fill="#8B4513"
                       fontWeight="bold"
@@ -489,39 +511,66 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
                 {/* Collar band for bowtie */}
                 <ellipse
                   cx="50"
-                  cy="48"
-                  rx="18"
-                  ry="3"
+                  cy="52"
+                  rx="16"
+                  ry="4"
                   fill={collarColor}
                   stroke="#654321"
                   strokeWidth="0.5"
+                  filter="url(#softshadow)"
                 />
-                {/* Bowtie */}
+                {/* Bowtie - positioned on the collar */}
                 <g>
                   <path
-                    d="M 45 48 L 40 45 L 40 51 Z"
-                    fill="#FF69B4"
-                    stroke="#FF1493"
+                    d="M 45 52 L 42 48 L 42 56 Z"
+                    fill={collarColor}
+                    stroke="#654321"
                     strokeWidth="0.5"
                   />
                   <path
-                    d="M 55 48 L 60 45 L 60 51 Z"
-                    fill="#FF69B4"
-                    stroke="#FF1493"
+                    d="M 55 52 L 58 48 L 58 56 Z"
+                    fill={collarColor}
+                    stroke="#654321"
                     strokeWidth="0.5"
                   />
-                  <rect x="48" y="47" width="4" height="2" fill="#FF1493" />
+                  <ellipse cx="50" cy="52" rx="2" ry="3" fill="#654321" />
                 </g>
+                {/* Name tag (optional) */}
+                {collarTag && (
+                  <g>
+                    <ellipse
+                      cx="50"
+                      cy="58"
+                      rx="6"
+                      ry="5"
+                      fill="#FFD700"
+                      stroke="#B8860B"
+                      strokeWidth="0.5"
+                      filter="url(#softshadow)"
+                    />
+                    <text
+                      x="50"
+                      y="60"
+                      fontSize="4"
+                      textAnchor="middle"
+                      fill="#8B4513"
+                      fontWeight="bold"
+                    >
+                      ELLIE
+                    </text>
+                  </g>
+                )}
               </>
             )}
             {collarStyle === "bandana" && (
-              /* Bandana */
+              /* Bandana - triangular style around neck */
               <path
-                d="M 35 50 L 50 55 L 65 50 L 50 48 Z"
+                d="M 35 52 L 50 60 L 65 52 L 50 50 Z"
                 fill={collarColor}
-                stroke="#DC143C"
-                strokeWidth="0.5"
-                opacity="0.9"
+                stroke={collarColor}
+                strokeWidth="1"
+                opacity="0.95"
+                filter="url(#softshadow)"
               />
             )}
           </g>
