@@ -4,6 +4,33 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { SpaceDetail } from './SpaceDetail';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
+// Mock Ellie components and hooks
+vi.mock('../components/ellie', () => ({
+  Ellie: () => <div data-testid="ellie-companion">Ellie</div>,
+}));
+
+vi.mock('../hooks', () => ({
+  useShihTzuCompanion: () => ({
+    mood: 'happy',
+    setMood: vi.fn(),
+    position: { x: 100, y: 100 },
+    celebrate: vi.fn(),
+  }),
+}));
+
+vi.mock('../hooks/useEllieCustomizationContext', () => ({
+  useEllieCustomizationContext: () => ({
+    customization: {
+      furColor: '#FFFFFF',
+      collarStyle: 'none' as const,
+      collarColor: '#8B4513',
+      collarTag: false,
+    },
+    updateCustomization: vi.fn(),
+    resetCustomization: vi.fn(),
+  }),
+}));
+
 // Mock components
 vi.mock('../components/spaces/MembersList', () => ({
   MembersList: ({ members, onInviteClick, onCancelInvitation }: {
@@ -34,6 +61,10 @@ vi.mock('../components/spaces/InviteMemberModal', () => ({
         <button data-testid="send-invite-btn" onClick={onInviteSent}>Send Invite</button>
       </div>
     ) : null,
+}));
+
+vi.mock('../features/journal/components/JournalList', () => ({
+  JournalList: () => <div data-testid="journal-list">Journal List</div>,
 }));
 
 // Mock space store
