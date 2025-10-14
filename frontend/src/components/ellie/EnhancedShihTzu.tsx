@@ -591,42 +591,55 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
                   cx="50"
                   cy="52"
                   rx="15"
-                  ry="2.5"
+                  ry="2"
                   fill="#FFFFFF"
-                  stroke="#E5E5E5"
-                  strokeWidth="0.5"
+                  stroke="#D0D0D0"
+                  strokeWidth="0.8"
                   filter="url(#softshadow)"
                 />
-                {/* Large decorative bowtie */}
+                {/* Large classic bowtie */}
                 <g>
-                  {/* Left bow */}
+                  {/* Left bow - larger rounded rectangle shape */}
                   <path
-                    d="M 45 52 Q 40 48 38 52 Q 40 56 45 52"
+                    d="M 38 52 Q 35 46 38 46 L 43 46 Q 46 46 46 52 Q 46 58 43 58 L 38 58 Q 35 58 38 52"
                     fill={collarColor}
                     stroke="#000000"
-                    strokeWidth="0.6"
-                    opacity="0.95"
+                    strokeWidth="1"
                   />
-                  {/* Right bow */}
+                  {/* Left bow shine */}
+                  <ellipse cx="40" cy="50" rx="2" ry="3" fill="#FFFFFF" opacity="0.3" />
+
+                  {/* Right bow - larger rounded rectangle shape */}
                   <path
-                    d="M 55 52 Q 60 48 62 52 Q 60 56 55 52"
+                    d="M 62 52 Q 65 46 62 46 L 57 46 Q 54 46 54 52 Q 54 58 57 58 L 62 58 Q 65 58 62 52"
                     fill={collarColor}
                     stroke="#000000"
-                    strokeWidth="0.6"
-                    opacity="0.95"
+                    strokeWidth="1"
                   />
-                  {/* Center knot */}
-                  <ellipse cx="50" cy="52" rx="3" ry="4" fill={collarColor} stroke="#000000" strokeWidth="0.6" />
-                  {/* Bow details */}
-                  <path d="M 42 52 L 45 52" stroke="#000000" strokeWidth="0.4" opacity="0.5" />
-                  <path d="M 55 52 L 58 52" stroke="#000000" strokeWidth="0.4" opacity="0.5" />
+                  {/* Right bow shine */}
+                  <ellipse cx="60" cy="50" rx="2" ry="3" fill="#FFFFFF" opacity="0.3" />
+
+                  {/* Center knot - larger and more prominent */}
+                  <rect
+                    x="46"
+                    y="48"
+                    width="8"
+                    height="8"
+                    rx="1"
+                    fill={collarColor}
+                    stroke="#000000"
+                    strokeWidth="1"
+                  />
+                  {/* Knot detail lines */}
+                  <line x1="48" y1="48" x2="48" y2="56" stroke="#000000" strokeWidth="0.5" opacity="0.3" />
+                  <line x1="52" y1="48" x2="52" y2="56" stroke="#000000" strokeWidth="0.5" opacity="0.3" />
                 </g>
                 {/* Name tag (optional) */}
                 {collarTag && (
                   <g>
                     <rect
                       x="44"
-                      y="57"
+                      y="59"
                       width="12"
                       height="6"
                       rx="1"
@@ -635,10 +648,10 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
                       strokeWidth="0.5"
                       filter="url(#softshadow)"
                     />
-                    <circle cx="50" cy="57" r="0.8" fill="#B8860B" />
+                    <circle cx="50" cy="59" r="0.8" fill="#B8860B" />
                     <text
                       x="50"
-                      y="61.5"
+                      y="63.5"
                       fontSize="3"
                       textAnchor="middle"
                       fill="#8B4513"
