@@ -315,16 +315,9 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
           <style>
             {`
               @keyframes wag-enhanced {
-                0% { transform: rotate(0deg); }
-                25% { transform: rotate(-20deg); }
-                50% { transform: rotate(0deg); }
-                75% { transform: rotate(20deg); }
-                100% { transform: rotate(0deg); }
-              }
-
-              @keyframes tail-sway {
-                0%, 100% { transform: rotate(0deg); }
-                50% { transform: rotate(5deg); }
+                0%, 100% { transform: rotate(-45deg); }
+                25% { transform: rotate(-65deg); }
+                75% { transform: rotate(-25deg); }
               }
 
               @keyframes tag-jingle {
@@ -406,13 +399,8 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
               }
 
               .animate-wag-enhanced {
-                animation: wag-enhanced 0.5s ease-in-out infinite;
-                transform-origin: 25px 57px;
-              }
-
-              .animate-tail-sway {
-                animation: tail-sway 3s ease-in-out infinite;
-                transform-origin: 25px 57px;
+                animation: wag-enhanced 0.6s ease-in-out infinite;
+                transform-origin: 30px 57px;
               }
 
               .animate-tag-jingle {
@@ -482,12 +470,12 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
           className={isMoving ? "opacity-50" : "opacity-100"}
         />
 
-        {/* Body - improved Shih Tzu proportions */}
+        {/* Body */}
         <ellipse
           cx="50"
           cy="60"
-          rx="28"
-          ry="22"
+          rx="25"
+          ry="20"
           fill="url(#bodyGradient)"
           stroke={colors.secondary}
           strokeWidth="1"
@@ -501,42 +489,14 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
           }
         />
 
-        {/* Side fluff details */}
-        <ellipse
-          cx="28"
-          cy="58"
-          rx="8"
-          ry="14"
-          fill={colors.primary}
-          opacity="0.6"
-        />
-        <ellipse
-          cx="72"
-          cy="58"
-          rx="8"
-          ry="14"
-          fill={colors.primary}
-          opacity="0.6"
-        />
-
-        {/* Chest fluff - enhanced */}
+        {/* Chest fluff */}
         <ellipse
           cx="50"
-          cy="68"
-          rx="15"
-          ry="10"
+          cy="65"
+          rx="12"
+          ry="8"
           fill={colors.primary}
           opacity="0.7"
-        />
-
-        {/* Belly curve detail */}
-        <ellipse
-          cx="50"
-          cy="72"
-          rx="18"
-          ry="6"
-          fill={colors.primary}
-          opacity="0.5"
         />
 
         {/* Collar - positioned at neck */}
@@ -777,89 +737,8 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
             </>
           )}
 
-          {/* Facial fur patterns - Shih Tzu style */}
-          <ellipse
-            cx="42"
-            cy="38"
-            rx="6"
-            ry="8"
-            fill={colors.primary}
-            opacity="0.8"
-          />
-          <ellipse
-            cx="58"
-            cy="38"
-            rx="6"
-            ry="8"
-            fill={colors.primary}
-            opacity="0.8"
-          />
-
-          {/* Top knot fur detail */}
-          <circle
-            cx="50"
-            cy="18"
-            r="6"
-            fill={colors.primary}
-            opacity="0.7"
-          />
-
           {/* Nose */}
           <ellipse cx="50" cy="42" rx="3" ry="2" fill={colors.accent} />
-
-          {/* Whiskers */}
-          <g opacity="0.6">
-            {/* Left whiskers */}
-            <line
-              x1="35"
-              y1="40"
-              x2="25"
-              y2="38"
-              stroke={colors.accent}
-              strokeWidth="0.5"
-            />
-            <line
-              x1="35"
-              y1="42"
-              x2="24"
-              y2="42"
-              stroke={colors.accent}
-              strokeWidth="0.5"
-            />
-            <line
-              x1="35"
-              y1="44"
-              x2="25"
-              y2="46"
-              stroke={colors.accent}
-              strokeWidth="0.5"
-            />
-            {/* Right whiskers */}
-            <line
-              x1="65"
-              y1="40"
-              x2="75"
-              y2="38"
-              stroke={colors.accent}
-              strokeWidth="0.5"
-            />
-            <line
-              x1="65"
-              y1="42"
-              x2="76"
-              y2="42"
-              stroke={colors.accent}
-              strokeWidth="0.5"
-            />
-            <line
-              x1="65"
-              y1="44"
-              x2="75"
-              y2="46"
-              stroke={colors.accent}
-              strokeWidth="0.5"
-            />
-          </g>
 
           {/* Mouth */}
           {currentMood === "happy" ||
@@ -910,90 +789,50 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
           )}
         </g>
 
-        {/* Tail - enhanced with curved path */}
-        <g
+        {/* Tail */}
+        <ellipse
+          cx="25"
+          cy="55"
+          rx="10"
+          ry="5"
+          fill={colors.primary}
+          stroke={colors.secondary}
+          strokeWidth="1"
+          transform="rotate(-45 25 55)"
           className={
             currentMood === "happy" ||
             currentMood === "excited" ||
             currentMood === "playful" ||
             currentMood === "celebrating"
               ? "animate-wag-enhanced"
-              : currentMood === "idle" || currentMood === "zen"
-              ? "animate-tail-sway"
               : ""
           }
-          style={{ transformOrigin: "25px 57px" }}
-        >
-          <path
-            d="M 25 57 Q 15 50 10 45 Q 8 42 10 40 Q 12 42 15 45 Q 20 50 25 57"
-            fill={colors.primary}
-            stroke={colors.secondary}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            filter="url(#softshadow)"
-          />
-          {/* Fluffy tail tip */}
-          <circle cx="10" cy="42" r="4" fill={colors.primary} opacity="0.8" />
-          <circle cx="12" cy="40" r="2.5" fill={colors.primary} opacity="0.6" />
-        </g>
+          filter="url(#softshadow)"
+        />
 
-        {/* Legs with paw pads */}
-        {/* Front left leg */}
-        <g>
-          <rect
-            x="40"
-            y="70"
-            width="6"
-            height="15"
-            rx="3"
-            fill={colors.primary}
-            stroke={colors.secondary}
-            strokeWidth="1"
-            className={currentMood === "walking" ? "animate-walk-front-leg" : ""}
-          />
-          {/* Paw pad */}
-          <ellipse
-            cx="43"
-            cy="83"
-            rx="3.5"
-            ry="2.5"
-            fill={colors.accent}
-            opacity="0.8"
-          />
-          {/* Toe pads */}
-          <circle cx="41" cy="82" r="0.8" fill={colors.accent} opacity="0.7" />
-          <circle cx="43" cy="81.5" r="0.8" fill={colors.accent} opacity="0.7" />
-          <circle cx="45" cy="82" r="0.8" fill={colors.accent} opacity="0.7" />
-        </g>
-
-        {/* Front right leg */}
-        <g>
-          <rect
-            x="54"
-            y="70"
-            width="6"
-            height="15"
-            rx="3"
-            fill={colors.primary}
-            stroke={colors.secondary}
-            strokeWidth="1"
-            className={currentMood === "walking" ? "animate-walk-back-leg" : ""}
-          />
-          {/* Paw pad */}
-          <ellipse
-            cx="57"
-            cy="83"
-            rx="3.5"
-            ry="2.5"
-            fill={colors.accent}
-            opacity="0.8"
-          />
-          {/* Toe pads */}
-          <circle cx="55" cy="82" r="0.8" fill={colors.accent} opacity="0.7" />
-          <circle cx="57" cy="81.5" r="0.8" fill={colors.accent} opacity="0.7" />
-          <circle cx="59" cy="82" r="0.8" fill={colors.accent} opacity="0.7" />
-        </g>
+        {/* Legs */}
+        <rect
+          x="40"
+          y="70"
+          width="6"
+          height="15"
+          rx="3"
+          fill={colors.primary}
+          stroke={colors.secondary}
+          strokeWidth="1"
+          className={currentMood === "walking" ? "animate-walk-front-leg" : ""}
+        />
+        <rect
+          x="54"
+          y="70"
+          width="6"
+          height="15"
+          rx="3"
+          fill={colors.primary}
+          stroke={colors.secondary}
+          strokeWidth="1"
+          className={currentMood === "walking" ? "animate-walk-back-leg" : ""}
+        />
 
         {/* Accessories */}
         {accessories.includes("party-hat") && (
