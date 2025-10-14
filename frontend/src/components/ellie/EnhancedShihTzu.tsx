@@ -15,6 +15,11 @@ interface EnhancedShihTzuProps {
   variant?: "default" | "winter" | "party" | "workout" | "balloon";
   className?: string;
   style?: React.CSSProperties;
+  // Customization props
+  furColor?: string;
+  collarStyle?: "none" | "leather" | "fabric" | "bowtie" | "bandana";
+  collarColor?: string;
+  collarTag?: boolean;
 }
 
 const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
@@ -31,6 +36,10 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
   variant = "balloon",
   className,
   style,
+  furColor,
+  collarStyle = "none",
+  collarColor = "#8B4513",
+  collarTag = false,
 }) => {
   const [currentPosition, setCurrentPosition] = useState(position);
   const [isMoving, setIsMoving] = useState(false);
@@ -144,6 +153,12 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
 
   // Get variant colors
   const getVariantColors = () => {
+    // If custom fur color is provided, use it
+    if (furColor) {
+      // Generate lighter and darker shades
+      return { primary: furColor, secondary: furColor, accent: "#8B4513" };
+    }
+
     switch (variant) {
       case "winter":
         return { primary: "#E0F2FE", secondary: "#7DD3FC", accent: "#0EA5E9" };
@@ -415,6 +430,102 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
           fill={colors.primary}
           opacity="0.7"
         />
+
+        {/* Collar */}
+        {collarStyle !== "none" && (
+          <g>
+            {(collarStyle === "leather" || collarStyle === "fabric") && (
+              <>
+                {/* Collar band */}
+                <ellipse
+                  cx="50"
+                  cy="48"
+                  rx="18"
+                  ry="4"
+                  fill={collarColor}
+                  stroke={collarStyle === "leather" ? "#654321" : colors.secondary}
+                  strokeWidth="0.5"
+                  filter="url(#softshadow)"
+                />
+                {/* Buckle */}
+                <rect
+                  x="47"
+                  y="46"
+                  width="6"
+                  height="4"
+                  rx="0.5"
+                  fill="#FFD700"
+                  stroke="#B8860B"
+                  strokeWidth="0.5"
+                />
+                {/* Name tag (optional) */}
+                {collarTag && (
+                  <g>
+                    <ellipse
+                      cx="50"
+                      cy="53"
+                      rx="5"
+                      ry="4"
+                      fill="#FFD700"
+                      stroke="#B8860B"
+                      strokeWidth="0.5"
+                    />
+                    <text
+                      x="50"
+                      y="54"
+                      fontSize="3"
+                      textAnchor="middle"
+                      fill="#8B4513"
+                      fontWeight="bold"
+                    >
+                      ELLIE
+                    </text>
+                  </g>
+                )}
+              </>
+            )}
+            {collarStyle === "bowtie" && (
+              <>
+                {/* Collar band for bowtie */}
+                <ellipse
+                  cx="50"
+                  cy="48"
+                  rx="18"
+                  ry="3"
+                  fill={collarColor}
+                  stroke="#654321"
+                  strokeWidth="0.5"
+                />
+                {/* Bowtie */}
+                <g>
+                  <path
+                    d="M 45 48 L 40 45 L 40 51 Z"
+                    fill="#FF69B4"
+                    stroke="#FF1493"
+                    strokeWidth="0.5"
+                  />
+                  <path
+                    d="M 55 48 L 60 45 L 60 51 Z"
+                    fill="#FF69B4"
+                    stroke="#FF1493"
+                    strokeWidth="0.5"
+                  />
+                  <rect x="48" y="47" width="4" height="2" fill="#FF1493" />
+                </g>
+              </>
+            )}
+            {collarStyle === "bandana" && (
+              /* Bandana */
+              <path
+                d="M 35 50 L 50 55 L 65 50 L 50 48 Z"
+                fill={collarColor}
+                stroke="#DC143C"
+                strokeWidth="0.5"
+                opacity="0.9"
+              />
+            )}
+          </g>
+        )}
 
         {/* Head group */}
         <g

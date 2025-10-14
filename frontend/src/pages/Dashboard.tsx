@@ -6,7 +6,7 @@ import { SpaceList } from '../components/spaces/SpaceList';
 import { CreateSpaceModal } from '../components/spaces/CreateSpaceModal';
 import { JoinByCodeForm } from '../components/invitations/JoinByCodeForm';
 import { Ellie } from '../components/ellie';
-import { useShihTzuCompanion } from '../hooks';
+import { useShihTzuCompanion, useEllieCustomization } from '../hooks';
 import type { Space } from '../types';
 import './Dashboard.css';
 
@@ -25,6 +25,9 @@ export const Dashboard: React.FC = () => {
       y: 100
     }
   });
+
+  // Ellie customization
+  const { customization } = useEllieCustomization();
 
   useEffect(() => {
     loadSpaces();
@@ -167,6 +170,10 @@ export const Dashboard: React.FC = () => {
         size="md"
         onClick={() => setMood(mood === 'playful' ? 'happy' : 'playful')}
         particleEffect={mood === 'celebrating' ? 'hearts' : null}
+        furColor={customization.furColor}
+        collarStyle={customization.collarStyle}
+        collarColor={customization.collarColor}
+        collarTag={customization.collarTag}
       />
     </div>
   );

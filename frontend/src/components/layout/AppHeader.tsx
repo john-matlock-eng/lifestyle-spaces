@@ -15,12 +15,14 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../stores/authStore'
 import { useTheme } from '../../theme/useTheme'
+import { useEllieCustomization } from '../../hooks/useEllieCustomization'
 
 export const AppHeader: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, signOut } = useAuth()
   const { darkMode, setDarkMode } = useTheme()
+  const { customization, updateCustomization } = useEllieCustomization()
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -48,7 +50,7 @@ export const AppHeader: React.FC = () => {
     icon?: typeof User
     onClick?: () => void
     className?: string
-    type?: 'divider' | 'theme-section'
+    type?: 'divider' | 'theme-section' | 'ellie-section'
     isActive?: boolean
   }
 
@@ -69,6 +71,8 @@ export const AppHeader: React.FC = () => {
         setIsProfileMenuOpen(false)
       }
     },
+    { type: 'divider' },
+    { type: 'ellie-section' },
     { type: 'divider' },
     { type: 'theme-section' },
     { type: 'divider' },
@@ -193,6 +197,132 @@ export const AppHeader: React.FC = () => {
                   {profileMenuItems.map((item, index) => {
                     if (item.type === 'divider') {
                       return <div key={index} className="menu-divider" />
+                    }
+
+                    if (item.type === 'ellie-section') {
+                      const collarStyles = [
+                        { value: 'none' as const, label: 'None', emoji: '🚫' },
+                        { value: 'leather' as const, label: 'Leather', emoji: '🦴' },
+                        { value: 'fabric' as const, label: 'Fabric', emoji: '🎀' },
+                        { value: 'bowtie' as const, label: 'Bowtie', emoji: '🎀' },
+                        { value: 'bandana' as const, label: 'Bandana', emoji: '🧣' }
+                      ]
+
+                      const collarColors = [
+                        { value: '#8B4513', label: 'Brown' },
+                        { value: '#FF0000', label: 'Red' },
+                        { value: '#0000FF', label: 'Blue' },
+                        { value: '#00FF00', label: 'Green' },
+                        { value: '#FFC0CB', label: 'Pink' },
+                        { value: '#FFD700', label: 'Gold' },
+                        { value: '#800080', label: 'Purple' },
+                        { value: '#000000', label: 'Black' }
+                      ]
+
+                      const furColors = [
+                        { value: undefined, label: 'Default' },
+                        { value: '#FFFFFF', label: 'White' },
+                        { value: '#F5DEB3', label: 'Cream' },
+                        { value: '#D2691E', label: 'Chocolate' },
+                        { value: '#8B4513', label: 'Brown' },
+                        { value: '#696969', label: 'Gray' },
+                        { value: '#000000', label: 'Black' }
+                      ]
+
+                      return (
+                        <div key="ellie-section" className="theme-section">
+                          <div className="theme-section-header">
+                            <span className="theme-section-title">🐾 Customize Ellie</span>
+                          </div>
+
+                          {/* Fur Color */}
+                          <div style={{ padding: '8px 0' }}>
+                            <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '6px', color: 'var(--text-primary)' }}>
+                              Fur Color
+                            </label>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                              {furColors.map((color) => (
+                                <button
+                                  key={color.label}
+                                  className={`theme-option ${customization.furColor === color.value ? 'active' : ''}`}
+                                  onClick={() => updateCustomization({ furColor: color.value })}
+                                  style={{
+                                    padding: '6px',
+                                    fontSize: '11px',
+                                    background: color.value || 'linear-gradient(135deg, #FDE2E4 0%, #E0B1CB 100%)'
+                                  }}
+                                  title={color.label}
+                                >
+                                  {customization.furColor === color.value && '✓'}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Collar Style */}
+                          <div style={{ padding: '8px 0' }}>
+                            <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '6px', color: 'var(--text-primary)' }}>
+                              Collar Style
+                            </label>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                              {collarStyles.map((style) => (
+                                <button
+                                  key={style.value}
+                                  className={`theme-option ${customization.collarStyle === style.value ? 'active' : ''}`}
+                                  onClick={() => updateCustomization({ collarStyle: style.value })}
+                                  style={{ padding: '6px', fontSize: '11px' }}
+                                >
+                                  <span>{style.emoji}</span>
+                                  <span style={{ marginLeft: '4px', fontSize: '10px' }}>{style.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Collar Color */}
+                          {customization.collarStyle !== 'none' && (
+                            <div style={{ padding: '8px 0' }}>
+                              <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '6px', color: 'var(--text-primary)' }}>
+                                Collar Color
+                              </label>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                                {collarColors.map((color) => (
+                                  <button
+                                    key={color.value}
+                                    className={`theme-option ${customization.collarColor === color.value ? 'active' : ''}`}
+                                    onClick={() => updateCustomization({ collarColor: color.value })}
+                                    style={{
+                                      padding: '8px',
+                                      background: color.value,
+                                      border: customization.collarColor === color.value ? '2px solid #8B4513' : '1px solid #ddd'
+                                    }}
+                                    title={color.label}
+                                  >
+                                    {customization.collarColor === color.value && <span style={{ color: color.value === '#000000' ? 'white' : 'black' }}>✓</span>}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Collar Tag */}
+                          {customization.collarStyle !== 'none' && customization.collarStyle !== 'bandana' && (
+                            <div style={{ padding: '8px 0' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={customization.collarTag}
+                                  onChange={(e) => updateCustomization({ collarTag: e.target.checked })}
+                                  style={{ width: '16px', height: '16px' }}
+                                />
+                                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                  Show Name Tag
+                                </span>
+                              </label>
+                            </div>
+                          )}
+                        </div>
+                      )
                     }
 
                     if (item.type === 'theme-section') {

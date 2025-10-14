@@ -15,6 +15,11 @@ export interface EllieProps {
   className?: string
   style?: React.CSSProperties
   tabIndex?: number
+  // Customization props
+  furColor?: string
+  collarStyle?: 'none' | 'leather' | 'fabric' | 'bowtie' | 'bandana'
+  collarColor?: string
+  collarTag?: boolean
 }
 
 export const Ellie: React.FC<EllieProps> = ({
@@ -30,7 +35,11 @@ export const Ellie: React.FC<EllieProps> = ({
   variant = 'balloon',
   className = '',
   style = {},
-  tabIndex
+  tabIndex,
+  furColor,
+  collarStyle = 'none',
+  collarColor = '#8B4513',
+  collarTag = false
 }) => {
   // Generate ARIA label based on mood
   const getAriaLabel = () => {
@@ -69,6 +78,10 @@ export const Ellie: React.FC<EllieProps> = ({
           zIndex: 9999,
           ...style
         }}
+        furColor={furColor}
+        collarStyle={collarStyle}
+        collarColor={collarColor}
+        collarTag={collarTag}
       />
     </div>
   )
