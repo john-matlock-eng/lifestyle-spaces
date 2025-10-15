@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { JournalCard } from './JournalCard'
 import { journalApi } from '../services/journalApi'
 import type { JournalEntry } from '../types/journal.types'
+import { getEmotionById } from '../data/emotionData'
 import '../styles/journal.css'
 
 interface JournalListProps {
@@ -21,6 +22,10 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
   const [totalPages, setTotalPages] = useState(1)
   const [hasMore, setHasMore] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedAuthor, setSelectedAuthor] = useState<string>('all')
+  const [selectedEmotion, setSelectedEmotion] = useState<string>('all')
+  const [selectedTag, setSelectedTag] = useState<string>('all')
+  const [dateFilter, setDateFilter] = useState<string>('all')
   const pageSize = 9
 
   const loadJournals = useCallback(async () => {
@@ -77,17 +82,77 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     setCurrentPage(1)
   }, [])
 
-  // Filter journals based on search query
+  // Extract unique values for filter dropdowns
+  const uniqueAuthors = Array.from(
+    new Set(journals.map((j) => j.author?.displayName).filter(Boolean))
+  ).sort()
+
+  const uniqueEmotions = Array.from(
+    new Set(journals.flatMap((j) => j.emotions || []))
+  ).sort()
+
+  const uniqueTags = Array.from(
+    new Set(journals.flatMap((j) => j.tags || []))
+  ).sort()
+
+  // Helper function to check if date matches filter
+  const matchesDateFilter = (dateString: string): boolean => {
+    if (dateFilter === 'all') return true
+
+    const journalDate = new Date(dateString)
+    const now = new Date()
+    const dayInMs = 24 * 60 * 60 * 1000
+
+    switch (dateFilter) {
+      case 'today':
+        return journalDate.toDateString() === now.toDateString()
+      case 'week':
+        return now.getTime() - journalDate.getTime() <= 7 * dayInMs
+      case 'month':
+        return now.getTime() - journalDate.getTime() <= 30 * dayInMs
+      case 'year':
+        return now.getTime() - journalDate.getTime() <= 365 * dayInMs
+      default:
+        return true
+    }
+  }
+
+  // Filter journals based on search query and filters
   const filteredJournals = journals.filter((journal) => {
-    if (!searchQuery.trim()) return true
+    // Search query filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      const titleMatch = journal.title?.toLowerCase().includes(query) || false
+      const contentMatch = journal.content?.toLowerCase().includes(query) || false
+      const tagsMatch = journal.tags?.some((tag) => tag.toLowerCase().includes(query)) || false
+      const authorMatch = journal.author?.displayName?.toLowerCase().includes(query) || false
 
-    const query = searchQuery.toLowerCase()
-    const titleMatch = journal.title?.toLowerCase().includes(query) || false
-    const contentMatch = journal.content?.toLowerCase().includes(query) || false
-    const tagsMatch = journal.tags?.some((tag) => tag.toLowerCase().includes(query)) || false
-    const authorMatch = journal.author?.displayName?.toLowerCase().includes(query) || false
+      if (!titleMatch && !contentMatch && !tagsMatch && !authorMatch) {
+        return false
+      }
+    }
 
-    return titleMatch || contentMatch || tagsMatch || authorMatch
+    // Author filter
+    if (selectedAuthor !== 'all' && journal.author?.displayName !== selectedAuthor) {
+      return false
+    }
+
+    // Emotion filter
+    if (selectedEmotion !== 'all' && !journal.emotions?.includes(selectedEmotion)) {
+      return false
+    }
+
+    // Tag filter
+    if (selectedTag !== 'all' && !journal.tags?.includes(selectedTag)) {
+      return false
+    }
+
+    // Date filter
+    if (!matchesDateFilter(journal.createdAt)) {
+      return false
+    }
+
+    return true
   })
 
   if (loading) {
@@ -140,12 +205,128 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
         </div>
       </div>
 
-      {filteredJournals.length === 0 && searchQuery ? (
+      {/* Filter Controls */}
+      <div className="journal-list-filters">
+        {/* Author Filter */}
+        {uniqueAuthors.length > 0 && (
+          <div className="journal-filter">
+            <label htmlFor="author-filter" className="journal-filter__label">
+              Author:
+            </label>
+            <select
+              id="author-filter"
+              value={selectedAuthor}
+              onChange={(e) => setSelectedAuthor(e.target.value)}
+              className="journal-filter__select"
+            >
+              <option value="all">All Authors</option>
+              {uniqueAuthors.map((author) => (
+                <option key={author} value={author}>
+                  {author}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Date Filter */}
+        <div className="journal-filter">
+          <label htmlFor="date-filter" className="journal-filter__label">
+            Date:
+          </label>
+          <select
+            id="date-filter"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="journal-filter__select"
+          >
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">Past Week</option>
+            <option value="month">Past Month</option>
+            <option value="year">Past Year</option>
+          </select>
+        </div>
+
+        {/* Emotion Filter */}
+        {uniqueEmotions.length > 0 && (
+          <div className="journal-filter">
+            <label htmlFor="emotion-filter" className="journal-filter__label">
+              Feeling:
+            </label>
+            <select
+              id="emotion-filter"
+              value={selectedEmotion}
+              onChange={(e) => setSelectedEmotion(e.target.value)}
+              className="journal-filter__select"
+            >
+              <option value="all">All Feelings</option>
+              {uniqueEmotions.map((emotionId) => {
+                const emotion = getEmotionById(emotionId)
+                return (
+                  <option key={emotionId} value={emotionId}>
+                    {emotion?.label || emotionId}
+                  </option>
+                )
+              })}
+            </select>
+          </div>
+        )}
+
+        {/* Tag Filter */}
+        {uniqueTags.length > 0 && (
+          <div className="journal-filter">
+            <label htmlFor="tag-filter" className="journal-filter__label">
+              Tag:
+            </label>
+            <select
+              id="tag-filter"
+              value={selectedTag}
+              onChange={(e) => setSelectedTag(e.target.value)}
+              className="journal-filter__select"
+            >
+              <option value="all">All Tags</option>
+              {uniqueTags.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Clear Filters Button */}
+        {(selectedAuthor !== 'all' || selectedEmotion !== 'all' || selectedTag !== 'all' || dateFilter !== 'all' || searchQuery) && (
+          <button
+            onClick={() => {
+              setSelectedAuthor('all')
+              setSelectedEmotion('all')
+              setSelectedTag('all')
+              setDateFilter('all')
+              setSearchQuery('')
+            }}
+            className="button-secondary journal-clear-filters"
+          >
+            Clear All Filters
+          </button>
+        )}
+      </div>
+
+      {filteredJournals.length === 0 && (searchQuery || selectedAuthor !== 'all' || selectedEmotion !== 'all' || selectedTag !== 'all' || dateFilter !== 'all') ? (
         <div className="journal-list-empty">
           <div className="journal-list-empty-icon">🔍</div>
-          <p className="journal-list-empty-text">No journals match "{searchQuery}"</p>
-          <button onClick={() => handleSearch('')} className="button-secondary">
-            Clear Search
+          <p className="journal-list-empty-text">No journals match your filters</p>
+          <button
+            onClick={() => {
+              setSearchQuery('')
+              setSelectedAuthor('all')
+              setSelectedEmotion('all')
+              setSelectedTag('all')
+              setDateFilter('all')
+            }}
+            className="button-secondary"
+          >
+            Clear All Filters
           </button>
         </div>
       ) : (
