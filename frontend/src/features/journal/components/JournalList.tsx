@@ -82,10 +82,10 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     if (!searchQuery.trim()) return true
 
     const query = searchQuery.toLowerCase()
-    const titleMatch = journal.title.toLowerCase().includes(query)
-    const contentMatch = journal.content.toLowerCase().includes(query)
-    const tagsMatch = journal.tags?.some((tag) => tag.toLowerCase().includes(query))
-    const authorMatch = journal.author?.displayName.toLowerCase().includes(query)
+    const titleMatch = journal.title?.toLowerCase().includes(query) || false
+    const contentMatch = journal.content?.toLowerCase().includes(query) || false
+    const tagsMatch = journal.tags?.some((tag) => tag.toLowerCase().includes(query)) || false
+    const authorMatch = journal.author?.displayName?.toLowerCase().includes(query) || false
 
     return titleMatch || contentMatch || tagsMatch || authorMatch
   })
