@@ -20,6 +20,7 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [hasMore, setHasMore] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const pageSize = 9
 
   const loadJournals = useCallback(async () => {
@@ -70,6 +71,25 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     }
   }
 
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query)
+    // Reset to first page when searching
+    setCurrentPage(1)
+  }, [])
+
+  // Filter journals based on search query
+  const filteredJournals = journals.filter((journal) => {
+    if (!searchQuery.trim()) return true
+
+    const query = searchQuery.toLowerCase()
+    const titleMatch = journal.title.toLowerCase().includes(query)
+    const contentMatch = journal.content.toLowerCase().includes(query)
+    const tagsMatch = journal.tags?.some((tag) => tag.toLowerCase().includes(query))
+    const authorMatch = journal.author?.displayName.toLowerCase().includes(query)
+
+    return titleMatch || contentMatch || tagsMatch || authorMatch
+  })
+
   if (loading) {
     return (
       <div className="journal-list-loading">
@@ -87,7 +107,7 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     )
   }
 
-  if (journals.length === 0) {
+  if (journals.length === 0 && !searchQuery) {
     return (
       <div className="journal-list-empty">
         <div className="journal-list-empty-icon">📔</div>
@@ -103,6 +123,16 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     <div className="journal-list-container">
       <div className="journal-list-header">
         <h2 className="journal-list-title">Journals</h2>
+        <div className="journal-list-search">
+          <input
+            type="text"
+            placeholder="Search journals..."
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="journal-list-search__input"
+            aria-label="Search journals"
+          />
+        </div>
         <div className="journal-list-actions">
           <button onClick={handleNewJournal} className="button-primary">
             + New Journal
@@ -110,15 +140,25 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
         </div>
       </div>
 
-      <div className="journal-list-grid">
-        {journals.map((journal) => (
-          <JournalCard
-            key={journal.journalId}
-            journal={journal}
-            onDelete={handleDelete}
-          />
-        ))}
-      </div>
+      {filteredJournals.length === 0 && searchQuery ? (
+        <div className="journal-list-empty">
+          <div className="journal-list-empty-icon">🔍</div>
+          <p className="journal-list-empty-text">No journals match "{searchQuery}"</p>
+          <button onClick={() => handleSearch('')} className="button-secondary">
+            Clear Search
+          </button>
+        </div>
+      ) : (
+        <div className="journal-list-grid">
+          {filteredJournals.map((journal) => (
+            <JournalCard
+              key={journal.journalId}
+              journal={journal}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
+      )}
 
       {totalPages > 1 && (
         <div className="journal-pagination">
