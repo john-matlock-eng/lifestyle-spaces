@@ -93,7 +93,7 @@ export const Settings: React.FC = () => {
                   </div>
                   <select
                     value={darkMode}
-                    onChange={(e) => setDarkMode(e.target.value as any)}
+                    onChange={(e) => setDarkMode(e.target.value as 'light' | 'dark' | 'system')}
                     className="setting-select"
                   >
                     <option value="light">Light</option>

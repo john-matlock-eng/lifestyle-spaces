@@ -75,7 +75,7 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
     if (mood !== currentMood) {
       setCurrentMood(mood);
     }
-  }, [mood]);
+  }, [mood, currentMood]);
 
   // Handle position changes with smoother transitions
   useEffect(() => {
@@ -103,7 +103,7 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
         clearTimeout(positionTimerRef.current);
       }
     };
-  }, [position.x, position.y]);
+  }, [position, onPositionChange, currentPosition.x, currentPosition.y]);
 
   // Handle particle effects
   useEffect(() => {
