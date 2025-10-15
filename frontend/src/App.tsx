@@ -11,6 +11,8 @@ import { SignUp } from './pages/SignUp';
 import { Dashboard } from './pages/Dashboard';
 import { SpaceDetail } from './pages/SpaceDetail';
 import { JoinSpace } from './pages/JoinSpace';
+import { Profile } from './pages/Profile';
+import { Settings } from './pages/Settings';
 import { JournalListPage } from './features/journal/pages/JournalListPage';
 import { JournalCreatePage } from './features/journal/pages/JournalCreatePage';
 import { JournalViewPage } from './features/journal/pages/JournalViewPage';
@@ -35,6 +37,8 @@ function App() {
                 {/* Protected routes with layout */}
                 <Route element={<AuthenticatedLayout />}>
                   <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/settings" element={<Settings />} />
                   <Route path="/space/:spaceId" element={<SpaceDetail />} />
                   <Route path="/join/:inviteCode" element={<JoinSpace />} />
 
