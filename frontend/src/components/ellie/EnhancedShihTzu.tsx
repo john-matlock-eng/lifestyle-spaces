@@ -103,7 +103,8 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
         clearTimeout(positionTimerRef.current);
       }
     };
-  }, [position, onPositionChange, currentPosition.x, currentPosition.y]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [position.x, position.y, onPositionChange]);
 
   // Handle particle effects
   useEffect(() => {
