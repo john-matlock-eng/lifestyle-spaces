@@ -203,13 +203,18 @@ export const JournalCard: React.FC<JournalCardProps> = ({ journal, onDelete }) =
 
         {journal.tags && journal.tags.length > 0 && (
           <div className="journal-card-tags">
-            {journal.tags.slice(0, 3).map((tag) => (
-              <span key={tag} className="journal-tag">
-                {tag}
+            {journal.tags.slice(0, 2).map((tag) => (
+              <span key={tag} className="journal-tag" title={tag}>
+                {tag.length > 10 ? `${tag.substring(0, 10)}...` : tag}
               </span>
             ))}
-            {journal.tags.length > 3 && (
-              <span className="journal-tag">+{journal.tags.length - 3}</span>
+            {journal.tags.length > 2 && (
+              <span
+                className="journal-tag journal-tag-more"
+                title={journal.tags.slice(2).join(', ')}
+              >
+                +{journal.tags.length - 2}
+              </span>
             )}
           </div>
         )}

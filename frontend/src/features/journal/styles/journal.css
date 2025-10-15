@@ -252,6 +252,13 @@
   padding: 20px;
   transition: all 0.2s ease;
   cursor: pointer;
+  /* Add overflow control */
+  overflow: hidden;
+  word-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .journal-card:hover {
@@ -273,6 +280,14 @@
   color: var(--theme-text-primary);
   margin: 0;
   flex: 1;
+  /* Add text overflow handling */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+  min-width: 0;
 }
 
 .journal-card-pin {
@@ -285,6 +300,8 @@
   gap: 8px;
   opacity: 0;
   transition: opacity 0.2s ease;
+  margin-left: 8px;
+  flex-shrink: 0;
 }
 
 .journal-card:hover .journal-card-actions {
@@ -319,34 +336,70 @@
   color: var(--theme-text-secondary);
   line-height: 1.6;
   margin: 12px 0;
+  /* Fix text overflow */
+  overflow: hidden;
+  text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
-  overflow: hidden;
+  word-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .journal-card-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid var(--theme-border-light);
   font-size: 0.875rem;
   color: var(--theme-text-secondary);
+  /* Prevent overflow */
+  overflow: hidden;
+  min-width: 0;
 }
 
 .journal-card-author {
   display: flex;
   align-items: center;
   gap: 6px;
+  /* Prevent overflow */
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.journal-card-author span:not(:first-child) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+
+.journal-card-author > span:first-child {
+  flex-shrink: 0;
 }
 
 .journal-card-date {
   display: flex;
   align-items: center;
   gap: 6px;
+  /* Prevent overflow */
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.journal-card-date span:not(:first-child) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+
+.journal-card-date > span:first-child {
+  flex-shrink: 0;
 }
 
 .journal-card-tags {
@@ -354,6 +407,10 @@
   flex-wrap: wrap;
   gap: 6px;
   margin-left: auto;
+  /* Prevent tag overflow */
+  max-width: 50%;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .journal-tag {
@@ -363,6 +420,21 @@
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 500;
+  /* Prevent individual tag overflow */
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.journal-tag-more {
+  background-color: var(--theme-bg-elevated);
+  color: var(--theme-text-secondary);
+  min-width: auto;
+  padding: 2px 6px;
+  font-weight: 600;
+  cursor: help;
 }
 
 .journal-card-mood {
@@ -381,6 +453,9 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
+  /* Prevent horizontal scroll */
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .journal-list-header {
@@ -390,6 +465,8 @@
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
+  width: 100%;
+  overflow: hidden;
 }
 
 .journal-list-title {
@@ -397,6 +474,12 @@
   font-weight: 700;
   color: var(--theme-text-primary);
   margin: 0;
+  /* Prevent title overflow */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
 }
 
 .journal-list-search {
@@ -483,9 +566,13 @@
 
 .journal-list-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(350px, 100%), 1fr));
   gap: 20px;
   margin-bottom: 24px;
+  /* Ensure grid doesn't overflow */
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .journal-list-empty {
@@ -793,8 +880,13 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .journal-list-container {
+    padding: 16px;
+  }
+
   .journal-list-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .journal-list-header {
@@ -831,6 +923,16 @@
   .journal-clear-filters {
     margin-left: 0;
     width: 100%;
+  }
+
+  .journal-card {
+    padding: 16px;
+  }
+
+  .journal-card-tags {
+    max-width: 100%;
+    margin-left: 0;
+    margin-top: 8px;
   }
 
   .journal-view-title {
