@@ -6,6 +6,7 @@ import { EmotionSelector } from '../components/EmotionSelector'
 import { QASection } from '../components/sections/QASection'
 import { AddSectionButton } from '../components/AddSectionButton'
 import { ListSection } from '../components/sections/ListSection'
+import AIWritingPrompts from '../../../components/AIWritingPrompts'
 import { useJournal } from '../hooks/useJournal'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { Template, TemplateData, QAPair, ListItem } from '../types/template.types'
@@ -203,6 +204,17 @@ export const JournalCreatePage: React.FC = () => {
     navigate(`/spaces/${spaceId}`)
   }
 
+  const handleSelectPrompt = (prompt: string) => {
+    // Add the prompt to the content with some formatting
+    const promptText = `**Prompt:** ${prompt}\n\n`
+    setContent(prevContent => {
+      if (!prevContent.trim()) {
+        return promptText
+      }
+      return `${prevContent}\n\n${promptText}`
+    })
+  }
+
   if (!spaceId) {
     return (
       <div className="journal-form-container">
@@ -317,19 +329,25 @@ export const JournalCreatePage: React.FC = () => {
             </div>
           ) : (
             // Free-form content editor
-            <div className="journal-form-group">
-              <label htmlFor="content" className="journal-form-label">
-                Content *
-              </label>
-              <RichTextEditor
-                content={content}
-                onChange={setContent}
-                placeholder="Start writing your thoughts..."
-                minHeight="400px"
-                showToolbar={true}
+            <>
+              <AIWritingPrompts
+                onSelectPrompt={handleSelectPrompt}
                 disabled={loading}
               />
-            </div>
+              <div className="journal-form-group">
+                <label htmlFor="content" className="journal-form-label">
+                  Content *
+                </label>
+                <RichTextEditor
+                  content={content}
+                  onChange={setContent}
+                  placeholder="Start writing your thoughts..."
+                  minHeight="400px"
+                  showToolbar={true}
+                  disabled={loading}
+                />
+              </div>
+            </>
           )}
 
           {/* Custom Sections */}
