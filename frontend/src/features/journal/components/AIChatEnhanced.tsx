@@ -32,9 +32,14 @@ export const AIChat: React.FC<AIChatProps> = ({
     const saved = localStorage.getItem(`chat_${journalId}`)
     if (saved) {
       try {
-        return JSON.parse(saved).map((m: any) => ({
+        interface SavedMessage {
+          role: 'user' | 'assistant';
+          content: string;
+          timestamp?: string | Date;
+        }
+        return JSON.parse(saved).map((m: SavedMessage) => ({
           ...m,
-          timestamp: new Date(m.timestamp)
+          timestamp: m.timestamp ? new Date(m.timestamp) : undefined
         }))
       } catch (err) {
         console.error('Failed to load chat history:', err)
@@ -94,10 +99,10 @@ export const AIChat: React.FC<AIChatProps> = ({
       }
       setMessages([welcomeMessage])
     }
-  }, [isOpen, journalTitle, emotions])
+  }, [isOpen, journalTitle, emotions, messages.length])
 
   // Format timestamp with relative time
-  const formatTimestamp = (date: Date) => {
+  const formatTimestamp = useCallback((date: Date) => {
     const now = new Date()
     const diff = now.getTime() - date.getTime()
 
@@ -112,7 +117,7 @@ export const AIChat: React.FC<AIChatProps> = ({
       hour: '2-digit',
       minute: '2-digit'
     })
-  }
+  }, [])
 
   // Copy message to clipboard with feedback
   const copyMessage = useCallback((content: string, messageId: string) => {
@@ -190,11 +195,12 @@ export const AIChat: React.FC<AIChatProps> = ({
       }
 
       setMessages(prev => [...prev, assistantMessage])
-    } catch (err: any) {
+    } catch (err) {
       console.error('AI chat error:', err)
-      const errorMessage = err.message?.includes('503')
+      const error = err as Error
+      const errorMessage = error.message?.includes('503')
         ? 'AI service is temporarily unavailable. Please try again in a moment.'
-        : err.message?.includes('401')
+        : error.message?.includes('401')
         ? 'Your session has expired. Please refresh the page and sign in again.'
         : 'Failed to get response. Please try again.'
       setError(errorMessage)
@@ -344,10 +350,10 @@ export const AIChat: React.FC<AIChatProps> = ({
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
-                          a: ({node, ...props}) => (
+                          a: ({...props}) => (
                             <a {...props} target="_blank" rel="noopener noreferrer" />
                           ),
-                          code: ({node, inline, ...props}) => (
+                          code: ({inline, ...props}) => (
                             inline ?
                             <code className="inline-code" {...props} /> :
                             <code className="block-code" {...props} />
