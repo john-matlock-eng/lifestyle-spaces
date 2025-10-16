@@ -12,7 +12,6 @@ from app.models.llm import (
 from app.services.claude_llm import get_claude_service
 from app.services.exceptions import ExternalServiceError
 from app.core.dependencies import get_current_user
-from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,7 @@ router = APIRouter(prefix="/api/llm", tags=["llm"])
 @router.post("/generate", response_model=LLMPromptResponse, status_code=status.HTTP_200_OK)
 async def generate_llm_response(
     request: LLMPromptRequest,
-    current_user: User = Depends(get_current_user)
+    current_user=Depends(get_current_user)
 ) -> LLMPromptResponse:
     """
     Generate a response from Claude LLM
@@ -37,7 +36,14 @@ async def generate_llm_response(
     Raises:
         HTTPException: If LLM service fails or is not configured
     """
-    logger.info(f"User {current_user.user_id} requesting LLM generation")
+    # Handle both dict and User object
+    if isinstance(current_user, dict):
+        user_id = (current_user.get("sub") or current_user.get("user_id") or
+                   current_user.get("userId") or "unknown")
+    else:
+        user_id = getattr(current_user, "user_id", "unknown")
+
+    logger.info(f"User {user_id} requesting LLM generation")
 
     try:
         # Get Claude service
@@ -53,7 +59,7 @@ async def generate_llm_response(
         )
 
         logger.info(
-            f"LLM generation successful for user {current_user.user_id}. "
+            f"LLM generation successful for user {user_id}. "
             f"Tokens used: {result['usage']['input_tokens']} in, "
             f"{result['usage']['output_tokens']} out"
         )
@@ -62,7 +68,7 @@ async def generate_llm_response(
         return LLMPromptResponse(**result)
 
     except ExternalServiceError as e:
-        logger.error(f"LLM service error for user {current_user.user_id}: {str(e)}")
+        logger.error(f"LLM service error for user {user_id}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"LLM service error: {str(e)}"
@@ -82,7 +88,7 @@ async def generate_llm_response(
 )
 async def generate_journal_insights(
     request: JournalInsightsRequest,
-    current_user: User = Depends(get_current_user)
+    current_user=Depends(get_current_user)
 ) -> JournalInsightsResponse:
     """
     Generate AI-powered insights for a journal entry
@@ -97,7 +103,14 @@ async def generate_journal_insights(
     Raises:
         HTTPException: If LLM service fails or is not configured
     """
-    logger.info(f"User {current_user.user_id} requesting journal insights")
+    # Handle both dict and User object
+    if isinstance(current_user, dict):
+        user_id = (current_user.get("sub") or current_user.get("user_id") or
+                   current_user.get("userId") or "unknown")
+    else:
+        user_id = getattr(current_user, "user_id", "unknown")
+
+    logger.info(f"User {user_id} requesting journal insights")
 
     try:
         # Get Claude service
@@ -111,7 +124,7 @@ async def generate_journal_insights(
         )
 
         logger.info(
-            f"Journal insights generated for user {current_user.user_id}. "
+            f"Journal insights generated for user {user_id}. "
             f"Tokens used: {result['usage']['input_tokens']} in, "
             f"{result['usage']['output_tokens']} out"
         )
@@ -120,7 +133,7 @@ async def generate_journal_insights(
         return JournalInsightsResponse(**result)
 
     except ExternalServiceError as e:
-        logger.error(f"LLM service error for user {current_user.user_id}: {str(e)}")
+        logger.error(f"LLM service error for user {user_id}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"LLM service error: {str(e)}"
