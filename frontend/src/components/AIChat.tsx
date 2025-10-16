@@ -3,7 +3,8 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { aiService, ChatMessage } from '../services/ai';
+import { aiService } from '../services/ai';
+import type { ChatMessage } from '../services/ai';
 import './AIChat.css';
 
 interface AIChatProps {

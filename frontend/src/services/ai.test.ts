@@ -6,9 +6,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { aiService } from './ai';
 import * as apiModule from './api';
 
-// Mock the apiRequest function
+// Mock the apiService
 vi.mock('./api', () => ({
-  apiRequest: vi.fn(),
+  apiService: {
+    post: vi.fn(),
+  },
 }));
 
 describe('AIService', () => {
@@ -27,7 +29,7 @@ describe('AIService', () => {
         },
       };
 
-      vi.spyOn(apiModule, 'apiRequest').mockResolvedValue(mockResponse);
+      vi.spyOn(apiModule.apiService, 'post').mockResolvedValue(mockResponse);
 
       const result = await aiService.generateResponse(
         'Test prompt',
@@ -36,14 +38,11 @@ describe('AIService', () => {
         0.7
       );
 
-      expect(apiModule.apiRequest).toHaveBeenCalledWith('/api/llm/generate', {
-        method: 'POST',
-        body: JSON.stringify({
-          prompt: 'Test prompt',
-          systemPrompt: 'System prompt',
-          maxTokens: 1024,
-          temperature: 0.7,
-        }),
+      expect(apiModule.apiService.post).toHaveBeenCalledWith('/api/llm/generate', {
+        prompt: 'Test prompt',
+        systemPrompt: 'System prompt',
+        maxTokens: 1024,
+        temperature: 0.7,
       });
 
       expect(result).toEqual(mockResponse);
@@ -59,18 +58,15 @@ describe('AIService', () => {
         },
       };
 
-      vi.spyOn(apiModule, 'apiRequest').mockResolvedValue(mockResponse);
+      vi.spyOn(apiModule.apiService, 'post').mockResolvedValue(mockResponse);
 
       await aiService.generateResponse('Test prompt');
 
-      expect(apiModule.apiRequest).toHaveBeenCalledWith('/api/llm/generate', {
-        method: 'POST',
-        body: JSON.stringify({
-          prompt: 'Test prompt',
-          systemPrompt: undefined,
-          maxTokens: 1024,
-          temperature: 0.7,
-        }),
+      expect(apiModule.apiService.post).toHaveBeenCalledWith('/api/llm/generate', {
+        prompt: 'Test prompt',
+        systemPrompt: undefined,
+        maxTokens: 1024,
+        temperature: 0.7,
       });
     });
   });
@@ -86,7 +82,7 @@ describe('AIService', () => {
         },
       };
 
-      vi.spyOn(apiModule, 'apiRequest').mockResolvedValue(mockResponse);
+      vi.spyOn(apiModule.apiService, 'post').mockResolvedValue(mockResponse);
 
       const result = await aiService.generateJournalInsights(
         'Journal content',
@@ -94,13 +90,10 @@ describe('AIService', () => {
         ['happy', 'grateful']
       );
 
-      expect(apiModule.apiRequest).toHaveBeenCalledWith('/api/llm/journal-insights', {
-        method: 'POST',
-        body: JSON.stringify({
-          journalContent: 'Journal content',
-          journalTitle: 'Journal title',
-          emotions: ['happy', 'grateful'],
-        }),
+      expect(apiModule.apiService.post).toHaveBeenCalledWith('/api/llm/journal-insights', {
+        journalContent: 'Journal content',
+        journalTitle: 'Journal title',
+        emotions: ['happy', 'grateful'],
       });
 
       expect(result).toEqual(mockResponse);
@@ -118,7 +111,7 @@ describe('AIService', () => {
         },
       };
 
-      vi.spyOn(apiModule, 'apiRequest').mockResolvedValue(mockResponse);
+      vi.spyOn(apiModule.apiService, 'post').mockResolvedValue(mockResponse);
 
       const result = await aiService.generateReflectionQuestions(
         'Journal content'
@@ -141,7 +134,7 @@ describe('AIService', () => {
         },
       };
 
-      vi.spyOn(apiModule, 'apiRequest').mockResolvedValue(mockResponse);
+      vi.spyOn(apiModule.apiService, 'post').mockResolvedValue(mockResponse);
 
       const result = await aiService.generateReflectionQuestions(
         'Journal content'
@@ -166,7 +159,7 @@ describe('AIService', () => {
         },
       };
 
-      vi.spyOn(apiModule, 'apiRequest').mockResolvedValue(mockResponse);
+      vi.spyOn(apiModule.apiService, 'post').mockResolvedValue(mockResponse);
 
       const conversationHistory = [
         { role: 'user' as const, content: 'Previous question' },
@@ -179,14 +172,14 @@ describe('AIService', () => {
         conversationHistory
       );
 
-      const mockFn = vi.mocked(apiModule.apiRequest);
+      const mockFn = vi.mocked(apiModule.apiService.post);
       const callArgs = mockFn.mock.calls[0];
-      const body = JSON.parse(callArgs[1].body as string);
+      const requestData = callArgs[1] as { prompt: string };
 
-      expect(body.prompt).toContain('Journal content');
-      expect(body.prompt).toContain('Previous question');
-      expect(body.prompt).toContain('Previous answer');
-      expect(body.prompt).toContain('New question');
+      expect(requestData.prompt).toContain('Journal content');
+      expect(requestData.prompt).toContain('Previous question');
+      expect(requestData.prompt).toContain('Previous answer');
+      expect(requestData.prompt).toContain('New question');
 
       expect(result).toBe('AI response to your question');
     });

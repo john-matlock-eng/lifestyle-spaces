@@ -2,7 +2,7 @@
  * AI Service - Integration with Claude LLM API
  */
 
-import { apiRequest } from './api';
+import { apiService } from './api';
 
 export interface AIResponse {
   response: string;
@@ -37,14 +37,11 @@ class AIService {
     maxTokens: number = 1024,
     temperature: number = 0.7
   ): Promise<AIResponse> {
-    const response = await apiRequest<AIResponse>('/api/llm/generate', {
-      method: 'POST',
-      body: JSON.stringify({
-        prompt,
-        systemPrompt,
-        maxTokens,
-        temperature,
-      }),
+    const response = await apiService.post<AIResponse>('/api/llm/generate', {
+      prompt,
+      systemPrompt,
+      maxTokens,
+      temperature,
     });
 
     return response;
@@ -58,13 +55,10 @@ class AIService {
     journalTitle?: string,
     emotions?: string[]
   ): Promise<JournalInsights> {
-    const response = await apiRequest<JournalInsights>('/api/llm/journal-insights', {
-      method: 'POST',
-      body: JSON.stringify({
-        journalContent,
-        journalTitle,
-        emotions,
-      }),
+    const response = await apiService.post<JournalInsights>('/api/llm/journal-insights', {
+      journalContent,
+      journalTitle,
+      emotions,
     });
 
     return response;
