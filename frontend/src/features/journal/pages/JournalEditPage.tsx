@@ -298,7 +298,7 @@ export const JournalEditPage: React.FC = () => {
       )
 
       // Find or create a Q&A section
-      let qaSectionId = customSections.find(s => s.type === 'q_and_a')?.id
+      const qaSectionId = customSections.find(s => s.type === 'q_and_a')?.id
 
       if (!qaSectionId) {
         // Create new Q&A section
