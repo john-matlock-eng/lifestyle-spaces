@@ -135,7 +135,7 @@ export const AIAssistantDock: React.FC<AIAssistantDockProps> = ({
                   journalId={journalId}
                   emotions={emotions}
                   isOpen={true}
-                  position="center"
+                  mode="embedded"
                 />
               </AIChatErrorBoundary>
             )}

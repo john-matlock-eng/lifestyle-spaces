@@ -16,6 +16,7 @@ interface AIChatProps {
   isOpen?: boolean
   onClose?: () => void
   position?: 'bottom-right' | 'bottom-left' | 'center'
+  mode?: 'embedded' | 'floating'
 }
 
 export const AIChat: React.FC<AIChatProps> = ({
@@ -25,7 +26,8 @@ export const AIChat: React.FC<AIChatProps> = ({
   emotions,
   isOpen = true,
   onClose,
-  position = 'bottom-right'
+  position = 'bottom-right',
+  mode = 'embedded'
 }) => {
   // Load persisted messages with proper date parsing
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
@@ -290,16 +292,21 @@ export const AIChat: React.FC<AIChatProps> = ({
     "Can you help me understand what I'm feeling?"
   ]
 
-  if (!isOpen) return null
+  if (!isOpen && mode === 'floating') return null
 
-  return (
-    <div
-      className={`ai-chat-container ${isMinimized ? 'minimized' : ''} position-${position}`}
-      style={{
+  const containerClass = mode === 'embedded'
+    ? 'ai-chat-container embedded'
+    : `ai-chat-container ${isMinimized ? 'minimized' : ''} position-${position}`
+
+  const containerStyle = mode === 'embedded'
+    ? {}
+    : {
         width: `${chatSize.width}px`,
         height: isMinimized ? 'auto' : `${chatSize.height}px`
-      }}
-    >
+      }
+
+  return (
+    <div className={containerClass} style={containerStyle}>
       <div className="ai-chat-header">
         <div className="ai-chat-title">
           <Bot size={20} />

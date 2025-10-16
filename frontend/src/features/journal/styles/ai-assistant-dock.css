@@ -194,32 +194,88 @@
 @media (max-width: 768px) {
   .ai-assistant-dock.expanded {
     height: 60vh;
+    max-height: 600px;
   }
 
   .ai-dock-content {
-    padding: 16px;
+    padding: 12px;
+  }
+
+  .ai-dock-tabs {
+    padding: 8px 12px 0;
+  }
+
+  .ai-dock-tab {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .ai-dock-header {
+    padding: 10px 16px;
+  }
+
+  .ai-dock-title {
+    font-size: 14px;
   }
 
   .question-type-buttons {
     grid-template-columns: 1fr;
   }
+
+  .generate-questions-section {
+    padding: 16px;
+    margin-top: 20px;
+  }
+
+  .generate-questions-section .section-header h3 {
+    font-size: 16px;
+  }
 }
 
-/* Integration with AIChat */
-.ai-dock-content .ai-chat-container {
-  position: static;
-  width: 100%;
-  height: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  box-shadow: none;
-  border-radius: 0;
+/* Tablet responsive */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .ai-assistant-dock.expanded {
+    height: 55vh;
+    max-height: 650px;
+  }
+
+  .question-type-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.ai-dock-content .ai-chat-header {
-  display: none; /* Hide duplicate header */
+/* Integration with AIChat - Embedded Mode */
+.ai-dock-content .ai-chat-container.embedded {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 1000px !important;
+  margin: 0 auto !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+  padding: 0 !important;
 }
 
-.ai-dock-content .ai-chat-messages {
-  height: calc(100% - 120px);
+.ai-dock-content .ai-chat-container.embedded .ai-chat-header {
+  display: none !important; /* Hide duplicate header when embedded in dock */
+}
+
+.ai-dock-content .ai-chat-container.embedded .ai-chat-messages {
+  height: calc(100% - 140px) !important;
+  min-height: 350px !important;
+  max-height: none !important;
+  padding: 0 !important;
+  margin-bottom: 12px;
+}
+
+.ai-dock-content .ai-chat-container.embedded .ai-chat-input {
+  border-top: 2px solid #e5e7eb;
+  padding: 16px 0;
+  background: white;
+}
+
+.ai-dock-content .ai-chat-container.embedded .quick-prompts {
+  padding: 16px 0;
+  border-top: 2px solid #e5e7eb;
 }
