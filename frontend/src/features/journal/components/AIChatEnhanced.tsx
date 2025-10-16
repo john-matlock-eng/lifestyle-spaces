@@ -58,14 +58,14 @@ export const AIChat: React.FC<AIChatProps> = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const timeoutRef = useRef<NodeJS.Timeout>()
-  const copyTimeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<number | undefined>(undefined)
+  const copyTimeoutRef = useRef<number | undefined>(undefined)
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current as unknown as number)
-      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current as unknown as number)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
     }
   }, [])
 
@@ -82,7 +82,7 @@ export const AIChat: React.FC<AIChatProps> = ({
 
   // Auto-scroll to bottom with smooth animation
   useEffect(() => {
-    timeoutRef.current = setTimeout(() => {
+    timeoutRef.current = window.setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({
         behavior: 'smooth',
         block: 'end'
@@ -125,7 +125,7 @@ export const AIChat: React.FC<AIChatProps> = ({
       .then(() => {
         setCopiedMessageId(messageId)
         if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
-        copyTimeoutRef.current = setTimeout(() => {
+        copyTimeoutRef.current = window.setTimeout(() => {
           setCopiedMessageId(null)
         }, 2000)
       })
