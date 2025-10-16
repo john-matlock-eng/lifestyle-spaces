@@ -6,6 +6,7 @@
 export { RichTextEditor } from './components/RichTextEditor'
 export { JournalCard } from './components/JournalCard'
 export { JournalList } from './components/JournalList'
+export { AIChat } from './components/AIChatEnhanced'
 
 // Pages
 export { JournalListPage } from './pages/JournalListPage'

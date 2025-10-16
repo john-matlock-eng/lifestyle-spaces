@@ -25,6 +25,69 @@ export interface JournalInsights {
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  timestamp?: Date;
+  metadata?: {
+    tokens?: number;
+    model?: string;
+    regenerated?: boolean;
+  };
+}
+
+/**
+ * Manages conversation context for AI chat
+ */
+export class ConversationManager {
+  private static readonly MAX_CONTEXT_LENGTH = 3000;
+  private static readonly MAX_MESSAGES = 10;
+
+  /**
+   * Prepare conversation context with smart truncation
+   */
+  static prepareContext(
+    messages: ChatMessage[],
+    maxTokens: number = 3000
+  ): ChatMessage[] {
+    // Start from most recent and work backwards
+    const reversed = [...messages].reverse();
+    const context: ChatMessage[] = [];
+    let totalLength = 0;
+
+    for (const msg of reversed) {
+      const msgLength = msg.content.length;
+      if (totalLength + msgLength > maxTokens) {
+        // If this is the first message and it's too long, truncate it
+        if (context.length === 0 && msg.role === 'user') {
+          const truncated = msg.content.substring(msg.content.length - maxTokens + 100);
+          context.unshift({
+            ...msg,
+            content: '...' + truncated
+          });
+        }
+        break;
+      }
+      context.unshift(msg);
+      totalLength += msgLength;
+    }
+
+    return context;
+  }
+
+  /**
+   * Summarize older messages for context
+   */
+  static summarizeOldMessages(messages: ChatMessage[]): string {
+    const oldMessages = messages.slice(0, -this.MAX_MESSAGES);
+    if (oldMessages.length === 0) return '';
+
+    const topics = new Set<string>();
+    oldMessages.forEach(msg => {
+      // Extract key topics (simple implementation)
+      const words = msg.content.toLowerCase().split(/\s+/);
+      words.filter(w => w.length > 5).forEach(w => topics.add(w));
+    });
+
+    return `Previous discussion touched on: ${Array.from(topics).slice(0, 5).join(', ')}`;
+  }
 }
 
 class AIService {
@@ -104,30 +167,86 @@ Please provide only the questions, one per line, without numbering or extra form
   async chatAboutJournal(
     journalContent: string,
     message: string,
-    conversationHistory: ChatMessage[] = []
+    conversationHistory: ChatMessage[] = [],
+    options: {
+      includeEmotionalContext?: boolean;
+      focusOnPatterns?: boolean;
+      temperature?: number;
+    } = {}
   ): Promise<string> {
-    // Build context with conversation history
-    let prompt = `I'm reflecting on my journal entry:\n\n${journalContent}\n\n`;
+    const cleanContent = this.cleanJournalContent(journalContent);
 
-    if (conversationHistory.length > 0) {
-      prompt += 'Previous conversation:\n';
-      conversationHistory.forEach(msg => {
-        const role = msg.role === 'user' ? 'Me' : 'You';
-        prompt += `${role}: ${msg.content}\n`;
-      });
-      prompt += '\n';
+    // Prepare context with smart truncation
+    const contextMessages = ConversationManager.prepareContext(
+      conversationHistory,
+      2000 // Leave room for journal content
+    );
+
+    // Build enhanced system prompt
+    let systemPrompt = `You are a supportive journal companion helping someone reflect on their journal entry.
+    Be empathetic, ask thoughtful follow-up questions, and help them explore their thoughts and feelings deeper.
+    Keep responses concise but meaningful (2-3 paragraphs max).`;
+
+    if (options.includeEmotionalContext) {
+      systemPrompt += `\nPay special attention to emotional patterns and feelings expressed.`;
     }
 
-    prompt += `My question: ${message}`;
+    if (options.focusOnPatterns) {
+      systemPrompt += `\nHelp identify recurring themes and patterns in their thinking.`;
+    }
+
+    // Add summary of older conversation if applicable
+    const oldSummary = ConversationManager.summarizeOldMessages(conversationHistory);
+
+    const historyContext = contextMessages
+      .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+      .join('\n\n');
+
+    const prompt = `Journal Entry: ${cleanContent.substring(0, 2000)}
+
+${oldSummary ? `Context: ${oldSummary}\n` : ''}
+${historyContext ? `Recent conversation:\n${historyContext}\n\n` : ''}
+User: ${message}`;
 
     const response = await this.generateResponse(
       prompt,
-      'You are a supportive journal companion that helps people reflect on their experiences. Provide thoughtful, encouraging responses that promote self-awareness and growth.',
+      systemPrompt,
       600,
-      0.7
+      options.temperature || 0.7
     );
 
     return response.response;
+  }
+
+  /**
+   * Generate contextual follow-up question
+   */
+  async generateFollowUpQuestion(
+    journalContent: string,
+    lastResponse: string
+  ): Promise<string> {
+    const cleanContent = this.cleanJournalContent(journalContent);
+
+    const systemPrompt = `Generate a single, thoughtful follow-up question based on the journal entry and previous response.
+    The question should encourage deeper reflection and self-discovery.
+    Return ONLY the question, no additional text.`;
+
+    const prompt = `Journal excerpt: ${cleanContent.substring(0, 1000)}
+
+Previous response: ${lastResponse.substring(0, 500)}
+
+Generate a follow-up question:`;
+
+    const response = await this.generateResponse(prompt, systemPrompt, 100, 0.8);
+    return response.response.trim();
+  }
+
+  /**
+   * Clean and truncate journal content
+   */
+  private cleanJournalContent(content: string): string {
+    // Remove excessive whitespace while preserving structure
+    return content.replace(/\n\n\n+/g, '\n\n').trim();
   }
 }
 
