@@ -11,11 +11,13 @@ class LLMPromptRequest(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=10000, description="User prompt/input")
     system_prompt: Optional[str] = Field(
         None,
+        alias="systemPrompt",
         max_length=2000,
         description="Optional system prompt to guide the model"
     )
     max_tokens: int = Field(
         default=1024,
+        alias="maxTokens",
         ge=1,
         le=4096,
         description="Maximum tokens in response"
@@ -47,11 +49,12 @@ class LLMPromptRequest(BaseModel):
         return v
 
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
                 "prompt": "What are some good habits for journaling?",
-                "system_prompt": "You are a helpful journaling assistant.",
-                "max_tokens": 800,
+                "systemPrompt": "You are a helpful journaling assistant.",
+                "maxTokens": 800,
                 "temperature": 0.7,
                 "model": "claude-3-5-sonnet-20241022"
             }

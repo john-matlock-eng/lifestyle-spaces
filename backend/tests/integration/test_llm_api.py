@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
 from app.main import app
 from app.services.exceptions import ExternalServiceError
+from app.models.user import User
 
 
 @pytest.fixture
@@ -18,20 +19,33 @@ def mock_claude_service():
 
 
 @pytest.fixture
-def mock_current_user():
-    """Mock authenticated user"""
-    with patch('app.api.routes.llm.get_current_user') as mock:
-        user = Mock()
-        user.user_id = "test-user-123"
-        user.email = "test@example.com"
-        mock.return_value = user
-        yield user
+def mock_auth_user():
+    """Create a mock user for authentication"""
+    user = User(
+        user_id="test-user-123",
+        email="test@example.com",
+        display_name="Test User"
+    )
+    return user
+
+
+@pytest.fixture
+def override_get_current_user(mock_auth_user):
+    """Override the get_current_user dependency"""
+    from app.core.dependencies import get_current_user
+
+    async def _get_current_user():
+        return mock_auth_user
+
+    app.dependency_overrides[get_current_user] = _get_current_user
+    yield
+    app.dependency_overrides.clear()
 
 
 class TestLLMGenerateEndpoint:
     """Test cases for POST /api/llm/generate"""
 
-    def test_generate_success(self, mock_claude_service, mock_current_user):
+    def test_generate_success(self, mock_claude_service, override_get_current_user):
         """Test successful LLM response generation"""
         # Setup mock response
         mock_claude_service.generate_response.return_value = {
@@ -72,7 +86,7 @@ class TestLLMGenerateEndpoint:
         assert call_args["max_tokens"] == 500
         assert call_args["temperature"] == 0.7
 
-    def test_generate_with_defaults(self, mock_claude_service, mock_current_user):
+    def test_generate_with_defaults(self, mock_claude_service, override_get_current_user):
         """Test generation with default parameters"""
         mock_claude_service.generate_response.return_value = {
             "response": "Default response",
@@ -95,7 +109,7 @@ class TestLLMGenerateEndpoint:
         assert call_args["max_tokens"] == 1024  # default
         assert call_args["temperature"] == 1.0  # default
 
-    def test_generate_invalid_model(self, mock_current_user):
+    def test_generate_invalid_model(self, override_get_current_user):
         """Test validation error for invalid model"""
         client = TestClient(app)
         response = client.post(
@@ -108,7 +122,7 @@ class TestLLMGenerateEndpoint:
 
         assert response.status_code == 422  # Validation error
 
-    def test_generate_service_error(self, mock_claude_service, mock_current_user):
+    def test_generate_service_error(self, mock_claude_service, override_get_current_user):
         """Test handling of service errors"""
         mock_claude_service.generate_response.side_effect = ExternalServiceError(
             "API key not configured"
@@ -124,7 +138,7 @@ class TestLLMGenerateEndpoint:
         data = response.json()
         assert "LLM service error" in data["detail"]
 
-    def test_generate_empty_prompt(self, mock_current_user):
+    def test_generate_empty_prompt(self, override_get_current_user):
         """Test validation error for empty prompt"""
         client = TestClient(app)
         response = client.post(
@@ -134,7 +148,7 @@ class TestLLMGenerateEndpoint:
 
         assert response.status_code == 422  # Validation error
 
-    def test_generate_max_tokens_validation(self, mock_current_user):
+    def test_generate_max_tokens_validation(self, override_get_current_user):
         """Test validation for max_tokens boundaries"""
         client = TestClient(app)
 
@@ -152,7 +166,7 @@ class TestLLMGenerateEndpoint:
         )
         assert response.status_code == 422
 
-    def test_generate_temperature_validation(self, mock_current_user):
+    def test_generate_temperature_validation(self, override_get_current_user):
         """Test validation for temperature boundaries"""
         client = TestClient(app)
 
@@ -174,7 +188,7 @@ class TestLLMGenerateEndpoint:
 class TestJournalInsightsEndpoint:
     """Test cases for POST /api/llm/journal-insights"""
 
-    def test_journal_insights_success(self, mock_claude_service, mock_current_user):
+    def test_journal_insights_success(self, mock_claude_service, override_get_current_user):
         """Test successful journal insights generation"""
         mock_claude_service.generate_journal_insights.return_value = {
             "response": "Here are some insights about your journal entry...",
@@ -204,7 +218,7 @@ class TestJournalInsightsEndpoint:
         assert call_args["journal_title"] == "Productive Day"
         assert call_args["emotions"] == ["satisfied", "accomplished"]
 
-    def test_journal_insights_minimal(self, mock_claude_service, mock_current_user):
+    def test_journal_insights_minimal(self, mock_claude_service, override_get_current_user):
         """Test journal insights with only content"""
         mock_claude_service.generate_journal_insights.return_value = {
             "response": "Minimal insights",
@@ -223,7 +237,7 @@ class TestJournalInsightsEndpoint:
         assert call_args["journal_title"] is None
         assert call_args["emotions"] is None
 
-    def test_journal_insights_empty_content(self, mock_current_user):
+    def test_journal_insights_empty_content(self, override_get_current_user):
         """Test validation error for empty journal content"""
         client = TestClient(app)
         response = client.post(
@@ -233,7 +247,7 @@ class TestJournalInsightsEndpoint:
 
         assert response.status_code == 422  # Validation error
 
-    def test_journal_insights_service_error(self, mock_claude_service, mock_current_user):
+    def test_journal_insights_service_error(self, mock_claude_service, override_get_current_user):
         """Test handling of service errors in journal insights"""
         mock_claude_service.generate_journal_insights.side_effect = ExternalServiceError(
             "Failed to connect to Claude API"
@@ -248,7 +262,7 @@ class TestJournalInsightsEndpoint:
         assert response.status_code == 503
         assert "LLM service error" in response.json()["detail"]
 
-    def test_journal_insights_long_content(self, mock_claude_service, mock_current_user):
+    def test_journal_insights_long_content(self, mock_claude_service, override_get_current_user):
         """Test journal insights with very long content"""
         mock_claude_service.generate_journal_insights.return_value = {
             "response": "Insights for long entry",
@@ -265,7 +279,7 @@ class TestJournalInsightsEndpoint:
 
         assert response.status_code == 200
 
-    def test_journal_insights_too_long_content(self, mock_current_user):
+    def test_journal_insights_too_long_content(self, override_get_current_user):
         """Test validation error for content exceeding max length"""
         client = TestClient(app)
         too_long_content = "X" * 25000  # Exceeds 20000 char limit
