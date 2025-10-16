@@ -14,10 +14,10 @@ resource "aws_secretsmanager_secret" "claude_api_key" {
   tags = merge(
     var.tags,
     {
-      Name        = "Claude API Key"
-      Purpose     = "LLM Integration"
-      ManagedBy   = "Terraform"
-      UpdatedBy   = "Manual"
+      Name      = "Claude API Key"
+      Purpose   = "LLM Integration"
+      ManagedBy = "Terraform"
+      UpdatedBy = "Manual"
     }
   )
 }
