@@ -4,9 +4,12 @@ Claude LLM Service - Integration with Anthropic's Claude API
 import os
 import json
 import boto3
+import logging
 from typing import Optional, Dict, Any
 from anthropic import Anthropic
 from app.services.exceptions import ExternalServiceError
+
+logger = logging.getLogger(__name__)
 
 
 class ClaudeLLMService:
@@ -27,44 +30,95 @@ class ClaudeLLMService:
         Raises:
             ExternalServiceError: If secret cannot be retrieved
         """
+        logger.info("=== Claude API Key Retrieval START ===")
         secret_arn = os.environ.get("CLAUDE_API_KEY_SECRET_ARN")
+        logger.info(f"Secret ARN from environment: {secret_arn}")
 
         if not secret_arn:
+            logger.error("CLAUDE_API_KEY_SECRET_ARN environment variable not set")
             raise ExternalServiceError(
                 "CLAUDE_API_KEY_SECRET_ARN environment variable not set"
             )
 
         try:
             # Create a Secrets Manager client
+            logger.info("Creating AWS Secrets Manager client...")
             session = boto3.session.Session()
             client = session.client(service_name="secretsmanager")
+            logger.info("Secrets Manager client created successfully")
 
             # Retrieve the secret value
+            logger.info(f"Attempting to retrieve secret: {secret_arn}")
             get_secret_value_response = client.get_secret_value(SecretId=secret_arn)
+            logger.info("Secret retrieved successfully from AWS")
 
             # Parse the secret string
-            secret = json.loads(get_secret_value_response["SecretString"])
+            secret_string = get_secret_value_response["SecretString"]
+            logger.info(f"Secret string length: {len(secret_string)}")
+            logger.info(f"Secret string preview: {secret_string[:50]}...")
+
+            secret = json.loads(secret_string)
+            logger.info(f"Secret parsed as JSON. Keys: {list(secret.keys())}")
+
             api_key = secret.get("api_key")
+            logger.info(f"API key present: {bool(api_key)}")
+
+            if api_key:
+                logger.info(f"API key length: {len(api_key)}")
+                logger.info(f"API key prefix: {api_key[:15]}...")
+                logger.info(f"Is placeholder: {api_key == 'PLACEHOLDER_UPDATE_MANUALLY'}")
 
             if not api_key or api_key == "PLACEHOLDER_UPDATE_MANUALLY":
+                logger.error("Claude API key is placeholder or missing")
                 raise ExternalServiceError(
-                    "Claude API key not configured. Please update the secret in AWS Secrets Manager."
+                    "Claude API key not configured. Please update the secret in "
+                    "AWS Secrets Manager."
                 )
 
+            logger.info("=== Claude API Key Retrieval SUCCESS ===")
             return api_key
 
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error: {str(e)}")
+            secret_str = get_secret_value_response.get('SecretString', 'N/A')
+            logger.error(f"Secret string was: {secret_str}")
+            raise ExternalServiceError(
+                f"Failed to parse Claude API key secret as JSON: {str(e)}"
+            )
         except Exception as e:
-            raise ExternalServiceError(f"Failed to retrieve Claude API key from Secrets Manager: {str(e)}")
+            logger.error("=== Claude API Key Retrieval FAILED ===")
+            logger.error(f"Error type: {type(e).__name__}")
+            logger.error(f"Error message: {str(e)}", exc_info=True)
+            raise ExternalServiceError(
+                f"Failed to retrieve Claude API key from Secrets Manager: {str(e)}"
+            )
 
     def _initialize_client(self):
         """Initialize the Anthropic client with API key from Secrets Manager"""
+        logger.info("=== Claude Client Initialization START ===")
         try:
+            logger.info("Retrieving API key from Secrets Manager...")
             self.api_key = self._get_secret()
+            logger.info(f"API key retrieved. Length: {len(self.api_key) if self.api_key else 0}")
+
+            logger.info("Creating Anthropic client...")
             self.client = Anthropic(api_key=self.api_key)
-        except ExternalServiceError:
+            logger.info("Anthropic client created successfully")
+            logger.info("=== Claude Client Initialization SUCCESS ===")
+
+        except ExternalServiceError as e:
+            logger.error("=== Claude Client Initialization FAILED ===")
+            logger.error(f"Initialization error: {str(e)}")
             # Client will remain None if initialization fails
             # This allows the service to exist but fail gracefully when called
-            pass
+            self.client = None
+            self.api_key = None
+        except Exception as e:
+            logger.error("=== Claude Client Initialization FAILED (Unexpected) ===")
+            logger.error(f"Unexpected error type: {type(e).__name__}")
+            logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+            self.client = None
+            self.api_key = None
 
     def generate_response(
         self,
@@ -180,9 +234,12 @@ Please provide:
 3. Positive observations or patterns
 """
 
-        system_prompt = """You are a thoughtful journal companion that helps people reflect on their experiences.
-Provide supportive, non-judgmental insights that encourage self-reflection and personal growth.
-Keep responses concise and actionable."""
+        system_prompt = (
+            "You are a thoughtful journal companion that helps people reflect on "
+            "their experiences. Provide supportive, non-judgmental insights that "
+            "encourage self-reflection and personal growth. Keep responses concise "
+            "and actionable."
+        )
 
         return self.generate_response(
             prompt=prompt,
@@ -205,5 +262,10 @@ def get_claude_service() -> ClaudeLLMService:
     """
     global _claude_service
     if _claude_service is None:
+        logger.info("Creating new Claude LLM service singleton...")
         _claude_service = ClaudeLLMService()
+        logger.info(f"Service created. Client initialized: {_claude_service.client is not None}")
+    else:
+        logger.info("Returning existing Claude LLM service singleton")
+        logger.info(f"Existing client status: {_claude_service.client is not None}")
     return _claude_service
