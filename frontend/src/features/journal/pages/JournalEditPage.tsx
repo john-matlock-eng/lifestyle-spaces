@@ -9,12 +9,15 @@ import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
+import { AIAssistantDock } from '../components/AIAssistantDock'
+import { aiService } from '../../../services/ai'
 import type { Template, TemplateData, QAPair, ListItem } from '../types/template.types'
 import type { CustomSection } from '../types/customSection.types'
-import { Trash2, Edit2 } from 'lucide-react'
+import { Trash2, Edit2, Bot } from 'lucide-react'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
+import '../styles/ai-assistant-dock.css'
 
 /**
  * Page for editing an existing journal entry
@@ -33,6 +36,7 @@ export const JournalEditPage: React.FC = () => {
   const [template, setTemplate] = useState<Template | null>(null)
   const [templateData, setTemplateData] = useState<TemplateData>({})
   const [customSections, setCustomSections] = useState<CustomSection[]>([])
+  const [showAIDock, setShowAIDock] = useState(false)
 
   const handleAddCustomSection = (section: Omit<CustomSection, 'isEditing'>) => {
     setCustomSections([...customSections, { ...section, isEditing: false }])
@@ -263,6 +267,75 @@ export const JournalEditPage: React.FC = () => {
   const handleCancel = () => {
     if (spaceId && journalId) {
       navigate(`/spaces/${spaceId}/journals/${journalId}`)
+    }
+  }
+
+  const handleGenerateQuestions = async (type: 'reflection' | 'emotional' | 'growth' | 'patterns') => {
+    if (!content.trim() && !title.trim()) {
+      alert('Please write some content first so the AI can generate relevant questions')
+      return
+    }
+
+    try {
+      // Get the journal content (either from template sections or free-form content)
+      let journalText = content
+      if (template) {
+        // Combine all template section content
+        journalText = Object.values(templateData)
+          .map(val => {
+            if (typeof val === 'string') return val
+            if (Array.isArray(val)) return JSON.stringify(val)
+            return String(val)
+          })
+          .join('\n\n')
+      }
+
+      // Generate questions using AI
+      const questions = await aiService.generateReflectionQuestions(
+        journalText || title,
+        title,
+        emotions
+      )
+
+      // Find or create a Q&A section
+      let qaSectionId = customSections.find(s => s.type === 'q_and_a')?.id
+
+      if (!qaSectionId) {
+        // Create new Q&A section
+        const newSection: CustomSection = {
+          id: `custom_${Date.now()}`,
+          title: `${type.charAt(0).toUpperCase() + type.slice(1)} Questions`,
+          type: 'q_and_a',
+          content: questions.map((q, idx) => ({
+            id: `q_${Date.now()}_${idx}`,
+            question: q,
+            answer: '',
+            isCollapsed: false
+          })),
+          isEditing: false
+        }
+        setCustomSections([...customSections, newSection])
+      } else {
+        // Add to existing Q&A section
+        handleUpdateCustomSection(qaSectionId, {
+          content: [
+            ...(Array.isArray(customSections.find(s => s.id === qaSectionId)?.content)
+              ? customSections.find(s => s.id === qaSectionId)!.content as QAPair[]
+              : []),
+            ...questions.map((q, idx) => ({
+              id: `q_${Date.now()}_${idx}`,
+              question: q,
+              answer: '',
+              isCollapsed: false
+            }))
+          ]
+        })
+      }
+
+      alert(`Added ${questions.length} ${type} questions to your journal!`)
+    } catch (err) {
+      console.error('Error generating questions:', err)
+      alert('Failed to generate questions. Please try again.')
     }
   }
 
@@ -514,6 +587,16 @@ export const JournalEditPage: React.FC = () => {
         <div className="journal-form-actions">
           <button
             type="button"
+            onClick={() => setShowAIDock(!showAIDock)}
+            className={`button-secondary ${showAIDock ? 'active' : ''}`}
+            disabled={isSubmitting}
+            title="AI Writing Assistant"
+          >
+            <Bot size={18} />
+            {showAIDock ? 'Hide AI Assistant' : 'Show AI Assistant'}
+          </button>
+          <button
+            type="button"
             onClick={handleCancel}
             className="button-secondary"
             disabled={isSubmitting}
@@ -525,6 +608,18 @@ export const JournalEditPage: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* AI Assistant Dock */}
+      {showAIDock && (
+        <AIAssistantDock
+          journalContent={content}
+          journalTitle={title}
+          journalId={journalId}
+          emotions={emotions}
+          onClose={() => setShowAIDock(false)}
+          onGenerateQuestions={handleGenerateQuestions}
+        />
+      )}
     </div>
   )
 }

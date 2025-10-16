@@ -12,12 +12,11 @@ import type { Template } from '../types/template.types'
 import { Ellie } from '../../../components/ellie'
 import { useShihTzuCompanion } from '../../../hooks'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
-import AIChat from '../../../components/AIChat'
-import ReflectionQuestions from '../../../components/ReflectionQuestions'
-import InsightsPanel from '../../../components/InsightsPanel'
+import { AIAssistantDock } from '../components/AIAssistantDock'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
+import '../styles/ai-assistant-dock.css'
 
 /**
  * Page for viewing a single journal entry
@@ -30,8 +29,7 @@ export const JournalViewPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false)
   const [template, setTemplate] = useState<Template | null>(null)
   const [displaySections, setDisplaySections] = useState<DisplaySection[]>([])
-  const [activeAITab, setActiveAITab] = useState<'insights' | 'questions' | 'chat'>('insights')
-  const [showAIPanel, setShowAIPanel] = useState(false)
+  const [showAIDock, setShowAIDock] = useState(false)
 
   // Ellie companion
   const { mood, setMood, position } = useShihTzuCompanion({
@@ -372,7 +370,7 @@ ${content}
           📥 Export
         </button>
         <button
-          onClick={() => setShowAIPanel(!showAIPanel)}
+          onClick={() => setShowAIDock(!showAIDock)}
           className="button-secondary"
           title="AI Assistant"
         >
@@ -394,64 +392,15 @@ ${content}
         )}
       </div>
 
-      {/* AI Assistant Panel */}
-      {showAIPanel && (
-        <div className="ai-assistant-panel">
-          <div className="ai-assistant-header">
-            <div className="ai-tabs">
-              <button
-                className={`ai-tab ${activeAITab === 'insights' ? 'active' : ''}`}
-                onClick={() => setActiveAITab('insights')}
-              >
-                💡 Insights
-              </button>
-              <button
-                className={`ai-tab ${activeAITab === 'questions' ? 'active' : ''}`}
-                onClick={() => setActiveAITab('questions')}
-              >
-                ❓ Questions
-              </button>
-              <button
-                className={`ai-tab ${activeAITab === 'chat' ? 'active' : ''}`}
-                onClick={() => setActiveAITab('chat')}
-              >
-                💬 Chat
-              </button>
-            </div>
-            <button
-              className="ai-close-btn"
-              onClick={() => setShowAIPanel(false)}
-              aria-label="Close AI panel"
-            >
-              ×
-            </button>
-          </div>
-
-          <div className="ai-assistant-content">
-            {activeAITab === 'insights' && (
-              <InsightsPanel
-                journalContent={journal.content}
-                journalTitle={journal.title}
-                emotions={journal.emotions?.map(id => getEmotionById(id)?.label).filter((label): label is string => !!label)}
-                autoGenerate={true}
-              />
-            )}
-            {activeAITab === 'questions' && (
-              <ReflectionQuestions
-                journalContent={journal.content}
-                journalTitle={journal.title}
-                emotions={journal.emotions?.map(id => getEmotionById(id)?.label).filter((label): label is string => !!label)}
-                autoGenerate={true}
-              />
-            )}
-            {activeAITab === 'chat' && (
-              <AIChat
-                journalContent={journal.content}
-                journalTitle={journal.title}
-              />
-            )}
-          </div>
-        </div>
+      {/* AI Assistant Dock */}
+      {showAIDock && (
+        <AIAssistantDock
+          journalContent={journal.content}
+          journalTitle={journal.title}
+          journalId={journalId}
+          emotions={journal.emotions?.map(id => getEmotionById(id)?.label).filter((label): label is string => !!label)}
+          onClose={() => setShowAIDock(false)}
+        />
       )}
 
       {/* Ellie companion */}
