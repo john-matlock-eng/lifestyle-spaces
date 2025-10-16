@@ -37,7 +37,6 @@ export interface ChatMessage {
  * Manages conversation context for AI chat
  */
 export class ConversationManager {
-  private static readonly MAX_CONTEXT_LENGTH = 3000;
   private static readonly MAX_MESSAGES = 10;
 
   /**

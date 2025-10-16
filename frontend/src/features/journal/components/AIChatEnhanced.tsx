@@ -64,8 +64,8 @@ export const AIChat: React.FC<AIChatProps> = ({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current as unknown as number)
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current as unknown as number)
     }
   }, [])
 
@@ -212,7 +212,15 @@ export const AIChat: React.FC<AIChatProps> = ({
 
   // Regenerate last response
   const regenerateLastResponse = async () => {
-    const lastUserIdx = messages.findLastIndex(m => m.role === 'user')
+    // Find last user message index (reverse search for compatibility)
+    let lastUserIdx = -1
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') {
+        lastUserIdx = i
+        break
+      }
+    }
+
     if (lastUserIdx === -1 || isLoading) return
 
     // Remove all messages after the last user message
@@ -353,11 +361,14 @@ export const AIChat: React.FC<AIChatProps> = ({
                           a: ({...props}) => (
                             <a {...props} target="_blank" rel="noopener noreferrer" />
                           ),
-                          code: ({inline, ...props}) => (
-                            inline ?
-                            <code className="inline-code" {...props} /> :
-                            <code className="block-code" {...props} />
-                          )
+                          code: ({className, ...props}) => {
+                            const isInline = !className || !className.includes('language-')
+                            return isInline ? (
+                              <code className="inline-code" {...props} />
+                            ) : (
+                              <code className={`block-code ${className || ''}`} {...props} />
+                            )
+                          }
                         }}
                       >
                         {message.content}
