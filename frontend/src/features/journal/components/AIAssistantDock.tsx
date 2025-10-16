@@ -6,6 +6,7 @@
 import React, { useState } from 'react'
 import { Bot, Minimize2, Maximize2, X, Sparkles, MessageCircle, Lightbulb, HelpCircle } from 'lucide-react'
 import { AIChat } from './AIChatEnhanced'
+import { AIChatErrorBoundary } from './AIChatErrorBoundary'
 import InsightsPanel from '../../../components/InsightsPanel'
 import '../styles/ai-assistant-dock.css'
 
@@ -127,14 +128,16 @@ export const AIAssistantDock: React.FC<AIAssistantDockProps> = ({
               </div>
             )}
             {activeTab === 'chat' && (
-              <AIChat
-                journalContent={journalContent}
-                journalTitle={journalTitle}
-                journalId={journalId}
-                emotions={emotions}
-                isOpen={true}
-                position="center"
-              />
+              <AIChatErrorBoundary>
+                <AIChat
+                  journalContent={journalContent}
+                  journalTitle={journalTitle}
+                  journalId={journalId}
+                  emotions={emotions}
+                  isOpen={true}
+                  position="center"
+                />
+              </AIChatErrorBoundary>
             )}
           </div>
         </>

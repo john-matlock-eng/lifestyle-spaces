@@ -23,14 +23,35 @@ export interface JournalInsights {
 }
 
 export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp?: Date;
+  id?: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  timestamp?: Date | string  // Allow both types for flexibility
   metadata?: {
-    tokens?: number;
-    model?: string;
-    regenerated?: boolean;
-  };
+    tokens?: number
+    model?: string
+    regenerated?: boolean
+  }
+}
+
+/**
+ * Type guard for safe timestamp handling
+ */
+export function isValidDate(date: unknown): date is Date {
+  return date instanceof Date && !isNaN(date.getTime())
+}
+
+/**
+ * Helper to ensure valid ChatMessage with all required fields
+ */
+export function ensureValidMessage(msg: Partial<ChatMessage>): ChatMessage {
+  return {
+    id: msg.id || `msg-${Date.now()}-${Math.random()}`,
+    role: msg.role || 'assistant',
+    content: msg.content || '',
+    timestamp: msg.timestamp || new Date(),
+    metadata: msg.metadata
+  }
 }
 
 /**

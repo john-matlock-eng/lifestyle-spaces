@@ -29,6 +29,8 @@ export const AIChat: React.FC<AIChatProps> = ({
 }) => {
   // Load persisted messages with proper date parsing
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (!journalId) return []
+
     const saved = localStorage.getItem(`chat_${journalId}`)
     if (saved) {
       try {
@@ -36,10 +38,15 @@ export const AIChat: React.FC<AIChatProps> = ({
           role: 'user' | 'assistant';
           content: string;
           timestamp?: string | Date;
+          id?: string;
         }
-        return JSON.parse(saved).map((m: SavedMessage) => ({
+        const parsed = JSON.parse(saved)
+
+        // Ensure all messages have valid timestamps and IDs
+        return parsed.map((m: SavedMessage, idx: number) => ({
           ...m,
-          timestamp: m.timestamp ? new Date(m.timestamp) : undefined
+          timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
+          id: m.id || `msg-${Date.now()}-${idx}`
         }))
       } catch (err) {
         console.error('Failed to load chat history:', err)
@@ -95,17 +102,31 @@ export const AIChat: React.FC<AIChatProps> = ({
     if (isOpen && messages.length === 0) {
       const welcomeMessage: ChatMessage = {
         role: 'assistant',
-        content: `Hello! I've read your journal entry${journalTitle ? ` "${journalTitle}"` : ''}. ${emotions?.length ? `I can see you're feeling ${emotions.join(', ')}.` : ''}\n\nI'm here to help you reflect and explore your thoughts. You can ask me:\n- To help identify patterns in your writing\n- For reflection questions\n- To explore your emotions deeper\n- For suggestions on next steps\n\nWhat would you like to discuss?`
+        content: `Hello! I've read your journal entry${journalTitle ? ` "${journalTitle}"` : ''}. ${emotions?.length ? `I can see you're feeling ${emotions.join(', ')}.` : ''}\n\nI'm here to help you reflect and explore your thoughts. You can ask me:\n- To help identify patterns in your writing\n- For reflection questions\n- To explore your emotions deeper\n- For suggestions on next steps\n\nWhat would you like to discuss?`,
+        timestamp: new Date()
       }
       setMessages([welcomeMessage])
     }
   }, [isOpen, journalTitle, emotions, messages.length])
 
   // Format timestamp with relative time
-  const formatTimestamp = useCallback((date: Date) => {
+  const formatTimestamp = useCallback((timestamp: Date | string | undefined) => {
+    if (!timestamp) return 'Just now'
+
+    // Ensure we have a Date object
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp)
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid timestamp:', timestamp)
+      return 'Recently'
+    }
+
     const now = new Date()
     const diff = now.getTime() - date.getTime()
 
+    // Handle future dates
+    if (diff < 0) return 'Just now'
     if (diff < 60000) return 'Just now'
     if (diff < 3600000) return `${Math.floor(diff/60000)}m ago`
     if (diff < 86400000) return `${Math.floor(diff/3600000)}h ago`
@@ -167,7 +188,8 @@ export const AIChat: React.FC<AIChatProps> = ({
 
     const userMessage: ChatMessage = {
       role: 'user',
-      content: textToSend
+      content: textToSend,
+      timestamp: new Date()
     }
 
     setMessages(prev => [...prev, userMessage])
@@ -191,7 +213,8 @@ export const AIChat: React.FC<AIChatProps> = ({
 
       const assistantMessage: ChatMessage = {
         role: 'assistant',
-        content: response
+        content: response,
+        timestamp: new Date()
       }
 
       setMessages(prev => [...prev, assistantMessage])
@@ -239,7 +262,8 @@ export const AIChat: React.FC<AIChatProps> = ({
       // Re-add welcome message
       const welcomeMessage: ChatMessage = {
         role: 'assistant',
-        content: `Chat cleared. How can I help you reflect on your journal entry?`
+        content: `Chat cleared. How can I help you reflect on your journal entry?`,
+        timestamp: new Date()
       }
       setMessages([welcomeMessage])
     }
