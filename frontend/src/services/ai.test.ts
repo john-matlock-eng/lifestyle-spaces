@@ -179,8 +179,9 @@ describe('AIService', () => {
         conversationHistory
       );
 
-      const callArgs = (apiModule.apiRequest as any).mock.calls[0];
-      const body = JSON.parse(callArgs[1].body);
+      const mockFn = vi.mocked(apiModule.apiRequest);
+      const callArgs = mockFn.mock.calls[0];
+      const body = JSON.parse(callArgs[1].body as string);
 
       expect(body.prompt).toContain('Journal content');
       expect(body.prompt).toContain('Previous question');
