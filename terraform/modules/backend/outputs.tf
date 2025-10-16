@@ -49,3 +49,13 @@ output "api_gateway_invoke_url" {
   description = "Full invoke URL for the API Gateway (recommended for external use)"
   value       = "https://${aws_api_gateway_rest_api.api.id}.execute-api.${var.region}.amazonaws.com/${var.environment}"
 }
+
+output "claude_api_key_secret_arn" {
+  description = "ARN of the Claude API Key secret in Secrets Manager"
+  value       = aws_secretsmanager_secret.claude_api_key.arn
+}
+
+output "claude_api_key_secret_name" {
+  description = "Name of the Claude API Key secret in Secrets Manager"
+  value       = aws_secretsmanager_secret.claude_api_key.name
+}

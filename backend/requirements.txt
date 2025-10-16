@@ -24,6 +24,9 @@ python-dotenv==1.0.0
 httpx==0.25.2
 requests==2.32.3
 
+# LLM Integration
+anthropic==0.40.0
+
 # Date/time utilities
 pytz==2023.3.post1
 

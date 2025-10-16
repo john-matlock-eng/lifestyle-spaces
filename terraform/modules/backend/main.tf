@@ -92,6 +92,7 @@ resource "aws_lambda_function" "api" {
       JWT_ALGORITHM               = "HS256"
       ACCESS_TOKEN_EXPIRE_MINUTES = "30"
       DYNAMODB_TABLE              = var.dynamodb_table_name
+      CLAUDE_API_KEY_SECRET_ARN   = aws_secretsmanager_secret.claude_api_key.arn
     }
   }
 

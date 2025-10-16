@@ -98,7 +98,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(health.router)
 
 # Import API routes
-from app.api.routes import auth, users, spaces, invitations, user_profile, journals, templates
+from app.api.routes import auth, users, spaces, invitations, user_profile, journals, templates, llm
 
 # Include API routers
 app.include_router(auth.router)
@@ -108,3 +108,4 @@ app.include_router(invitations.router)
 app.include_router(user_profile.router)
 app.include_router(journals.router)
 app.include_router(templates.router)
+app.include_router(llm.router)
