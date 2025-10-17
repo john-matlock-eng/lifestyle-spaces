@@ -153,9 +153,33 @@ class AIService {
   async generateReflectionQuestions(
     journalContent: string,
     journalTitle?: string,
-    emotions?: string[]
+    emotions?: string[],
+    questionType?: 'reflection' | 'emotional' | 'growth' | 'patterns'
   ): Promise<string[]> {
-    const prompt = `Based on this journal entry, generate 3-5 thoughtful reflection questions that would help deepen self-awareness.
+    // Define different prompts for different question types
+    const typePrompts = {
+      reflection: {
+        instruction: 'Generate 3-5 deep reflection questions that encourage introspection about the experiences, thoughts, and decisions described in this journal entry.',
+        systemPrompt: 'You are a thoughtful journal companion. Generate reflection questions that help explore the deeper meaning and significance of experiences.'
+      },
+      emotional: {
+        instruction: 'Generate 3-5 questions focused on emotional awareness and understanding the feelings expressed or implied in this journal entry.',
+        systemPrompt: 'You are an empathetic journal companion. Generate questions that help explore and understand emotional experiences and their sources.'
+      },
+      growth: {
+        instruction: 'Generate 3-5 questions focused on personal growth, learning opportunities, and future development based on this journal entry.',
+        systemPrompt: 'You are a growth-oriented journal companion. Generate questions that encourage learning, development, and positive change.'
+      },
+      patterns: {
+        instruction: 'Generate 3-5 questions that help identify recurring themes, patterns, habits, or behaviors mentioned or implied in this journal entry.',
+        systemPrompt: 'You are an insightful journal companion. Generate questions that help recognize patterns, connections, and recurring themes in thoughts and behaviors.'
+      }
+    };
+
+    const selectedType = questionType || 'reflection';
+    const typeConfig = typePrompts[selectedType];
+
+    const prompt = `Based on this journal entry, ${typeConfig.instruction}
 
 ${journalTitle ? `Title: ${journalTitle}` : ''}
 ${emotions ? `Emotions: ${emotions.join(', ')}` : ''}
@@ -163,13 +187,13 @@ ${emotions ? `Emotions: ${emotions.join(', ')}` : ''}
 Journal Entry:
 ${journalContent}
 
-Please provide only the questions, one per line, without numbering or extra formatting.`;
+Please provide only the questions, one per line, without numbering or extra formatting. Make the questions unique, specific to this entry, and varied in their focus.`;
 
     const response = await this.generateResponse(
       prompt,
-      'You are a thoughtful journal companion. Generate reflection questions that encourage introspection and personal growth.',
+      typeConfig.systemPrompt,
       500,
-      0.7
+      0.8  // Higher temperature for more variety
     );
 
     // Parse questions from response (split by newlines, filter empty)

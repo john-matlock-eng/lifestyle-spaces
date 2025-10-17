@@ -536,7 +536,7 @@ export const JournalEditPage: React.FC = () => {
                   config={section.config}
                   disabled={isSubmitting}
                   showGenerateButton={true}
-                  onGenerateQuestions={async () => {
+                  onGenerateQuestions={async (type) => {
                     // Get all journal content for context
                     let journalText = content
                     if (template || customSections.length > 0) {
@@ -554,11 +554,12 @@ export const JournalEditPage: React.FC = () => {
                       ].filter(text => text.trim()).join('\n\n')
                     }
 
-                    // Generate questions using AI
+                    // Generate questions using AI with the selected type
                     const questions = await aiService.generateReflectionQuestions(
                       journalText || title,
                       title,
-                      emotions
+                      emotions,
+                      type
                     )
                     return questions
                   }}

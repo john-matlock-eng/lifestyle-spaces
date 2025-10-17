@@ -21,7 +21,7 @@ interface QASectionProps {
     min_pairs?: number
     max_pairs?: number
   }
-  onGenerateQuestions?: () => Promise<string[]>
+  onGenerateQuestions?: (type: 'reflection' | 'emotional' | 'growth' | 'patterns') => Promise<string[]>
   showGenerateButton?: boolean
 }
 
@@ -39,6 +39,7 @@ export const QASection: React.FC<QASectionProps> = ({
     : value || []
 
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [showTypeSelection, setShowTypeSelection] = useState(false)
   const [showGenerateModal, setShowGenerateModal] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedQuestions, setGeneratedQuestions] = useState<string[]>([])
@@ -75,12 +76,17 @@ export const QASection: React.FC<QASectionProps> = ({
     onChange(updated)
   }
 
-  const handleGenerateClick = async () => {
+  const handleGenerateClick = () => {
+    setShowTypeSelection(true)
+  }
+
+  const handleTypeSelect = async (type: 'reflection' | 'emotional' | 'growth' | 'patterns') => {
     if (!onGenerateQuestions) return
 
+    setShowTypeSelection(false)
     setIsGenerating(true)
     try {
-      const questions = await onGenerateQuestions()
+      const questions = await onGenerateQuestions(type)
       setGeneratedQuestions(questions)
       setShowGenerateModal(true)
     } catch (error) {
@@ -167,6 +173,86 @@ export const QASection: React.FC<QASectionProps> = ({
           <Sparkles size={16} />
           {isGenerating ? 'Generating Questions...' : 'Generate Questions with AI'}
         </button>
+      )}
+
+      {/* Type Selection Modal */}
+      {showTypeSelection && (
+        <div className="qa-generate-modal-overlay" onClick={() => setShowTypeSelection(false)}>
+          <div className="qa-generate-modal qa-type-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="qa-generate-modal-header">
+              <h3>
+                <Sparkles size={20} />
+                Select Question Type
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowTypeSelection(false)}
+                className="qa-modal-close"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="qa-generate-modal-body">
+              <p className="qa-modal-description">
+                Choose the type of reflection questions you'd like to generate:
+              </p>
+              <div className="qa-type-selection-grid">
+                <button
+                  type="button"
+                  onClick={() => handleTypeSelect('reflection')}
+                  className="qa-type-option"
+                  disabled={isGenerating}
+                >
+                  <span className="qa-type-icon">🤔</span>
+                  <span className="qa-type-label">Deep Reflection</span>
+                  <span className="qa-type-description">
+                    Explore deeper meaning and significance of your experiences
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTypeSelect('emotional')}
+                  className="qa-type-option"
+                  disabled={isGenerating}
+                >
+                  <span className="qa-type-icon">💭</span>
+                  <span className="qa-type-label">Emotional Awareness</span>
+                  <span className="qa-type-description">
+                    Understand and explore your feelings and emotional experiences
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTypeSelect('growth')}
+                  className="qa-type-option"
+                  disabled={isGenerating}
+                >
+                  <span className="qa-type-icon">🌱</span>
+                  <span className="qa-type-label">Personal Growth</span>
+                  <span className="qa-type-description">
+                    Focus on learning, development, and future opportunities
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTypeSelect('patterns')}
+                  className="qa-type-option"
+                  disabled={isGenerating}
+                >
+                  <span className="qa-type-icon">🔍</span>
+                  <span className="qa-type-label">Pattern Recognition</span>
+                  <span className="qa-type-description">
+                    Identify recurring themes, habits, and behaviors
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Generated Questions Modal */}
