@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Plus, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
+import { RichTextEditor } from '../RichTextEditor'
 import '../../styles/sections.css'
 
 interface QAPair {
@@ -107,13 +108,13 @@ export const QASection: React.FC<QASectionProps> = ({
 
             {!pair.isCollapsed && (
               <div className="qa-pair-body">
-                <textarea
-                  value={pair.answer}
-                  onChange={(e) => updatePair(pair.id, 'answer', e.target.value)}
-                  placeholder="Explore your answer here..."
-                  className="qa-answer-input"
+                <RichTextEditor
+                  content={pair.answer}
+                  onChange={(value) => updatePair(pair.id, 'answer', value)}
+                  placeholder="Explore your answer here with full markdown support..."
+                  minHeight="150px"
+                  showToolbar={true}
                   disabled={disabled}
-                  rows={4}
                 />
               </div>
             )}

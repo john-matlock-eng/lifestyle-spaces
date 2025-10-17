@@ -328,10 +328,44 @@
 }
 
 .qa-pair-body {
-  padding: 18px;
+  padding: 20px;
   background: var(--theme-bg-base);
 }
 
+/* Full-width RichTextEditor integration */
+.qa-pair-body .rich-text-editor {
+  width: 100%;
+  max-width: 100%;
+}
+
+.qa-pair-body .editor-toolbar {
+  background: var(--theme-bg-surface);
+  border: 1px solid var(--theme-border-light);
+  border-radius: 8px 8px 0 0;
+  padding: 10px 14px;
+  margin-bottom: -1px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.qa-pair-body .editor-content {
+  border: 1px solid var(--theme-border-base);
+  border-radius: 0 0 8px 8px;
+  background: var(--theme-bg-elevated);
+  padding: 16px;
+  transition: all 0.2s;
+}
+
+.qa-pair-body .editor-content:focus-within {
+  border-color: var(--theme-primary-600);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark .qa-pair-body .editor-content:focus-within {
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+}
+
+/* Legacy textarea styles (for backward compatibility) */
 .qa-answer-input {
   width: 100%;
   padding: 14px;
@@ -517,7 +551,16 @@
   }
 
   .qa-pair-body {
-    padding: 14px;
+    padding: 16px;
+  }
+
+  .qa-pair-body .editor-toolbar {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .qa-pair-body .editor-content {
+    padding: 12px;
   }
 
   .qa-answer-input {
