@@ -623,7 +623,7 @@
 .ai-chat-container.embedded {
   position: relative !important;
   width: 100% !important;
-  height: 100% !important;
+  height: auto !important;
   max-width: 100% !important;
   bottom: auto !important;
   right: auto !important;
@@ -634,6 +634,8 @@
   box-shadow: none !important;
   border: none !important;
   background: transparent !important;
+  display: block !important;
+  overflow: visible !important;
 }
 
 .ai-chat-container.embedded .ai-chat-header {
@@ -641,12 +643,15 @@
 }
 
 .ai-chat-container.embedded .ai-chat-messages {
-  min-height: 400px;
-  max-height: 600px;
+  flex: none !important;
+  height: auto !important;
+  min-height: 300px !important;
+  max-height: none !important;
   padding: 24px;
   background: white;
   border-radius: 8px;
   margin-bottom: 16px;
+  overflow-y: auto !important;
 }
 
 .ai-chat-container.embedded .ai-chat-input {
@@ -654,6 +659,7 @@
   padding: 20px 24px;
   background: white;
   border-radius: 8px;
+  flex: none !important;
 }
 
 .ai-chat-container.embedded .quick-prompts {
@@ -662,6 +668,7 @@
   background: white;
   border-radius: 8px;
   margin-top: 16px;
+  flex: none !important;
 }
 
 .ai-chat-container.embedded .quick-prompts-grid {

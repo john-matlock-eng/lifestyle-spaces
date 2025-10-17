@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Plus, X, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, X, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
 import { RichTextEditor } from '../RichTextEditor'
 import '../../styles/sections.css'
@@ -21,13 +21,17 @@ interface QASectionProps {
     min_pairs?: number
     max_pairs?: number
   }
+  onGenerateQuestions?: () => Promise<string[]>
+  showGenerateButton?: boolean
 }
 
 export const QASection: React.FC<QASectionProps> = ({
   value,
   onChange,
   disabled = false,
-  config = {}
+  config = {},
+  onGenerateQuestions,
+  showGenerateButton = false
 }) => {
   // Parse value if it's a string (for backward compatibility)
   const pairs: QAPair[] = typeof value === 'string'
@@ -35,6 +39,9 @@ export const QASection: React.FC<QASectionProps> = ({
     : value || []
 
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [showGenerateModal, setShowGenerateModal] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedQuestions, setGeneratedQuestions] = useState<string[]>([])
 
   const addPair = (question: string = '') => {
     if (config.max_pairs && pairs.length >= config.max_pairs) return
@@ -66,6 +73,33 @@ export const QASection: React.FC<QASectionProps> = ({
       pair.id === id ? { ...pair, isCollapsed: !pair.isCollapsed } : pair
     )
     onChange(updated)
+  }
+
+  const handleGenerateClick = async () => {
+    if (!onGenerateQuestions) return
+
+    setIsGenerating(true)
+    try {
+      const questions = await onGenerateQuestions()
+      setGeneratedQuestions(questions)
+      setShowGenerateModal(true)
+    } catch (error) {
+      console.error('Failed to generate questions:', error)
+      alert('Failed to generate questions. Please try again.')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const handleAddGeneratedQuestion = (question: string) => {
+    addPair(question)
+    setGeneratedQuestions(generatedQuestions.filter(q => q !== question))
+  }
+
+  const handleAddAllGenerated = () => {
+    generatedQuestions.forEach(question => addPair(question))
+    setGeneratedQuestions([])
+    setShowGenerateModal(false)
   }
 
   return (
@@ -121,6 +155,81 @@ export const QASection: React.FC<QASectionProps> = ({
           </div>
         ))}
       </div>
+
+      {/* AI Generate Questions Button */}
+      {showGenerateButton && onGenerateQuestions && (
+        <button
+          type="button"
+          onClick={handleGenerateClick}
+          className="qa-generate-btn"
+          disabled={disabled || isGenerating}
+        >
+          <Sparkles size={16} />
+          {isGenerating ? 'Generating Questions...' : 'Generate Questions with AI'}
+        </button>
+      )}
+
+      {/* Generated Questions Modal */}
+      {showGenerateModal && generatedQuestions.length > 0 && (
+        <div className="qa-generate-modal-overlay" onClick={() => setShowGenerateModal(false)}>
+          <div className="qa-generate-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="qa-generate-modal-header">
+              <h3>
+                <Sparkles size={20} />
+                AI Generated Questions
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowGenerateModal(false)}
+                className="qa-modal-close"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="qa-generate-modal-body">
+              <p className="qa-modal-description">
+                Select individual questions or add them all to your Q&A section:
+              </p>
+              <div className="qa-generated-list">
+                {generatedQuestions.map((question, idx) => (
+                  <div key={idx} className="qa-generated-item">
+                    <span className="qa-generated-question">{question}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleAddGeneratedQuestion(question)}
+                      className="qa-generated-add-btn"
+                      title="Add this question"
+                    >
+                      <Plus size={16} />
+                      Add
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="qa-generate-modal-footer">
+              <button
+                type="button"
+                onClick={() => setShowGenerateModal(false)}
+                className="qa-modal-btn-secondary"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={handleAddAllGenerated}
+                className="qa-modal-btn-primary"
+                disabled={generatedQuestions.length === 0}
+              >
+                <Plus size={16} />
+                Add All {generatedQuestions.length} Questions
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Suggested Questions */}
       {config.suggested_questions && config.suggested_questions.length > 0 && (

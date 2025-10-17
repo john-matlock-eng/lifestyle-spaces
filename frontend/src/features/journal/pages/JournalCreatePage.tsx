@@ -484,6 +484,33 @@ export const JournalCreatePage: React.FC = () => {
                     onChange={(content) => handleUpdateCustomSection(section.id, { content })}
                     config={section.config}
                     disabled={loading}
+                    showGenerateButton={true}
+                    onGenerateQuestions={async () => {
+                      // Get all journal content for context
+                      let journalText = content
+                      if (selectedTemplate || customSections.length > 0) {
+                        journalText = [
+                          ...Object.values(templateData).map(val => {
+                            if (typeof val === 'string') return val
+                            if (Array.isArray(val)) return JSON.stringify(val)
+                            return String(val)
+                          }),
+                          ...customSections.map(s => {
+                            if (typeof s.content === 'string') return s.content
+                            if (Array.isArray(s.content)) return JSON.stringify(s.content)
+                            return String(s.content)
+                          })
+                        ].filter(text => text.trim()).join('\n\n')
+                      }
+
+                      // Generate questions using AI
+                      const questions = await aiService.generateReflectionQuestions(
+                        journalText || title,
+                        title,
+                        emotions
+                      )
+                      return questions
+                    }}
                   />
                 )}
                 {section.type === 'list' && (
@@ -562,7 +589,56 @@ export const JournalCreatePage: React.FC = () => {
       {/* AI Assistant Dock */}
       {showAIDock && !showTemplatePicker && (
         <AIAssistantDock
-          journalContent={content}
+          journalContent={
+            // For templated journals, combine all section content
+            selectedTemplate || customSections.length > 0
+              ? [
+                  // Template sections
+                  ...Object.values(templateData).map(val => {
+                    if (typeof val === 'string') return val
+                    if (Array.isArray(val)) {
+                      // For Q&A pairs and lists, extract content
+                      return val.map((item: QAPair | ListItem | unknown) => {
+                        if (typeof item === 'object' && item !== null) {
+                          const qaItem = item as QAPair
+                          if ('question' in qaItem && 'answer' in qaItem) {
+                            return `**Q:** ${qaItem.question}\n\n**A:** ${qaItem.answer || '(not answered yet)'}`
+                          }
+                          const listItem = item as ListItem
+                          if ('text' in listItem) {
+                            return `- ${listItem.text}`
+                          }
+                        }
+                        return String(item)
+                      }).join('\n\n')
+                    }
+                    return String(val)
+                  }),
+                  // Custom sections
+                  ...customSections.map(section => {
+                    if (typeof section.content === 'string') return section.content
+                    if (Array.isArray(section.content)) {
+                      return section.content.map((item: QAPair | ListItem | unknown) => {
+                        if (typeof item === 'object' && item !== null) {
+                          const qaItem = item as QAPair
+                          if ('question' in qaItem && 'answer' in qaItem) {
+                            return `**Q:** ${qaItem.question}\n\n**A:** ${qaItem.answer || '(not answered yet)'}`
+                          }
+                          const listItem = item as ListItem
+                          if ('text' in listItem) {
+                            return `- ${listItem.text}`
+                          }
+                        }
+                        return String(item)
+                      }).join('\n\n')
+                    }
+                    return String(section.content)
+                  })
+                ]
+                  .filter(text => text.trim())
+                  .join('\n\n---\n\n')
+              : content
+          }
           journalTitle={title}
           journalId="draft"
           emotions={emotions}

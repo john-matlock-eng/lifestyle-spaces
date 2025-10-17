@@ -248,13 +248,14 @@
 .ai-dock-content .ai-chat-container.embedded {
   position: relative !important;
   width: 100% !important;
-  height: 100% !important;
+  height: auto !important;
   max-width: 1000px !important;
   margin: 0 auto !important;
   box-shadow: none !important;
   border-radius: 0 !important;
   border: none !important;
   padding: 0 !important;
+  display: block !important;
 }
 
 .ai-dock-content .ai-chat-container.embedded .ai-chat-header {
@@ -262,20 +263,23 @@
 }
 
 .ai-dock-content .ai-chat-container.embedded .ai-chat-messages {
-  height: calc(100% - 140px) !important;
-  min-height: 350px !important;
+  height: auto !important;
+  min-height: 300px !important;
   max-height: none !important;
   padding: 0 !important;
   margin-bottom: 12px;
+  overflow-y: auto !important;
 }
 
 .ai-dock-content .ai-chat-container.embedded .ai-chat-input {
   border-top: 2px solid #e5e7eb;
   padding: 16px 0;
   background: white;
+  flex: none !important;
 }
 
 .ai-dock-content .ai-chat-container.embedded .quick-prompts {
   padding: 16px 0;
   border-top: 2px solid #e5e7eb;
+  flex: none !important;
 }
