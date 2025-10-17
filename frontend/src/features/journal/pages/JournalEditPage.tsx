@@ -11,6 +11,10 @@ import { getTemplate } from '../services/templateApi'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { aiService } from '../../../services/ai'
+import { Ellie } from '../../../components/ellie'
+import { useShihTzuCompanion } from '../../../hooks'
+import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
+import { useJournalProgress } from '../hooks/useJournalProgress'
 import type { Template, TemplateData, QAPair, ListItem } from '../types/template.types'
 import type { CustomSection } from '../types/customSection.types'
 import { Trash2, Edit2, Bot } from 'lucide-react'
@@ -37,6 +41,49 @@ export const JournalEditPage: React.FC = () => {
   const [templateData, setTemplateData] = useState<TemplateData>({})
   const [customSections, setCustomSections] = useState<CustomSection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
+  const [justSaved, setJustSaved] = useState(false)
+
+  // Ellie companion
+  const { mood, setMood, position, celebrate } = useShihTzuCompanion({
+    initialMood: 'happy',
+    initialPosition: {
+      x: Math.min(window.innerWidth * 0.8, window.innerWidth - 150),
+      y: 120
+    }
+  })
+
+  // Ellie customization
+  const { customization } = useEllieCustomizationContext()
+
+  // Journal progress tracking
+  const { getContextualMessage, getContextualMood } = useJournalProgress({
+    title,
+    content,
+    emotions,
+    tags,
+    templateData,
+    customSections,
+    totalSections: template?.sections.length || 0
+  })
+
+  // Update Ellie's mood based on writing progress
+  useEffect(() => {
+    if (justSaved) {
+      setMood('celebrating')
+      celebrate()
+    } else {
+      const contextualMood = getContextualMood()
+      setMood(contextualMood)
+    }
+  }, [justSaved, getContextualMood, setMood, celebrate])
+
+  // Reset justSaved after celebration
+  useEffect(() => {
+    if (justSaved) {
+      const timer = setTimeout(() => setJustSaved(false), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [justSaved])
 
   const handleAddCustomSection = (section: Omit<CustomSection, 'isEditing'>) => {
     setCustomSections([...customSections, { ...section, isEditing: false }])
@@ -256,7 +303,13 @@ export const JournalEditPage: React.FC = () => {
         // NO templateData field!
       })
 
-      navigate(`/spaces/${spaceId}/journals/${journalId}`)
+      // Celebrate successful save!
+      setJustSaved(true)
+
+      // Navigate after a brief celebration
+      setTimeout(() => {
+        navigate(`/spaces/${spaceId}/journals/${journalId}`)
+      }, 1500)
     } catch (err) {
       console.error('Failed to update journal:', err)
     } finally {
@@ -697,6 +750,21 @@ export const JournalEditPage: React.FC = () => {
           onGenerateQuestions={handleGenerateQuestions}
         />
       )}
+
+      {/* Ellie companion */}
+      <Ellie
+        mood={mood}
+        position={position}
+        showThoughtBubble={true}
+        thoughtText={justSaved ? "Changes saved beautifully! 🌟" : getContextualMessage()}
+        size="md"
+        particleEffect={justSaved ? 'sparkles' : null}
+        onClick={() => setMood(mood === 'playful' ? 'happy' : 'playful')}
+        furColor={customization.furColor}
+        collarStyle={customization.collarStyle}
+        collarColor={customization.collarColor}
+        collarTag={customization.collarTag}
+      />
     </div>
   )
 }
