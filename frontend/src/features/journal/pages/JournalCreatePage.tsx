@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { RichTextEditor } from '../components/RichTextEditor'
 import { TemplatePicker } from '../components/TemplatePicker'
@@ -12,9 +12,8 @@ import { JournalContentManager } from '../../../lib/journal/JournalContentManage
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { aiService } from '../../../services/ai'
 import { Ellie } from '../../../components/ellie'
-import { useShihTzuCompanion } from '../../../hooks'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
-import { useJournalProgress } from '../hooks/useJournalProgress'
+import { useEllieJournalGuide } from '../hooks/useEllieJournalGuide'
 import type { Template, TemplateData, QAPair, ListItem } from '../types/template.types'
 import type { CustomSection } from '../types/customSection.types'
 import { Trash2, Edit2, Bot } from 'lucide-react'
@@ -40,51 +39,25 @@ export const JournalCreatePage: React.FC = () => {
   const [showTemplatePicker, setShowTemplatePicker] = useState(true)
   const [customSections, setCustomSections] = useState<CustomSection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
-  const [justSaved, setJustSaved] = useState(false)
-
-  // Ellie companion
-  const { mood, setMood, position, celebrate } = useShihTzuCompanion({
-    initialMood: 'curious',
-    initialPosition: {
-      x: Math.min(window.innerWidth * 0.8, window.innerWidth - 150),
-      y: 120
-    }
-  })
+  const [currentSectionId, setCurrentSectionId] = useState<string | undefined>()
 
   // Ellie customization
   const { customization } = useEllieCustomizationContext()
 
-  // Journal progress tracking
-  const { getContextualMessage, getContextualMood } = useJournalProgress({
-    title,
-    content,
-    emotions,
-    tags,
-    templateData,
-    customSections,
-    totalSections: selectedTemplate?.sections.length || 0
-  })
-
-  // Update Ellie's mood based on writing progress
-  useEffect(() => {
-    if (showTemplatePicker) {
-      setMood('curious')
-    } else if (justSaved) {
-      setMood('celebrating')
-      celebrate()
-    } else {
-      const contextualMood = getContextualMood()
-      setMood(contextualMood)
-    }
-  }, [showTemplatePicker, justSaved, getContextualMood, setMood, celebrate])
-
-  // Reset justSaved after celebration
-  useEffect(() => {
-    if (justSaved) {
-      const timer = setTimeout(() => setJustSaved(false), 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [justSaved])
+  // Template-driven Ellie guidance
+  const {
+    mood,
+    position,
+    thoughtText,
+    particleEffect,
+    handleTemplateSelect: onEllieTemplateSelect,
+    handleJournalStart,
+    handleSectionStart,
+    updateSectionProgress,
+    handleSectionComplete,
+    handleSave: onEllieSave,
+    getHint
+  } = useEllieJournalGuide(selectedTemplate, currentSectionId)
 
   const handleAddCustomSection = (section: Omit<CustomSection, 'isEditing'>) => {
     setCustomSections([...customSections, { ...section, isEditing: false }])
@@ -102,6 +75,10 @@ export const JournalCreatePage: React.FC = () => {
 
   const handleTemplateSelect = (template: Template | null) => {
     setSelectedTemplate(template)
+
+    // Notify Ellie of template selection
+    onEllieTemplateSelect()
+
     if (template) {
       // Initialize template data with appropriate default values based on section type
       const initialData: TemplateData = {}
@@ -129,16 +106,42 @@ export const JournalCreatePage: React.FC = () => {
       })
       setTemplateData(initialData)
       setShowTemplatePicker(false)
+
+      // Notify Ellie that journal has started
+      handleJournalStart()
     } else {
       setTemplateData({})
     }
   }
 
   const handleTemplateDataChange = (sectionId: string, value: string | QAPair[] | ListItem[] | number) => {
+    // Get previous value before updating
+    const previousValue = templateData[sectionId]
+
     setTemplateData((prev) => ({
       ...prev,
       [sectionId]: value
     }))
+
+    // Update section progress for Ellie guidance
+    if (typeof value === 'string') {
+      // Word count for paragraph sections
+      const wordCount = value.trim().split(/\s+/).filter(w => w.length > 0).length
+      updateSectionProgress(sectionId, { wordCount })
+
+      // Mark section as complete if it has content and was previously empty
+      if (wordCount > 0 && (!previousValue || previousValue === '')) {
+        handleSectionComplete(sectionId)
+      }
+    } else if (Array.isArray(value)) {
+      // Item count for Q&A and list sections
+      updateSectionProgress(sectionId, { itemCount: value.length })
+
+      // Mark section as complete if it has items and was previously empty
+      if (value.length > 0 && (!Array.isArray(previousValue) || previousValue.length === 0)) {
+        handleSectionComplete(sectionId)
+      }
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -246,13 +249,13 @@ export const JournalCreatePage: React.FC = () => {
         // NO templateData field!
       })
 
-      // Celebrate successful save!
-      setJustSaved(true)
+      // Notify Ellie of successful save
+      onEllieSave()
 
-      // Navigate after a brief celebration
+      // Navigate after a brief celebration (Ellie's save guidance includes delay)
       setTimeout(() => {
         navigate(`/spaces/${spaceId}/journals/${journal.journalId}`)
-      }, 1500)
+      }, 2000)
     } catch (err) {
       // Error is handled by the hook
       console.error('Failed to create journal:', err)
@@ -417,7 +420,14 @@ export const JournalCreatePage: React.FC = () => {
             // Render template sections
             <div className="template-sections">
               {selectedTemplate.sections.map((section) => (
-                <div key={section.id} className="journal-form-group">
+                <div
+                  key={section.id}
+                  className="journal-form-group"
+                  onFocus={() => {
+                    setCurrentSectionId(section.id)
+                    handleSectionStart(section.id)
+                  }}
+                >
                   <label htmlFor={section.id} className="journal-form-label">
                     {section.title}
                   </label>
@@ -709,10 +719,16 @@ export const JournalCreatePage: React.FC = () => {
           mood={mood}
           position={position}
           showThoughtBubble={true}
-          thoughtText={justSaved ? "Another beautiful entry! 🌟" : getContextualMessage()}
+          thoughtText={thoughtText || "Let's create something meaningful! 💫"}
           size="md"
-          particleEffect={justSaved ? 'sparkles' : null}
-          onClick={() => setMood(mood === 'playful' ? 'happy' : 'playful')}
+          particleEffect={particleEffect}
+          onClick={() => {
+            // Get a hint for the current section, or just be playful
+            const hint = getHint()
+            if (hint) {
+              console.log('Ellie hint:', hint)
+            }
+          }}
           furColor={customization.furColor}
           collarStyle={customization.collarStyle}
           collarColor={customization.collarColor}

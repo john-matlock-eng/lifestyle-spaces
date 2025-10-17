@@ -5,34 +5,174 @@
   "version": 1,
   "icon": "🎯",
   "color": "#34D399",
+  "ellie": {
+    "onSelect": {
+      "mood": "excited",
+      "message": "Time to celebrate your progress! Every step counts! 🎯",
+      "animation": "bounce"
+    },
+    "onStart": {
+      "mood": "excited",
+      "message": "Let's track your wins! You're making it happen! 💪"
+    },
+    "onComplete": {
+      "mood": "celebrating",
+      "message": "Look at you go! You're unstoppable! 🚀",
+      "particleEffect": "sparkles",
+      "animation": "spin"
+    },
+    "onSave": {
+      "mood": "celebrating",
+      "message": "Progress logged! Keep that momentum going! 🔥",
+      "particleEffect": "hearts"
+    },
+    "theme": {
+      "supportive": true,
+      "energetic": true,
+      "reflective": false
+    }
+  },
   "sections": [
     {
       "id": "goal",
       "title": "Goal",
       "type": "paragraph",
       "placeholder": "What goal are you working on?",
-      "defaultValue": ""
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "Remind me - what amazing thing are you working toward? 🌟"
+        },
+        "onComplete": {
+          "mood": "excited",
+          "message": "I love this goal! Let's make it happen! 🎯"
+        },
+        "hints": [
+          "Be specific - what does success look like?",
+          "Why is this goal important to you?",
+          "When do you want to achieve this by?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "20": {
+              "mood": "excited",
+              "message": "Clear goals are powerful! 💎"
+            }
+          }
+        }
+      }
     },
     {
       "id": "progress",
       "title": "Today's progress",
       "type": "paragraph",
       "placeholder": "What did you accomplish today toward this goal?",
-      "defaultValue": ""
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "excited",
+          "message": "Every step forward is a victory! What did you accomplish? 🏆"
+        },
+        "onComplete": {
+          "mood": "celebrating",
+          "message": "YES! That's progress! So proud of you! 🎉",
+          "particleEffect": "sparkles"
+        },
+        "hints": [
+          "Even small steps count!",
+          "What obstacles did you overcome?",
+          "What did you learn today?",
+          "How does this bring you closer to your goal?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "30": {
+              "mood": "happy",
+              "message": "You're taking action! That's what matters! 💪"
+            },
+            "75": {
+              "mood": "celebrating",
+              "message": "Look at all this progress! Amazing! 🌟"
+            },
+            "150": {
+              "mood": "celebrating",
+              "message": "You're on fire! This detail is incredible! 🔥",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
+      }
     },
     {
       "id": "obstacles",
       "title": "Obstacles",
       "type": "paragraph",
       "placeholder": "What's holding you back?",
-      "defaultValue": ""
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "concerned",
+          "message": "Let's identify what's in the way. Every obstacle can be overcome 💪"
+        },
+        "onComplete": {
+          "mood": "proud",
+          "message": "Awareness is the first step to breakthrough! 🌱"
+        },
+        "onSkip": {
+          "mood": "celebrating",
+          "message": "No obstacles today? That's fantastic! Keep going! 🚀"
+        },
+        "hints": [
+          "Is it a resource issue? Time? Knowledge? Support?",
+          "What would help you overcome this?",
+          "Have you faced something similar before?",
+          "Who could help you with this?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "40": {
+              "mood": "concerned",
+              "message": "You're being strategic about this. Smart! 🧠"
+            }
+          }
+        }
+      }
     },
     {
       "id": "next_steps",
       "title": "Next steps",
       "type": "paragraph",
       "placeholder": "What will you do next to move forward?",
-      "defaultValue": ""
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "What's next on your journey? Let's plan! 📝"
+        },
+        "onComplete": {
+          "mood": "excited",
+          "message": "Great plan! You've got this! I believe in you! 💫"
+        },
+        "hints": [
+          "Break it down into small, actionable steps",
+          "What's the very next physical action you'll take?",
+          "When will you do this?",
+          "What resources do you need?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "30": {
+              "mood": "excited",
+              "message": "Clear next steps = momentum! 🚀"
+            },
+            "75": {
+              "mood": "proud",
+              "message": "This level of planning? You're going to crush it! 💪"
+            }
+          }
+        }
+      }
     }
   ]
 }

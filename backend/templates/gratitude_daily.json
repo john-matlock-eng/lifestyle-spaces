@@ -5,27 +5,145 @@
   "version": 1,
   "icon": "🙏",
   "color": "#FBBF24",
+  "ellie": {
+    "onSelect": {
+      "mood": "zen",
+      "message": "Let's take a moment to appreciate the good things... 🙏",
+      "animation": "sway"
+    },
+    "onStart": {
+      "mood": "happy",
+      "message": "Gratitude makes everything brighter. What are you thankful for today?"
+    },
+    "onComplete": {
+      "mood": "celebrating",
+      "message": "Your gratitude is beautiful! Feel that warm glow? ✨",
+      "particleEffect": "hearts",
+      "animation": "bounce"
+    },
+    "onSave": {
+      "mood": "celebrating",
+      "message": "Gratitude recorded! May your blessings multiply 🌟",
+      "particleEffect": "sparkles"
+    },
+    "theme": {
+      "supportive": true,
+      "energetic": false,
+      "reflective": true
+    }
+  },
   "sections": [
     {
       "id": "gratitude_list",
       "title": "Things I'm grateful for",
       "type": "paragraph",
       "placeholder": "List at least three things you're grateful for today...",
-      "defaultValue": ""
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "zen",
+          "message": "Start with the first blessing that comes to mind... 💫"
+        },
+        "onComplete": {
+          "mood": "happy",
+          "message": "These are wonderful! Count your blessings indeed! 🌟",
+          "particleEffect": "hearts"
+        },
+        "hints": [
+          "Think about people who made your day better",
+          "What small comforts brought you joy?",
+          "What do you often take for granted?",
+          "What challenge taught you something valuable?",
+          "What made you feel safe or loved today?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "20": {
+              "mood": "happy",
+              "message": "One blessing counted! 🌟"
+            },
+            "50": {
+              "mood": "excited",
+              "message": "Your heart is opening! Keep going... 💝"
+            },
+            "100": {
+              "mood": "celebrating",
+              "message": "So many blessings! Your gratitude is radiant! ✨",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
+      }
     },
     {
       "id": "reflection",
       "title": "Why they matter",
       "type": "paragraph",
       "placeholder": "Reflect on the meaning behind your gratitude...",
-      "defaultValue": ""
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "Let's go deeper... why do these things matter to you? 💭"
+        },
+        "onComplete": {
+          "mood": "proud",
+          "message": "This reflection is so meaningful. You're building wisdom! 🌱"
+        },
+        "hints": [
+          "How do these blessings align with your values?",
+          "What would life be like without them?",
+          "How do they make you feel?",
+          "What patterns do you notice in what you're grateful for?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "40": {
+              "mood": "zen",
+              "message": "Beautiful insights... keep exploring 🌸"
+            },
+            "80": {
+              "mood": "proud",
+              "message": "This depth of reflection is powerful! 💎"
+            }
+          }
+        }
+      }
     },
     {
       "id": "tomorrow",
       "title": "Tomorrow's intention",
       "type": "paragraph",
       "placeholder": "What gratitude practice will you focus on tomorrow?",
-      "defaultValue": ""
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "Let's set a positive intention for tomorrow 🌅"
+        },
+        "onComplete": {
+          "mood": "excited",
+          "message": "Perfect! I'll remind you tomorrow! 💪"
+        },
+        "onSkip": {
+          "mood": "happy",
+          "message": "That's okay! Today's gratitude is enough 😊"
+        },
+        "hints": [
+          "Perhaps notice gratitude in the small moments?",
+          "Maybe express gratitude to someone directly?",
+          "Could you find gratitude in a challenge?",
+          "What if you started your day with gratitude?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "25": {
+              "mood": "excited",
+              "message": "What a lovely intention! 🌟"
+            }
+          }
+        }
+      }
     }
   ]
 }

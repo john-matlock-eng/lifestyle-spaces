@@ -5,34 +5,180 @@
   "version": 1,
   "icon": "💭",
   "color": "#C084FC",
+  "ellie": {
+    "onSelect": {
+      "mood": "concerned",
+      "message": "Let's check in with your emotions. All feelings are welcome here 💜",
+      "animation": "sway"
+    },
+    "onStart": {
+      "mood": "zen",
+      "message": "Take a deep breath... how are you feeling right now? 🌸"
+    },
+    "onComplete": {
+      "mood": "proud",
+      "message": "Thank you for being so aware of your emotions. You're building emotional intelligence! 💎",
+      "particleEffect": "hearts"
+    },
+    "onSave": {
+      "mood": "celebrating",
+      "message": "Mood tracked! Your feelings are valid and important 💝",
+      "particleEffect": "sparkles"
+    },
+    "theme": {
+      "supportive": true,
+      "energetic": false,
+      "reflective": true
+    }
+  },
   "sections": [
     {
       "id": "current_mood",
       "title": "Current mood",
       "type": "paragraph",
       "placeholder": "How are you feeling right now? (Use the mood wheel to select)",
-      "defaultValue": ""
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "zen",
+          "message": "Take a moment to truly feel... what's present for you right now? 💭"
+        },
+        "onComplete": {
+          "mood": "concerned",
+          "message": "Thank you for naming your feelings. That's brave 💜"
+        },
+        "hints": [
+          "Try the emotion wheel - start broad, then get specific",
+          "It's okay to feel multiple things at once",
+          "Rate the intensity from 1-10",
+          "Where do you feel this in your body?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "20": {
+              "mood": "zen",
+              "message": "You're connecting with your emotions... 🌸"
+            },
+            "50": {
+              "mood": "concerned",
+              "message": "This emotional awareness is powerful 💜"
+            }
+          }
+        }
+      }
     },
     {
       "id": "triggers",
       "title": "What triggered this mood?",
       "type": "paragraph",
       "placeholder": "Describe what led to these feelings...",
-      "defaultValue": ""
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "Let's gently explore... what brought these feelings up? 🔍"
+        },
+        "onComplete": {
+          "mood": "proud",
+          "message": "Identifying triggers is key to understanding yourself! 🌱"
+        },
+        "hints": [
+          "Was it a specific event, person, or thought?",
+          "Did something remind you of a past experience?",
+          "What happened right before you felt this way?",
+          "Is there a pattern you're noticing?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "30": {
+              "mood": "curious",
+              "message": "You're uncovering important patterns... 💡"
+            },
+            "75": {
+              "mood": "proud",
+              "message": "This level of self-awareness is incredible! 💎"
+            }
+          }
+        }
+      }
     },
     {
       "id": "physical_state",
       "title": "Physical sensations",
       "type": "paragraph",
       "placeholder": "How does your body feel? Any tension, energy, fatigue?",
-      "defaultValue": ""
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "zen",
+          "message": "Your body holds wisdom. What is it telling you? 🌸"
+        },
+        "onComplete": {
+          "mood": "proud",
+          "message": "Mind-body connection recognized! This is powerful awareness 💪"
+        },
+        "hints": [
+          "Scan from head to toe - what do you notice?",
+          "Any tightness, heaviness, or lightness?",
+          "Is your breathing shallow or deep?",
+          "What's your energy level?",
+          "Are you holding tension anywhere?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "25": {
+              "mood": "zen",
+              "message": "Beautiful body awareness... 🌸"
+            },
+            "60": {
+              "mood": "proud",
+              "message": "Your mind-body connection is strengthening! 💪"
+            }
+          }
+        }
+      }
     },
     {
       "id": "coping",
       "title": "How I'm coping",
       "type": "paragraph",
       "placeholder": "What are you doing to manage these feelings?",
-      "defaultValue": ""
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "What helps you navigate these feelings? 💫"
+        },
+        "onComplete": {
+          "mood": "celebrating",
+          "message": "You have coping strategies! That's resilience in action! 💪",
+          "particleEffect": "hearts"
+        },
+        "onSkip": {
+          "mood": "concerned",
+          "message": "That's okay. Sometimes we need help finding coping strategies 💜"
+        },
+        "hints": [
+          "What healthy coping strategies are you using?",
+          "What helps you feel grounded?",
+          "Who or what brings you comfort?",
+          "What would help you feel better?",
+          "What worked for you in the past?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "30": {
+              "mood": "happy",
+              "message": "These are healthy coping strategies! 💫"
+            },
+            "75": {
+              "mood": "celebrating",
+              "message": "Your emotional toolkit is growing! So proud! 🌟",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
+      }
     }
   ]
 }

@@ -5,13 +5,72 @@
   "version": 1,
   "icon": "🔬",
   "color": "#A855F7",
+  "ellie": {
+    "onSelect": {
+      "mood": "concerned",
+      "message": "I'm here for whatever you need to process. This is a safe space 💜",
+      "animation": "sway"
+    },
+    "onStart": {
+      "mood": "zen",
+      "message": "Let's go deep together. Express, examine, and evolve. I'm with you 🌱"
+    },
+    "onComplete": {
+      "mood": "proud",
+      "message": "This work takes courage. You're growing in real-time. So proud! 💎",
+      "particleEffect": "sparkles",
+      "animation": "bounce"
+    },
+    "onSave": {
+      "mood": "celebrating",
+      "message": "Transformation recorded. You're becoming who you're meant to be 🦋",
+      "particleEffect": "hearts"
+    },
+    "theme": {
+      "supportive": true,
+      "energetic": false,
+      "reflective": true
+    }
+  },
   "sections": [
     {
       "id": "raw_thoughts",
       "title": "Express",
       "type": "paragraph",
       "placeholder": "Let it all out. Raw, unfiltered, true feelings. No judgment, no editing, just release.",
-      "defaultValue": ""
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "concerned",
+          "message": "This is your safe space. Let it all out - no filters, no judgment 💜"
+        },
+        "onComplete": {
+          "mood": "zen",
+          "message": "Thank you for your honesty. That took courage 🌊"
+        },
+        "hints": [
+          "What are you feeling in your body right now?",
+          "If this emotion could speak, what would it say?",
+          "What do you need most in this moment?",
+          "Stream of consciousness - don't overthink, just write"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "50": {
+              "mood": "concerned",
+              "message": "Keep going... let it flow 💭"
+            },
+            "100": {
+              "mood": "zen",
+              "message": "You're releasing so much. This is healing ��"
+            },
+            "200": {
+              "mood": "proud",
+              "message": "This level of honesty is powerful. You're doing the work 💪"
+            }
+          }
+        }
+      }
     },
     {
       "id": "deep_dive",
@@ -32,6 +91,39 @@
           "What am I afraid will happen if I let this go?",
           "What story am I telling myself about this?"
         ]
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "Now let's go deeper. Ask yourself the hard questions 🔍"
+        },
+        "onComplete": {
+          "mood": "proud",
+          "message": "This self-examination is profound. You're uncovering truth 💎"
+        },
+        "hints": [
+          "Be gentle but honest with yourself",
+          "Look for patterns from your past",
+          "What would your wisest self say?",
+          "Where does this really come from?"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "1": {
+              "mood": "curious",
+              "message": "Good question! Keep exploring... 🔍"
+            },
+            "3": {
+              "mood": "excited",
+              "message": "You're asking the right questions! This is how we grow! 🌱"
+            },
+            "5": {
+              "mood": "proud",
+              "message": "Five deep questions! You're committed to understanding! 💪",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
       }
     },
     {
@@ -39,7 +131,43 @@
       "title": "Evolve",
       "type": "paragraph",
       "placeholder": "Create the change. Design new responses, reframe your perspective, set actionable steps, and identify your growth edge.",
-      "defaultValue": ""
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "excited",
+          "message": "Now for the transformation! How will you evolve from this? 🦋"
+        },
+        "onComplete": {
+          "mood": "celebrating",
+          "message": "YES! This is growth in action! You're evolving! 🚀",
+          "particleEffect": "hearts",
+          "animation": "bounce"
+        },
+        "hints": [
+          "What's one small step you can take today?",
+          "How will you respond differently next time?",
+          "What new story will you tell yourself?",
+          "What support or resources do you need?",
+          "How will you know you're making progress?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "40": {
+              "mood": "excited",
+              "message": "You're designing your evolution! 🦋"
+            },
+            "80": {
+              "mood": "celebrating",
+              "message": "This action plan is powerful! You're ready! 💫"
+            },
+            "150": {
+              "mood": "celebrating",
+              "message": "This level of commitment? You're unstoppable! 🔥",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
+      }
     }
   ]
 }
