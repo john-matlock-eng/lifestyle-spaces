@@ -1,5 +1,5 @@
 import React from 'react'
-import EnhancedShihTzu from './EnhancedShihTzu'
+import { ModularEnhancedShihTzu } from './ModularEnhancedShihTzu'
 
 export interface EllieProps {
   mood?: 'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'
@@ -11,15 +11,14 @@ export interface EllieProps {
   showThoughtBubble?: boolean
   thoughtText?: string
   particleEffect?: 'hearts' | 'sparkles' | 'treats' | 'zzz' | null
-  variant?: 'default' | 'winter' | 'party' | 'workout' | 'balloon'
+  variant?: 'default' | 'winter' | 'party' | 'workout' | 'balloon' // Deprecated - no longer used
   className?: string
-  style?: React.CSSProperties
   tabIndex?: number
   // Customization props
   furColor?: string
   collarStyle?: 'none' | 'leather' | 'fabric' | 'bowtie' | 'bandana'
   collarColor?: string
-  collarTag?: boolean
+  collarTag?: boolean // Deprecated - tag is shown automatically based on collar style
 }
 
 export const Ellie: React.FC<EllieProps> = ({
@@ -32,14 +31,13 @@ export const Ellie: React.FC<EllieProps> = ({
   showThoughtBubble = false,
   thoughtText = '',
   particleEffect = null,
-  variant = 'balloon',
-  className = '',
-  style = {},
+  variant: _variant, // Accept but ignore - deprecated
+  className,
   tabIndex,
   furColor,
   collarStyle = 'none',
   collarColor = '#8B4513',
-  collarTag = false
+  collarTag: _collarTag // Accept but ignore - tag shown automatically
 }) => {
   // Generate ARIA label based on mood
   const getAriaLabel = () => {
@@ -53,6 +51,7 @@ export const Ellie: React.FC<EllieProps> = ({
     <div
       role="img"
       aria-label={getAriaLabel()}
+      className={className}
       tabIndex={tabIndex}
       onKeyDown={(e) => {
         if (e.key === 'Enter' && onClick) {
@@ -60,28 +59,19 @@ export const Ellie: React.FC<EllieProps> = ({
         }
       }}
     >
-      <EnhancedShihTzu
+      <ModularEnhancedShihTzu
         mood={mood}
         position={position}
         onPositionChange={onPositionChange}
         onClick={onClick}
         onPet={onPet}
         size={size}
-        accessories={[]}
         showThoughtBubble={showThoughtBubble}
         thoughtText={thoughtText}
         particleEffect={particleEffect}
-        variant={variant}
-        className={className}
-        style={{
-          position: 'fixed',
-          zIndex: 9999,
-          ...style
-        }}
         furColor={furColor}
         collarStyle={collarStyle}
         collarColor={collarColor}
-        collarTag={collarTag}
       />
     </div>
   )

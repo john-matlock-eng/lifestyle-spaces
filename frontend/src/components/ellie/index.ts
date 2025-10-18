@@ -1,11 +1,14 @@
 export { Ellie } from './Ellie'
 export type { EllieProps } from './Ellie'
 export { AnimatedShihTzu } from './AnimatedShihTzu'
-export { default as EnhancedShihTzu } from './EnhancedShihTzu'
 export { EllieCustomizer, type EllieCustomization } from './EllieCustomizer'
 
-// New modular component system
+// Modular component system (recommended)
 export { ModularEnhancedShihTzu } from './ModularEnhancedShihTzu'
+export { ModularEnhancedShihTzu as default } from './ModularEnhancedShihTzu'
+
+// Legacy component (deprecated - use ModularEnhancedShihTzu instead)
+export { default as EnhancedShihTzu } from './EnhancedShihTzu'
 
 // Export modular types
 export type * from './types/ellie.types'
