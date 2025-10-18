@@ -39,6 +39,9 @@ export const Ellie: React.FC<EllieProps> = ({
   collarColor = '#8B4513',
   collarTag: _collarTag // Accept but ignore - tag shown automatically
 }) => {
+  // Suppress unused variable warnings - these props are for backward compatibility
+  void _variant;
+  void _collarTag;
   // Generate ARIA label based on mood
   const getAriaLabel = () => {
     if (mood && mood !== 'idle') {
