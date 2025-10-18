@@ -103,8 +103,8 @@ export class JournalContentManager {
   }
 
   static serialize(data: {
-    template: string;
-    templateVersion: string;
+    template?: string;
+    templateVersion?: string;
     metadata: Record<string, unknown>;
     sections: Record<string, { content: string; title: string; type: string }>;
   }): string {
@@ -112,8 +112,12 @@ export class JournalContentManager {
 
     // Add metadata header
     lines.push('<!--');
-    lines.push(`@template: ${data.template}`);
-    lines.push(`@version: ${data.templateVersion}`);
+    if (data.template) {
+      lines.push(`@template: ${data.template}`);
+    }
+    if (data.templateVersion) {
+      lines.push(`@version: ${data.templateVersion}`);
+    }
     lines.push(`@created: ${new Date().toISOString()}`);
     lines.push(`@metadata: ${JSON.stringify(data.metadata)}`);
     lines.push('-->');
