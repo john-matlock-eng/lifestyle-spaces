@@ -23,6 +23,7 @@ const COLLAR_COLORS = [
   { value: "#8B4513", label: "Brown" },
   { value: "#FF0000", label: "Red" },
   { value: "#0000FF", label: "Blue" },
+  { value: "#20B2AA", label: "Teal" },
   { value: "#00FF00", label: "Green" },
   { value: "#FFC0CB", label: "Pink" },
   { value: "#FFD700", label: "Gold" },

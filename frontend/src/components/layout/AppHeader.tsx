@@ -212,6 +212,7 @@ export const AppHeader: React.FC = () => {
                         { value: '#8B4513', label: 'Brown' },
                         { value: '#FF0000', label: 'Red' },
                         { value: '#0000FF', label: 'Blue' },
+                        { value: '#20B2AA', label: 'Teal' },
                         { value: '#00FF00', label: 'Green' },
                         { value: '#FFC0CB', label: 'Pink' },
                         { value: '#FFD700', label: 'Gold' },
@@ -222,11 +223,12 @@ export const AppHeader: React.FC = () => {
                       const furColors = [
                         { value: undefined, label: 'Default' },
                         { value: '#FFFFFF', label: 'White' },
-                        { value: '#F5DEB3', label: 'Cream' },
-                        { value: '#D2691E', label: 'Chocolate' },
-                        { value: '#8B4513', label: 'Brown' },
-                        { value: '#696969', label: 'Gray' },
-                        { value: '#000000', label: 'Black' }
+                        { value: '#F5F5DC', label: 'Beige' },
+                        { value: '#DEB887', label: 'Tan' },
+                        { value: '#C19A6B', label: 'Caramel' },
+                        { value: '#A0826D', label: 'Taupe' },
+                        { value: '#8B7355', label: 'Brown' },
+                        { value: '#B0B0B0', label: 'Silver' }
                       ]
 
                       return (
