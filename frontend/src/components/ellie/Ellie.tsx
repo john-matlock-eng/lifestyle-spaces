@@ -31,17 +31,16 @@ export const Ellie: React.FC<EllieProps> = ({
   showThoughtBubble = false,
   thoughtText = '',
   particleEffect = null,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   variant: _variant, // Accept but ignore - deprecated
   className,
   tabIndex,
   furColor,
   collarStyle = 'none',
   collarColor = '#8B4513',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   collarTag: _collarTag // Accept but ignore - tag shown automatically
 }) => {
-  // Suppress unused variable warnings - these props are for backward compatibility
-  void _variant;
-  void _collarTag;
   // Generate ARIA label based on mood
   const getAriaLabel = () => {
     if (mood && mood !== 'idle') {
@@ -56,6 +55,10 @@ export const Ellie: React.FC<EllieProps> = ({
       aria-label={getAriaLabel()}
       className={className}
       tabIndex={tabIndex}
+      style={{
+        position: 'fixed',
+        zIndex: 9999,
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' && onClick) {
           onClick()
