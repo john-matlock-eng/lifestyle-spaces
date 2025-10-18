@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { clsx } from "clsx";
 
-// Helper type for moods
-type EllieMood = 'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating';
-
 // Determine when to show tongue
 const shouldShowTongue = (mood: string): boolean => {
   return ['happy', 'excited', 'playful', 'walking', 'celebrating'].includes(mood);
