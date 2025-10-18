@@ -163,8 +163,48 @@ export const JournalEditPage: React.FC = () => {
         }
         loadTemplateAndParse()
       } else {
-        // Non-templated journal, just set the content
-        setContent(journal.content)
+        // Non-templated journal (or 'blank' template)
+        // Check if content has embedded sections (custom sections without template)
+        const parsed = JournalContentManager.parse(journal.content)
+
+        if (Object.keys(parsed.sections).length > 0) {
+          // Has custom sections - extract them
+          const parsedCustomSections: CustomSection[] = []
+
+          Object.entries(parsed.sections).forEach(([sectionId, section]) => {
+            let parsedContent: string | QAPair[] | ListItem[] | number
+
+            if (section.type === 'q_and_a') {
+              try {
+                parsedContent = JSON.parse(section.content) as QAPair[]
+              } catch {
+                parsedContent = []
+              }
+            } else if (section.type === 'list') {
+              try {
+                parsedContent = JSON.parse(section.content) as ListItem[]
+              } catch {
+                parsedContent = []
+              }
+            } else {
+              parsedContent = section.content
+            }
+
+            parsedCustomSections.push({
+              id: sectionId,
+              title: section.title || 'Untitled Section',
+              type: section.type || 'paragraph',
+              content: parsedContent,
+              isEditing: false
+            })
+          })
+
+          setCustomSections(parsedCustomSections)
+        } else {
+          // Pure free-form content - extract clean markdown
+          const cleanContent = JournalContentManager.extractCleanMarkdown(journal.content)
+          setContent(cleanContent)
+        }
       }
     }
   }, [journal, onEllieTemplateSelect, handleJournalStart])
