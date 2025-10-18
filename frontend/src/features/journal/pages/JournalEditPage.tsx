@@ -87,7 +87,8 @@ export const JournalEditPage: React.FC = () => {
       setEmotions(journal.emotions || [])
 
       // Parse content to extract template data if it exists
-      if (journal.templateId) {
+      // Skip loading for "blank" template (non-templated journals)
+      if (journal.templateId && journal.templateId !== 'blank') {
         const loadTemplateAndParse = async () => {
           try {
             // Load the template definition
@@ -280,9 +281,10 @@ export const JournalEditPage: React.FC = () => {
         })
 
         // Serialize everything into content with embedded metadata
+        // Only include template info if we have a real template (not 'blank')
         finalContent = JournalContentManager.serialize({
-          template: template?.id || 'blank',
-          templateVersion: String(template?.version || 1),
+          template: template?.id || undefined,
+          templateVersion: template ? String(template.version) : undefined,
           metadata: {
             title,
             emotions: emotions.length > 0 ? emotions : undefined

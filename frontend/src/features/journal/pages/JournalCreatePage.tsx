@@ -224,9 +224,10 @@ export const JournalCreatePage: React.FC = () => {
         })
 
         // Serialize everything into content with embedded metadata
+        // Only include template info if we have a real template (not 'blank')
         finalContent = JournalContentManager.serialize({
-          template: selectedTemplate?.id || 'blank',
-          templateVersion: String(selectedTemplate?.version || 1),
+          template: selectedTemplate?.id || undefined,
+          templateVersion: selectedTemplate ? String(selectedTemplate.version) : undefined,
           metadata: {
             title,
             emotions: emotions.length > 0 ? emotions : undefined
