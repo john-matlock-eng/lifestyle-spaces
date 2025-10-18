@@ -29,6 +29,12 @@ class TemplateSection(BaseModel):
         description="Type-specific configuration"
     )
 
+    # Ellie (Shih Tzu companion) guidance for this section
+    ellie: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Ellie guidance configuration for this section"
+    )
+
     model_config = ConfigDict(populate_by_name=True)
 
 
@@ -41,6 +47,12 @@ class Template(BaseModel):
     sections: List[TemplateSection] = Field(default_factory=list, description="Template sections")
     icon: Optional[str] = Field(None, description="Icon/emoji for the template")
     color: Optional[str] = Field(None, description="Color theme for the template")
+
+    # Ellie (Shih Tzu companion) guidance for template-level events
+    ellie: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Ellie guidance configuration for template-level events"
+    )
 
     model_config = ConfigDict(populate_by_name=True)
 

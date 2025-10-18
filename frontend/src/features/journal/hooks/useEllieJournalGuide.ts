@@ -54,19 +54,13 @@ export function useEllieJournalGuide(
   // Apply guidance (mood, message, effects)
   const applyGuidance = useCallback(
     (guidance: EllieGuidance | undefined, key?: string) => {
-      console.log('[DEBUG ELLIE] applyGuidance called:', { guidance, key, alreadyApplied: key ? appliedGuidanceRef.current.has(key) : false })
-
       if (!guidance) return
 
       // Prevent applying the same guidance multiple times
-      if (key && appliedGuidanceRef.current.has(key)) {
-        console.log('[DEBUG ELLIE] Skipping - already applied:', key)
-        return
-      }
+      if (key && appliedGuidanceRef.current.has(key)) return
       if (key) appliedGuidanceRef.current.add(key)
 
       const applyEffect = () => {
-        console.log('[DEBUG ELLIE] Applying effect:', { mood: guidance.mood, message: guidance.message })
         if (guidance.mood) setMood(guidance.mood)
         if (guidance.message) setThoughtText(guidance.message)
         if (guidance.particleEffect) {
@@ -103,10 +97,7 @@ export function useEllieJournalGuide(
   // Handle section start
   const handleSectionStart = useCallback(
     (sectionId: string) => {
-      console.log('[DEBUG ELLIE] handleSectionStart called:', sectionId)
       const section = template?.sections.find((s) => s.id === sectionId)
-      console.log('[DEBUG ELLIE] Found section:', section?.id, 'has onStart guidance:', !!section?.ellie?.onStart)
-
       if (section?.ellie?.onStart) {
         applyGuidance(section.ellie.onStart, `section-${sectionId}-start`)
       }
