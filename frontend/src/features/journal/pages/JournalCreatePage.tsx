@@ -118,8 +118,11 @@ export const JournalCreatePage: React.FC = () => {
     // Get previous value before updating
     const previousValue = templateData[sectionId]
 
+    console.log('[DEBUG] handleTemplateDataChange:', { sectionId, previousValue, value })
+
     // Start section guidance if this is the first interaction with this section
     if (!previousValue || (typeof previousValue === 'string' && !previousValue.trim()) || (Array.isArray(previousValue) && previousValue.length === 0)) {
+      console.log('[DEBUG] Triggering handleSectionStart for:', sectionId)
       handleSectionStart(sectionId)
       setCurrentSectionId(sectionId)
     }
