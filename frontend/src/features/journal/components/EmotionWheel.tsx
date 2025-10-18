@@ -123,11 +123,13 @@ const EmotionWheel: React.FC<EmotionWheelProps> = ({
           }
         }
       } else if (emotion.level === 'tertiary') {
-        // Can only select if it's a child of the focused secondary emotion
-        if (emotion.parent === focusedSecondaryEmotion) {
+        // Allow selection if it's a child of the focused secondary emotion, OR deselection anytime
+        if (emotion.parent === focusedSecondaryEmotion || safeSelectedEmotions.includes(emotionId)) {
           onEmotionToggle(emotionId)
-          // Show complete button when a tertiary is selected
-          setShowCompleteButton(true)
+          // Show complete button when a tertiary is selected (only if selecting, not deselecting)
+          if (!safeSelectedEmotions.includes(emotionId)) {
+            setShowCompleteButton(true)
+          }
         }
       }
     } else {
