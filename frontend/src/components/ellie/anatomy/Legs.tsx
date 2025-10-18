@@ -1,9 +1,7 @@
 import React from 'react';
 import type { BodyPartProps } from '../types/ellie.types';
 
-export const Legs: React.FC<BodyPartProps> = ({ furColor, mood, className = '' }) => {
-  const isWalking = mood === 'walking';
-
+export const Legs: React.FC<BodyPartProps> = ({ furColor, className = '' }) => {
   return (
     <g className={`ellie-legs ${className}`}>
       {/* Back legs */}

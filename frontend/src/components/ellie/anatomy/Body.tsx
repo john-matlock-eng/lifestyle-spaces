@@ -1,7 +1,7 @@
 import React from 'react';
 import type { BodyPartProps } from '../types/ellie.types';
 
-export const Body: React.FC<BodyPartProps> = ({ furColor, mood, className = '' }) => {
+export const Body: React.FC<BodyPartProps> = ({ furColor, className = '' }) => {
   return (
     <g className={`ellie-body ${className}`}>
       {/* Shadow/ground indicator */}

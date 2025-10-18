@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import type { EllieProps, EllieMood } from './types/ellie.types';
+import type { EllieProps } from './types/ellie.types';
 import { Head } from './anatomy/Head';
 import { Body } from './anatomy/Body';
 import { Neck } from './anatomy/Neck';
@@ -8,7 +8,7 @@ import { Tail } from './anatomy/Tail';
 import { Collar } from './accessories/Collar';
 import { useEllieMood } from './hooks/useEllieMood';
 import { useEllieAnimation } from './hooks/useEllieAnimation';
-import { ELLIE_SIZES, VIEWBOX, DEFAULT_FUR_COLOR, DEFAULT_COLLAR_STYLE, DEFAULT_COLLAR_COLOR } from './constants';
+import { ELLIE_SIZES, VIEWBOX, DEFAULT_COLLAR_STYLE, DEFAULT_COLLAR_COLOR } from './constants';
 import './styles';
 
 export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({

@@ -1,7 +1,7 @@
 import React from 'react';
 import type { FacialFeatureProps } from '../types/ellie.types';
 
-export const Nose: React.FC<FacialFeatureProps> = ({ mood, onClick, className = '' }) => {
+export const Nose: React.FC<FacialFeatureProps> = ({ onClick, className = '' }) => {
   return (
     <g className={`ellie-nose ${className}`} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       {/* Main nose */}

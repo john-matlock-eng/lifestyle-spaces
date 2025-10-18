@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { EllieMood } from '../types/ellie.types';
 
 export interface UseEllieMoodOptions {
