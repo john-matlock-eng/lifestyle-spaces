@@ -168,38 +168,55 @@ export const JournalEditPage: React.FC = () => {
         const parsed = JournalContentManager.parse(journal.content)
 
         if (Object.keys(parsed.sections).length > 0) {
-          // Has custom sections - extract them
+          // Has sections - need to determine if it's custom sections or just free-form content
           const parsedCustomSections: CustomSection[] = []
+          let mainContent = ''
 
           Object.entries(parsed.sections).forEach(([sectionId, section]) => {
-            let parsedContent: string | QAPair[] | ListItem[] | number
+            // If the only section is "content" with type "paragraph", treat it as free-form content
+            if (sectionId === 'content' && section.type === 'paragraph' && Object.keys(parsed.sections).length === 1) {
+              mainContent = section.content
+            } else if (sectionId.startsWith('custom_')) {
+              // This is a custom section
+              let parsedContent: string | QAPair[] | ListItem[] | number
 
-            if (section.type === 'q_and_a') {
-              try {
-                parsedContent = JSON.parse(section.content) as QAPair[]
-              } catch {
-                parsedContent = []
+              if (section.type === 'q_and_a') {
+                try {
+                  parsedContent = JSON.parse(section.content) as QAPair[]
+                } catch {
+                  parsedContent = []
+                }
+              } else if (section.type === 'list') {
+                try {
+                  parsedContent = JSON.parse(section.content) as ListItem[]
+                } catch {
+                  parsedContent = []
+                }
+              } else {
+                parsedContent = section.content
               }
-            } else if (section.type === 'list') {
-              try {
-                parsedContent = JSON.parse(section.content) as ListItem[]
-              } catch {
-                parsedContent = []
-              }
-            } else {
-              parsedContent = section.content
+
+              parsedCustomSections.push({
+                id: sectionId,
+                title: section.title || 'Untitled Section',
+                type: section.type || 'paragraph',
+                content: parsedContent,
+                isEditing: false
+              })
             }
-
-            parsedCustomSections.push({
-              id: sectionId,
-              title: section.title || 'Untitled Section',
-              type: section.type || 'paragraph',
-              content: parsedContent,
-              isEditing: false
-            })
           })
 
-          setCustomSections(parsedCustomSections)
+          if (mainContent) {
+            // Had a single 'content' section - use as free-form content
+            setContent(mainContent)
+          } else if (parsedCustomSections.length > 0) {
+            // Has actual custom sections
+            setCustomSections(parsedCustomSections)
+          } else {
+            // Fallback to clean markdown extraction
+            const cleanContent = JournalContentManager.extractCleanMarkdown(journal.content)
+            setContent(cleanContent)
+          }
         } else {
           // Pure free-form content - extract clean markdown
           const cleanContent = JournalContentManager.extractCleanMarkdown(journal.content)
