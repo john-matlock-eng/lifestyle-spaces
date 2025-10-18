@@ -447,6 +447,34 @@ export const JournalCreatePage: React.FC = () => {
                       placeholder={section.placeholder}
                       disabled={loading}
                       config={section.config}
+                      showGenerateButton={true}
+                      onGenerateQuestions={async (type) => {
+                        // Get all journal content for context
+                        let journalText = content
+                        if (selectedTemplate || customSections.length > 0) {
+                          journalText = [
+                            ...Object.values(templateData).map(val => {
+                              if (typeof val === 'string') return val
+                              if (Array.isArray(val)) return JSON.stringify(val)
+                              return String(val)
+                            }),
+                            ...customSections.map(s => {
+                              if (typeof s.content === 'string') return s.content
+                              if (Array.isArray(s.content)) return JSON.stringify(s.content)
+                              return String(s.content)
+                            })
+                          ].filter(text => text.trim()).join('\n\n')
+                        }
+
+                        // Generate questions using AI with the selected type
+                        const questions = await aiService.generateReflectionQuestions(
+                          journalText || title,
+                          title,
+                          emotions,
+                          type
+                        )
+                        return questions
+                      }}
                     />
                   ) : section.type === 'list' ? (
                     <ListSection
