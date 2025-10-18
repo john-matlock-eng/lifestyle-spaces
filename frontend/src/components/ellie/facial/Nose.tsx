@@ -2,8 +2,15 @@ import React from 'react';
 import type { FacialFeatureProps } from '../types/ellie.types';
 
 export const Nose: React.FC<FacialFeatureProps> = ({ onClick, className = '' }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onClick) {
+      onClick();
+    }
+  };
+
   return (
-    <g className={`ellie-nose ${className}`} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
+    <g className={`ellie-nose ${className}`} onClick={handleClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       {/* Main nose */}
       <ellipse
         cx="60"

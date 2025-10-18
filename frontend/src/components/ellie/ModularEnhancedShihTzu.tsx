@@ -56,8 +56,7 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
   const sizeConfig = ELLIE_SIZES[size];
 
   // Handlers
-  const handleNoseBoop = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleNoseBoop = useCallback(() => {
     celebrate('hearts');
     if (onNoseBoop) {
       onNoseBoop();
