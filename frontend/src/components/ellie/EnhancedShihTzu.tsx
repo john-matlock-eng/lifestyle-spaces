@@ -6,64 +6,61 @@ const shouldShowTongue = (mood: string): boolean => {
   return ['happy', 'excited', 'playful', 'walking', 'celebrating'].includes(mood);
 };
 
-// Generate mouth path based on mood
+// Generate mouth path based on mood (simpler, shows lower jaw)
 const getMouthPath = (mood: string): string => {
-  // Base: Line from nose down
-  const noseToMouth = 'M 50 51 L 50 56';
-
   switch(mood) {
     case 'happy':
     case 'excited':
     case 'playful':
     case 'celebrating':
-      // Open mouth for tongue
-      return `${noseToMouth} M 42 56 Q 50 59 58 56`;
+      // Open mouth showing lower jaw
+      return 'M 60 44 L 60 47 M 55 47 Q 60 49 65 47';
 
     case 'concerned':
-      // Downturned
-      return `${noseToMouth} M 42 56 Q 50 54 58 56`;
+      // Downturned with visible lower jaw
+      return 'M 60 44 L 60 46 M 55 47 Q 60 45 65 47';
 
     case 'sleeping':
-      // Small, relaxed
-      return `${noseToMouth} M 46 56 L 54 56`;
+      // Closed, relaxed
+      return 'M 60 44 L 60 45';
 
     case 'zen':
       // Gentle smile
-      return `${noseToMouth} M 44 56 Q 50 58 56 56`;
+      return 'M 60 44 L 60 46 M 56 46 Q 60 47 64 46';
 
     case 'proud':
       // Confident smile
-      return `${noseToMouth} M 42 56 Q 50 58 58 56`;
+      return 'M 60 44 L 60 46 M 55 46 Q 60 47 65 46';
 
     case 'curious':
-      // Slightly open, inquisitive
-      return `${noseToMouth} M 45 56 Q 50 57 55 56`;
+      // Slightly open
+      return 'M 60 44 L 60 46 M 57 46 L 63 46';
 
     default:
       // Neutral
-      return `${noseToMouth} M 44 56 Q 50 57 56 56`;
+      return 'M 60 44 L 60 46 M 57 46 L 63 46';
   }
 };
 
-// Generate tongue shape based on mood
+// Generate tongue shape based on mood (hangs from mouth, not covering collar)
 const getTonguePath = (mood: string): string => {
   switch(mood) {
     case 'happy':
-      // Medium tongue, centered
-      return 'M 46 57 Q 46 64 48 66 Q 50 67 52 66 Q 54 64 54 57 Z';
+      // Small tongue hanging down
+      return 'M 58 48 Q 58 52 59 54 Q 60 55 61 54 Q 62 52 62 48 Z';
 
     case 'excited':
     case 'celebrating':
-      // Long tongue, energetic
-      return 'M 45 57 Q 45 67 47 70 Q 50 72 53 70 Q 55 67 55 57 Z';
+      // Longer tongue
+      return 'M 57 48 Q 57 55 58 58 Q 60 59 62 58 Q 63 55 63 48 Z';
 
     case 'playful':
-      // Medium tongue, slightly to side
-      return 'M 47 57 Q 46 64 48 66 Q 51 67 54 65 Q 56 63 55 57 Z';
+      // Tongue to side
+      return 'M 59 48 Q 61 52 63 54 Q 64 55 65 54 Q 65 51 63 48 Z';
 
     case 'walking':
-      // Panting, to the side
-      return 'M 48 57 Q 52 65 55 67 Q 57 68 58 66 Q 58 63 54 57 Z';
+      // Panting tongue
+      return 'M 58 48 Q 58 54 59 57 Q 61 58 63 57 Q 64 54 64 48 Z';
 
     default:
       return '';
@@ -74,17 +71,17 @@ const getTonguePath = (mood: string): string => {
 const getTongueHighlightPath = (mood: string): string => {
   switch(mood) {
     case 'happy':
-      return 'M 48 59 Q 49 62 50 63 Q 51 62 52 59';
+      return 'M 59 50 Q 59.5 52 60 53 Q 60.5 52 61 50';
 
     case 'excited':
     case 'celebrating':
-      return 'M 47 59 Q 48 65 50 67 Q 52 65 53 59';
+      return 'M 58 50 Q 59 54 60 56 Q 61 54 62 50';
 
     case 'playful':
-      return 'M 49 59 Q 50 62 52 63 Q 53 61 52 59';
+      return 'M 60 50 Q 62 52 63 53 Q 63 51 62 50';
 
     case 'walking':
-      return 'M 51 59 Q 54 63 56 64 Q 56 62 53 59';
+      return 'M 59 50 Q 60 53 61 55 Q 62 53 62 50';
 
     default:
       return '';
@@ -379,8 +376,9 @@ const EnhancedShihTzu: React.FC<EnhancedShihTzuProps> = ({
       <svg
         width={currentSize.width}
         height={currentSize.height}
-        viewBox="0 0 100 100"
+        viewBox="0 0 120 120"
         className={clsx(
+          `ellie-svg mood-${currentMood}`,
           currentMood === "happy" && "animate-bounce-subtle",
           currentMood === "excited" && "animate-wiggle-subtle",
           currentMood === "playful" && "animate-spin-slow",

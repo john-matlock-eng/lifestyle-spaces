@@ -1,0 +1,113 @@
+/* Mood-specific styling classes */
+
+/* Base mood class */
+.ellie-mood {
+  transition: all 0.3s ease;
+}
+
+/* Idle/Default */
+.mood-idle .ellie-body {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+/* Happy */
+.mood-happy .ellie-tail {
+  animation: wag-enhanced 0.8s ease-in-out infinite;
+}
+
+.mood-happy .ellie-ears {
+  animation: ear-wiggle 1.5s ease-in-out infinite;
+}
+
+.mood-happy .ellie-tongue {
+  animation: tongueGentle 2s ease-in-out infinite;
+}
+
+/* Excited */
+.mood-excited .ellie-tail {
+  animation: wag-enhanced 0.4s ease-in-out infinite;
+}
+
+.mood-excited .ellie-body {
+  animation: bounce-subtle 0.6s ease-in-out infinite;
+}
+
+.mood-excited .ellie-ears {
+  animation: wiggle 0.5s ease-in-out infinite;
+}
+
+.mood-excited .ellie-tongue {
+  animation: tonguePant 0.6s ease-in-out infinite;
+}
+
+/* Playful */
+.mood-playful .ellie-tail {
+  animation: wiggle 1s ease-in-out infinite;
+}
+
+.mood-playful .ellie-body {
+  animation: wiggle-subtle 1.5s ease-in-out infinite;
+}
+
+.mood-playful .ellie-tongue {
+  animation: tongueWag 1s ease-in-out infinite;
+}
+
+/* Celebrating */
+.mood-celebrating .ellie-tail {
+  animation: wag-enhanced 0.4s ease-in-out infinite;
+}
+
+.mood-celebrating .ellie-body {
+  animation: bounce-subtle 0.5s ease-in-out infinite;
+}
+
+.mood-celebrating .ellie-ears {
+  animation: ear-wiggle 0.6s ease-in-out infinite;
+}
+
+.mood-celebrating .ellie-tongue {
+  animation: tonguePant 0.6s ease-in-out infinite;
+}
+
+/* Curious */
+.mood-curious .ellie-ears {
+  animation: ear-wiggle 2s ease-in-out infinite;
+}
+
+.mood-curious .ellie-nose {
+  animation: noseSniff 0.5s ease-in-out infinite;
+}
+
+/* Sleeping */
+.mood-sleeping .ellie-body {
+  animation: breathe 6s ease-in-out infinite;
+}
+
+/* Zen */
+.mood-zen .ellie-body {
+  animation: breathe 8s ease-in-out infinite;
+}
+
+/* Concerned */
+.mood-concerned .ellie-ears {
+  transform: rotate(-5deg);
+}
+
+/* Proud */
+.mood-proud .ellie-head {
+  transform: translateY(-2px);
+}
+
+.mood-proud .ellie-tail {
+  transform: rotate(50deg);
+}
+
+/* Walking */
+.mood-walking .ellie-body {
+  animation: bounce-subtle 1s ease-in-out infinite;
+}
+
+.mood-walking .ellie-tongue {
+  animation: tonguePant 0.8s ease-in-out infinite;
+}

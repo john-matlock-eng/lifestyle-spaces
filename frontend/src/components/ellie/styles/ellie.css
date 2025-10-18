@@ -1,0 +1,95 @@
+/* Base Ellie component styles */
+
+.ellie-container {
+  position: relative;
+  display: inline-block;
+  user-select: none;
+}
+
+.ellie-svg {
+  overflow: visible;
+  transition: transform 0.3s ease;
+}
+
+/* Interactive elements */
+.ellie-nose {
+  transition: all 0.3s ease;
+  transform-origin: center;
+  cursor: pointer;
+}
+
+.ellie-nose:hover {
+  transform: scale(1.1);
+}
+
+/* Thought bubble */
+.thought-bubble {
+  position: absolute;
+  top: -50px;
+  right: 0;
+  background: white;
+  border: 2px solid #333;
+  border-radius: 20px;
+  padding: 8px 12px;
+  max-width: 200px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+.thought-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  right: 30px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid white;
+}
+
+.thought-text {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+}
+
+/* Particles */
+.particle {
+  position: absolute;
+  pointer-events: none;
+  font-size: 20px;
+  animation: float-up 3s ease-out forwards;
+}
+
+/* Draggable state */
+.ellie-container.dragging {
+  cursor: grabbing;
+  opacity: 0.8;
+}
+
+.ellie-container.draggable {
+  cursor: grab;
+}
+
+/* Size variants */
+.ellie-sm {
+  transform: scale(0.75);
+}
+
+.ellie-md {
+  transform: scale(1);
+}
+
+.ellie-lg {
+  transform: scale(1.5);
+}
+
+/* Gradient definitions for default fur */
+.ellie-fur-gradient {
+  stop-color: #FDE2E4;
+}
+
+.ellie-fur-gradient-end {
+  stop-color: #E0B1CB;
+}
