@@ -230,6 +230,12 @@ export const JournalEditPage: React.FC = () => {
     // Get previous value before updating
     const previousValue = templateData[sectionId]
 
+    // Start section guidance if this is the first interaction with this section
+    if (!previousValue || (typeof previousValue === 'string' && !previousValue.trim()) || (Array.isArray(previousValue) && previousValue.length === 0)) {
+      handleSectionStart(sectionId)
+      setCurrentSectionId(sectionId)
+    }
+
     setTemplateData((prev) => ({
       ...prev,
       [sectionId]: value

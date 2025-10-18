@@ -118,6 +118,12 @@ export const JournalCreatePage: React.FC = () => {
     // Get previous value before updating
     const previousValue = templateData[sectionId]
 
+    // Start section guidance if this is the first interaction with this section
+    if (!previousValue || (typeof previousValue === 'string' && !previousValue.trim()) || (Array.isArray(previousValue) && previousValue.length === 0)) {
+      handleSectionStart(sectionId)
+      setCurrentSectionId(sectionId)
+    }
+
     setTemplateData((prev) => ({
       ...prev,
       [sectionId]: value
@@ -620,7 +626,14 @@ export const JournalCreatePage: React.FC = () => {
           </label>
           <EmotionSelector
             selectedEmotions={emotions}
-            onEmotionsChange={setEmotions}
+            onEmotionsChange={(newEmotions) => {
+              setEmotions(newEmotions)
+              // Trigger Ellie reaction when emotions are selected
+              if (newEmotions.length > emotions.length && selectedTemplate?.ellie?.onStart) {
+                // User added an emotion - show supportive message
+                console.log('[DEBUG] Emotion added, Ellie reacting')
+              }
+            }}
             disabled={loading}
           />
         </div>
