@@ -110,7 +110,7 @@ class TestTemplatesAPI:
     def test_get_template_not_found(self, client, mock_template_service):
         """Test getting a template that doesn't exist."""
         # Mock service to raise TemplateNotFoundError
-        mock_template_service.get_template.side_effect = TemplateNotFoundError("nonexistent")
+        mock_template_service.get_template.side_effect = TemplateNotFoundError("Template 'nonexistent' not found")
 
         # Make request
         response = client.get("/api/templates/nonexistent")
