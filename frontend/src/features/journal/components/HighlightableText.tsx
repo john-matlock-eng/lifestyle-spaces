@@ -1,10 +1,11 @@
 /**
- * HighlightableText Component - FIXED VERSION
+ * HighlightableText Component - ENHANCED WITH COLOR SELECTION
  *
  * Renders journal text with highlighting capability.
  * Allows users to select text and create highlights with color choices.
+ * Features beautiful gradient popover with animations and color indicators.
  *
- * FIX: Using React Portal to render popover at document.body level
+ * Uses React Portal to render popover at document.body level.
  */
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -23,7 +24,7 @@ interface HighlightableTextProps {
   highlights: Highlight[];
   journalEntryId: string;
   spaceId: string;
-  onHighlightCreate: (selection: HighlightSelection) => void;
+  onHighlightCreate: (selection: HighlightSelection, color: HighlightColor) => void;
   onHighlightClick: (highlight: Highlight) => void;
   isReadOnly?: boolean;
   className?: string;
@@ -39,6 +40,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
 }) => {
   const [selection, setSelection] = useState<HighlightSelection | null>(null);
   const [popoverPosition, setPopoverPosition] = useState<{ x: number; y: number } | null>(null);
+  const [selectedColor, setSelectedColor] = useState<HighlightColor>('yellow');
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Handle text selection
@@ -172,9 +174,8 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
   const handleCreateHighlight = useCallback((color: HighlightColor) => {
     if (selection) {
       console.log('[HighlightableText] Creating highlight with color:', color);
-      // For now, we're not passing color to onHighlightCreate
-      // TODO: Update onHighlightCreate to accept color parameter
-      onHighlightCreate(selection);
+      setSelectedColor(color); // Remember the last used color
+      onHighlightCreate(selection, color);
       setSelection(null);
       setPopoverPosition(null);
       window.getSelection()?.removeAllRanges();
@@ -265,87 +266,131 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           top: `${popoverPosition.y}px`,
           transform: 'translate(-50%, -100%)',
           zIndex: 99999,
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-          padding: '8px',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: '12px',
+          boxShadow: '0 10px 40px rgba(102, 126, 234, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+          padding: '12px',
           display: 'flex',
-          gap: '6px',
-          alignItems: 'center',
-          animation: 'fadeIn 0.2s ease-out',
+          flexDirection: 'column',
+          gap: '8px',
+          animation: 'slideInFromTop 0.3s ease-out',
+          minWidth: '240px',
         }}
       >
         <style>{`
-          @keyframes fadeIn {
+          @keyframes slideInFromTop {
             from {
               opacity: 0;
-              transform: translate(-50%, -90%);
+              transform: translate(-50%, -110%) scale(0.95);
             }
             to {
               opacity: 1;
-              transform: translate(-50%, -100%);
+              transform: translate(-50%, -100%) scale(1);
             }
+          }
+
+          /* Pointer arrow */
+          .highlight-popover::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #764ba2;
           }
         `}</style>
 
-        {/* Color buttons */}
-        {(Object.keys(HIGHLIGHT_COLORS) as HighlightColor[]).map((color) => (
-          <button
-            key={color}
-            className="highlight-color-btn"
-            style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '6px',
-              border: '2px solid transparent',
-              backgroundColor: HIGHLIGHT_COLORS[color],
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              position: 'relative',
-            }}
-            onClick={() => handleCreateHighlight(color)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.1)';
-              e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.borderColor = 'transparent';
-            }}
-            title={`Highlight in ${color}`}
-          >
-            <span style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              top: 0,
-              left: 0,
-              borderRadius: '4px',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-            }} />
-          </button>
-        ))}
-
-        {/* Divider */}
+        {/* Title */}
         <div style={{
-          width: '1px',
-          height: '20px',
-          backgroundColor: '#e5e5e5',
-          margin: '0 4px',
-        }} />
+          color: 'white',
+          fontSize: '13px',
+          fontWeight: '600',
+          textAlign: 'center',
+          marginBottom: '4px',
+          letterSpacing: '0.5px',
+        }}>
+          Choose highlight color
+        </div>
+
+        {/* Color buttons */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+        }}>
+          {(Object.keys(HIGHLIGHT_COLORS) as HighlightColor[]).map((color) => (
+            <button
+              key={color}
+              className="highlight-color-btn"
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                border: selectedColor === color ? '3px solid white' : '2px solid rgba(255, 255, 255, 0.3)',
+                backgroundColor: HIGHLIGHT_COLORS[color],
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                position: 'relative',
+                boxShadow: selectedColor === color
+                  ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                  : '0 2px 6px rgba(0, 0, 0, 0.15)',
+              }}
+              onClick={() => handleCreateHighlight(color)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.1)';
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.25)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = selectedColor === color
+                  ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                  : '0 2px 6px rgba(0, 0, 0, 0.15)';
+              }}
+              title={`Highlight in ${color}`}
+            >
+              {/* Checkmark for selected color */}
+              {selectedColor === color && (
+                <svg
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '16px',
+                    height: '16px',
+                  }}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="rgba(0, 0, 0, 0.6)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
 
         {/* Cancel button */}
         <button
           style={{
-            padding: '4px 8px',
+            padding: '8px 16px',
             fontSize: '13px',
-            color: '#666',
-            backgroundColor: 'transparent',
-            border: '1px solid #e5e5e5',
-            borderRadius: '4px',
+            color: 'white',
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            borderRadius: '6px',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
-            whiteSpace: 'nowrap',
+            fontWeight: '500',
+            marginTop: '4px',
           }}
           onClick={() => {
             setSelection(null);
@@ -353,12 +398,10 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
             window.getSelection()?.removeAllRanges();
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#f5f5f5';
-            e.currentTarget.style.borderColor = '#d0d0d0';
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.borderColor = '#e5e5e5';
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
           }}
         >
           Cancel

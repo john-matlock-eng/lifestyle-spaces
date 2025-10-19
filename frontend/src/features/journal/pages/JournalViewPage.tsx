@@ -356,7 +356,7 @@ ${content}
                             highlights={highlights}
                             journalEntryId={journalId || ''}
                             spaceId={spaceId || ''}
-                            onHighlightCreate={(selection) => createHighlight(selection, 'yellow')}
+                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
                             onHighlightClick={setSelectedHighlight}
                           />
                         )
@@ -387,7 +387,7 @@ ${content}
                             highlights={highlights}
                             journalEntryId={journalId || ''}
                             spaceId={spaceId || ''}
-                            onHighlightCreate={(selection) => createHighlight(selection, 'yellow')}
+                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
                             onHighlightClick={setSelectedHighlight}
                           />
                         )
@@ -465,45 +465,17 @@ ${content}
         />
       )}
 
-      {/* Comment Thread Modal */}
+      {/* Comment Thread - Renders as sliding panel with its own backdrop */}
       {selectedHighlight && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => setSelectedHighlight(null)}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              maxWidth: '600px',
-              maxHeight: '80vh',
-              overflow: 'auto',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <CommentThread
-              highlight={selectedHighlight}
-              comments={comments[selectedHighlight.id] || []}
-              spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
-              currentUserId={user?.userId || ''}
-              onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
-              onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
-              onClose={() => setSelectedHighlight(null)}
-            />
-          </div>
-        </div>
+        <CommentThread
+          highlight={selectedHighlight}
+          comments={comments[selectedHighlight.id] || []}
+          spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
+          currentUserId={user?.userId || ''}
+          onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
+          onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
+          onClose={() => setSelectedHighlight(null)}
+        />
       )}
 
       {/* Ellie companion */}
