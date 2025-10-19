@@ -15,6 +15,7 @@ import './styles';
 
 export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
   mood: propMood = 'idle',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   position = { x: 0, y: 0 },
   size = 'md',
   furColor,
