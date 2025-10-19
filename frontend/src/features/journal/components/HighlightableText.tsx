@@ -117,6 +117,13 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     }
   }, [isReadOnly]);
 
+  // Debug: Log when selection/position changes
+  useEffect(() => {
+    console.log('[HighlightableText] State changed - selection:', selection);
+    console.log('[HighlightableText] State changed - popoverPosition:', popoverPosition);
+    console.log('[HighlightableText] State changed - Should show popover?', !!(selection && popoverPosition && !isReadOnly));
+  }, [selection, popoverPosition, isReadOnly]);
+
   // Handle clicking outside to close popover
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -212,11 +219,12 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
       {/* Highlight Color Popover */}
       {selection && popoverPosition && !isReadOnly && (
         <div
-          className="highlight-popover fixed z-50 bg-white rounded-lg shadow-lg border border-gray-200 p-2 flex gap-2"
+          className="highlight-popover fixed bg-white rounded-lg shadow-lg border-4 border-red-500 p-2 flex gap-2"
           style={{
             left: `${popoverPosition.x}px`,
             top: `${popoverPosition.y}px`,
             transform: 'translate(-50%, -100%)',
+            zIndex: 9999,
           }}
         >
           {(Object.keys(HIGHLIGHT_COLORS) as HighlightColor[]).map((color) => (
