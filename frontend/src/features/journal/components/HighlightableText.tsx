@@ -40,17 +40,28 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
 
   // Handle text selection
   const handleMouseUp = useCallback(() => {
-    if (isReadOnly) return;
+    console.log('[HighlightableText] mouseUp triggered');
+
+    if (isReadOnly) {
+      console.log('[HighlightableText] Read-only mode, ignoring');
+      return;
+    }
 
     const windowSelection = window.getSelection();
+    console.log('[HighlightableText] windowSelection:', windowSelection);
+
     if (!windowSelection || windowSelection.isCollapsed) {
+      console.log('[HighlightableText] No selection or collapsed');
       setSelection(null);
       setPopoverPosition(null);
       return;
     }
 
     const selectedText = windowSelection.toString().trim();
+    console.log('[HighlightableText] Selected text:', selectedText);
+
     if (!selectedText) {
+      console.log('[HighlightableText] Empty selection');
       setSelection(null);
       setPopoverPosition(null);
       return;
@@ -58,37 +69,52 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
 
     const range = windowSelection.getRangeAt(0);
     const boundingRect = range.getBoundingClientRect();
+    console.log('[HighlightableText] boundingRect:', boundingRect);
 
     // Calculate text offsets
     const container = contentRef.current;
-    if (!container) return;
+    console.log('[HighlightableText] container:', container);
 
-    const preSelectionRange = document.createRange();
-    preSelectionRange.selectNodeContents(container);
-    preSelectionRange.setEnd(range.startContainer, range.startOffset);
-    const startOffset = preSelectionRange.toString().length;
-    const endOffset = startOffset + selectedText.length;
+    if (!container) {
+      console.log('[HighlightableText] No container ref, aborting');
+      return;
+    }
 
-    setSelection({
-      text: selectedText,
-      range: {
-        startOffset,
-        endOffset,
-        startContainerId: undefined,
-        endContainerId: undefined,
-      },
-      boundingRect,
-    });
+    try {
+      const preSelectionRange = document.createRange();
+      preSelectionRange.selectNodeContents(container);
+      preSelectionRange.setEnd(range.startContainer, range.startOffset);
+      const startOffset = preSelectionRange.toString().length;
+      const endOffset = startOffset + selectedText.length;
 
-    // Position popover above selection, but keep it on screen
-    // With transform: translate(-50%, -100%), we need extra space above
-    const popoverHeight = 60; // Approximate height of popover
-    const minTop = popoverHeight + 20; // Minimum distance from top of viewport
+      console.log('[HighlightableText] Calculated offsets:', { startOffset, endOffset });
 
-    setPopoverPosition({
-      x: boundingRect.left + boundingRect.width / 2,
-      y: Math.max(minTop, boundingRect.top - 10),
-    });
+      setSelection({
+        text: selectedText,
+        range: {
+          startOffset,
+          endOffset,
+          startContainerId: undefined,
+          endContainerId: undefined,
+        },
+        boundingRect,
+      });
+
+      // Position popover above selection, but keep it on screen
+      // With transform: translate(-50%, -100%), we need extra space above
+      const popoverHeight = 60; // Approximate height of popover
+      const minTop = popoverHeight + 20; // Minimum distance from top of viewport
+
+      const popoverPos = {
+        x: boundingRect.left + boundingRect.width / 2,
+        y: Math.max(minTop, boundingRect.top - 10),
+      };
+
+      console.log('[HighlightableText] Setting popover position:', popoverPos);
+      setPopoverPosition(popoverPos);
+    } catch (error) {
+      console.error('[HighlightableText] Error calculating selection:', error);
+    }
   }, [isReadOnly]);
 
   // Handle clicking outside to close popover
