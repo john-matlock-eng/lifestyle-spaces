@@ -58,9 +58,6 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
   const isConnected = false;
   const isConnecting = false;
   const wsError: string | null = null;
-  const sendMessage = useCallback((_type: string, _payload: Record<string, unknown>) => {
-    // No-op - WebSocket not connected
-  }, []);
   const reconnect = useCallback(() => {
     // No-op - WebSocket not enabled
   }, []);
@@ -320,13 +317,10 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
     [spaceId]
   );
 
-  // Notify typing status
-  const notifyTyping = useCallback(
-    (isTyping: boolean) => {
-      sendMessage(isTyping ? 'TYPING_START' : 'TYPING_STOP', {});
-    },
-    [sendMessage]
-  );
+  // Notify typing status (no-op without WebSocket)
+  const notifyTyping = useCallback(() => {
+    // No-op - WebSocket not enabled
+  }, []);
 
   // Fetch highlights on mount
   useEffect(() => {
