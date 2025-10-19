@@ -13,7 +13,6 @@ import type {
   HighlightSelection,
   PresenceUser,
 } from '../types/highlight.types';
-import { useWebSocket } from './useWebSocket';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -49,105 +48,22 @@ interface PendingAction {
 export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) => {
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [comments, setComments] = useState<Record<string, Comment[]>>({});
-  const [activeUsers, setActiveUsers] = useState<PresenceUser[]>([]);
+  const [activeUsers] = useState<PresenceUser[]>([]); // Empty - no real-time presence
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
 
-  // WebSocket message handler
-  const handleWebSocketMessage = useCallback((message: { type: string; payload: Record<string, unknown> }) => {
-    console.log('Received WebSocket message:', message.type, message.payload);
-
-    switch (message.type) {
-      case 'NEW_HIGHLIGHT':
-        setHighlights((prev) => {
-          // Check if already exists (optimistic update)
-          if (prev.some((h) => h.id === message.payload.id)) {
-            return prev;
-          }
-          return [...prev, message.payload as unknown as Highlight];
-        });
-        // Remove from pending if it was optimistic
-        setPendingActions((prev) =>
-          prev.filter((a) => !(a.type === 'CREATE_HIGHLIGHT' && a.id === message.payload.id))
-        );
-        break;
-
-      case 'DELETE_HIGHLIGHT':
-        setHighlights((prev) => prev.filter((h) => h.id !== message.payload.id));
-        setPendingActions((prev) =>
-          prev.filter((a) => !(a.type === 'DELETE_HIGHLIGHT' && a.id === message.payload.id))
-        );
-        break;
-
-      case 'NEW_COMMENT': {
-        const highlightId = String(message.payload.highlightId);
-        setComments((prev) => ({
-          ...prev,
-          [highlightId]: [
-            ...(prev[highlightId] || []),
-            message.payload as unknown as Comment,
-          ],
-        }));
-        // Update comment count on highlight
-        setHighlights((prev) =>
-          prev.map((h) =>
-            h.id === message.payload.highlightId
-              ? { ...h, commentCount: h.commentCount + 1 }
-              : h
-          )
-        );
-        setPendingActions((prev) =>
-          prev.filter((a) => !(a.type === 'CREATE_COMMENT' && a.id === message.payload.id))
-        );
-        break;
-      }
-
-      case 'DELETE_COMMENT': {
-        const highlightId = String(message.payload.highlightId);
-        setComments((prev) => {
-          return {
-            ...prev,
-            [highlightId]: (prev[highlightId] || []).filter(
-              (c) => c.id !== message.payload.id
-            ),
-          };
-        });
-        // Update comment count on highlight
-        setHighlights((prev) =>
-          prev.map((h) =>
-            h.id === message.payload.highlightId
-              ? { ...h, commentCount: Math.max(0, h.commentCount - 1) }
-              : h
-          )
-        );
-        setPendingActions((prev) =>
-          prev.filter((a) => !(a.type === 'DELETE_COMMENT' && a.id === message.payload.id))
-        );
-        break;
-      }
-
-      case 'USER_PRESENCE':
-        setActiveUsers((message.payload.activeUsers as unknown as PresenceUser[]) || []);
-        break;
-
-      default:
-        console.log('Unknown message type:', message.type);
-    }
+  // WebSocket disabled for now - real-time updates not needed
+  // Users can refresh to see new highlights/comments from others
+  const isConnected = false;
+  const isConnecting = false;
+  const wsError: string | null = null;
+  const sendMessage = useCallback((_type: string, _payload: Record<string, unknown>) => {
+    // No-op - WebSocket not connected
   }, []);
-
-  // WebSocket connection
-  const {
-    isConnected,
-    isConnecting,
-    error: wsError,
-    sendMessage,
-    reconnect,
-  } = useWebSocket({
-    spaceId,
-    journalEntryId,
-    onMessage: handleWebSocketMessage,
-  });
+  const reconnect = useCallback(() => {
+    // No-op - WebSocket not enabled
+  }, []);
 
   // Fetch highlights for journal entry
   const fetchHighlights = useCallback(async () => {
