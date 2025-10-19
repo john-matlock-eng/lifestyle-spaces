@@ -6,6 +6,8 @@
  */
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type {
   Highlight,
   HighlightSelection,
@@ -120,8 +122,9 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
 
   // Render text with highlights
   const renderHighlightedContent = () => {
+    // If no highlights, render markdown
     if (highlights.length === 0) {
-      return <div dangerouslySetInnerHTML={{ __html: content }} />;
+      return <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>;
     }
 
     // Sort highlights by start offset
