@@ -33,38 +33,38 @@ export const getMouthPath = (mood: EllieMood): string => {
 };
 
 /**
- * Generate tongue shape (hangs from mouth, not covering collar)
+ * Generate tongue shape (hangs from mouth, not covering collar) - subtle size
  */
 export const getTonguePath = (mood: EllieMood): string => {
   switch (mood) {
     case 'happy':
-      return 'M 58 48 Q 58 52 59 54 Q 60 55 61 54 Q 62 52 62 48 Z';
+      return 'M 58 48 Q 58 50 59 51 Q 60 52 61 51 Q 62 50 62 48 Z';
     case 'excited':
     case 'celebrating':
-      return 'M 57 48 Q 57 55 58 58 Q 60 59 62 58 Q 63 55 63 48 Z';
+      return 'M 57 48 Q 57 51 58 53 Q 60 54 62 53 Q 63 51 63 48 Z';
     case 'playful':
-      return 'M 59 48 Q 61 52 63 54 Q 64 55 65 54 Q 65 51 63 48 Z';
+      return 'M 59 48 Q 60 50 61 51 Q 62 52 63 51 Q 63 49 62 48 Z';
     case 'walking':
-      return 'M 58 48 Q 58 54 59 57 Q 61 58 63 57 Q 64 54 64 48 Z';
+      return 'M 58 48 Q 58 51 59 52 Q 60 53 61 52 Q 62 51 62 48 Z';
     default:
       return '';
   }
 };
 
 /**
- * Tongue highlight for dimension
+ * Tongue highlight for dimension - subtle
  */
 export const getTongueHighlightPath = (mood: EllieMood): string => {
   switch (mood) {
     case 'happy':
-      return 'M 59 50 Q 59.5 52 60 53 Q 60.5 52 61 50';
+      return 'M 59 49 Q 59.5 50 60 50.5 Q 60.5 50 61 49';
     case 'excited':
     case 'celebrating':
-      return 'M 58 50 Q 59 54 60 56 Q 61 54 62 50';
+      return 'M 58 49 Q 59 51 60 52 Q 61 51 62 49';
     case 'playful':
-      return 'M 60 50 Q 62 52 63 53 Q 63 51 62 50';
+      return 'M 60 49 Q 61 50 61.5 50.5 Q 62 50 62 49';
     case 'walking':
-      return 'M 59 50 Q 60 53 61 55 Q 62 53 62 50';
+      return 'M 59 49 Q 60 50.5 60.5 51 Q 61 50.5 61 49';
     default:
       return '';
   }

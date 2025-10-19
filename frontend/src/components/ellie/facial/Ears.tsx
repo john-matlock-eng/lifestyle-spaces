@@ -5,18 +5,18 @@ import { ELLIE_COORDINATES } from '../constants/coordinates';
 export const Ears: React.FC<BodyPartProps> = ({ furColor, mood, className = '' }) => {
   const { leftEar, rightEar } = ELLIE_COORDINATES.face;
 
-  // Ear rotation based on mood
+  // Ear rotation based on mood - subtle movements
   const getEarRotation = () => {
     switch(mood) {
       case 'curious':
-        return { left: -10, right: 10 };  // Perked up
+        return { left: -5, right: 5 };    // Slightly perked up
       case 'concerned':
-        return { left: -30, right: 30 };  // Droopy
+        return { left: -15, right: 15 };  // Slightly droopy
       case 'excited':
       case 'happy':
-        return { left: -5, right: 5 };    // Alert
+        return { left: -3, right: 3 };    // Slightly alert
       default:
-        return { left: -20, right: 20 };  // Normal
+        return { left: -10, right: 10 };  // Normal (reduced from -20, 20)
     }
   };
 
