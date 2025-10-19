@@ -1,18 +1,20 @@
 /**
- * CommentThread Component - THEME-AWARE GLASSMORPHISM DESIGN
+ * CommentThread Component - DARK MODE COMPATIBLE DESIGN
  *
  * Displays a highlight with its associated comment thread.
  * Features:
+ * - Full dark mode support with automatic detection
  * - Glassmorphism sliding panel from right
- * - Theme-aware gradient header (teal/cyan primary colors)
+ * - Theme-aware gradient header with dark mode variants
+ * - Enhanced contrast for readability
  * - Consistent avatar colors per user
  * - Smooth animations (slideInRight, fadeIn)
- * - Modern comment bubbles
+ * - Modern comment bubbles with proper backgrounds
  * - Smart timestamp formatting (just now, 5m ago, etc.)
- * - @mention highlighting
+ * - @mention highlighting with theme awareness
  * - Elegant reply threading
  * - Floating mention autocomplete
- * - Theme-aware gradient submit button
+ * - Improved spacing and visual hierarchy
  *
  * Uses React Portal to render at document.body level.
  */
@@ -71,8 +73,8 @@ const formatTimestamp = (isoString: string): string => {
   return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-// Highlight @mentions in text using theme colors
-const highlightMentions = (text: string): React.ReactNode => {
+// Highlight @mentions in text using theme colors (dark mode compatible)
+const highlightMentions = (text: string, isDarkMode: boolean = false): React.ReactNode => {
   const parts = text.split(/(@\w+)/g);
   return parts.map((part, index) => {
     if (part.startsWith('@')) {
@@ -80,11 +82,12 @@ const highlightMentions = (text: string): React.ReactNode => {
         <span
           key={index}
           style={{
-            color: 'var(--theme-primary-700)',
-            fontWeight: '600',
-            backgroundColor: 'var(--theme-primary-100)',
-            padding: '2px 4px',
-            borderRadius: '3px',
+            color: isDarkMode ? '#60a5fa' : 'var(--theme-primary-700)',
+            fontWeight: '700',
+            backgroundColor: isDarkMode ? 'rgba(59, 130, 246, 0.15)' : 'var(--theme-primary-100)',
+            padding: '3px 6px',
+            borderRadius: '4px',
+            border: isDarkMode ? '1px solid rgba(59, 130, 246, 0.3)' : 'none',
           }}
         >
           {part}
@@ -108,8 +111,29 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   const [commentText, setCommentText] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setIsDarkMode(isDark);
+    };
+
+    // Initial check
+    checkDarkMode();
+
+    // Watch for theme changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -217,23 +241,31 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
             </div>
           </div>
 
-          {/* Comment content */}
+          {/* Comment content - Dark mode enhanced */}
           <div className="flex-1 min-w-0">
             <div
               style={{
-                backgroundColor: isAuthor ? 'var(--theme-primary-100)' : 'var(--theme-bg-elevated)',
-                borderRadius: '12px',
-                padding: '12px',
-                boxShadow: 'var(--theme-shadow-sm)',
-                border: `1px solid ${isAuthor ? 'var(--theme-primary-200)' : 'var(--theme-border-light)'}`,
+                backgroundColor: isDarkMode
+                  ? (isAuthor ? 'rgba(59, 130, 246, 0.12)' : 'rgba(30, 41, 59, 0.6)')
+                  : (isAuthor ? 'var(--theme-primary-100)' : 'var(--theme-bg-elevated)'),
+                borderRadius: '14px',
+                padding: '14px 16px',
+                boxShadow: isDarkMode
+                  ? '0 4px 12px rgba(0, 0, 0, 0.2)'
+                  : 'var(--theme-shadow-sm)',
+                border: `1px solid ${
+                  isDarkMode
+                    ? (isAuthor ? 'rgba(59, 130, 246, 0.25)' : 'rgba(148, 163, 184, 0.15)')
+                    : (isAuthor ? 'var(--theme-primary-200)' : 'var(--theme-border-light)')
+                }`,
               }}
             >
-              <div className="flex items-baseline gap-2 mb-1">
+              <div className="flex items-baseline gap-2 mb-2">
                 <span
                   style={{
-                    fontWeight: '600',
+                    fontWeight: '700',
                     fontSize: '14px',
-                    color: 'var(--theme-text-primary)',
+                    color: isDarkMode ? '#f1f5f9' : 'var(--theme-text-primary)',
                   }}
                 >
                   {comment.authorName}
@@ -241,7 +273,8 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 <span
                   style={{
                     fontSize: '12px',
-                    color: 'var(--theme-text-secondary)',
+                    color: isDarkMode ? '#94a3b8' : 'var(--theme-text-secondary)',
+                    fontWeight: '500',
                   }}
                 >
                   {formatTimestamp(comment.createdAt)}
@@ -250,7 +283,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                   <span
                     style={{
                       fontSize: '11px',
-                      color: 'var(--theme-text-muted)',
+                      color: isDarkMode ? '#64748b' : 'var(--theme-text-muted)',
                       fontStyle: 'italic',
                     }}
                   >
@@ -261,37 +294,38 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
               <p
                 style={{
                   fontSize: '14px',
-                  color: 'var(--theme-text-primary)',
-                  lineHeight: '1.5',
+                  color: isDarkMode ? '#e2e8f0' : 'var(--theme-text-primary)',
+                  lineHeight: '1.6',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',
                   margin: 0,
                 }}
               >
-                {highlightMentions(comment.text)}
+                {highlightMentions(comment.text, isDarkMode)}
               </p>
             </div>
 
-            {/* Comment actions */}
-            <div className="flex gap-4 mt-2 ml-1">
+            {/* Comment actions - Dark mode compatible */}
+            <div className="flex gap-5 mt-3 ml-2">
               <button
                 style={{
-                  fontSize: '12px',
-                  color: 'var(--theme-primary-600)',
-                  fontWeight: '500',
+                  fontSize: '13px',
+                  color: isDarkMode ? '#60a5fa' : 'var(--theme-primary-600)',
+                  fontWeight: '600',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
                   padding: '0',
+                  transition: 'all 0.15s ease',
                 }}
                 onClick={() => setReplyToId(comment.id)}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.textDecoration = 'underline';
-                  e.currentTarget.style.color = 'var(--theme-primary-700)';
+                  e.currentTarget.style.color = isDarkMode ? '#93c5fd' : 'var(--theme-primary-700)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.textDecoration = 'none';
-                  e.currentTarget.style.color = 'var(--theme-primary-600)';
+                  e.currentTarget.style.color = isDarkMode ? '#60a5fa' : 'var(--theme-primary-600)';
                 }}
               >
                 Reply
@@ -299,22 +333,23 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
               {isAuthor && (
                 <button
                   style={{
-                    fontSize: '12px',
-                    color: 'var(--theme-error-600)',
-                    fontWeight: '500',
+                    fontSize: '13px',
+                    color: isDarkMode ? '#f87171' : 'var(--theme-error-600)',
+                    fontWeight: '600',
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
                     padding: '0',
+                    transition: 'all 0.15s ease',
                   }}
                   onClick={() => onDeleteComment(comment.id)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.textDecoration = 'underline';
-                    e.currentTarget.style.color = 'var(--theme-error-700)';
+                    e.currentTarget.style.color = isDarkMode ? '#fca5a5' : 'var(--theme-error-700)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.textDecoration = 'none';
-                    e.currentTarget.style.color = 'var(--theme-error-600)';
+                    e.currentTarget.style.color = isDarkMode ? '#f87171' : 'var(--theme-error-600)';
                   }}
                 >
                   Delete
@@ -345,7 +380,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)',
           backdropFilter: 'blur(4px)',
           zIndex: 9998,
           animation: 'fadeIn 0.3s ease-out',
@@ -363,10 +398,12 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           bottom: 0,
           width: '480px',
           maxWidth: '90vw',
-          background: 'var(--theme-bg-surface)',
-          backdropFilter: 'blur(20px)',
-          boxShadow: 'var(--theme-shadow-2xl)',
-          border: `1px solid var(--theme-border-light)`,
+          background: isDarkMode ? '#0f172a' : 'var(--theme-bg-surface)',
+          backdropFilter: isDarkMode ? 'blur(30px)' : 'blur(20px)',
+          boxShadow: isDarkMode
+            ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+            : 'var(--theme-shadow-2xl)',
+          border: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.1)' : 'var(--theme-border-light)'}`,
           zIndex: 9999,
           display: 'flex',
           flexDirection: 'column',
@@ -396,15 +433,38 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           .comment-item {
             animation: fadeIn 0.3s ease-out;
           }
+
+          /* Custom scrollbar for comment list */
+          .comments-scrollable::-webkit-scrollbar {
+            width: 8px;
+          }
+
+          .comments-scrollable::-webkit-scrollbar-track {
+            background: ${isDarkMode ? 'rgba(15, 23, 42, 0.5)' : 'rgba(0, 0, 0, 0.05)'};
+            border-radius: 4px;
+          }
+
+          .comments-scrollable::-webkit-scrollbar-thumb {
+            background: ${isDarkMode ? 'rgba(148, 163, 184, 0.3)' : 'rgba(0, 0, 0, 0.2)'};
+            border-radius: 4px;
+          }
+
+          .comments-scrollable::-webkit-scrollbar-thumb:hover {
+            background: ${isDarkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(0, 0, 0, 0.3)'};
+          }
         `}</style>
 
-        {/* Theme-aware Gradient Header */}
+        {/* Dark Mode Compatible Gradient Header */}
         <div
           style={{
-            background: 'linear-gradient(135deg, var(--theme-primary-500) 0%, var(--theme-primary-700) 100%)',
-            padding: '20px 24px',
+            background: isDarkMode
+              ? 'linear-gradient(135deg, #1e40af 0%, #7c3aed 100%)'
+              : 'linear-gradient(135deg, var(--theme-primary-500) 0%, var(--theme-primary-700) 100%)',
+            padding: '24px',
             color: 'white',
-            boxShadow: 'var(--theme-shadow-md)',
+            boxShadow: isDarkMode
+              ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
+              : 'var(--theme-shadow-md)',
           }}
         >
           <div className="flex items-center justify-between mb-3">
@@ -455,18 +515,24 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
             </button>
           </div>
 
-          {/* Highlighted text preview */}
+          {/* Highlighted text preview - Enhanced for dark mode */}
           <div
             style={{
-              padding: '12px',
-              borderRadius: '8px',
-              backgroundColor: highlight.color || HIGHLIGHT_COLORS.yellow,
-              color: 'var(--theme-text-primary)',
+              padding: '14px 16px',
+              borderRadius: '10px',
+              backgroundColor: isDarkMode
+                ? 'rgba(251, 191, 36, 0.15)'  // Semi-transparent yellow for dark mode
+                : (highlight.color || HIGHLIGHT_COLORS.yellow),
+              color: isDarkMode ? '#f1f5f9' : '#1e293b',
               fontSize: '14px',
-              lineHeight: '1.5',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              lineHeight: '1.6',
+              boxShadow: isDarkMode
+                ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                : '0 2px 8px rgba(0, 0, 0, 0.1)',
               maxHeight: '80px',
               overflow: 'auto',
+              border: isDarkMode ? '1px solid rgba(251, 191, 36, 0.3)' : 'none',
+              fontWeight: '500',
             }}
           >
             "{highlight.highlightedText}"
@@ -475,36 +541,47 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           <div
             style={{
               fontSize: '12px',
-              marginTop: '8px',
-              opacity: 0.9,
+              marginTop: '10px',
+              opacity: 0.95,
+              fontWeight: '400',
             }}
           >
             Highlighted by {highlight.createdByName} • {formatTimestamp(highlight.createdAt)}
           </div>
         </div>
 
-        {/* Comments list */}
+        {/* Comments list - Dark mode compatible */}
         <div
+          className="comments-scrollable"
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '16px 24px',
-            backgroundColor: 'var(--theme-bg-base)',
+            padding: '20px 24px',
+            backgroundColor: isDarkMode ? '#1e293b' : 'var(--theme-bg-base)',
           }}
         >
           {comments.length === 0 ? (
             <div
               style={{
                 textAlign: 'center',
-                padding: '48px 24px',
-                color: 'var(--theme-text-secondary)',
+                padding: '60px 24px',
+                color: isDarkMode ? '#94a3b8' : 'var(--theme-text-secondary)',
               }}
             >
-              <div style={{ fontSize: '48px', marginBottom: '12px' }}>💭</div>
-              <div style={{ fontSize: '14px', fontWeight: '500' }}>
+              <div style={{ fontSize: '56px', marginBottom: '16px', opacity: isDarkMode ? 0.6 : 1 }}>💭</div>
+              <div style={{
+                fontSize: '15px',
+                fontWeight: '600',
+                color: isDarkMode ? '#cbd5e1' : 'inherit',
+                marginBottom: '6px'
+              }}>
                 No comments yet
               </div>
-              <div style={{ fontSize: '13px', marginTop: '4px' }}>
+              <div style={{
+                fontSize: '13px',
+                color: isDarkMode ? '#94a3b8' : 'inherit',
+                opacity: 0.9
+              }}>
                 Be the first to share your thoughts!
               </div>
             </div>
@@ -513,38 +590,43 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           )}
         </div>
 
-        {/* Comment input */}
+        {/* Comment input - Dark mode compatible */}
         <div
           style={{
-            borderTop: `1px solid var(--theme-border-light)`,
-            padding: '20px 24px',
-            backgroundColor: 'var(--theme-bg-surface)',
-            boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.05)',
+            borderTop: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'var(--theme-border-light)'}`,
+            padding: '24px',
+            backgroundColor: isDarkMode ? '#0f172a' : 'var(--theme-bg-surface)',
+            boxShadow: isDarkMode
+              ? '0 -4px 16px rgba(0, 0, 0, 0.3)'
+              : '0 -4px 12px rgba(0, 0, 0, 0.05)',
             position: 'relative',
           }}
         >
           {replyToId && (
             <div
               style={{
-                marginBottom: '12px',
+                marginBottom: '14px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '8px 12px',
-                backgroundColor: 'var(--theme-primary-100)',
-                borderRadius: '6px',
+                gap: '10px',
+                padding: '10px 14px',
+                backgroundColor: isDarkMode
+                  ? 'rgba(59, 130, 246, 0.15)'
+                  : 'var(--theme-primary-100)',
+                borderRadius: '8px',
                 fontSize: '13px',
-                color: 'var(--theme-primary-700)',
+                color: isDarkMode ? '#93c5fd' : 'var(--theme-primary-700)',
+                border: isDarkMode ? '1px solid rgba(59, 130, 246, 0.3)' : 'none',
               }}
             >
-              <span>↩ Replying to comment</span>
+              <span style={{ fontWeight: '500' }}>↩ Replying to comment</span>
               <button
                 onClick={() => setReplyToId(null)}
                 style={{
                   marginLeft: 'auto',
                   background: 'none',
                   border: 'none',
-                  color: 'var(--theme-primary-700)',
+                  color: isDarkMode ? '#93c5fd' : 'var(--theme-primary-700)',
                   fontWeight: '600',
                   cursor: 'pointer',
                   fontSize: '13px',
@@ -555,7 +637,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
             </div>
           )}
 
-          {/* Mention autocomplete */}
+          {/* Mention autocomplete - Dark mode compatible */}
           {showMentions && filteredMembers.length > 0 && (
             <div
               style={{
@@ -563,12 +645,14 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 bottom: '100%',
                 left: '24px',
                 right: '24px',
-                marginBottom: '8px',
-                backgroundColor: 'var(--theme-bg-surface)',
-                border: `1px solid var(--theme-border-light)`,
-                borderRadius: '8px',
-                boxShadow: 'var(--theme-shadow-lg)',
-                maxHeight: '160px',
+                marginBottom: '10px',
+                backgroundColor: isDarkMode ? '#1e293b' : 'var(--theme-bg-surface)',
+                border: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'var(--theme-border-light)'}`,
+                borderRadius: '10px',
+                boxShadow: isDarkMode
+                  ? '0 20px 25px -5px rgba(0, 0, 0, 0.4)'
+                  : 'var(--theme-shadow-lg)',
+                maxHeight: '180px',
                 overflowY: 'auto',
               }}
             >
@@ -577,7 +661,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                   key={member.id}
                   style={{
                     width: '100%',
-                    padding: '10px 12px',
+                    padding: '12px 14px',
                     textAlign: 'left',
                     fontSize: '14px',
                     background: 'none',
@@ -585,13 +669,16 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.2s ease',
-                    color: 'var(--theme-text-primary)',
+                    gap: '10px',
+                    transition: 'background-color 0.15s ease',
+                    color: isDarkMode ? '#e2e8f0' : 'var(--theme-text-primary)',
+                    fontWeight: '500',
                   }}
                   onClick={() => handleMentionSelect(member.name)}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--theme-primary-50)';
+                    e.currentTarget.style.backgroundColor = isDarkMode
+                      ? 'rgba(59, 130, 246, 0.15)'
+                      : 'var(--theme-primary-50)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = 'transparent';
@@ -626,17 +713,19 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
             placeholder="Add a comment... (use @ to mention)"
             style={{
               width: '100%',
-              padding: '12px',
-              border: `1px solid var(--theme-border-light)`,
-              borderRadius: '8px',
+              padding: '14px 16px',
+              border: `2px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'var(--theme-border-light)'}`,
+              borderRadius: '10px',
               fontSize: '14px',
               resize: 'none',
-              minHeight: '44px',
-              maxHeight: '120px',
+              minHeight: '52px',
+              maxHeight: '140px',
               outline: 'none',
-              transition: 'border-color 0.2s ease',
-              backgroundColor: 'var(--theme-bg-surface)',
-              color: 'var(--theme-text-primary)',
+              transition: 'all 0.2s ease',
+              backgroundColor: isDarkMode ? '#1e293b' : 'var(--theme-bg-surface)',
+              color: isDarkMode ? '#f1f5f9' : 'var(--theme-text-primary)',
+              fontFamily: 'inherit',
+              lineHeight: '1.5',
             }}
             rows={1}
             onKeyDown={(e) => {
@@ -646,10 +735,14 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
               }
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'var(--theme-primary-500)';
+              e.currentTarget.style.borderColor = isDarkMode ? '#3b82f6' : 'var(--theme-primary-500)';
+              e.currentTarget.style.boxShadow = isDarkMode
+                ? '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                : '0 0 0 3px rgba(20, 184, 166, 0.1)';
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--theme-border-light)';
+              e.currentTarget.style.borderColor = isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'var(--theme-border-light)';
+              e.currentTarget.style.boxShadow = 'none';
             }}
           />
 
