@@ -122,6 +122,7 @@ export const useHighlights = (spaceId: string, journalEntryId: string) => {
 
         setHighlights((prev) => prev.filter((h) => h.id !== highlightId));
         setComments((prev) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { [highlightId]: _, ...rest } = prev;
           return rest;
         });

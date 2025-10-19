@@ -31,7 +31,7 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
   const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
 
   // WebSocket message handler
-  const handleWebSocketMessage = useCallback((message: any) => {
+  const handleWebSocketMessage = useCallback((message: { type: string; payload: Record<string, unknown> }) => {
     console.log('Received WebSocket message:', message.type, message.payload);
 
     switch (message.type) {
@@ -41,7 +41,7 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
           if (prev.some((h) => h.id === message.payload.id)) {
             return prev;
           }
-          return [...prev, message.payload];
+          return [...prev, message.payload as Highlight];
         });
         // Remove from pending if it was optimistic
         setPendingActions((prev) =>
@@ -59,9 +59,9 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
       case 'NEW_COMMENT':
         setComments((prev) => ({
           ...prev,
-          [message.payload.highlightId]: [
-            ...(prev[message.payload.highlightId] || []),
-            message.payload,
+          [message.payload.highlightId as string]: [
+            ...(prev[message.payload.highlightId as string] || []),
+            message.payload as Comment,
           ],
         }));
         // Update comment count on highlight
@@ -266,6 +266,7 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
         // Remove from state
         setHighlights((prev) => prev.filter((h) => h.id !== highlightId));
         setComments((prev) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { [highlightId]: _, ...rest } = prev;
           return rest;
         });

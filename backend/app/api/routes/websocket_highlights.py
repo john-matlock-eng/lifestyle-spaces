@@ -10,7 +10,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, Depends
 from fastapi.responses import JSONResponse
 
 from app.websocket.highlight_manager import get_websocket_manager
-from app.api.dependencies import get_current_user_ws
+from app.core.dependencies import get_current_user_ws
 
 
 logger = logging.getLogger(__name__)

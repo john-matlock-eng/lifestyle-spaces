@@ -8,7 +8,7 @@ import { HighlightWebSocketMessage } from '../types/highlight.types';
 interface UseWebSocketOptions {
   spaceId: string;
   journalEntryId: string;
-  onMessage?: (message: HighlightWebSocketMessage) => void;
+  onMessage?: (message: { type: string; payload: Record<string, unknown> }) => void;
   onConnect?: () => void;
   onDisconnect?: () => void;
   onError?: (error: Event) => void;
@@ -18,7 +18,7 @@ interface UseWebSocketReturn {
   isConnected: boolean;
   isConnecting: boolean;
   error: string | null;
-  sendMessage: (type: string, payload: any) => void;
+  sendMessage: (type: string, payload: Record<string, unknown>) => void;
   reconnect: () => void;
 }
 
@@ -52,7 +52,7 @@ export const useWebSocket = (options: UseWebSocketOptions): UseWebSocketReturn =
   }, []);
 
   // Send message through WebSocket
-  const sendMessage = useCallback((type: string, payload: any) => {
+  const sendMessage = useCallback((type: string, payload: Record<string, unknown>) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       const message = {
         type,
