@@ -39,15 +39,13 @@ export const ELLIE_COORDINATES = {
 
   // Facial features
   face: {
-    nose: { cx: 60, cy: 42, rx: 4, ry: 3 },
-    leftEye: { cx: 53, cy: 34, radius: 2.5 },
-    rightEye: { cx: 67, cy: 34, radius: 2.5 },
-    leftEar: {
-      path: 'M 45 28 Q 38 32 40 42 Q 42 45 45 42 Q 47 35 45 28',
-    },
-    rightEar: {
-      path: 'M 75 28 Q 82 32 80 42 Q 78 45 75 42 Q 73 35 75 28',
-    },
+    nose: { cx: 60, cy: 40, rx: 6, ry: 4.5 },
+    // Eyes closer together (center is 60)
+    leftEye: { cx: 54, cy: 32 },
+    rightEye: { cx: 66, cy: 32 },
+    // Ears as ellipses for better control
+    leftEar: { cx: 40, cy: 25, rx: 8, ry: 12 },
+    rightEar: { cx: 80, cy: 25, rx: 8, ry: 12 },
   },
 
   // Mouth positioning (below nose)
@@ -96,12 +94,13 @@ export const ELLIE_COORDINATES = {
     transformOrigin: '35 62',
   },
 
-  // Collar positioning (on neck)
+  // Collar positioning (on neck - using rect instead of ellipse)
   collar: {
-    cx: 60,
-    cy: 52,
-    rx: 14,
-    ry: 4,
+    x: 48,      // Left edge (neck center 60 - half width 12)
+    y: 48,      // Top of neck area
+    width: 24,  // Matches neck width (rx: 12 * 2)
+    height: 6,  // Thinner collar
+    rx: 3,      // Border radius
   },
 
   // Shadow positioning

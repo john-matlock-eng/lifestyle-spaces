@@ -1,4 +1,5 @@
 import React from 'react';
+import { ELLIE_COORDINATES } from '../constants/coordinates';
 
 export interface FabricCollarProps {
   color: string;
@@ -7,29 +8,10 @@ export interface FabricCollarProps {
 }
 
 export const FabricCollar: React.FC<FabricCollarProps> = ({ color, showTag = false, className = '' }) => {
+  const { collar } = ELLIE_COORDINATES;
+
   return (
     <g className={`ellie-collar fabric ${className}`}>
-      {/* Fabric collar band - softer appearance */}
-      <ellipse
-        cx="50"
-        cy="58"
-        rx="14"
-        ry="3.5"
-        fill={color}
-        stroke="rgba(0, 0, 0, 0.2)"
-        strokeWidth="0.3"
-      />
-
-      {/* Fabric weave pattern */}
-      <ellipse
-        cx="50"
-        cy="58"
-        rx="14"
-        ry="3.5"
-        fill="url(#fabricPattern)"
-        opacity="0.3"
-      />
-
       {/* Pattern definition */}
       <defs>
         <pattern id="fabricPattern" width="2" height="2" patternUnits="userSpaceOnUse">
@@ -38,19 +20,49 @@ export const FabricCollar: React.FC<FabricCollarProps> = ({ color, showTag = fal
         </pattern>
       </defs>
 
+      {/* Fabric collar band - softer appearance */}
+      <rect
+        x={collar.x}
+        y={collar.y}
+        width={collar.width}
+        height={collar.height}
+        rx={collar.rx}
+        fill={color}
+        stroke="rgba(0, 0, 0, 0.2)"
+        strokeWidth="0.3"
+      />
+
+      {/* Fabric weave pattern */}
+      <rect
+        x={collar.x}
+        y={collar.y}
+        width={collar.width}
+        height={collar.height}
+        rx={collar.rx}
+        fill="url(#fabricPattern)"
+        opacity="0.3"
+      />
+
+      {/* Polka dot pattern */}
+      <circle cx={collar.x + 5} cy={collar.y + 3} r="1" fill="#fff" opacity="0.5" />
+      <circle cx={collar.x + 12} cy={collar.y + 3} r="1" fill="#fff" opacity="0.5" />
+      <circle cx={collar.x + 19} cy={collar.y + 3} r="1" fill="#fff" opacity="0.5" />
+
       {/* Name tag */}
       {showTag && (
         <g className="name-tag">
-          <path
-            d="M 45 62 L 48 62 L 48 66 L 46.5 65 L 45 66 Z"
+          <circle
+            cx={collar.x + collar.width / 2}
+            cy={collar.y + collar.height + 2}
+            r="3"
             fill="#FFD700"
             stroke="#B8860B"
             strokeWidth="0.3"
           />
           <text
-            x="46.5"
-            y="64.5"
-            fontSize="2"
+            x={collar.x + collar.width / 2}
+            y={collar.y + collar.height + 3.5}
+            fontSize="2.5"
             fill="#B8860B"
             textAnchor="middle"
             fontWeight="bold"
