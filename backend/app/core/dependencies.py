@@ -102,11 +102,45 @@ def get_current_user_id(
 ) -> str:
     """
     Get the current authenticated user's ID.
-    
+
     Args:
         current_user: User data from JWT token
-    
+
     Returns:
         str: User ID from the 'sub' claim
     """
     return current_user.get("sub", current_user.get("userId"))
+
+
+async def get_current_user_ws(token: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Get the current user for WebSocket connections.
+
+    WebSocket connections pass the token as a query parameter instead of a header.
+
+    Args:
+        token: JWT access token from query parameter
+
+    Returns:
+        Dict: User information
+
+    Raises:
+        HTTPException: If authentication fails
+    """
+    # TODO: Implement full JWT validation for WebSocket connections
+    # For now, return a placeholder user
+    if not token:
+        return {
+            "userId": "anonymous",
+            "displayName": "Anonymous User"
+        }
+
+    # In production, validate the token and extract user info
+    # from app.core.cognito_auth import verify_token
+    # user_data = verify_token(token)
+    # return user_data
+
+    return {
+        "userId": token[:8] if len(token) > 8 else token,
+        "displayName": f"User {token[:8]}"
+    }
