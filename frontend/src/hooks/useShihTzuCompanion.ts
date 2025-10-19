@@ -39,7 +39,25 @@ export interface UseShihTzuCompanionReturn {
 
 // Configuration constants
 const COMPANION_OFFSET = 80 // Distance from element edge
-const COMPANION_SIZE = 100 // Approximate size of companion
+const COMPANION_SIZE = 120 // Approximate size of companion (including thought bubble)
+const VIEWPORT_PADDING = 20 // Minimum distance from viewport edges
+
+// Helper to constrain position within viewport bounds
+const constrainToViewport = (position: Position): Position => {
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+
+  const x = Math.max(
+    VIEWPORT_PADDING,
+    Math.min(position.x, viewportWidth - COMPANION_SIZE - VIEWPORT_PADDING)
+  )
+  const y = Math.max(
+    VIEWPORT_PADDING,
+    Math.min(position.y, viewportHeight - COMPANION_SIZE - VIEWPORT_PADDING)
+  )
+
+  return { x, y }
+}
 
 // Valid moods for runtime validation
 const VALID_MOODS: readonly Mood[] = [
@@ -63,13 +81,24 @@ export function useShihTzuCompanion({
   }
 
   const [mood, setMoodState] = useState<Mood>(isValidMood(initialMood) ? initialMood : 'idle')
-  const [position, setPosition] = useState<Position>(initialPosition)
+  // Constrain initial position to viewport bounds
+  const [position, setPosition] = useState<Position>(constrainToViewport(initialPosition))
 
   // Track if this is the first render to avoid initial transitions
   const isFirstRender = useRef(true)
 
   useEffect(() => {
     isFirstRender.current = false
+  }, [])
+
+  // Handle viewport resize - keep Ellie in bounds
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition(currentPos => constrainToViewport(currentPos))
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   // Stable function to update mood with validation
@@ -116,21 +145,8 @@ export function useShihTzuCompanion({
       }
     }
 
-    // Ensure position stays within viewport bounds with padding
-    const viewportPadding = 20
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-
-    newX = Math.max(
-      viewportPadding,
-      Math.min(newX, viewportWidth - COMPANION_SIZE - viewportPadding)
-    )
-    newY = Math.max(
-      viewportPadding,
-      Math.min(newY, viewportHeight - COMPANION_SIZE - viewportPadding)
-    )
-
-    setPosition({ x: newX, y: newY })
+    // Constrain to viewport bounds
+    setPosition(constrainToViewport({ x: newX, y: newY }))
   }, [])
 
   // Celebrate function - sets mood and triggers optional effects
