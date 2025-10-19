@@ -256,73 +256,132 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     }
   }, [clickedHighlight, onHighlightClick]);
 
-  // Render text with highlights
+  // Render text with highlights - preserves markdown formatting
   const renderHighlightedContent = () => {
-    // If no highlights, render markdown
+    // If no highlights, render markdown normally
     if (filteredHighlights.length === 0) {
       return <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>;
     }
 
-    // Sort highlights by start offset
+    // Sort highlights by start offset for efficient lookup
     const sortedHighlights = [...filteredHighlights].sort(
       (a, b) => a.textRange.startOffset - b.textRange.startOffset
     );
 
-    const parts: React.ReactNode[] = [];
-    let currentIndex = 0;
+    // Create a ref to track character offset across the entire render tree
+    const offsetTracker = { current: 0 };
 
-    sortedHighlights.forEach((highlight, idx) => {
-      const { startOffset, endOffset } = highlight.textRange;
+    // Process text node and apply highlights where they overlap
+    const processTextNode = (text: string): React.ReactNode => {
+      if (!text) return text;
 
-      // Add text before highlight
-      if (currentIndex < startOffset) {
-        parts.push(
-          <span key={`text-${idx}`}>
-            {content.substring(currentIndex, startOffset)}
-          </span>
-        );
+      const textStart = offsetTracker.current;
+      const textEnd = textStart + text.length;
+      offsetTracker.current = textEnd;
+
+      // Find highlights that overlap with this text segment
+      const overlapping = sortedHighlights.filter(h => {
+        return h.textRange.startOffset < textEnd && h.textRange.endOffset > textStart;
+      });
+
+      if (overlapping.length === 0) {
+        return text;
       }
 
-      // Add highlighted text
-      parts.push(
-        <mark
-          key={`highlight-${highlight.id}`}
-          className="highlight cursor-pointer transition-all hover:opacity-80"
-          style={{
-            backgroundColor: highlight.color || HIGHLIGHT_COLORS.yellow,
-            padding: '2px 0',
-            borderRadius: '2px'
-          }}
-          onClick={(e) => handleExistingHighlightClick(e, highlight)}
-          title={`Click for options (${highlight.commentCount || 0} comments)`}
-        >
-          {content.substring(startOffset, endOffset)}
-          {highlight.commentCount > 0 && (
-            <span
-              style={{
-                marginLeft: '4px',
-                fontSize: '0.8em',
-                verticalAlign: 'super',
-                opacity: 0.7
-              }}
-            >
-              [{highlight.commentCount}]
-            </span>
-          )}
-        </mark>
-      );
+      // Split text into parts with highlights
+      const parts: React.ReactNode[] = [];
+      let pos = 0;
 
-      currentIndex = endOffset;
-    });
+      overlapping.forEach((highlight, idx) => {
+        // Calculate positions relative to this text node
+        const relStart = Math.max(0, highlight.textRange.startOffset - textStart);
+        const relEnd = Math.min(text.length, highlight.textRange.endOffset - textStart);
 
-    // Add remaining text
-    if (currentIndex < content.length) {
-      parts.push(
-        <span key="text-end">{content.substring(currentIndex)}</span>
-      );
-    }
+        // Text before highlight
+        if (relStart > pos) {
+          parts.push(text.substring(pos, relStart));
+        }
 
-    return <>{parts}</>;
+        // Highlighted text
+        parts.push(
+          <mark
+            key={`h-${highlight.id}-${idx}`}
+            className="highlight cursor-pointer transition-all hover:opacity-80"
+            style={{
+              backgroundColor: highlight.color || HIGHLIGHT_COLORS.yellow,
+              padding: '2px 0',
+              borderRadius: '2px',
+            }}
+            onClick={(e) => handleExistingHighlightClick(e, highlight)}
+            title={`Click for options (${highlight.commentCount || 0} comments)`}
+          >
+            {text.substring(relStart, relEnd)}
+            {highlight.commentCount > 0 && (
+              <span
+                style={{
+                  marginLeft: '4px',
+                  fontSize: '0.8em',
+                  verticalAlign: 'super',
+                  opacity: 0.7,
+                }}
+              >
+                [{highlight.commentCount}]
+              </span>
+            )}
+          </mark>
+        );
+
+        pos = relEnd;
+      });
+
+      // Remaining text
+      if (pos < text.length) {
+        parts.push(text.substring(pos));
+      }
+
+      return <>{parts}</>;
+    };
+
+    // Process children recursively to handle nested structures
+    const processChildren = (children: any): any => {
+      if (typeof children === 'string') {
+        return processTextNode(children);
+      }
+
+      if (Array.isArray(children)) {
+        return children.map((child, i) => {
+          if (typeof child === 'string') {
+            return <React.Fragment key={i}>{processTextNode(child)}</React.Fragment>;
+          }
+          return child;
+        });
+      }
+
+      return children;
+    };
+
+    // Custom components that process text while preserving structure
+    const components: any = {
+      p: ({ children, ...props }: any) => <p {...props}>{processChildren(children)}</p>,
+      li: ({ children, ...props }: any) => <li {...props}>{processChildren(children)}</li>,
+      h1: ({ children, ...props }: any) => <h1 {...props}>{processChildren(children)}</h1>,
+      h2: ({ children, ...props }: any) => <h2 {...props}>{processChildren(children)}</h2>,
+      h3: ({ children, ...props }: any) => <h3 {...props}>{processChildren(children)}</h3>,
+      h4: ({ children, ...props }: any) => <h4 {...props}>{processChildren(children)}</h4>,
+      h5: ({ children, ...props }: any) => <h5 {...props}>{processChildren(children)}</h5>,
+      h6: ({ children, ...props }: any) => <h6 {...props}>{processChildren(children)}</h6>,
+      strong: ({ children, ...props }: any) => <strong {...props}>{processChildren(children)}</strong>,
+      em: ({ children, ...props }: any) => <em {...props}>{processChildren(children)}</em>,
+      code: ({ children, ...props }: any) => <code {...props}>{processChildren(children)}</code>,
+      a: ({ children, ...props }: any) => <a {...props}>{processChildren(children)}</a>,
+      blockquote: ({ children, ...props }: any) => <blockquote {...props}>{processChildren(children)}</blockquote>,
+    };
+
+    return (
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+        {content}
+      </ReactMarkdown>
+    );
   };
 
   // Render "Create Highlight" button
