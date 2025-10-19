@@ -260,7 +260,14 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 }`,
               }}
             >
-              <div className="flex items-baseline gap-2 mb-2">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: '8px',
+                  marginBottom: '8px',
+                }}
+              >
                 <span
                   style={{
                     fontWeight: '700',
@@ -306,7 +313,14 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
             </div>
 
             {/* Comment actions - Dark mode compatible */}
-            <div className="flex gap-5 mt-3 ml-2">
+            <div
+              style={{
+                display: 'flex',
+                gap: '16px',
+                marginTop: '12px',
+                marginLeft: '8px',
+              }}
+            >
               <button
                 style={{
                   fontSize: '13px',
