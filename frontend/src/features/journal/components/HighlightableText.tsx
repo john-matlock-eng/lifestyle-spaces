@@ -133,10 +133,10 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           boundingRect,
         });
 
-        // Position button above selection (viewport-relative for fixed positioning)
+        // Position button below selection to avoid OS context menu (viewport-relative for fixed positioning)
         const buttonPos = {
           x: boundingRect.left + (boundingRect.width / 2),
-          y: boundingRect.top - 10, // 10px above selection
+          y: boundingRect.bottom + 10, // 10px below selection
         };
 
         console.log('[HighlightableText] Setting button position:', buttonPos);
@@ -420,7 +420,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           position: 'fixed',
           left: `${buttonPosition.x}px`,
           top: `${buttonPosition.y}px`,
-          transform: 'translate(-50%, -100%)',
+          transform: 'translate(-50%, 0%)',
           zIndex: 99999,
           animation: 'fadeIn 0.2s ease-out',
         }}
@@ -470,7 +470,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           position: 'fixed',
           left: `${buttonPosition.x}px`,
           top: `${buttonPosition.y}px`,
-          transform: 'translate(-50%, -100%)',
+          transform: 'translate(-50%, 0%)',
           zIndex: 99999,
           background: 'linear-gradient(135deg, var(--theme-primary-500) 0%, var(--theme-primary-700) 100%)',
           borderRadius: '12px',
@@ -479,34 +479,34 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
-          animation: 'slideInFromTop 0.3s ease-out',
+          animation: 'slideInFromBottom 0.3s ease-out',
           minWidth: '240px',
         }}
       >
         <style>{`
-          @keyframes slideInFromTop {
+          @keyframes slideInFromBottom {
             from {
               opacity: 0;
-              transform: translate(-50%, -110%) scale(0.95);
+              transform: translate(-50%, 10%) scale(0.95);
             }
             to {
               opacity: 1;
-              transform: translate(-50%, -100%) scale(1);
+              transform: translate(-50%, 0%) scale(1);
             }
           }
 
-          /* Pointer arrow - uses theme primary-700 */
+          /* Pointer arrow pointing up - uses theme primary-500 */
           .highlight-color-picker::after {
             content: '';
             position: absolute;
-            bottom: -8px;
+            top: -8px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
             border-left: 8px solid transparent;
             border-right: 8px solid transparent;
-            border-top: 8px solid var(--theme-primary-700);
+            border-bottom: 8px solid var(--theme-primary-500);
           }
         `}</style>
 
