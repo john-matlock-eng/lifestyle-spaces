@@ -10,9 +10,13 @@
   animation: breathe 4s ease-in-out infinite;
 }
 
-/* Happy */
+/* Happy - subtle animations only */
+.mood-happy .ellie-body {
+  animation: breathe 5s ease-in-out infinite;
+}
+
 .mood-happy .ellie-tail {
-  animation: wag-enhanced 0.8s ease-in-out infinite;
+  animation: wag-enhanced 2s ease-in-out infinite;
 }
 
 /* Removed ear animation - ears should be static */

@@ -1,8 +1,8 @@
-/* Tail animations - subtle movements */
+/* Tail animations - very subtle movements */
 @keyframes wag-enhanced {
   0%, 100% { transform: rotate(-45deg); }
-  25% { transform: rotate(-50deg); }
-  75% { transform: rotate(-40deg); }
+  25% { transform: rotate(-48deg); }
+  75% { transform: rotate(-42deg); }
 }
 
 @keyframes wiggle {
@@ -25,7 +25,7 @@
 
 @keyframes breathe {
   0%, 100% { transform: scaleY(1) scaleX(1); }
-  50% { transform: scaleY(0.95) scaleX(1.02); }
+  50% { transform: scaleY(0.98) scaleX(1.01); }
 }
 
 @keyframes breathingSlow {
