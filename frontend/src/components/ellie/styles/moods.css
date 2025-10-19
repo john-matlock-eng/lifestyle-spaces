@@ -15,8 +15,9 @@
   animation: breathe 5s ease-in-out infinite;
 }
 
-.mood-happy .ellie-tail {
+.mood-happy .ellie-tail-inner {
   animation: wag-enhanced 2s ease-in-out infinite;
+  transform-origin: center center;
 }
 
 /* Removed ear animation - ears should be static */
@@ -26,12 +27,13 @@
 }
 
 /* Excited */
-.mood-excited .ellie-tail {
-  animation: wag-enhanced 0.4s ease-in-out infinite;
+.mood-excited .ellie-tail-inner {
+  animation: wag-enhanced 0.6s ease-in-out infinite;
+  transform-origin: center center;
 }
 
 .mood-excited .ellie-body {
-  animation: bounce-subtle 0.6s ease-in-out infinite;
+  animation: bounce-subtle 0.8s ease-in-out infinite;
 }
 
 /* Removed ear animation - ears should be static */
@@ -41,12 +43,13 @@
 }
 
 /* Playful */
-.mood-playful .ellie-tail {
+.mood-playful .ellie-tail-inner {
   animation: wiggle 1s ease-in-out infinite;
+  transform-origin: center center;
 }
 
 .mood-playful .ellie-body {
-  animation: wiggle-subtle 1.5s ease-in-out infinite;
+  animation: breathe 3s ease-in-out infinite;
 }
 
 .mood-playful .ellie-tongue {
@@ -54,8 +57,9 @@
 }
 
 /* Celebrating */
-.mood-celebrating .ellie-tail {
-  animation: wag-enhanced 0.4s ease-in-out infinite;
+.mood-celebrating .ellie-tail-inner {
+  animation: wag-enhanced 0.6s ease-in-out infinite;
+  transform-origin: center center;
 }
 
 .mood-celebrating .ellie-body {

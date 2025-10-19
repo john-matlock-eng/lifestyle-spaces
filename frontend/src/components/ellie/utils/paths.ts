@@ -123,13 +123,13 @@ export const getTailRotation = (mood: EllieMood): number => {
     case 'excited':
     case 'playful':
     case 'celebrating':
-      return 10; // Slightly up (happy)
+      return 8; // Slightly up (happy) - reduced from 10
     case 'concerned':
       return -5; // Slightly down (tucked)
     case 'sleeping':
     case 'zen':
-      return 3; // Relaxed
+      return 2; // Relaxed - reduced from 3
     default:
-      return 5; // Normal/neutral
+      return 2; // Normal/neutral - reduced from 5
   }
 };

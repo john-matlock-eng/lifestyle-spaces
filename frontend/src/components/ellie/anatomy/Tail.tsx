@@ -8,16 +8,19 @@ export const Tail: React.FC<BodyPartProps> = ({ furColor, mood, className = '' }
   const { tail } = ELLIE_COORDINATES;
 
   return (
-    <g className={`ellie-tail ${className}`}>
+    <g
+      className={`ellie-tail ${className}`}
+      transform={`rotate(${tail.rotation + rotation} ${tail.transformOrigin})`}
+    >
       {/* Tail - ellipse for better shape */}
+      {/* The wag animation will be applied via CSS to this inner element */}
       <ellipse
         cx={tail.cx}
         cy={tail.cy}
         rx={tail.rx}
         ry={tail.ry}
         fill={furColor}
-        transform={`rotate(${tail.rotation + rotation} ${tail.transformOrigin})`}
-        style={{ transformOrigin: tail.transformOrigin }}
+        className="ellie-tail-inner"
       />
     </g>
   );
