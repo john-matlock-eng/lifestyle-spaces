@@ -78,9 +78,14 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
       boundingRect,
     });
 
+    // Position popover above selection, but keep it on screen
+    // With transform: translate(-50%, -100%), we need extra space above
+    const popoverHeight = 60; // Approximate height of popover
+    const minTop = popoverHeight + 20; // Minimum distance from top of viewport
+
     setPopoverPosition({
       x: boundingRect.left + boundingRect.width / 2,
-      y: boundingRect.top - 10,
+      y: Math.max(minTop, boundingRect.top - 10),
     });
   }, [isReadOnly]);
 
