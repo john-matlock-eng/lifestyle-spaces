@@ -13,6 +13,12 @@ import { Ellie } from '../../../components/ellie'
 import { useShihTzuCompanion } from '../../../hooks'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { AIAssistantDock } from '../components/AIAssistantDock'
+import { HighlightableText } from '../components/HighlightableText'
+import { CommentThread } from '../components/CommentThread'
+import { PresenceAvatars } from '../components/PresenceAvatars'
+import { ConnectionStatus } from '../components/ConnectionStatus'
+import { useHighlightsRealtime } from '../hooks/useHighlightsRealtime'
+import type { Highlight } from '../types/highlight.types'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -30,6 +36,21 @@ export const JournalViewPage: React.FC = () => {
   const [template, setTemplate] = useState<Template | null>(null)
   const [displaySections, setDisplaySections] = useState<DisplaySection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
+  const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
+
+  // Highlights and comments real-time feature
+  const {
+    highlights,
+    comments,
+    activeUsers,
+    isConnected,
+    isConnecting,
+    error: highlightError,
+    createHighlight,
+    createComment,
+    deleteComment,
+    reconnect
+  } = useHighlightsRealtime(spaceId || '', journalId || '')
 
   // Ellie companion
   const { mood, setMood, position } = useShihTzuCompanion({
@@ -279,9 +300,20 @@ ${content}
         </div>
       </div>
 
+      {/* Presence and Connection Status */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <PresenceAvatars activeUsers={activeUsers} maxVisible={5} />
+        <ConnectionStatus
+          isConnected={isConnected}
+          isConnecting={isConnecting}
+          error={highlightError}
+          onReconnect={reconnect}
+        />
+      </div>
+
       <div className="journal-view-content">
         {template && displaySections.length > 0 ? (
-          // Render template sections parsed from content
+          // Render template sections with highlighting
           <div className="template-content">
             {template.icon && (
               <div className="template-icon-display" style={{ fontSize: '2em', marginBottom: '1em' }}>
@@ -293,7 +325,7 @@ ${content}
                 <h3 className="template-section-title">{section.title}</h3>
                 <div className="template-section-content">
                   {section.type === 'q_and_a' ? (
-                    // Render Q&A section
+                    // Render Q&A section (without highlighting for structured content)
                     (() => {
                       try {
                         const qaPairs = JSON.parse(section.content) as Array<{
@@ -317,8 +349,17 @@ ${content}
                           </div>
                         )
                       } catch {
-                        // If parsing fails, fall back to markdown
-                        return <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
+                        // If parsing fails, use highlightable text
+                        return (
+                          <HighlightableText
+                            content={section.content}
+                            highlights={highlights}
+                            journalEntryId={journalId || ''}
+                            spaceId={spaceId || ''}
+                            onHighlightCreate={(selection) => createHighlight(selection, 'yellow')}
+                            onHighlightClick={setSelectedHighlight}
+                          />
+                        )
                       }
                     })()
                   ) : section.type === 'list' ? (
@@ -339,25 +380,46 @@ ${content}
                           </ul>
                         )
                       } catch {
-                        // If parsing fails, fall back to markdown
-                        return <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
+                        // If parsing fails, use highlightable text
+                        return (
+                          <HighlightableText
+                            content={section.content}
+                            highlights={highlights}
+                            journalEntryId={journalId || ''}
+                            spaceId={spaceId || ''}
+                            onHighlightCreate={(selection) => createHighlight(selection, 'yellow')}
+                            onHighlightClick={setSelectedHighlight}
+                          />
+                        )
                       }
                     })()
                   ) : (
-                    // Render other section types as markdown
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
+                    // Render other section types with highlighting
+                    <HighlightableText
+                      content={section.content}
+                      highlights={highlights}
+                      journalEntryId={journalId || ''}
+                      spaceId={spaceId || ''}
+                      onHighlightCreate={(selection) => createHighlight(selection, 'yellow')}
+                      onHighlightClick={setSelectedHighlight}
+                    />
                   )}
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          // Render regular markdown content (or clean markdown if no sections)
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {template
+          // Render regular content with highlighting
+          <HighlightableText
+            content={template
               ? JournalContentManager.extractCleanMarkdown(journal.content)
               : journal.content}
-          </ReactMarkdown>
+            highlights={highlights}
+            journalEntryId={journalId || ''}
+            spaceId={spaceId || ''}
+            onHighlightCreate={(selection) => createHighlight(selection, 'yellow')}
+            onHighlightClick={setSelectedHighlight}
+          />
         )}
       </div>
 
@@ -401,6 +463,47 @@ ${content}
           emotions={journal.emotions?.map(id => getEmotionById(id)?.label).filter((label): label is string => !!label)}
           onClose={() => setShowAIDock(false)}
         />
+      )}
+
+      {/* Comment Thread Modal */}
+      {selectedHighlight && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setSelectedHighlight(null)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              maxWidth: '600px',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CommentThread
+              highlight={selectedHighlight}
+              comments={comments[selectedHighlight.id] || []}
+              spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
+              currentUserId={user?.userId || ''}
+              onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
+              onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
+              onClose={() => setSelectedHighlight(null)}
+            />
+          </div>
+        </div>
       )}
 
       {/* Ellie companion */}
