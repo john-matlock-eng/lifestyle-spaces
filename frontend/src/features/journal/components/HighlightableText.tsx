@@ -121,16 +121,14 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           boundingRect,
         });
 
-        // Position button above selection, accounting for scroll
-        const scrollY = window.scrollY || window.pageYOffset;
-        const scrollX = window.scrollX || window.pageXOffset;
-
+        // Position button above selection (viewport-relative for fixed positioning)
         const buttonPos = {
-          x: boundingRect.left + (boundingRect.width / 2) + scrollX,
-          y: boundingRect.top + scrollY - 10, // 10px above selection
+          x: boundingRect.left + (boundingRect.width / 2),
+          y: boundingRect.top - 10, // 10px above selection
         };
 
         console.log('[HighlightableText] Setting button position:', buttonPos);
+        console.log('[HighlightableText] BoundingRect:', boundingRect);
         setButtonPosition(buttonPos);
         setShowCreateButton(true);
         setShowColorPicker(false); // Don't show color picker yet
@@ -212,15 +210,19 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
   const handleExistingHighlightClick = useCallback((e: React.MouseEvent, highlight: Highlight) => {
     e.stopPropagation();
 
-    // Calculate position for menu
+    // Calculate position for menu (viewport-relative for fixed positioning)
     const rect = (e.target as HTMLElement).getBoundingClientRect();
-    const scrollY = window.scrollY || window.pageYOffset;
-    const scrollX = window.scrollX || window.pageXOffset;
 
     setClickedHighlight(highlight);
     setHighlightMenuPosition({
-      x: rect.left + (rect.width / 2) + scrollX,
-      y: rect.bottom + scrollY + 8, // 8px below highlight
+      x: rect.left + (rect.width / 2),
+      y: rect.bottom + 8, // 8px below highlight
+    });
+
+    console.log('[HighlightableText] Highlight menu position:', {
+      x: rect.left + (rect.width / 2),
+      y: rect.bottom + 8,
+      rect
     });
   }, []);
 
