@@ -148,7 +148,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         console.error('[HighlightableText] Error calculating selection:', error);
       }
     }, 500); // 500ms delay allows for selection adjustment
-  }, [isReadOnly]);
+  }, [isReadOnly, sectionId]);
 
   // Handle clicking outside to close UI elements
   useEffect(() => {
@@ -343,7 +343,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     };
 
     // Process children recursively to handle nested structures
-    const processChildren = (children: any): any => {
+    const processChildren = (children: React.ReactNode): React.ReactNode => {
       if (typeof children === 'string') {
         return processTextNode(children);
       }
@@ -360,25 +360,34 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
       return children;
     };
 
+    // Type for markdown component props
+    type MarkdownComponentProps = {
+      children?: React.ReactNode;
+      [key: string]: unknown;
+    };
+
     // Custom components that process text while preserving structure
-    const components: any = {
-      p: ({ children, ...props }: any) => <p {...props}>{processChildren(children)}</p>,
-      li: ({ children, ...props }: any) => <li {...props}>{processChildren(children)}</li>,
-      h1: ({ children, ...props }: any) => <h1 {...props}>{processChildren(children)}</h1>,
-      h2: ({ children, ...props }: any) => <h2 {...props}>{processChildren(children)}</h2>,
-      h3: ({ children, ...props }: any) => <h3 {...props}>{processChildren(children)}</h3>,
-      h4: ({ children, ...props }: any) => <h4 {...props}>{processChildren(children)}</h4>,
-      h5: ({ children, ...props }: any) => <h5 {...props}>{processChildren(children)}</h5>,
-      h6: ({ children, ...props }: any) => <h6 {...props}>{processChildren(children)}</h6>,
-      strong: ({ children, ...props }: any) => <strong {...props}>{processChildren(children)}</strong>,
-      em: ({ children, ...props }: any) => <em {...props}>{processChildren(children)}</em>,
-      code: ({ children, ...props }: any) => <code {...props}>{processChildren(children)}</code>,
-      a: ({ children, ...props }: any) => <a {...props}>{processChildren(children)}</a>,
-      blockquote: ({ children, ...props }: any) => <blockquote {...props}>{processChildren(children)}</blockquote>,
+    const components = {
+      p: ({ children, ...props }: MarkdownComponentProps) => <p {...props}>{processChildren(children)}</p>,
+      li: ({ children, ...props }: MarkdownComponentProps) => <li {...props}>{processChildren(children)}</li>,
+      h1: ({ children, ...props }: MarkdownComponentProps) => <h1 {...props}>{processChildren(children)}</h1>,
+      h2: ({ children, ...props }: MarkdownComponentProps) => <h2 {...props}>{processChildren(children)}</h2>,
+      h3: ({ children, ...props }: MarkdownComponentProps) => <h3 {...props}>{processChildren(children)}</h3>,
+      h4: ({ children, ...props }: MarkdownComponentProps) => <h4 {...props}>{processChildren(children)}</h4>,
+      h5: ({ children, ...props }: MarkdownComponentProps) => <h5 {...props}>{processChildren(children)}</h5>,
+      h6: ({ children, ...props }: MarkdownComponentProps) => <h6 {...props}>{processChildren(children)}</h6>,
+      strong: ({ children, ...props }: MarkdownComponentProps) => <strong {...props}>{processChildren(children)}</strong>,
+      em: ({ children, ...props }: MarkdownComponentProps) => <em {...props}>{processChildren(children)}</em>,
+      code: ({ children, ...props }: MarkdownComponentProps) => <code {...props}>{processChildren(children)}</code>,
+      a: ({ children, ...props }: MarkdownComponentProps) => <a {...props}>{processChildren(children)}</a>,
+      blockquote: ({ children, ...props }: MarkdownComponentProps) => <blockquote {...props}>{processChildren(children)}</blockquote>,
     };
 
     return (
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={components as React.ComponentProps<typeof ReactMarkdown>['components']}
+      >
         {content}
       </ReactMarkdown>
     );
