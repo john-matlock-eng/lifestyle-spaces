@@ -86,25 +86,34 @@ class DynamoDBClient:
     def query(self, pk: str, sk_prefix: Optional[str] = None, index_name: Optional[str] = None) -> list:
         """
         Query items from the DynamoDB table.
-        
+
         Args:
-            pk: Partition key
+            pk: Partition key value
             sk_prefix: Optional sort key prefix for filtering
             index_name: Optional GSI name to query
-        
+
         Returns:
             list: List of items matching the query
         """
+        # Determine key names based on whether we're querying a GSI
+        if index_name == 'GSI1':
+            pk_key = 'GSI1PK'
+            sk_key = 'GSI1SK'
+        else:
+            pk_key = 'PK'
+            sk_key = 'SK'
+
+        # Build key condition expression
         kwargs = {
-            'KeyConditionExpression': Key('PK').eq(pk)
+            'KeyConditionExpression': Key(pk_key).eq(pk)
         }
-        
+
         if sk_prefix:
-            kwargs['KeyConditionExpression'] = kwargs['KeyConditionExpression'] & Key('SK').begins_with(sk_prefix)
-        
+            kwargs['KeyConditionExpression'] = kwargs['KeyConditionExpression'] & Key(sk_key).begins_with(sk_prefix)
+
         if index_name:
             kwargs['IndexName'] = index_name
-        
+
         response = self.table.query(**kwargs)
         return response.get('Items', [])
 
