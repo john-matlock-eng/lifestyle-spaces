@@ -1,35 +1,27 @@
 import React from 'react';
 import type { BodyPartProps } from '../types/ellie.types';
+import { ELLIE_COORDINATES } from '../constants/coordinates';
 
 export const Body: React.FC<BodyPartProps> = ({ furColor, className = '' }) => {
+  const { body } = ELLIE_COORDINATES;
+
   return (
     <g className={`ellie-body ${className}`}>
-      {/* Shadow/ground indicator */}
+      {/* Main body */}
       <ellipse
-        cx="50"
-        cy="95"
-        rx="18"
-        ry="3"
-        fill="rgba(0, 0, 0, 0.15)"
-      />
-
-      {/* Main body - slimmer proportions */}
-      <ellipse
-        cx="50"
-        cy="68"
-        rx="22"
-        ry="20"
+        cx={body.cx}
+        cy={body.cy}
+        rx={body.rx}
+        ry={body.ry}
         fill={furColor}
-        stroke="#8B7355"
-        strokeWidth="0.5"
       />
 
       {/* Chest/belly highlight */}
       <ellipse
-        cx="50"
-        cy="72"
-        rx="12"
-        ry="10"
+        cx={body.cx}
+        cy={body.cy + 4}
+        rx={12}
+        ry={8}
         fill="rgba(255, 255, 255, 0.1)"
       />
     </g>

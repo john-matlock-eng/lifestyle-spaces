@@ -11,14 +11,14 @@ export interface EllieProps {
   showThoughtBubble?: boolean
   thoughtText?: string
   particleEffect?: 'hearts' | 'sparkles' | 'treats' | 'zzz' | null
-  variant?: 'default' | 'winter' | 'party' | 'workout' | 'balloon' // Deprecated - no longer used
+  variant?: 'default' | 'winter' | 'party' | 'workout' | 'balloon'
   className?: string
   tabIndex?: number
   // Customization props
   furColor?: string
   collarStyle?: 'none' | 'leather' | 'fabric' | 'bowtie' | 'bandana'
   collarColor?: string
-  collarTag?: boolean // Deprecated - tag is shown automatically based on collar style
+  collarTag?: boolean
 }
 
 export const Ellie: React.FC<EllieProps> = ({
@@ -31,15 +31,13 @@ export const Ellie: React.FC<EllieProps> = ({
   showThoughtBubble = false,
   thoughtText = '',
   particleEffect = null,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  variant: _variant, // Accept but ignore - deprecated
+  variant = 'default',
   className,
   tabIndex,
   furColor,
   collarStyle = 'none',
   collarColor = '#8B4513',
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  collarTag: _collarTag // Accept but ignore - tag shown automatically
+  collarTag = false
 }) => {
   // Generate ARIA label based on mood
   const getAriaLabel = () => {
@@ -75,9 +73,11 @@ export const Ellie: React.FC<EllieProps> = ({
         showThoughtBubble={showThoughtBubble}
         thoughtText={thoughtText}
         particleEffect={particleEffect}
+        variant={variant}
         furColor={furColor}
         collarStyle={collarStyle}
         collarColor={collarColor}
+        collarTag={collarTag}
       />
     </div>
   )

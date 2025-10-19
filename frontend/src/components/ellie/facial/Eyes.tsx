@@ -1,8 +1,11 @@
 import React from 'react';
 import type { FacialFeatureProps } from '../types/ellie.types';
 import { getEyePath } from '../utils/paths';
+import { ELLIE_COORDINATES } from '../constants/coordinates';
 
 export const Eyes: React.FC<FacialFeatureProps> = ({ mood, className = '' }) => {
+  const { leftEye, rightEye } = ELLIE_COORDINATES.face;
+
   return (
     <g className={`ellie-eyes ${className}`}>
       {/* Left eye */}
@@ -26,8 +29,8 @@ export const Eyes: React.FC<FacialFeatureProps> = ({ mood, className = '' }) => 
       {/* Eye shine (only when not sleeping) */}
       {mood !== 'sleeping' && (
         <>
-          <circle cx="41" cy="34" r="0.8" fill="rgba(255, 255, 255, 0.8)" />
-          <circle cx="59" cy="34" r="0.8" fill="rgba(255, 255, 255, 0.8)" />
+          <circle cx={leftEye.cx - 1} cy={leftEye.cy} r="0.8" fill="rgba(255, 255, 255, 0.8)" />
+          <circle cx={rightEye.cx - 1} cy={rightEye.cy} r="0.8" fill="rgba(255, 255, 255, 0.8)" />
         </>
       )}
     </g>

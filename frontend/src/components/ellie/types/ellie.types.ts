@@ -17,6 +17,8 @@ export type ParticleEffect = 'hearts' | 'sparkles' | 'treats' | 'zzz' | null;
 
 export type CollarStyle = 'none' | 'leather' | 'fabric' | 'bowtie' | 'bandana';
 
+export type EllieVariant = 'default' | 'winter' | 'party' | 'workout' | 'balloon';
+
 export interface ElliePosition {
   x: number;
   y: number;
@@ -29,6 +31,8 @@ export interface EllieProps {
   furColor?: string;
   collarStyle?: CollarStyle;
   collarColor?: string;
+  collarTag?: boolean;
+  variant?: EllieVariant;
   showThoughtBubble?: boolean;
   thoughtText?: string;
   particleEffect?: ParticleEffect;

@@ -6,9 +6,11 @@ import { Neck } from './anatomy/Neck';
 import { Legs } from './anatomy/Legs';
 import { Tail } from './anatomy/Tail';
 import { Collar } from './accessories/Collar';
+import { VariantDecorations } from './accessories/VariantDecorations';
 import { useEllieMood } from './hooks/useEllieMood';
 import { useEllieAnimation } from './hooks/useEllieAnimation';
-import { ELLIE_SIZES, VIEWBOX, DEFAULT_COLLAR_STYLE, DEFAULT_COLLAR_COLOR } from './constants';
+import { ELLIE_SIZES, VIEWBOX, DEFAULT_COLLAR_STYLE, DEFAULT_COLLAR_COLOR, ELLIE_COORDINATES } from './constants';
+import { getVariantColors, getEffectiveFurColor } from './utils/variants';
 import './styles';
 
 export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
@@ -18,6 +20,8 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
   furColor,
   collarStyle = DEFAULT_COLLAR_STYLE,
   collarColor = DEFAULT_COLLAR_COLOR,
+  collarTag = false,
+  variant = 'default',
   showThoughtBubble = false,
   thoughtText = '',
   particleEffect: propParticleEffect = null,
@@ -49,8 +53,11 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
     }
   }, [propParticleEffect, particleEffect, celebrate]);
 
-  // Determine fur color (use gradient if not specified)
-  const effectiveFurColor = furColor || `url(#ellie-fur-gradient)`;
+  // Get variant colors
+  const variantColors = getVariantColors(variant);
+
+  // Determine fur color (furColor prop takes precedence over variant)
+  const effectiveFurColor = getEffectiveFurColor(furColor, variant);
 
   // Size config
   const sizeConfig = ELLIE_SIZES[size];
@@ -169,23 +176,30 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
         height={sizeConfig.height}
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Gradient definition for default fur */}
+        {/* Gradient definition for fur based on variant */}
         <defs>
           <linearGradient id="ellie-fur-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" className="ellie-fur-gradient" />
-            <stop offset="100%" className="ellie-fur-gradient-end" />
+            <stop offset="0%" stopColor={variantColors.primary} />
+            <stop offset="100%" stopColor={variantColors.secondary} />
           </linearGradient>
         </defs>
 
-        {/* Render in proper layering order */}
+        {/* Shadow */}
+        <ellipse
+          cx={ELLIE_COORDINATES.shadow.cx}
+          cy={ELLIE_COORDINATES.shadow.cy}
+          rx={ELLIE_COORDINATES.shadow.rx}
+          ry={ELLIE_COORDINATES.shadow.ry}
+          fill="rgba(0, 0, 0, 0.1)"
+        />
 
-        {/* 1. Back legs (furthest back) */}
-        <g className="back-layer">
-          <Legs furColor={effectiveFurColor} mood={mood} />
-        </g>
+        {/* Render in proper layering order - back to front */}
 
-        {/* 2. Tail */}
+        {/* 1. Tail (furthest back) */}
         <Tail furColor={effectiveFurColor} mood={mood} />
+
+        {/* 2. Legs */}
+        <Legs furColor={effectiveFurColor} mood={mood} />
 
         {/* 3. Body */}
         <Body furColor={effectiveFurColor} mood={mood} />
@@ -194,11 +208,13 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
         <Neck furColor={effectiveFurColor} mood={mood} />
 
         {/* 5. Collar (on neck) */}
-        <Collar
-          style={collarStyle}
-          color={collarColor}
-          showTag={collarStyle !== 'none' && collarStyle !== 'bandana'}
-        />
+        {collarStyle !== 'none' && (
+          <Collar
+            style={collarStyle}
+            color={collarColor}
+            showTag={collarTag}
+          />
+        )}
 
         {/* 6. Head (with all facial features) */}
         <Head
@@ -206,6 +222,9 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
           mood={mood}
           onNoseBoop={handleNoseBoop}
         />
+
+        {/* 7. Variant decorations (balloons, snowflakes, etc.) */}
+        <VariantDecorations variant={variant} />
       </svg>
     </div>
   );

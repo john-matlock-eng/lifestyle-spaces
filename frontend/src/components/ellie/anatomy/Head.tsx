@@ -1,12 +1,15 @@
 import React from 'react';
 import type { BodyPartProps } from '../types/ellie.types';
 import { Nose, Mouth, Tongue, Eyes, Ears } from '../facial';
+import { ELLIE_COORDINATES } from '../constants/coordinates';
 
 export interface HeadProps extends BodyPartProps {
   onNoseBoop?: () => void;
 }
 
 export const Head: React.FC<HeadProps> = ({ furColor, mood, onNoseBoop, className = '' }) => {
+  const { head, muzzle } = ELLIE_COORDINATES;
+
   return (
     <g className={`ellie-head ${className}`}>
       {/* Ears (behind head) */}
@@ -14,34 +17,28 @@ export const Head: React.FC<HeadProps> = ({ furColor, mood, onNoseBoop, classNam
 
       {/* Main head circle */}
       <circle
-        cx="50"
-        cy="30"
-        r="20"
+        cx={head.cx}
+        cy={head.cy}
+        r={head.radius}
         fill={furColor}
-        stroke="#8B7355"
-        strokeWidth="0.5"
       />
 
-      {/* Muzzle/snout area */}
+      {/* Upper muzzle/snout area */}
       <ellipse
-        cx="50"
-        cy="38"
-        rx="12"
-        ry="10"
+        cx={muzzle.upper.cx}
+        cy={muzzle.upper.cy}
+        rx={muzzle.upper.rx}
+        ry={muzzle.upper.ry}
         fill={furColor}
-        stroke="#8B7355"
-        strokeWidth="0.5"
       />
 
-      {/* Lower jaw */}
+      {/* Lower muzzle/jaw */}
       <ellipse
-        cx="50"
-        cy="42"
-        rx="10"
-        ry="6"
+        cx={muzzle.lower.cx}
+        cy={muzzle.lower.cy}
+        rx={muzzle.lower.rx}
+        ry={muzzle.lower.ry}
         fill={furColor}
-        stroke="#8B7355"
-        strokeWidth="0.5"
       />
 
       {/* Eyes */}
