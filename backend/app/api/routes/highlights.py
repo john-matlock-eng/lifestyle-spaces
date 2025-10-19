@@ -141,11 +141,14 @@ async def create_comment(
     # TODO: Verify user has access to this space
     # TODO: Verify highlight exists
 
+    user_id = current_user.get("sub") or current_user.get("userId")
+    user_name = current_user.get("profile", {}).get("displayName", "Unknown User")
+
     comment = await service.create_comment(
         space_id=space_id,
         highlight_id=highlight_id,
-        user_id=current_user["userId"],
-        user_name=current_user.get("displayName", "Unknown User"),
+        user_id=user_id,
+        user_name=user_name,
         request=request,
     )
 
@@ -183,10 +186,12 @@ async def update_comment(
     """Update a comment. Only the author can update."""
     service = CommentService()
 
+    user_id = current_user.get("sub") or current_user.get("userId")
+
     comment = await service.update_comment(
         space_id=space_id,
         comment_id=comment_id,
-        user_id=current_user["userId"],
+        user_id=user_id,
         new_text=new_text,
     )
 
@@ -211,10 +216,12 @@ async def delete_comment(
     """Delete a comment. Only the author can delete."""
     service = CommentService()
 
+    user_id = current_user.get("sub") or current_user.get("userId")
+
     success = await service.delete_comment(
         space_id=space_id,
         comment_id=comment_id,
-        user_id=current_user["userId"],
+        user_id=user_id,
     )
 
     if not success:
