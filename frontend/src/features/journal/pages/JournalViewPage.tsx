@@ -23,6 +23,7 @@ import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
 import '../styles/ai-assistant-dock.css'
+import '../styles/journal-compact.css'
 
 /**
  * Page for viewing a single journal entry
@@ -37,6 +38,7 @@ export const JournalViewPage: React.FC = () => {
   const [displaySections, setDisplaySections] = useState<DisplaySection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
   const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
+  const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
 
   // Highlights and comments real-time feature
   const {
@@ -184,6 +186,12 @@ ${content}
     URL.revokeObjectURL(url)
   }
 
+  // Calculate read time (average 200 words per minute)
+  const calculateReadTime = (wordCount: number): string => {
+    const minutes = Math.ceil(wordCount / 200)
+    return minutes === 1 ? '1 min' : `${minutes} min`
+  }
+
   if (loading) {
     return (
       <div className="journal-view-container">
@@ -216,60 +224,86 @@ ${content}
 
   const isAuthor = user?.userId === journal.userId
   const canEdit = isAuthor
+  const highlightCount = highlights.length
+  const totalComments = Object.values(comments).reduce((sum, arr) => sum + arr.length, 0)
 
   return (
-    <div className="journal-view-container">
-      <button onClick={handleBack} className="button-secondary" style={{ marginBottom: '16px' }}>
+    <div className={`journal-view-container compact density-${density} has-sticky-actions`}>
+      <button onClick={handleBack} className="button-secondary" style={{ marginBottom: '12px' }}>
         ← Back
       </button>
 
-      <div className="journal-view-header">
-        <h1 className="journal-view-title">
-          {journal.title}
-          {journal.isPinned && <span className="journal-card-pin">📌</span>}
-        </h1>
-
-        {template && (
-          <div className="journal-template-badge">
-            <span className="template-icon">{template.icon}</span>
-            <span className="template-name">{template.name}</span>
+      {/* Compact Header */}
+      <div className="journal-header-compact">
+        {/* Title Row */}
+        <div className="journal-title-row">
+          <div className="journal-title-content">
+            <h1 className="journal-title-compact">
+              {journal.title}
+              {journal.isPinned && <span style={{ marginLeft: '8px' }}>📌</span>}
+            </h1>
+            {template && (
+              <div className="journal-template-badge-compact">
+                <span>{template.icon}</span>
+                <span>{template.name}</span>
+              </div>
+            )}
           </div>
-        )}
 
-        <div className="journal-view-meta">
+          {/* Density Toggle */}
+          <div className="density-toggle">
+            <button
+              className={`density-option ${density === 'compact' ? 'active' : ''}`}
+              onClick={() => setDensity('compact')}
+              title="Compact view"
+            >
+              Compact
+            </button>
+            <button
+              className={`density-option ${density === 'comfortable' ? 'active' : ''}`}
+              onClick={() => setDensity('comfortable')}
+              title="Comfortable view"
+            >
+              Comfortable
+            </button>
+            <button
+              className={`density-option ${density === 'spacious' ? 'active' : ''}`}
+              onClick={() => setDensity('spacious')}
+              title="Spacious view"
+            >
+              Spacious
+            </button>
+          </div>
+        </div>
+
+        {/* Metadata Pills */}
+        <div className="journal-meta-pills">
           {journal.author && (
-            <div className="journal-meta-item">
-              <span className="meta-icon">👤</span>
+            <div className="journal-meta-pill">
+              <span>👤</span>
               <span>{journal.author.displayName}</span>
             </div>
           )}
 
-          <div className="journal-meta-item">
-            <span className="meta-icon">📅</span>
+          <div className="journal-meta-pill">
+            <span>📅</span>
             <span>{formatDate(journal.createdAt)}</span>
           </div>
 
           {journal.updatedAt !== journal.createdAt && (
-            <div className="journal-meta-item">
-              <span className="meta-icon">✏️</span>
+            <div className="journal-meta-pill">
+              <span>✏️</span>
               <span>Updated {formatDate(journal.updatedAt)}</span>
             </div>
           )}
+        </div>
 
-          {journal.wordCount > 0 && (
-            <div className="journal-meta-item">
-              <span className="meta-icon">📝</span>
-              <span>{journal.wordCount} words</span>
-            </div>
-          )}
-
-          {journal.emotions && journal.emotions.length > 0 && (
-            <div className="journal-emotions-section">
-              <div className="journal-meta-label">
-                <span className="meta-icon">💭</span>
-                <span>Emotions:</span>
-              </div>
-              <div className="journal-emotions-list">
+        {/* Inline Emotions and Tags */}
+        {((journal.emotions && journal.emotions.length > 0) || (journal.tags && journal.tags.length > 0)) && (
+          <div className="journal-meta-inline">
+            {journal.emotions && journal.emotions.length > 0 && (
+              <>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>💭</span>
                 {journal.emotions.map((emotionId) => {
                   const emotion = getEmotionById(emotionId)
                   if (!emotion) return null
@@ -287,25 +321,45 @@ ${content}
                     </span>
                   )
                 })}
-              </div>
-            </div>
-          )}
+              </>
+            )}
 
-          {journal.tags && journal.tags.length > 0 && (
-            <div className="journal-tags-section">
-              <div className="journal-meta-label">
-                <span className="meta-icon">🏷️</span>
-                <span>Tags:</span>
-              </div>
-              <div className="journal-card-tags">
+            {journal.tags && journal.tags.length > 0 && (
+              <>
+                <span className="journal-meta-separator">•</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>🏷️</span>
                 {journal.tags.map((tag) => (
                   <span key={tag} className="journal-tag">
                     {tag}
                   </span>
                 ))}
-              </div>
-            </div>
-          )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Quick Stats Bar */}
+      <div className="journal-stats-bar">
+        <div className="journal-stat-item">
+          <span>📝</span>
+          <span className="journal-stat-value">{journal.wordCount}</span>
+          <span className="journal-stat-label">words</span>
+        </div>
+        <div className="journal-stat-item">
+          <span>⏱️</span>
+          <span className="journal-stat-value">{calculateReadTime(journal.wordCount)}</span>
+          <span className="journal-stat-label">read</span>
+        </div>
+        <div className="journal-stat-item">
+          <span>🎨</span>
+          <span className="journal-stat-value">{highlightCount}</span>
+          <span className="journal-stat-label">{highlightCount === 1 ? 'highlight' : 'highlights'}</span>
+        </div>
+        <div className="journal-stat-item">
+          <span>💬</span>
+          <span className="journal-stat-value">{totalComments}</span>
+          <span className="journal-stat-label">{totalComments === 1 ? 'comment' : 'comments'}</span>
         </div>
       </div>
 
@@ -330,8 +384,8 @@ ${content}
               </div>
             )}
             {displaySections.map((section) => (
-              <div key={section.id} className="template-section">
-                <h3 className="template-section-title">{section.title}</h3>
+              <div key={section.id} className="template-section template-section-compact">
+                <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
                 <div className="template-section-content">
                   {section.type === 'q_and_a' ? (
                     // Render Q&A section (without highlighting for structured content)
@@ -343,14 +397,14 @@ ${content}
                           answer: string
                         }>
                         return (
-                          <div className="qa-view-section">
+                          <div className="qa-view-section qa-view-section-compact">
                             {qaPairs.map((pair, index: number) => (
-                              <div key={pair.id || index} className="qa-view-pair">
-                                <div className="qa-view-question">
-                                  <span className="qa-number">Q{index + 1}</span>
+                              <div key={pair.id || index} className="qa-view-pair qa-view-pair-compact">
+                                <div className="qa-view-question qa-view-question-compact">
+                                  <span className="qa-number qa-number-compact">Q{index + 1}</span>
                                   <strong>{pair.question}</strong>
                                 </div>
-                                <div className="qa-view-answer">
+                                <div className="qa-view-answer qa-view-answer-compact">
                                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{pair.answer}</ReactMarkdown>
                                 </div>
                               </div>
@@ -382,9 +436,9 @@ ${content}
                           text: string
                         }>
                         return (
-                          <ul className="list-view-section">
+                          <ul className="list-view-section list-view-section-compact">
                             {listItems.map((item, index: number) => (
-                              <li key={item.id || index} className="list-view-item">
+                              <li key={item.id || index} className="list-view-item list-view-item-compact">
                                 {item.text}
                               </li>
                             ))}
@@ -439,35 +493,46 @@ ${content}
         )}
       </div>
 
-      <div className="journal-view-actions">
-        <button
-          onClick={handleExportMarkdown}
-          className="button-secondary"
-          title="Export as Markdown"
-        >
-          📥 Export
-        </button>
-        <button
-          onClick={() => setShowAIDock(!showAIDock)}
-          className="button-secondary"
-          title="AI Assistant"
-        >
-          🤖 AI Assistant
-        </button>
-        {canEdit && (
-          <>
-            <button
-              onClick={handleDelete}
-              className="button-danger"
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </button>
-            <button onClick={handleEdit} className="button-primary">
-              Edit
-            </button>
-          </>
-        )}
+      {/* Sticky Action Bar */}
+      <div className="journal-actions-sticky">
+        <div className="journal-actions-left">
+          <button
+            onClick={handleExportMarkdown}
+            className="journal-action-icon-btn"
+            title="Export as Markdown"
+          >
+            📥
+          </button>
+          <button
+            onClick={() => setShowAIDock(!showAIDock)}
+            className="journal-action-icon-btn"
+            title="AI Assistant"
+          >
+            🤖
+          </button>
+        </div>
+
+        <div className="journal-actions-right">
+          {canEdit && (
+            <>
+              <button
+                onClick={handleDelete}
+                className="journal-action-icon-btn danger"
+                disabled={isDeleting}
+                title={isDeleting ? 'Deleting...' : 'Delete'}
+              >
+                🗑️
+              </button>
+              <button
+                onClick={handleEdit}
+                className="journal-action-icon-btn primary"
+                title="Edit"
+              >
+                ✏️
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* AI Assistant Dock */}
