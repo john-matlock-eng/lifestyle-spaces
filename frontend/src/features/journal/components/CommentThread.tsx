@@ -457,10 +457,12 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
         {/* Dark Mode Compatible Gradient Header - Compact Design */}
         <div
           style={{
+            position: 'relative',
             background: isDarkMode
               ? 'linear-gradient(135deg, #1e40af 0%, #7c3aed 100%)'
               : 'linear-gradient(135deg, var(--theme-primary-500) 0%, var(--theme-primary-700) 100%)',
             padding: '16px 20px',
+            paddingRight: '60px',
             color: 'white',
             boxShadow: isDarkMode
               ? '0 4px 12px rgba(0, 0, 0, 0.3)'
@@ -468,51 +470,56 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
             borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'}`,
           }}
         >
-          <div className="flex items-center justify-between mb-3">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '20px' }}>💬</span>
-              <h3
-                style={{
-                  fontSize: '17px',
-                  fontWeight: '600',
-                  margin: 0,
-                  letterSpacing: '0.3px',
-                }}
-              >
-                Discussion
-              </h3>
-            </div>
-            <button
-              onClick={onClose}
-              title="Close discussion"
+          {/* Close button - absolute positioned at top right */}
+          <button
+            onClick={onClose}
+            title="Close discussion"
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              background: 'rgba(255, 255, 255, 0.15)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              borderRadius: '6px',
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              color: 'white',
+              fontSize: '20px',
+              fontWeight: '400',
+              lineHeight: '1',
+              zIndex: 1,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            ✕
+          </button>
+
+          {/* Title */}
+          <div className="flex items-center mb-3" style={{ gap: '10px' }}>
+            <span style={{ fontSize: '20px' }}>💬</span>
+            <h3
               style={{
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.25)',
-                borderRadius: '6px',
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                color: 'white',
-                fontSize: '20px',
-                fontWeight: '400',
-                lineHeight: '1',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
-                e.currentTarget.style.transform = 'scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                e.currentTarget.style.transform = 'scale(1)';
+                fontSize: '17px',
+                fontWeight: '600',
+                margin: 0,
+                letterSpacing: '0.3px',
               }}
             >
-              ✕
-            </button>
+              Discussion
+            </h3>
           </div>
 
           {/* Highlighted text preview - Enhanced for dark mode */}
