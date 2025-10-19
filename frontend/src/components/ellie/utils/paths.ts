@@ -115,7 +115,7 @@ export const getEarRotation = (mood: EllieMood, isLeft: boolean): string => {
 };
 
 /**
- * Get tail rotation based on mood
+ * Get tail rotation based on mood - subtle movements
  */
 export const getTailRotation = (mood: EllieMood): number => {
   switch (mood) {
@@ -123,13 +123,13 @@ export const getTailRotation = (mood: EllieMood): number => {
     case 'excited':
     case 'playful':
     case 'celebrating':
-      return 45; // Wagging up
+      return 10; // Slightly up (happy)
     case 'concerned':
-      return -15; // Tucked down
+      return -5; // Slightly down (tucked)
     case 'sleeping':
     case 'zen':
-      return 15; // Relaxed
+      return 3; // Relaxed
     default:
-      return 30; // Normal
+      return 5; // Normal/neutral
   }
 };

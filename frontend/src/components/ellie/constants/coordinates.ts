@@ -43,9 +43,9 @@ export const ELLIE_COORDINATES = {
     // Eyes closer together (center is 60)
     leftEye: { cx: 54, cy: 32 },
     rightEye: { cx: 66, cy: 32 },
-    // Ears as ellipses for better control
-    leftEar: { cx: 40, cy: 25, rx: 8, ry: 12 },
-    rightEar: { cx: 80, cy: 25, rx: 8, ry: 12 },
+    // Ears positioned on sides of head (head center: 60, 38, radius: 18)
+    leftEar: { cx: 45, cy: 30, rx: 6, ry: 10 },
+    rightEar: { cx: 75, cy: 30, rx: 6, ry: 10 },
   },
 
   // Mouth positioning (below nose)
