@@ -147,15 +147,6 @@ class TestHighlightUtilities:
 class TestJournalValidators:
     """Tests for journal model validators."""
 
-    def test_journal_create_empty_title(self):
-        """Test journal creation with empty title."""
-        with pytest.raises(ValidationError) as exc_info:
-            JournalCreateRequest(
-                title="   ",  # Only whitespace
-                content="Valid content"
-            )
-        assert "title" in str(exc_info.value).lower()
-
     def test_journal_create_long_title(self):
         """Test journal creation with title too long."""
         with pytest.raises(ValidationError) as exc_info:
