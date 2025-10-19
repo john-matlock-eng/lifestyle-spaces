@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { fetchAuthSession } from '@aws-amplify/auth';
 import type {
   Highlight,
   Comment,
@@ -13,6 +14,29 @@ import type {
 } from '../types/highlight.types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+/**
+ * Get authentication headers from AWS Amplify session
+ */
+const getAuthHeaders = async (): Promise<Record<string, string>> => {
+  try {
+    const session = await fetchAuthSession();
+    const accessToken = session.tokens?.accessToken?.toString();
+
+    if (accessToken) {
+      return {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      };
+    }
+  } catch (error) {
+    console.error('Failed to get auth session:', error);
+  }
+
+  return {
+    'Content-Type': 'application/json',
+  };
+};
 
 export const useHighlights = (spaceId: string, journalEntryId: string) => {
   const [highlights, setHighlights] = useState<Highlight[]>([]);
@@ -28,14 +52,10 @@ export const useHighlights = (spaceId: string, journalEntryId: string) => {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('accessToken');
+      const headers = await getAuthHeaders();
       const response = await axios.get<Highlight[]>(
         `${API_BASE_URL}/api/highlights/spaces/${spaceId}/journals/${journalEntryId}/highlights`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers }
       );
 
       setHighlights(response.data);
@@ -51,14 +71,10 @@ export const useHighlights = (spaceId: string, journalEntryId: string) => {
   const fetchComments = useCallback(
     async (highlightId: string) => {
       try {
-        const token = localStorage.getItem('accessToken');
+        const headers = await getAuthHeaders();
         const response = await axios.get<Comment[]>(
           `${API_BASE_URL}/api/highlights/spaces/${spaceId}/highlights/${highlightId}/comments`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers }
         );
 
         setComments((prev) => ({
@@ -77,7 +93,7 @@ export const useHighlights = (spaceId: string, journalEntryId: string) => {
   const createHighlight = useCallback(
     async (selection: HighlightSelection, color: string = 'yellow') => {
       try {
-        const token = localStorage.getItem('accessToken');
+        const headers = await getAuthHeaders();
         const request: CreateHighlightRequest = {
           highlightedText: selection.text,
           textRange: selection.range,
@@ -87,12 +103,7 @@ export const useHighlights = (spaceId: string, journalEntryId: string) => {
         const response = await axios.post<Highlight>(
           `${API_BASE_URL}/api/highlights/spaces/${spaceId}/journals/${journalEntryId}/highlights`,
           request,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          }
+          { headers }
         );
 
         setHighlights((prev) => [...prev, response.data]);
@@ -110,14 +121,10 @@ export const useHighlights = (spaceId: string, journalEntryId: string) => {
   const deleteHighlight = useCallback(
     async (highlightId: string) => {
       try {
-        const token = localStorage.getItem('accessToken');
+        const headers = await getAuthHeaders();
         await axios.delete(
           `${API_BASE_URL}/api/highlights/spaces/${spaceId}/highlights/${highlightId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers }
         );
 
         setHighlights((prev) => prev.filter((h) => h.id !== highlightId));
@@ -138,7 +145,7 @@ export const useHighlights = (spaceId: string, journalEntryId: string) => {
   const createComment = useCallback(
     async (highlightId: string, text: string, parentCommentId?: string) => {
       try {
-        const token = localStorage.getItem('accessToken');
+        const headers = await getAuthHeaders();
 
         // Extract mentions from text
         const mentionRegex = /@(\w+)/g;
@@ -157,12 +164,7 @@ export const useHighlights = (spaceId: string, journalEntryId: string) => {
         const response = await axios.post<Comment>(
           `${API_BASE_URL}/api/highlights/spaces/${spaceId}/highlights/${highlightId}/comments`,
           request,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          }
+          { headers }
         );
 
         setComments((prev) => ({
@@ -191,14 +193,10 @@ export const useHighlights = (spaceId: string, journalEntryId: string) => {
   const deleteComment = useCallback(
     async (highlightId: string, commentId: string) => {
       try {
-        const token = localStorage.getItem('accessToken');
+        const headers = await getAuthHeaders();
         await axios.delete(
           `${API_BASE_URL}/api/highlights/spaces/${spaceId}/comments/${commentId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers }
         );
 
         setComments((prev) => ({
