@@ -38,7 +38,7 @@ async def create_highlight(
     # TODO: Verify journal entry exists and belongs to this space
 
     user_id = current_user.get("sub") or current_user.get("userId")
-    user_name = current_user.get("profile", {}).get("displayName", "Unknown User")
+    user_name = current_user.get("profile", {}).get("display_name", "Unknown User")
 
     highlight = await service.create_highlight(
         space_id=space_id,
@@ -142,7 +142,7 @@ async def create_comment(
     # TODO: Verify highlight exists
 
     user_id = current_user.get("sub") or current_user.get("userId")
-    user_name = current_user.get("profile", {}).get("displayName", "Unknown User")
+    user_name = current_user.get("profile", {}).get("display_name", "Unknown User")
 
     comment = await service.create_comment(
         space_id=space_id,
