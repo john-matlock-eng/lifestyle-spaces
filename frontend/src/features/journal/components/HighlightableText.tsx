@@ -26,6 +26,7 @@ interface HighlightableTextProps {
   spaceId: string;
   onHighlightCreate: (selection: HighlightSelection, color: HighlightColor) => void;
   onHighlightClick: (highlight: Highlight) => void;
+  onHighlightDelete?: (highlightId: string) => void;
   isReadOnly?: boolean;
   className?: string;
 }
@@ -35,15 +36,21 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
   highlights,
   onHighlightCreate,
   onHighlightClick,
+  onHighlightDelete,
   isReadOnly = false,
   className = '',
 }) => {
   const [selection, setSelection] = useState<HighlightSelection | null>(null);
-  const [popoverPosition, setPopoverPosition] = useState<{ x: number; y: number } | null>(null);
+  const [showCreateButton, setShowCreateButton] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [buttonPosition, setButtonPosition] = useState<{ x: number; y: number } | null>(null);
   const [selectedColor, setSelectedColor] = useState<HighlightColor>('yellow');
+  const [clickedHighlight, setClickedHighlight] = useState<Highlight | null>(null);
+  const [highlightMenuPosition, setHighlightMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const selectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle text selection
+  // Handle text selection with delay to allow for selection adjustment (mobile-friendly)
   const handleMouseUp = useCallback(() => {
     console.log('[HighlightableText] mouseUp triggered');
 
@@ -52,96 +59,104 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
       return;
     }
 
-    const windowSelection = window.getSelection();
-    console.log('[HighlightableText] windowSelection:', windowSelection);
-
-    if (!windowSelection || windowSelection.isCollapsed) {
-      console.log('[HighlightableText] No selection or collapsed');
-      setSelection(null);
-      setPopoverPosition(null);
-      return;
+    // Clear any existing timeout
+    if (selectionTimeoutRef.current) {
+      clearTimeout(selectionTimeoutRef.current);
     }
 
-    const selectedText = windowSelection.toString().trim();
-    console.log('[HighlightableText] Selected text:', selectedText);
+    // Wait a bit to see if user is still adjusting selection
+    selectionTimeoutRef.current = setTimeout(() => {
+      const windowSelection = window.getSelection();
+      console.log('[HighlightableText] windowSelection:', windowSelection);
 
-    if (!selectedText) {
-      console.log('[HighlightableText] Empty selection');
-      setSelection(null);
-      setPopoverPosition(null);
-      return;
-    }
+      if (!windowSelection || windowSelection.isCollapsed) {
+        console.log('[HighlightableText] No selection or collapsed');
+        setSelection(null);
+        setShowCreateButton(false);
+        setShowColorPicker(false);
+        return;
+      }
 
-    const range = windowSelection.getRangeAt(0);
-    const boundingRect = range.getBoundingClientRect();
-    console.log('[HighlightableText] boundingRect:', boundingRect);
+      const selectedText = windowSelection.toString().trim();
+      console.log('[HighlightableText] Selected text:', selectedText);
 
-    // Calculate text offsets
-    const container = contentRef.current;
-    console.log('[HighlightableText] container:', container);
+      if (!selectedText) {
+        console.log('[HighlightableText] Empty selection');
+        setSelection(null);
+        setShowCreateButton(false);
+        setShowColorPicker(false);
+        return;
+      }
 
-    if (!container) {
-      console.log('[HighlightableText] No container ref, aborting');
-      return;
-    }
+      const range = windowSelection.getRangeAt(0);
+      const boundingRect = range.getBoundingClientRect();
+      console.log('[HighlightableText] boundingRect:', boundingRect);
 
-    try {
-      const preSelectionRange = document.createRange();
-      preSelectionRange.selectNodeContents(container);
-      preSelectionRange.setEnd(range.startContainer, range.startOffset);
-      const startOffset = preSelectionRange.toString().length;
-      const endOffset = startOffset + selectedText.length;
+      // Calculate text offsets
+      const container = contentRef.current;
+      console.log('[HighlightableText] container:', container);
 
-      console.log('[HighlightableText] Calculated offsets:', { startOffset, endOffset });
+      if (!container) {
+        console.log('[HighlightableText] No container ref, aborting');
+        return;
+      }
 
-      setSelection({
-        text: selectedText,
-        range: {
-          startOffset,
-          endOffset,
-          startContainerId: undefined,
-          endContainerId: undefined,
-        },
-        boundingRect,
-      });
+      try {
+        const preSelectionRange = document.createRange();
+        preSelectionRange.selectNodeContents(container);
+        preSelectionRange.setEnd(range.startContainer, range.startOffset);
+        const startOffset = preSelectionRange.toString().length;
+        const endOffset = startOffset + selectedText.length;
 
-      // Position popover above selection, accounting for scroll
-      const scrollY = window.scrollY || window.pageYOffset;
-      const scrollX = window.scrollX || window.pageXOffset;
+        console.log('[HighlightableText] Calculated offsets:', { startOffset, endOffset });
 
-      const popoverPos = {
-        x: boundingRect.left + (boundingRect.width / 2) + scrollX,
-        y: boundingRect.top + scrollY - 10, // 10px above selection
-      };
+        setSelection({
+          text: selectedText,
+          range: {
+            startOffset,
+            endOffset,
+            startContainerId: undefined,
+            endContainerId: undefined,
+          },
+          boundingRect,
+        });
 
-      console.log('[HighlightableText] Setting popover position:', popoverPos);
-      console.log('[HighlightableText] Window scroll:', { scrollX, scrollY });
-      setPopoverPosition(popoverPos);
-    } catch (error) {
-      console.error('[HighlightableText] Error calculating selection:', error);
-    }
+        // Position button above selection, accounting for scroll
+        const scrollY = window.scrollY || window.pageYOffset;
+        const scrollX = window.scrollX || window.pageXOffset;
+
+        const buttonPos = {
+          x: boundingRect.left + (boundingRect.width / 2) + scrollX,
+          y: boundingRect.top + scrollY - 10, // 10px above selection
+        };
+
+        console.log('[HighlightableText] Setting button position:', buttonPos);
+        setButtonPosition(buttonPos);
+        setShowCreateButton(true);
+        setShowColorPicker(false); // Don't show color picker yet
+      } catch (error) {
+        console.error('[HighlightableText] Error calculating selection:', error);
+      }
+    }, 500); // 500ms delay allows for selection adjustment
   }, [isReadOnly]);
 
-  // Debug: Log when selection/position changes
-  useEffect(() => {
-    console.log('[HighlightableText] State changed - selection:', selection);
-    console.log('[HighlightableText] State changed - popoverPosition:', popoverPosition);
-    console.log('[HighlightableText] State changed - Should show popover?', !!(selection && popoverPosition && !isReadOnly));
-  }, [selection, popoverPosition, isReadOnly]);
-
-  // Handle clicking outside to close popover
+  // Handle clicking outside to close UI elements
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (selection && popoverPosition) {
-        const target = e.target as HTMLElement;
+      const target = e.target as HTMLElement;
 
-        // Check if click is on popover or its children
-        if (!target.closest('.highlight-popover') && !target.closest('.highlightable-text')) {
-          console.log('[HighlightableText] Clearing selection due to outside click');
-          setSelection(null);
-          setPopoverPosition(null);
-          window.getSelection()?.removeAllRanges();
-        }
+      // Check if click is on any highlight UI element
+      if (!target.closest('.highlight-button') &&
+          !target.closest('.highlight-color-picker') &&
+          !target.closest('.highlight-menu') &&
+          !target.closest('.highlightable-text')) {
+        console.log('[HighlightableText] Clearing selection due to outside click');
+        setSelection(null);
+        setShowCreateButton(false);
+        setShowColorPicker(false);
+        setClickedHighlight(null);
+        setHighlightMenuPosition(null);
+        window.getSelection()?.removeAllRanges();
       }
     };
 
@@ -154,21 +169,30 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
       clearTimeout(timeoutId);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [selection, popoverPosition]);
+  }, [selection, showCreateButton, showColorPicker, clickedHighlight]);
 
-  // Handle escape key to close popover
+  // Handle escape key to close UI
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && selection) {
+      if (e.key === 'Escape') {
         setSelection(null);
-        setPopoverPosition(null);
+        setShowCreateButton(false);
+        setShowColorPicker(false);
+        setClickedHighlight(null);
+        setHighlightMenuPosition(null);
         window.getSelection()?.removeAllRanges();
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [selection]);
+  }, []);
+
+  // Show color picker when user clicks "Create Highlight" button
+  const handleShowColorPicker = useCallback(() => {
+    setShowCreateButton(false);
+    setShowColorPicker(true);
+  }, []);
 
   // Create highlight with selected color
   const handleCreateHighlight = useCallback((color: HighlightColor) => {
@@ -177,10 +201,46 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
       setSelectedColor(color); // Remember the last used color
       onHighlightCreate(selection, color);
       setSelection(null);
-      setPopoverPosition(null);
+      setShowCreateButton(false);
+      setShowColorPicker(false);
+      setButtonPosition(null);
       window.getSelection()?.removeAllRanges();
     }
   }, [selection, onHighlightCreate]);
+
+  // Handle clicking on an existing highlight
+  const handleExistingHighlightClick = useCallback((e: React.MouseEvent, highlight: Highlight) => {
+    e.stopPropagation();
+
+    // Calculate position for menu
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    const scrollY = window.scrollY || window.pageYOffset;
+    const scrollX = window.scrollX || window.pageXOffset;
+
+    setClickedHighlight(highlight);
+    setHighlightMenuPosition({
+      x: rect.left + (rect.width / 2) + scrollX,
+      y: rect.bottom + scrollY + 8, // 8px below highlight
+    });
+  }, []);
+
+  // Handle deleting a highlight
+  const handleDeleteHighlight = useCallback(() => {
+    if (clickedHighlight && onHighlightDelete) {
+      onHighlightDelete(clickedHighlight.id);
+      setClickedHighlight(null);
+      setHighlightMenuPosition(null);
+    }
+  }, [clickedHighlight, onHighlightDelete]);
+
+  // Handle viewing comments for a highlight
+  const handleViewComments = useCallback(() => {
+    if (clickedHighlight) {
+      onHighlightClick(clickedHighlight);
+      setClickedHighlight(null);
+      setHighlightMenuPosition(null);
+    }
+  }, [clickedHighlight, onHighlightClick]);
 
   // Render text with highlights
   const renderHighlightedContent = () => {
@@ -219,8 +279,8 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
             padding: '2px 0',
             borderRadius: '2px'
           }}
-          onClick={() => onHighlightClick(highlight)}
-          title={`Click to view comments (${highlight.commentCount || 0})`}
+          onClick={(e) => handleExistingHighlightClick(e, highlight)}
+          title={`Click for options (${highlight.commentCount || 0} comments)`}
         >
           {content.substring(startOffset, endOffset)}
           {highlight.commentCount > 0 && (
@@ -251,19 +311,69 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     return <>{parts}</>;
   };
 
-  // Render popover using React Portal
-  const renderPopover = () => {
-    if (!selection || !popoverPosition || isReadOnly) {
+  // Render "Create Highlight" button
+  const renderCreateButton = () => {
+    if (!showCreateButton || !buttonPosition || isReadOnly) {
+      return null;
+    }
+
+    const buttonElement = (
+      <div
+        className="highlight-button"
+        style={{
+          position: 'fixed',
+          left: `${buttonPosition.x}px`,
+          top: `${buttonPosition.y}px`,
+          transform: 'translate(-50%, -100%)',
+          zIndex: 99999,
+          animation: 'fadeIn 0.2s ease-out',
+        }}
+      >
+        <button
+          onClick={handleShowColorPicker}
+          style={{
+            padding: '10px 20px',
+            fontSize: '14px',
+            fontWeight: '600',
+            color: 'white',
+            background: 'linear-gradient(135deg, var(--theme-primary-500) 0%, var(--theme-primary-700) 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(20, 184, 166, 0.3)',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            whiteSpace: 'nowrap',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+            e.currentTarget.style.boxShadow = '0 6px 16px rgba(20, 184, 166, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(20, 184, 166, 0.3)';
+          }}
+        >
+          ✨ Create Highlight
+        </button>
+      </div>
+    );
+
+    return ReactDOM.createPortal(buttonElement, document.body);
+  };
+
+  // Render color picker
+  const renderColorPicker = () => {
+    if (!showColorPicker || !buttonPosition || isReadOnly) {
       return null;
     }
 
     const popoverElement = (
       <div
-        className="highlight-popover"
+        className="highlight-color-picker"
         style={{
           position: 'fixed',
-          left: `${popoverPosition.x}px`,
-          top: `${popoverPosition.y}px`,
+          left: `${buttonPosition.x}px`,
+          top: `${buttonPosition.y}px`,
           transform: 'translate(-50%, -100%)',
           zIndex: 99999,
           background: 'linear-gradient(135deg, var(--theme-primary-500) 0%, var(--theme-primary-700) 100%)',
@@ -290,7 +400,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           }
 
           /* Pointer arrow - uses theme primary-700 */
-          .highlight-popover::after {
+          .highlight-color-picker::after {
             content: '';
             position: absolute;
             bottom: -8px;
@@ -394,7 +504,8 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           }}
           onClick={() => {
             setSelection(null);
-            setPopoverPosition(null);
+            setShowColorPicker(false);
+            setButtonPosition(null);
             window.getSelection()?.removeAllRanges();
           }}
           onMouseEnter={(e) => {
@@ -413,6 +524,103 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     return ReactDOM.createPortal(popoverElement, document.body);
   };
 
+  // Render highlight menu (for existing highlights)
+  const renderHighlightMenu = () => {
+    if (!clickedHighlight || !highlightMenuPosition) {
+      return null;
+    }
+
+    const menuElement = (
+      <div
+        className="highlight-menu"
+        style={{
+          position: 'fixed',
+          left: `${highlightMenuPosition.x}px`,
+          top: `${highlightMenuPosition.y}px`,
+          transform: 'translateX(-50%)',
+          zIndex: 99999,
+          background: 'white',
+          borderRadius: '10px',
+          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+          border: '1px solid rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden',
+          minWidth: '200px',
+          animation: 'fadeIn 0.2s ease-out',
+        }}
+      >
+        <style>{`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+          }
+        `}</style>
+
+        {/* View Comments Button */}
+        <button
+          onClick={handleViewComments}
+          style={{
+            width: '100%',
+            padding: '14px 18px',
+            fontSize: '14px',
+            fontWeight: '600',
+            color: 'var(--theme-primary-700)',
+            background: 'none',
+            border: 'none',
+            borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+            cursor: 'pointer',
+            textAlign: 'left',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            transition: 'background-color 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(20, 184, 166, 0.08)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
+        >
+          <span style={{ fontSize: '18px' }}>💬</span>
+          <span>View Comments ({clickedHighlight.commentCount || 0})</span>
+        </button>
+
+        {/* Delete Highlight Button */}
+        {onHighlightDelete && (
+          <button
+            onClick={handleDeleteHighlight}
+            style={{
+              width: '100%',
+              padding: '14px 18px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: 'var(--theme-error-700)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              transition: 'background-color 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>🗑️</span>
+            <span>Delete Highlight</span>
+          </button>
+        )}
+      </div>
+    );
+
+    return ReactDOM.createPortal(menuElement, document.body);
+  };
+
   return (
     <>
       <div className={`relative ${className}`}>
@@ -426,8 +634,10 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         </div>
       </div>
 
-      {/* Render popover via portal */}
-      {renderPopover()}
+      {/* Render UI elements via portals */}
+      {renderCreateButton()}
+      {renderColorPicker()}
+      {renderHighlightMenu()}
     </>
   );
 };
