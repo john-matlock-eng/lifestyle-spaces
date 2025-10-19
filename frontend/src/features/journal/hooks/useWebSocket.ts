@@ -3,7 +3,6 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { HighlightWebSocketMessage } from '../types/highlight.types';
 
 interface UseWebSocketOptions {
   spaceId: string;
@@ -125,7 +124,7 @@ export const useWebSocket = (options: UseWebSocketOptions): UseWebSocketReturn =
 
           // Dispatch message to handler
           if (onMessage) {
-            onMessage(message as HighlightWebSocketMessage);
+            onMessage(message as { type: string; payload: Record<string, unknown> });
           }
         } catch (err) {
           console.error('Error parsing WebSocket message:', err);

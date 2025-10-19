@@ -6,12 +6,12 @@
  */
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import {
+import type {
   Highlight,
   HighlightSelection,
-  HIGHLIGHT_COLORS,
   HighlightColor
 } from '../types/highlight.types';
+import { HIGHLIGHT_COLORS } from '../types/highlight.types';
 
 interface HighlightableTextProps {
   content: string;

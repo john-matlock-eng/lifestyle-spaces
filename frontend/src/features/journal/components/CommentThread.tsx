@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Highlight, Comment } from '../types/highlight.types';
+import type { Highlight, Comment } from '../types/highlight.types';
 import { HIGHLIGHT_COLORS } from '../types/highlight.types';
 
 interface CommentThreadProps {

@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import {
+import type {
   Highlight,
   Comment,
   CreateHighlightRequest,
@@ -41,7 +41,7 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
           if (prev.some((h) => h.id === message.payload.id)) {
             return prev;
           }
-          return [...prev, message.payload as Highlight];
+          return [...prev, message.payload as unknown as Highlight];
         });
         // Remove from pending if it was optimistic
         setPendingActions((prev) =>
@@ -56,12 +56,13 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
         );
         break;
 
-      case 'NEW_COMMENT':
+      case 'NEW_COMMENT': {
+        const highlightId = String(message.payload.highlightId);
         setComments((prev) => ({
           ...prev,
-          [message.payload.highlightId as string]: [
-            ...(prev[message.payload.highlightId as string] || []),
-            message.payload as Comment,
+          [highlightId]: [
+            ...(prev[highlightId] || []),
+            message.payload as unknown as Comment,
           ],
         }));
         // Update comment count on highlight
@@ -76,10 +77,11 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
           prev.filter((a) => !(a.type === 'CREATE_COMMENT' && a.id === message.payload.id))
         );
         break;
+      }
 
-      case 'DELETE_COMMENT':
+      case 'DELETE_COMMENT': {
+        const highlightId = String(message.payload.highlightId);
         setComments((prev) => {
-          const highlightId = message.payload.highlightId;
           return {
             ...prev,
             [highlightId]: (prev[highlightId] || []).filter(
@@ -99,9 +101,10 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
           prev.filter((a) => !(a.type === 'DELETE_COMMENT' && a.id === message.payload.id))
         );
         break;
+      }
 
       case 'USER_PRESENCE':
-        setActiveUsers(message.payload.activeUsers || []);
+        setActiveUsers((message.payload.activeUsers as unknown as PresenceUser[]) || []);
         break;
 
       default:

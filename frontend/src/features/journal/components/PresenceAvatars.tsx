@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { PresenceUser } from '../types/highlight.types';
+import type { PresenceUser } from '../types/highlight.types';
 
 interface PresenceAvatarsProps {
   activeUsers: PresenceUser[];
