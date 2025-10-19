@@ -26,6 +26,7 @@ jobs:
     environment: development
     outputs:
       api_gateway_url: ${{ steps.tf-outputs.outputs.api_gateway_url }}
+      websocket_url: ${{ steps.tf-outputs.outputs.websocket_url }}
       s3_bucket_name: ${{ steps.tf-outputs.outputs.s3_bucket_name }}
       cloudfront_distribution_id: ${{ steps.tf-outputs.outputs.cloudfront_distribution_id }}
       website_url: ${{ steps.tf-outputs.outputs.website_url }}
@@ -90,6 +91,7 @@ jobs:
         working-directory: terraform/environments/dev
         run: |
           echo "api_gateway_url=$(terraform output -raw api_gateway_url)" >> $GITHUB_OUTPUT
+          echo "websocket_url=$(terraform output -raw websocket_url)" >> $GITHUB_OUTPUT
           echo "s3_bucket_name=$(terraform output -raw s3_bucket_name)" >> $GITHUB_OUTPUT
           echo "cloudfront_distribution_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_OUTPUT
           echo "website_url=$(terraform output -raw website_url)" >> $GITHUB_OUTPUT
@@ -126,6 +128,7 @@ jobs:
         run: npm run build
         env:
           VITE_API_URL: ${{ needs.deploy-infrastructure.outputs.api_gateway_url }}
+          VITE_WS_URL: ${{ needs.deploy-infrastructure.outputs.websocket_url }}
           VITE_ENVIRONMENT: development
           VITE_COGNITO_USER_POOL_ID: ${{ needs.deploy-infrastructure.outputs.cognito_user_pool_id }}
           VITE_COGNITO_USER_POOL_CLIENT_ID: ${{ needs.deploy-infrastructure.outputs.cognito_user_pool_client_id }}

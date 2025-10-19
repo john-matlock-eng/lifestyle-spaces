@@ -102,6 +102,17 @@ output "api_gateway_invoke_url" {
   value       = module.backend.api_gateway_invoke_url
 }
 
+# WebSocket API Outputs
+output "websocket_url" {
+  description = "WebSocket API URL for real-time features"
+  value       = module.backend.websocket_url
+}
+
+output "websocket_api_id" {
+  description = "ID of the WebSocket API Gateway"
+  value       = module.backend.websocket_api_id
+}
+
 # Additional Frontend Outputs
 output "cloudfront_distribution_domain" {
   description = "CloudFront distribution domain name (AWS-generated URL)"
@@ -124,6 +135,7 @@ output "deployment_info" {
     api_url        = module.backend.api_gateway_url
     api_invoke_url = module.backend.api_gateway_invoke_url
     api_stage      = module.backend.api_gateway_stage_name
+    websocket_url  = module.backend.websocket_url
 
     # Authentication
     cognito_user_pool_id = module.cognito.user_pool_id

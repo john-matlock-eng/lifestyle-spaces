@@ -59,3 +59,19 @@ output "claude_api_key_secret_name" {
   description = "Name of the Claude API Key secret in Secrets Manager"
   value       = aws_secretsmanager_secret.claude_api_key.name
 }
+
+# WebSocket API outputs
+output "websocket_api_id" {
+  description = "ID of the WebSocket API Gateway"
+  value       = aws_apigatewayv2_api.websocket.id
+}
+
+output "websocket_api_endpoint" {
+  description = "WebSocket API endpoint URL"
+  value       = aws_apigatewayv2_api.websocket.api_endpoint
+}
+
+output "websocket_url" {
+  description = "Full WebSocket URL for client connections"
+  value       = "${replace(aws_apigatewayv2_api.websocket.api_endpoint, "wss://", "wss://")}/${var.environment}"
+}

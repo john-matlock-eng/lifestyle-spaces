@@ -70,6 +70,33 @@ resource "aws_iam_role_policy_attachment" "lambda_dynamodb" {
   role       = aws_iam_role.lambda_role.name
 }
 
+# IAM Policy for WebSocket API Management
+resource "aws_iam_policy" "lambda_websocket_policy" {
+  name        = "${var.project_name}-${var.environment}-lambda-websocket-policy"
+  description = "IAM policy for Lambda to manage WebSocket connections"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "execute-api:ManageConnections",
+          "execute-api:Invoke"
+        ]
+        Resource = "arn:aws:execute-api:${var.region}:*:*/*/*/*"
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_websocket" {
+  policy_arn = aws_iam_policy.lambda_websocket_policy.arn
+  role       = aws_iam_role.lambda_role.name
+}
+
 # Lambda Function
 resource "aws_lambda_function" "api" {
   filename         = var.lambda_zip_path
