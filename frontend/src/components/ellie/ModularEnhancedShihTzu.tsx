@@ -137,9 +137,7 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
       ref={containerRef}
       className={`ellie-container ${onPositionChange ? 'draggable' : ''} ${isDragging ? 'dragging' : ''}`}
       style={{
-        position: onPositionChange ? 'absolute' : 'relative',
-        left: position.x,
-        top: position.y,
+        position: 'relative',
         width: sizeConfig.width,
         height: sizeConfig.height,
       }}

@@ -55,6 +55,8 @@ export const Ellie: React.FC<EllieProps> = ({
       tabIndex={tabIndex}
       style={{
         position: 'fixed',
+        left: `${position.x}px`,
+        top: `${position.y}px`,
         zIndex: 9999,
       }}
       onKeyDown={(e) => {
