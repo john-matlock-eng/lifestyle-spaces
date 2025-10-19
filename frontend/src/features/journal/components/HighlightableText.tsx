@@ -62,9 +62,9 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     return highlights.filter(h => h.textRange.startContainerId === sectionId);
   }, [highlights, sectionId]);
 
-  // Handle text selection with delay to allow for selection adjustment (mobile-friendly)
-  const handleMouseUp = useCallback(() => {
-    console.log('[HighlightableText] mouseUp triggered');
+  // Shared selection handling logic for both mouse and touch
+  const handleSelection = useCallback(() => {
+    console.log('[HighlightableText] Selection triggered');
 
     if (isReadOnly) {
       console.log('[HighlightableText] Read-only mode, ignoring');
@@ -150,17 +150,29 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     }, 500); // 500ms delay allows for selection adjustment
   }, [isReadOnly, sectionId]);
 
-  // Handle clicking outside to close UI elements
+  // Handle text selection on desktop (mouse events)
+  const handleMouseUp = useCallback(() => {
+    console.log('[HighlightableText] mouseUp triggered');
+    handleSelection();
+  }, [handleSelection]);
+
+  // Handle text selection on mobile (touch events)
+  const handleTouchEnd = useCallback(() => {
+    console.log('[HighlightableText] touchEnd triggered');
+    handleSelection();
+  }, [handleSelection]);
+
+  // Handle clicking/tapping outside to close UI elements
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement;
 
-      // Check if click is on any highlight UI element
+      // Check if click/tap is on any highlight UI element
       if (!target.closest('.highlight-button') &&
           !target.closest('.highlight-color-picker') &&
           !target.closest('.highlight-menu') &&
           !target.closest('.highlightable-text')) {
-        console.log('[HighlightableText] Clearing selection due to outside click');
+        console.log('[HighlightableText] Clearing selection due to outside click/tap');
         setSelection(null);
         setShowCreateButton(false);
         setShowColorPicker(false);
@@ -173,11 +185,13 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     // Use setTimeout to avoid clearing immediately after setting
     const timeoutId = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
     }, 100);
 
     return () => {
       clearTimeout(timeoutId);
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
     };
   }, [selection, showCreateButton, showColorPicker, clickedHighlight]);
 
@@ -710,6 +724,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           ref={contentRef}
           className="highlightable-text prose max-w-none"
           onMouseUp={handleMouseUp}
+          onTouchEnd={handleTouchEnd}
           style={{ userSelect: 'text' }}
         >
           {renderHighlightedContent()}
