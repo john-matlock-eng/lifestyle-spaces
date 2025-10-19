@@ -363,6 +363,7 @@ ${content}
                           <HighlightableText
                             content={section.content}
                             highlights={highlights}
+                            sectionId={section.id}
                             journalEntryId={journalId || ''}
                             spaceId={spaceId || ''}
                             onHighlightCreate={(selection, color) => createHighlight(selection, color)}
@@ -395,6 +396,7 @@ ${content}
                           <HighlightableText
                             content={section.content}
                             highlights={highlights}
+                            sectionId={section.id}
                             journalEntryId={journalId || ''}
                             spaceId={spaceId || ''}
                             onHighlightCreate={(selection, color) => createHighlight(selection, color)}
@@ -409,6 +411,7 @@ ${content}
                     <HighlightableText
                       content={section.content}
                       highlights={highlights}
+                      sectionId={section.id}
                       journalEntryId={journalId || ''}
                       spaceId={spaceId || ''}
                       onHighlightCreate={(selection) => createHighlight(selection, 'yellow')}

@@ -24,6 +24,7 @@ interface HighlightableTextProps {
   highlights: Highlight[];
   journalEntryId: string;
   spaceId: string;
+  sectionId?: string; // Optional section ID for template journals
   onHighlightCreate: (selection: HighlightSelection, color: HighlightColor) => void;
   onHighlightClick: (highlight: Highlight) => void;
   onHighlightDelete?: (highlightId: string) => void;
@@ -34,6 +35,7 @@ interface HighlightableTextProps {
 export const HighlightableText: React.FC<HighlightableTextProps> = ({
   content,
   highlights,
+  sectionId,
   onHighlightCreate,
   onHighlightClick,
   onHighlightDelete,
@@ -49,6 +51,16 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
   const [highlightMenuPosition, setHighlightMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const selectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Filter highlights to only show ones for this section (if sectionId provided)
+  const filteredHighlights = React.useMemo(() => {
+    if (!sectionId) {
+      // No section ID - show all highlights (for non-template journals)
+      return highlights;
+    }
+    // Filter to only highlights for this section
+    return highlights.filter(h => h.textRange.startContainerId === sectionId);
+  }, [highlights, sectionId]);
 
   // Handle text selection with delay to allow for selection adjustment (mobile-friendly)
   const handleMouseUp = useCallback(() => {
@@ -115,8 +127,8 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           range: {
             startOffset,
             endOffset,
-            startContainerId: undefined,
-            endContainerId: undefined,
+            startContainerId: sectionId, // Store section ID for template journals
+            endContainerId: sectionId,
           },
           boundingRect,
         });
@@ -247,12 +259,12 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
   // Render text with highlights
   const renderHighlightedContent = () => {
     // If no highlights, render markdown
-    if (highlights.length === 0) {
+    if (filteredHighlights.length === 0) {
       return <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>;
     }
 
     // Sort highlights by start offset
-    const sortedHighlights = [...highlights].sort(
+    const sortedHighlights = [...filteredHighlights].sort(
       (a, b) => a.textRange.startOffset - b.textRange.startOffset
     );
 
