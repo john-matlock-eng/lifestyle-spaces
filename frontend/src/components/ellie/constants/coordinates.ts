@@ -84,14 +84,14 @@ export const ELLIE_COORDINATES = {
     },
   },
 
-  // Tail positioning
+  // Tail positioning - attached to back of body, longer
   tail: {
-    cx: 35,
-    cy: 62,
-    rx: 8,
-    ry: 4,
+    cx: 42,     // Moved right to attach to body (body left edge is at 40)
+    cy: 68,     // Positioned at back-middle of body
+    rx: 12,     // Made longer (was 8)
+    ry: 5,      // Slightly thicker (was 4)
     rotation: -45,
-    transformOrigin: '35 62',
+    transformOrigin: '42 68',
   },
 
   // Collar positioning (on neck - using rect instead of ellipse)
