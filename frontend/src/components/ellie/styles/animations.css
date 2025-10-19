@@ -1,8 +1,8 @@
-/* Tail animations */
+/* Tail animations - subtle movements */
 @keyframes wag-enhanced {
   0%, 100% { transform: rotate(-45deg); }
-  25% { transform: rotate(-65deg); }
-  75% { transform: rotate(-25deg); }
+  25% { transform: rotate(-50deg); }
+  75% { transform: rotate(-40deg); }
 }
 
 @keyframes wiggle {

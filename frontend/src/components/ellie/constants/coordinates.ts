@@ -8,12 +8,12 @@ export const ELLIE_COORDINATES = {
   centerX: 60,
   centerY: 60,
 
-  // Body positioning (torso)
+  // Body positioning (torso) - narrower/sleeker
   body: {
     cx: 60,
     cy: 65,
-    rx: 25,
-    ry: 18,
+    rx: 20,  // Reduced from 25 (20% narrower)
+    ry: 16,  // Reduced from 18 for better proportion
   },
 
   // Neck positioning (connects head to body)
