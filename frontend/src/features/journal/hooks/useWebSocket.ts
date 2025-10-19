@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { fetchAuthSession } from '@aws-amplify/auth';
 
 interface UseWebSocketOptions {
   spaceId: string;
@@ -45,9 +46,16 @@ export const useWebSocket = (options: UseWebSocketOptions): UseWebSocketReturn =
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isIntentionalCloseRef = useRef(false);
 
-  // Get auth token
-  const getToken = useCallback(() => {
-    return localStorage.getItem('accessToken') || '';
+  // Get auth token from AWS Amplify
+  const getToken = useCallback(async (): Promise<string> => {
+    try {
+      const session = await fetchAuthSession();
+      const accessToken = session.tokens?.accessToken?.toString();
+      return accessToken || '';
+    } catch (error) {
+      console.error('Failed to get auth session for WebSocket:', error);
+      return '';
+    }
   }, []);
 
   // Send message through WebSocket
@@ -84,7 +92,7 @@ export const useWebSocket = (options: UseWebSocketOptions): UseWebSocketReturn =
   }, []);
 
   // Connect to WebSocket
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       return; // Already connected
     }
@@ -92,7 +100,7 @@ export const useWebSocket = (options: UseWebSocketOptions): UseWebSocketReturn =
     setIsConnecting(true);
     setError(null);
 
-    const token = getToken();
+    const token = await getToken();
     const wsUrl = `${WS_BASE_URL}/ws/spaces/${spaceId}/journals/${journalEntryId}?token=${encodeURIComponent(token)}`;
 
     try {
