@@ -246,7 +246,7 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
       try {
         // Optimistic update
         setHighlights((prev) => prev.map((h) =>
-          h.id === highlightId ? { ...h, _isDeleting: true } as any : h
+          h.id === highlightId ? { ...h, _isDeleting: true } as Highlight & { _isDeleting?: boolean } : h
         ));
         setPendingActions((prev) => [
           ...prev,
@@ -274,7 +274,7 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
         console.error('Error deleting highlight:', err);
         // Rollback optimistic update
         setHighlights((prev) => prev.map((h) =>
-          h.id === highlightId ? { ...h, _isDeleting: undefined } as any : h
+          h.id === highlightId ? { ...h, _isDeleting: undefined } as Highlight & { _isDeleting?: boolean } : h
         ));
         setPendingActions((prev) =>
           prev.filter((a) => !(a.type === 'DELETE_HIGHLIGHT' && a.id === highlightId))

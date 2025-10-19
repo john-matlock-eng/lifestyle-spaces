@@ -102,8 +102,10 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
   }, [selection, popoverPosition]);
 
   // Create highlight with selected color
-  const handleCreateHighlight = useCallback((_color: HighlightColor = 'yellow') => {
+  const handleCreateHighlight = useCallback((color: HighlightColor = 'yellow') => {
     if (selection) {
+      // TODO: Use color parameter when passing to onHighlightCreate
+      void color; // Suppress unused warning
       onHighlightCreate(selection);
       setSelection(null);
       setPopoverPosition(null);
