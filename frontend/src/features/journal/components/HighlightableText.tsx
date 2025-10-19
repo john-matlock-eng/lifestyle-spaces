@@ -129,7 +129,12 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     const handleClickOutside = (e: MouseEvent) => {
       if (selection && popoverPosition) {
         const target = e.target as HTMLElement;
+        console.log('[HighlightableText] Click outside check - target:', target);
+        console.log('[HighlightableText] Click outside check - closest popover:', target.closest('.highlight-popover'));
+        console.log('[HighlightableText] Click outside check - closest highlightable:', target.closest('.highlightable-text'));
+
         if (!target.closest('.highlight-popover') && !target.closest('.highlightable-text')) {
+          console.log('[HighlightableText] Clearing selection due to outside click');
           setSelection(null);
           setPopoverPosition(null);
           window.getSelection()?.removeAllRanges();
@@ -137,8 +142,15 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    // Use setTimeout to avoid clearing immediately after setting
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [selection, popoverPosition]);
 
   // Create highlight with selected color
