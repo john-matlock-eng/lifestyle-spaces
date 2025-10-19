@@ -49,6 +49,7 @@ export const JournalViewPage: React.FC = () => {
     createHighlight,
     createComment,
     deleteComment,
+    fetchComments,
     reconnect
   } = useHighlightsRealtime(spaceId || '', journalId || '')
 
@@ -63,6 +64,13 @@ export const JournalViewPage: React.FC = () => {
 
   // Ellie customization
   const { customization } = useEllieCustomizationContext()
+
+  // Handler to open highlight and load its comments
+  const handleHighlightClick = (highlight: Highlight) => {
+    setSelectedHighlight(highlight)
+    // Fetch comments for this highlight
+    fetchComments(highlight.id)
+  }
 
   useEffect(() => {
     if (spaceId && journalId) {
@@ -357,7 +365,7 @@ ${content}
                             journalEntryId={journalId || ''}
                             spaceId={spaceId || ''}
                             onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-                            onHighlightClick={setSelectedHighlight}
+                            onHighlightClick={handleHighlightClick}
                           />
                         )
                       }
@@ -388,7 +396,7 @@ ${content}
                             journalEntryId={journalId || ''}
                             spaceId={spaceId || ''}
                             onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-                            onHighlightClick={setSelectedHighlight}
+                            onHighlightClick={handleHighlightClick}
                           />
                         )
                       }
@@ -401,7 +409,7 @@ ${content}
                       journalEntryId={journalId || ''}
                       spaceId={spaceId || ''}
                       onHighlightCreate={(selection) => createHighlight(selection, 'yellow')}
-                      onHighlightClick={setSelectedHighlight}
+                      onHighlightClick={handleHighlightClick}
                     />
                   )}
                 </div>
@@ -418,7 +426,7 @@ ${content}
             journalEntryId={journalId || ''}
             spaceId={spaceId || ''}
             onHighlightCreate={(selection) => createHighlight(selection, 'yellow')}
-            onHighlightClick={setSelectedHighlight}
+            onHighlightClick={handleHighlightClick}
           />
         )}
       </div>
