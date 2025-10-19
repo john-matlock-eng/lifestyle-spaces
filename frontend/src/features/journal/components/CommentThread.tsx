@@ -454,84 +454,84 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           }
         `}</style>
 
-        {/* Dark Mode Compatible Gradient Header */}
+        {/* Dark Mode Compatible Gradient Header - Compact Design */}
         <div
           style={{
             background: isDarkMode
               ? 'linear-gradient(135deg, #1e40af 0%, #7c3aed 100%)'
               : 'linear-gradient(135deg, var(--theme-primary-500) 0%, var(--theme-primary-700) 100%)',
-            padding: '24px',
+            padding: '16px 20px',
             color: 'white',
             boxShadow: isDarkMode
-              ? '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
-              : 'var(--theme-shadow-md)',
+              ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+              : '0 2px 8px rgba(0, 0, 0, 0.1)',
+            borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'}`,
           }}
         >
           <div className="flex items-center justify-between mb-3">
-            <h3
-              style={{
-                fontSize: '20px',
-                fontWeight: '700',
-                margin: 0,
-                letterSpacing: '0.5px',
-              }}
-            >
-              💬 Discussion
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '20px' }}>💬</span>
+              <h3
+                style={{
+                  fontSize: '17px',
+                  fontWeight: '600',
+                  margin: 0,
+                  letterSpacing: '0.3px',
+                }}
+              >
+                Discussion
+              </h3>
+            </div>
             <button
               onClick={onClose}
+              title="Close discussion"
               style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                borderRadius: '8px',
-                width: '32px',
-                height: '32px',
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                borderRadius: '6px',
+                width: '36px',
+                height: '36px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
+                color: 'white',
+                fontSize: '20px',
+                fontWeight: '400',
+                lineHeight: '1',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+                e.currentTarget.style.transform = 'scale(1.05)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                e.currentTarget.style.transform = 'scale(1)';
               }}
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              ✕
             </button>
           </div>
 
           {/* Highlighted text preview - Enhanced for dark mode */}
           <div
             style={{
-              padding: '14px 16px',
-              borderRadius: '10px',
+              padding: '10px 12px',
+              borderRadius: '8px',
               backgroundColor: isDarkMode
-                ? 'rgba(251, 191, 36, 0.15)'  // Semi-transparent yellow for dark mode
+                ? 'rgba(251, 191, 36, 0.12)'  // Semi-transparent yellow for dark mode
                 : (highlight.color || HIGHLIGHT_COLORS.yellow),
               color: isDarkMode ? '#f1f5f9' : '#1e293b',
-              fontSize: '14px',
-              lineHeight: '1.6',
+              fontSize: '13px',
+              lineHeight: '1.5',
               boxShadow: isDarkMode
-                ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                : '0 2px 8px rgba(0, 0, 0, 0.1)',
-              maxHeight: '80px',
+                ? '0 2px 8px rgba(0, 0, 0, 0.2)'
+                : '0 1px 4px rgba(0, 0, 0, 0.1)',
+              maxHeight: '70px',
               overflow: 'auto',
-              border: isDarkMode ? '1px solid rgba(251, 191, 36, 0.3)' : 'none',
+              border: isDarkMode ? '1px solid rgba(251, 191, 36, 0.25)' : 'none',
               fontWeight: '500',
             }}
           >

@@ -22,25 +22,35 @@
   transform: scale(1.1);
 }
 
-/* Thought bubble */
+/* Thought bubble - positioned above and to the left to avoid blocking Ellie */
 .thought-bubble {
   position: absolute;
-  top: -80px;
-  right: 0;
+  top: -100px;
+  left: -20px;
   background: white;
   border: 2px solid #333;
-  border-radius: 20px;
-  padding: 8px 12px;
-  max-width: 200px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  padding: 10px 14px;
+  max-width: 180px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 10;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Dark mode support for thought bubble */
+.dark .thought-bubble {
+  background: #1e293b;
+  border-color: #475569;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .thought-bubble::after {
   content: '';
   position: absolute;
   bottom: -10px;
-  right: 30px;
+  left: 40px;
   width: 0;
   height: 0;
   border-left: 10px solid transparent;
@@ -48,10 +58,18 @@
   border-top: 10px solid white;
 }
 
+.dark .thought-bubble::after {
+  border-top-color: #1e293b;
+}
+
 .thought-text {
-  font-size: 14px;
+  font-size: 13px;
   color: #333;
   line-height: 1.4;
+}
+
+.dark .thought-text {
+  color: #e2e8f0;
 }
 
 /* Particles */
