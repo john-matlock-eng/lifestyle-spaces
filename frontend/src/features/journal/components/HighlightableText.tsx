@@ -266,9 +266,9 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           top: `${popoverPosition.y}px`,
           transform: 'translate(-50%, -100%)',
           zIndex: 99999,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, var(--theme-primary-500) 0%, var(--theme-primary-700) 100%)',
           borderRadius: '12px',
-          boxShadow: '0 10px 40px rgba(102, 126, 234, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 10px 40px rgba(20, 184, 166, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)',
           padding: '12px',
           display: 'flex',
           flexDirection: 'column',
@@ -289,7 +289,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
             }
           }
 
-          /* Pointer arrow */
+          /* Pointer arrow - uses theme primary-700 */
           .highlight-popover::after {
             content: '';
             position: absolute;
@@ -300,7 +300,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
             height: 0;
             border-left: 8px solid transparent;
             border-right: 8px solid transparent;
-            border-top: 8px solid #764ba2;
+            border-top: 8px solid var(--theme-primary-700);
           }
         `}</style>
 

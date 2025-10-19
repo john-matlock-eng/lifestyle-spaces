@@ -1,10 +1,10 @@
 /**
- * CommentThread Component - STUNNING GLASSMORPHISM REDESIGN
+ * CommentThread Component - THEME-AWARE GLASSMORPHISM DESIGN
  *
  * Displays a highlight with its associated comment thread.
  * Features:
  * - Glassmorphism sliding panel from right
- * - Gradient header with project branding
+ * - Theme-aware gradient header (teal/cyan primary colors)
  * - Consistent avatar colors per user
  * - Smooth animations (slideInRight, fadeIn)
  * - Modern comment bubbles
@@ -12,7 +12,7 @@
  * - @mention highlighting
  * - Elegant reply threading
  * - Floating mention autocomplete
- * - Gradient submit button
+ * - Theme-aware gradient submit button
  *
  * Uses React Portal to render at document.body level.
  */
@@ -32,17 +32,17 @@ interface CommentThreadProps {
   onClose: () => void;
 }
 
-// Generate consistent color for user based on their ID
+// Generate consistent color for user based on their ID (using theme colors)
 const getUserColor = (userId: string): string => {
   const colors = [
-    '#667eea', // purple
-    '#f093fb', // pink
-    '#4facfe', // blue
-    '#43e97b', // green
-    '#fa709a', // rose
-    '#feca57', // yellow
-    '#48dbfb', // cyan
-    '#ff6b6b', // red
+    '#14b8a6', // theme teal (primary-500)
+    '#a855f7', // theme purple (secondary-500)
+    '#ec4899', // theme pink (accent-500)
+    '#10b981', // theme green (status-success)
+    '#0ea5e9', // theme blue (status-info)
+    '#f59e0b', // theme yellow (status-warning)
+    '#0d9488', // theme teal dark (primary-600)
+    '#9333ea', // theme purple dark (secondary-600)
   ];
 
   let hash = 0;
@@ -71,7 +71,7 @@ const formatTimestamp = (isoString: string): string => {
   return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-// Highlight @mentions in text
+// Highlight @mentions in text using theme colors
 const highlightMentions = (text: string): React.ReactNode => {
   const parts = text.split(/(@\w+)/g);
   return parts.map((part, index) => {
@@ -80,9 +80,9 @@ const highlightMentions = (text: string): React.ReactNode => {
         <span
           key={index}
           style={{
-            color: '#667eea',
+            color: 'var(--theme-primary-700)',
             fontWeight: '600',
-            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            backgroundColor: 'var(--theme-primary-100)',
             padding: '2px 4px',
             borderRadius: '3px',
           }}
@@ -221,10 +221,11 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           <div className="flex-1 min-w-0">
             <div
               style={{
-                backgroundColor: isAuthor ? 'rgba(102, 126, 234, 0.08)' : 'rgba(0, 0, 0, 0.03)',
+                backgroundColor: isAuthor ? 'var(--theme-primary-100)' : 'var(--theme-bg-elevated)',
                 borderRadius: '12px',
                 padding: '12px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+                boxShadow: 'var(--theme-shadow-sm)',
+                border: `1px solid ${isAuthor ? 'var(--theme-primary-200)' : 'var(--theme-border-light)'}`,
               }}
             >
               <div className="flex items-baseline gap-2 mb-1">
@@ -232,7 +233,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                   style={{
                     fontWeight: '600',
                     fontSize: '14px',
-                    color: '#1a202c',
+                    color: 'var(--theme-text-primary)',
                   }}
                 >
                   {comment.authorName}
@@ -240,7 +241,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 <span
                   style={{
                     fontSize: '12px',
-                    color: '#718096',
+                    color: 'var(--theme-text-secondary)',
                   }}
                 >
                   {formatTimestamp(comment.createdAt)}
@@ -249,7 +250,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                   <span
                     style={{
                       fontSize: '11px',
-                      color: '#a0aec0',
+                      color: 'var(--theme-text-muted)',
                       fontStyle: 'italic',
                     }}
                   >
@@ -260,10 +261,11 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
               <p
                 style={{
                   fontSize: '14px',
-                  color: '#2d3748',
+                  color: 'var(--theme-text-primary)',
                   lineHeight: '1.5',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',
+                  margin: 0,
                 }}
               >
                 {highlightMentions(comment.text)}
@@ -275,7 +277,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
               <button
                 style={{
                   fontSize: '12px',
-                  color: '#667eea',
+                  color: 'var(--theme-primary-600)',
                   fontWeight: '500',
                   background: 'none',
                   border: 'none',
@@ -285,9 +287,11 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 onClick={() => setReplyToId(comment.id)}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.textDecoration = 'underline';
+                  e.currentTarget.style.color = 'var(--theme-primary-700)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.textDecoration = 'none';
+                  e.currentTarget.style.color = 'var(--theme-primary-600)';
                 }}
               >
                 Reply
@@ -296,7 +300,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 <button
                   style={{
                     fontSize: '12px',
-                    color: '#e53e3e',
+                    color: 'var(--theme-error-600)',
                     fontWeight: '500',
                     background: 'none',
                     border: 'none',
@@ -306,9 +310,11 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                   onClick={() => onDeleteComment(comment.id)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.textDecoration = 'underline';
+                    e.currentTarget.style.color = 'var(--theme-error-700)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.textDecoration = 'none';
+                    e.currentTarget.style.color = 'var(--theme-error-600)';
                   }}
                 >
                   Delete
@@ -357,9 +363,10 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           bottom: 0,
           width: '480px',
           maxWidth: '90vw',
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: 'var(--theme-bg-surface)',
           backdropFilter: 'blur(20px)',
-          boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.1)',
+          boxShadow: 'var(--theme-shadow-2xl)',
+          border: `1px solid var(--theme-border-light)`,
           zIndex: 9999,
           display: 'flex',
           flexDirection: 'column',
@@ -391,13 +398,13 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           }
         `}</style>
 
-        {/* Gradient Header */}
+        {/* Theme-aware Gradient Header */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, var(--theme-primary-500) 0%, var(--theme-primary-700) 100%)',
             padding: '20px 24px',
             color: 'white',
-            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.2)',
+            boxShadow: 'var(--theme-shadow-md)',
           }}
         >
           <div className="flex items-center justify-between mb-3">
@@ -454,7 +461,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
               padding: '12px',
               borderRadius: '8px',
               backgroundColor: highlight.color || HIGHLIGHT_COLORS.yellow,
-              color: '#1a202c',
+              color: 'var(--theme-text-primary)',
               fontSize: '14px',
               lineHeight: '1.5',
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
@@ -482,7 +489,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
             flex: 1,
             overflowY: 'auto',
             padding: '16px 24px',
-            backgroundColor: 'rgba(248, 250, 252, 0.8)',
+            backgroundColor: 'var(--theme-bg-base)',
           }}
         >
           {comments.length === 0 ? (
@@ -490,7 +497,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
               style={{
                 textAlign: 'center',
                 padding: '48px 24px',
-                color: '#718096',
+                color: 'var(--theme-text-secondary)',
               }}
             >
               <div style={{ fontSize: '48px', marginBottom: '12px' }}>💭</div>
@@ -509,9 +516,9 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
         {/* Comment input */}
         <div
           style={{
-            borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+            borderTop: `1px solid var(--theme-border-light)`,
             padding: '20px 24px',
-            backgroundColor: 'white',
+            backgroundColor: 'var(--theme-bg-surface)',
             boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.05)',
             position: 'relative',
           }}
@@ -524,10 +531,10 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 alignItems: 'center',
                 gap: '8px',
                 padding: '8px 12px',
-                backgroundColor: 'rgba(102, 126, 234, 0.08)',
+                backgroundColor: 'var(--theme-primary-100)',
                 borderRadius: '6px',
                 fontSize: '13px',
-                color: '#667eea',
+                color: 'var(--theme-primary-700)',
               }}
             >
               <span>↩ Replying to comment</span>
@@ -537,7 +544,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                   marginLeft: 'auto',
                   background: 'none',
                   border: 'none',
-                  color: '#667eea',
+                  color: 'var(--theme-primary-700)',
                   fontWeight: '600',
                   cursor: 'pointer',
                   fontSize: '13px',
@@ -557,10 +564,10 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 left: '24px',
                 right: '24px',
                 marginBottom: '8px',
-                backgroundColor: 'white',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
+                backgroundColor: 'var(--theme-bg-surface)',
+                border: `1px solid var(--theme-border-light)`,
                 borderRadius: '8px',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+                boxShadow: 'var(--theme-shadow-lg)',
                 maxHeight: '160px',
                 overflowY: 'auto',
               }}
@@ -580,10 +587,11 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                     alignItems: 'center',
                     gap: '8px',
                     transition: 'background-color 0.2s ease',
+                    color: 'var(--theme-text-primary)',
                   }}
                   onClick={() => handleMentionSelect(member.name)}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(102, 126, 234, 0.08)';
+                    e.currentTarget.style.backgroundColor = 'var(--theme-primary-50)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = 'transparent';
@@ -619,7 +627,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
             style={{
               width: '100%',
               padding: '12px',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
+              border: `1px solid var(--theme-border-light)`,
               borderRadius: '8px',
               fontSize: '14px',
               resize: 'none',
@@ -627,6 +635,8 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
               maxHeight: '120px',
               outline: 'none',
               transition: 'border-color 0.2s ease',
+              backgroundColor: 'var(--theme-bg-surface)',
+              color: 'var(--theme-text-primary)',
             }}
             rows={1}
             onKeyDown={(e) => {
@@ -636,10 +646,10 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
               }
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = '#667eea';
+              e.currentTarget.style.borderColor = 'var(--theme-primary-500)';
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.1)';
+              e.currentTarget.style.borderColor = 'var(--theme-border-light)';
             }}
           />
 
@@ -656,22 +666,11 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 setCommentText('');
                 setReplyToId(null);
               }}
+              className="button-secondary"
               style={{
                 padding: '8px 16px',
                 fontSize: '13px',
                 fontWeight: '500',
-                color: '#718096',
-                backgroundColor: 'transparent',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.03)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
               Clear
@@ -679,33 +678,11 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
             <button
               onClick={handleSubmit}
               disabled={!commentText.trim()}
+              className="button-primary"
               style={{
                 padding: '8px 20px',
                 fontSize: '13px',
                 fontWeight: '600',
-                color: 'white',
-                background: commentText.trim()
-                  ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                  : '#cbd5e0',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: commentText.trim() ? 'pointer' : 'not-allowed',
-                transition: 'all 0.2s ease',
-                boxShadow: commentText.trim()
-                  ? '0 2px 8px rgba(102, 126, 234, 0.3)'
-                  : 'none',
-              }}
-              onMouseEnter={(e) => {
-                if (commentText.trim()) {
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (commentText.trim()) {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
-                }
               }}
             >
               Post Comment
