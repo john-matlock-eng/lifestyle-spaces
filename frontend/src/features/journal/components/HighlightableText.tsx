@@ -162,6 +162,35 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     handleSelection();
   }, [handleSelection]);
 
+  // Listen for selection changes (more reliable for mobile)
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      console.log('[HighlightableText] selectionchange triggered');
+
+      // Only process if we're within our content area
+      const windowSelection = window.getSelection();
+      if (!windowSelection || windowSelection.isCollapsed) {
+        return;
+      }
+
+      // Check if selection is within our content
+      const range = windowSelection.getRangeAt(0);
+      const container = contentRef.current;
+      if (!container) return;
+
+      // Check if selection is within this component
+      if (container.contains(range.commonAncestorContainer)) {
+        console.log('[HighlightableText] Selection is within our content, triggering handler');
+        handleSelection();
+      }
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, [handleSelection]);
+
   // Handle clicking/tapping outside to close UI elements
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
