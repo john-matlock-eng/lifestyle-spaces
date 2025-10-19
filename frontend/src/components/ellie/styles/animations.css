@@ -61,26 +61,26 @@
   50% { transform: scale(1.05); }
 }
 
-/* Tongue animations */
+/* Tongue animations - no vertical movement, only subtle scale/horizontal */
 @keyframes tongueGentle {
-  0%, 100% { transform: scaleY(1); }
-  50% { transform: scaleY(1.1); }
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.05); }
 }
 
 @keyframes tonguePant {
-  0%, 100% { transform: scaleY(0.95) translateY(0); }
-  50% { transform: scaleY(1.15) translateY(2px); }
+  0%, 100% { transform: scaleX(0.98); }
+  50% { transform: scaleX(1.08); }
 }
 
 @keyframes tongueWag {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-8deg); }
-  75% { transform: rotate(8deg); }
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-1px); }
+  75% { transform: translateX(1px); }
 }
 
 @keyframes tonguePantSide {
-  0%, 100% { transform: translateX(0) scaleX(1); }
-  50% { transform: translateX(3px) scaleX(1.1); }
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(2px); }
 }
 
 /* Particle animations */
