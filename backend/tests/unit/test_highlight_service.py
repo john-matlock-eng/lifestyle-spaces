@@ -299,3 +299,261 @@ class TestCommentService:
             # Verify success
             assert result is True
             mock_db.delete_item.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_delete_comment_not_found(self, mock_db):
+        """Test deleting a comment that doesn't exist."""
+        space_id = "space-123"
+        comment_id = "nonexistent-comment"
+        user_id = "user-789"
+
+        # Mock DynamoDB get_item response (not found)
+        mock_db.get_item.return_value = None
+
+        with patch("app.services.highlight_service.get_db", return_value=mock_db):
+            service = CommentService()
+
+            # Delete comment
+            result = await service.delete_comment(space_id, comment_id, user_id)
+
+            # Verify failure
+            assert result is False
+            mock_db.delete_item.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_delete_comment_not_owner(self, mock_db):
+        """Test deleting a comment (not owner)."""
+        space_id = "space-123"
+        comment_id = "comment-456"
+        user_id = "user-789"
+        highlight_id = "highlight-123"
+
+        # Mock DynamoDB get_item response (different author)
+        mock_db.get_item.return_value = {
+            "id": comment_id,
+            "highlightId": highlight_id,
+            "spaceId": space_id,
+            "text": "Comment text",
+            "author": "different-user",
+            "authorName": "Different User",
+            "mentions": [],
+            "createdAt": "2025-01-01T00:00:00",
+            "updatedAt": "2025-01-01T00:00:00",
+            "isEdited": False,
+        }
+
+        with patch("app.services.highlight_service.get_db", return_value=mock_db):
+            service = CommentService()
+
+            # Delete comment
+            result = await service.delete_comment(space_id, comment_id, user_id)
+
+            # Verify failure
+            assert result is False
+            mock_db.delete_item.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_update_comment_success(self, mock_db):
+        """Test updating a comment (owner)."""
+        space_id = "space-123"
+        comment_id = "comment-456"
+        user_id = "user-789"
+
+        # Mock DynamoDB get_item response
+        mock_db.get_item.return_value = {
+            "id": comment_id,
+            "highlightId": "highlight-123",
+            "spaceId": space_id,
+            "text": "Old text",
+            "author": user_id,
+            "authorName": "User",
+            "mentions": [],
+            "createdAt": "2025-01-01T00:00:00",
+            "updatedAt": "2025-01-01T00:00:00",
+            "isEdited": False,
+        }
+
+        with patch("app.services.highlight_service.get_db", return_value=mock_db):
+            service = CommentService()
+
+            # Update comment
+            updated = await service.update_comment(space_id, comment_id, user_id, "New text")
+
+            # Verify success
+            assert updated is not None
+            assert updated.text == "New text"
+            assert updated.is_edited is True
+            mock_db.update_item.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_update_comment_not_found(self, mock_db):
+        """Test updating a comment that doesn't exist."""
+        space_id = "space-123"
+        comment_id = "nonexistent-comment"
+        user_id = "user-789"
+
+        # Mock DynamoDB get_item response (not found)
+        mock_db.get_item.return_value = None
+
+        with patch("app.services.highlight_service.get_db", return_value=mock_db):
+            service = CommentService()
+
+            # Update comment
+            updated = await service.update_comment(space_id, comment_id, user_id, "New text")
+
+            # Verify failure
+            assert updated is None
+            mock_db.update_item.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_update_comment_not_owner(self, mock_db):
+        """Test updating a comment (not owner)."""
+        space_id = "space-123"
+        comment_id = "comment-456"
+        user_id = "user-789"
+
+        # Mock DynamoDB get_item response (different author)
+        mock_db.get_item.return_value = {
+            "id": comment_id,
+            "highlightId": "highlight-123",
+            "spaceId": space_id,
+            "text": "Old text",
+            "author": "different-user",
+            "authorName": "Different User",
+            "mentions": [],
+            "createdAt": "2025-01-01T00:00:00",
+            "updatedAt": "2025-01-01T00:00:00",
+            "isEdited": False,
+        }
+
+        with patch("app.services.highlight_service.get_db", return_value=mock_db):
+            service = CommentService()
+
+            # Update comment
+            updated = await service.update_comment(space_id, comment_id, user_id, "New text")
+
+            # Verify failure
+            assert updated is None
+            mock_db.update_item.assert_not_called()
+
+
+class TestHighlightServiceEdgeCases:
+    """Tests for edge cases in HighlightService."""
+
+    @pytest.mark.asyncio
+    async def test_get_highlight_not_found(self, mock_db):
+        """Test getting a highlight that doesn't exist."""
+        space_id = "space-123"
+        highlight_id = "nonexistent-highlight"
+
+        # Mock DynamoDB get_item response (not found)
+        mock_db.get_item.return_value = None
+
+        with patch("app.services.highlight_service.get_db", return_value=mock_db):
+            service = HighlightService()
+
+            # Get highlight
+            highlight = await service.get_highlight(space_id, highlight_id)
+
+            # Verify not found
+            assert highlight is None
+
+    @pytest.mark.asyncio
+    async def test_increment_comment_count(self, mock_db):
+        """Test incrementing comment count on a highlight."""
+        space_id = "space-123"
+        highlight_id = "highlight-456"
+
+        # Mock DynamoDB get_item response
+        mock_db.get_item.return_value = {
+            "id": highlight_id,
+            "journalEntryId": "journal-123",
+            "spaceId": space_id,
+            "highlightedText": "Test text",
+            "textRange": {"startOffset": 0, "endOffset": 9},
+            "color": "yellow",
+            "createdBy": "user-1",
+            "createdByName": "User",
+            "createdAt": "2025-01-01T00:00:00",
+            "updatedAt": "2025-01-01T00:00:00",
+            "commentCount": 5,
+        }
+
+        with patch("app.services.highlight_service.get_db", return_value=mock_db):
+            service = HighlightService()
+
+            # Increment comment count
+            await service.increment_comment_count(space_id, highlight_id)
+
+            # Verify update was called with incremented count
+            mock_db.update_item.assert_called_once()
+            call_args = mock_db.update_item.call_args[1]
+            assert call_args["updates"]["commentCount"] == 6
+
+    @pytest.mark.asyncio
+    async def test_decrement_comment_count(self, mock_db):
+        """Test decrementing comment count on a highlight."""
+        space_id = "space-123"
+        highlight_id = "highlight-456"
+
+        # Mock DynamoDB get_item response
+        mock_db.get_item.return_value = {
+            "id": highlight_id,
+            "journalEntryId": "journal-123",
+            "spaceId": space_id,
+            "highlightedText": "Test text",
+            "textRange": {"startOffset": 0, "endOffset": 9},
+            "color": "yellow",
+            "createdBy": "user-1",
+            "createdByName": "User",
+            "createdAt": "2025-01-01T00:00:00",
+            "updatedAt": "2025-01-01T00:00:00",
+            "commentCount": 5,
+        }
+
+        with patch("app.services.highlight_service.get_db", return_value=mock_db):
+            service = HighlightService()
+
+            # Decrement comment count
+            await service.decrement_comment_count(space_id, highlight_id)
+
+            # Verify update was called with decremented count
+            mock_db.update_item.assert_called_once()
+            call_args = mock_db.update_item.call_args[1]
+            assert call_args["updates"]["commentCount"] == 4
+
+    @pytest.mark.asyncio
+    async def test_increment_comment_count_highlight_not_found(self, mock_db):
+        """Test incrementing comment count when highlight doesn't exist."""
+        space_id = "space-123"
+        highlight_id = "nonexistent-highlight"
+
+        # Mock DynamoDB get_item response (not found)
+        mock_db.get_item.return_value = None
+
+        with patch("app.services.highlight_service.get_db", return_value=mock_db):
+            service = HighlightService()
+
+            # Increment comment count
+            await service.increment_comment_count(space_id, highlight_id)
+
+            # Verify update was NOT called
+            mock_db.update_item.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_decrement_comment_count_highlight_not_found(self, mock_db):
+        """Test decrementing comment count when highlight doesn't exist."""
+        space_id = "space-123"
+        highlight_id = "nonexistent-highlight"
+
+        # Mock DynamoDB get_item response (not found)
+        mock_db.get_item.return_value = None
+
+        with patch("app.services.highlight_service.get_db", return_value=mock_db):
+            service = HighlightService()
+
+            # Decrement comment count
+            await service.decrement_comment_count(space_id, highlight_id)
+
+            # Verify update was NOT called
+            mock_db.update_item.assert_not_called()
