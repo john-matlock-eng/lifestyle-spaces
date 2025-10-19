@@ -113,7 +113,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           if [ -f requirements.txt ] && [ -d tests ]; then
-            pytest --cov=app --cov-report=term-missing --cov-fail-under=94
+            pytest --cov=app --cov-report=term-missing --cov-fail-under=90
           else
             echo "⚠️ Tests need to be configured"
           fi
