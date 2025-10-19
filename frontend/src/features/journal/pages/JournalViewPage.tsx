@@ -378,11 +378,6 @@ ${content}
         {template && displaySections.length > 0 ? (
           // Render template sections with highlighting
           <div className="template-content">
-            {template.icon && (
-              <div className="template-icon-display" style={{ fontSize: '2em', marginBottom: '1em' }}>
-                {template.icon}
-              </div>
-            )}
             {displaySections.map((section) => (
               <div key={section.id} className="template-section template-section-compact">
                 <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
@@ -468,7 +463,7 @@ ${content}
                       sectionId={section.id}
                       journalEntryId={journalId || ''}
                       spaceId={spaceId || ''}
-                      onHighlightCreate={(selection) => createHighlight(selection, 'yellow')}
+                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
                       onHighlightClick={handleHighlightClick}
                       onHighlightDelete={deleteHighlight}
                     />
@@ -486,7 +481,7 @@ ${content}
             highlights={highlights}
             journalEntryId={journalId || ''}
             spaceId={spaceId || ''}
-            onHighlightCreate={(selection) => createHighlight(selection, 'yellow')}
+            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
             onHighlightClick={handleHighlightClick}
             onHighlightDelete={deleteHighlight}
           />
