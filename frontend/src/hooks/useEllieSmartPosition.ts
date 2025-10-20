@@ -25,7 +25,6 @@ const SAFE_ZONE_MARGIN = 20;
 const NUDGE_DISTANCE = 100;
 const NUDGE_OFFSET = 30;
 const EDGE_SNAP_TIMEOUT = 3000;
-const EDGE_SNAP_THRESHOLD = 50;
 const FOLLOW_DELAY = 500;
 const STORAGE_KEY = 'ellie-position';
 
@@ -97,8 +96,6 @@ export const useEllieSmartPosition = (
   // Get nearest edge position
   const getNearestEdge = useCallback((pos: ElliePosition): ElliePosition => {
     const { x, y } = pos;
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
 
     // Determine which edge is closest
     const distanceToLeft = x;

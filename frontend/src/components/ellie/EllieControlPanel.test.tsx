@@ -7,7 +7,7 @@ import {
   CallEllieButton,
   OpacitySlider,
 } from './EllieControlPanel';
-import { EllieMode } from './modes/InteractionModes';
+import { EllieMode } from './modes/types';
 
 describe('EllieControlPanel', () => {
   describe('EllieControlButton', () => {
@@ -432,7 +432,6 @@ describe('EllieControlPanel', () => {
       expect(document.activeElement).toBe(button);
 
       // Should respond to Enter key
-      const onModeChange = vi.fn();
       fireEvent.keyDown(button, { key: 'Enter' });
     });
 

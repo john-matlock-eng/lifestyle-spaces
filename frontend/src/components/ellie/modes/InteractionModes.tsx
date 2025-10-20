@@ -1,43 +1,14 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-
-export enum EllieMode {
-  COMPANION = 'companion',
-  ASSISTANT = 'assistant',
-  PLAYFUL = 'playful',
-  FOCUS = 'focus',
-}
-
-export interface Position {
-  x: number;
-  y: number;
-}
-
-export interface InteractionModeManagerProps {
-  currentMode: EllieMode;
-  onModeChange: (mode: EllieMode) => void;
-  position?: Position;
-  onPositionChange?: (position: Position) => void;
-  onDockChange?: (docked: boolean) => void;
-  children?: React.ReactNode;
-}
-
-export interface ModeContextMenuProps {
-  currentMode: EllieMode;
-  onModeSelect: (mode: EllieMode) => void;
-  children: React.ReactNode;
-}
-
-const MODE_DESCRIPTIONS: Record<EllieMode, string> = {
-  [EllieMode.COMPANION]: 'Follows user activity subtly, moves to avoid cursor',
-  [EllieMode.ASSISTANT]: 'Stays docked in bottom-right until called',
-  [EllieMode.PLAYFUL]: 'Occasionally moves on her own every 30-60 seconds',
-  [EllieMode.FOCUS]: 'Minimizes to tiny bubble during work',
-};
-
-const PLAYFUL_MIN_INTERVAL = 30000; // 30 seconds
-const PLAYFUL_MAX_INTERVAL = 60000; // 60 seconds
-const CURSOR_AVOID_DISTANCE = 100;
-const NUDGE_DISTANCE = 30;
+import {
+  EllieMode,
+  InteractionModeManagerProps,
+  ModeContextMenuProps,
+  MODE_DESCRIPTIONS,
+  PLAYFUL_MIN_INTERVAL,
+  PLAYFUL_MAX_INTERVAL,
+  CURSOR_AVOID_DISTANCE,
+  NUDGE_DISTANCE,
+} from './types';
 
 /**
  * InteractionModeManager component manages Ellie's behavior based on the selected mode
@@ -247,35 +218,4 @@ export const ModeContextMenu: React.FC<ModeContextMenuProps> = ({
       )}
     </>
   );
-};
-
-/**
- * Custom hook for mode keyboard shortcuts
- */
-export const useModeKeyboardShortcuts = (
-  currentMode: EllieMode,
-  onModeChange: (mode: EllieMode) => void
-) => {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+Shift+E to cycle modes
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'e') {
-        e.preventDefault();
-
-        const modes = [
-          EllieMode.COMPANION,
-          EllieMode.ASSISTANT,
-          EllieMode.PLAYFUL,
-          EllieMode.FOCUS,
-        ];
-
-        const currentIndex = modes.indexOf(currentMode);
-        const nextIndex = (currentIndex + 1) % modes.length;
-        onModeChange(modes[nextIndex]);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [currentMode, onModeChange]);
 };

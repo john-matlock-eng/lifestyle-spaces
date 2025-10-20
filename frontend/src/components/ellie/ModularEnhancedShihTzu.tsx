@@ -189,8 +189,8 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
     // Apply momentum if velocity is significant
     const velocityMagnitude = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
     if (velocityMagnitude > 0.5) {
-      let currentVelocity = { ...velocity };
-      let currentPosition = { ...internalPosition };
+      const currentVelocity = { ...velocity };
+      const currentPosition = { ...internalPosition };
 
       const applyMomentum = () => {
         currentVelocity.x *= MOMENTUM_DECAY;

@@ -3,13 +3,13 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { useEllieSmartPosition } from './useEllieSmartPosition';
 
 describe('useEllieSmartPosition', () => {
-  let mockIntersectionObserver: any;
+  let mockIntersectionObserver: ReturnType<typeof vi.fn>;
   let mockLocalStorage: { [key: string]: string };
 
   beforeEach(() => {
     // Mock IntersectionObserver
     mockIntersectionObserver = vi.fn();
-    mockIntersectionObserver.mockImplementation((callback: any) => ({
+    mockIntersectionObserver.mockImplementation(() => ({
       observe: vi.fn(),
       unobserve: vi.fn(),
       disconnect: vi.fn(),
@@ -18,10 +18,10 @@ describe('useEllieSmartPosition', () => {
       rootMargin: '',
       thresholds: [],
     }));
-    global.IntersectionObserver = mockIntersectionObserver as any;
+    global.IntersectionObserver = mockIntersectionObserver as unknown as typeof IntersectionObserver;
 
     // Mock requestAnimationFrame
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: any) => {
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
       cb(0);
       return 0;
     });

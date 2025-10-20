@@ -1,47 +1,14 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  EllieMode,
+  Position,
+  ElliePreferences,
+  PagePositions,
+  ElliePositionContext,
+} from './ElliePositionContextDefinition';
 
-export type EllieMode = 'companion' | 'assistant' | 'playful' | 'focus';
-
-export interface Position {
-  x: number;
-  y: number;
-}
-
-export interface ElliePreferences {
-  mode: EllieMode;
-  opacity: number;
-  isDocked: boolean;
-}
-
-export interface PagePositions {
-  [pathname: string]: Position;
-}
-
-export interface ElliePositionContextValue {
-  // Position
-  position: Position;
-  setPosition: (position: Position) => void;
-  getPositionForPage: (pathname: string) => Position | null;
-  resetPosition: () => void;
-
-  // Mode
-  mode: EllieMode;
-  setMode: (mode: EllieMode) => void;
-
-  // Appearance
-  opacity: number;
-  setOpacity: (opacity: number) => void;
-
-  // Docked state
-  isDocked: boolean;
-  setDocked: (docked: boolean) => void;
-
-  // History
-  positionHistory: Position[];
-  undoPosition: () => void;
-}
-
-const ElliePositionContext = createContext<ElliePositionContextValue | null>(null);
+// Re-export types for convenience
+export type { EllieMode, Position, ElliePreferences, PagePositions };
 
 const STORAGE_KEYS = {
   POSITION: 'ellie-position',
@@ -329,12 +296,4 @@ export const ElliePositionProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
     </ElliePositionContext.Provider>
   );
-};
-
-export const useElliePosition = (): ElliePositionContextValue => {
-  const context = useContext(ElliePositionContext);
-  if (!context) {
-    throw new Error('useElliePosition must be used within ElliePositionProvider');
-  }
-  return context;
 };

@@ -1,11 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
-import { ElliePositionProvider, useElliePosition } from './ElliePositionContext';
+import { ElliePositionProvider } from './ElliePositionContext';
+import { useElliePosition } from './useElliePosition';
 
 describe('ElliePositionContext', () => {
   let mockLocalStorage: { [key: string]: string };
-  let mockBroadcastChannel: any;
+  let mockBroadcastChannel: {
+    postMessage: ReturnType<typeof vi.fn>;
+    addEventListener: ReturnType<typeof vi.fn>;
+    removeEventListener: ReturnType<typeof vi.fn>;
+    close: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     // Mock localStorage
@@ -25,11 +31,11 @@ describe('ElliePositionContext', () => {
       removeEventListener: vi.fn(),
       close: vi.fn(),
     };
-    global.BroadcastChannel = vi.fn(() => mockBroadcastChannel) as any;
+    global.BroadcastChannel = vi.fn(() => mockBroadcastChannel) as unknown as typeof BroadcastChannel;
 
     // Mock window.location
-    delete (window as any).location;
-    (window as any).location = { pathname: '/test' };
+    delete (window as unknown as { location: unknown }).location;
+    (window as unknown as { location: { pathname: string } }).location = { pathname: '/test' };
   });
 
   afterEach(() => {
@@ -60,7 +66,7 @@ describe('ElliePositionContext', () => {
         try {
           useElliePosition();
           return <div>no error</div>;
-        } catch (error) {
+        } catch {
           return <div>error caught</div>;
         }
       };
@@ -105,9 +111,10 @@ describe('ElliePositionContext', () => {
       });
 
       expect(localStorage.setItem).toHaveBeenCalled();
-      const calls = (localStorage.setItem as any).mock.calls;
-      const positionCall = calls.find((call: any) =>
-        call[0].includes('position')
+      const mockSetItem = localStorage.setItem as ReturnType<typeof vi.fn>;
+      const calls = mockSetItem.mock.calls;
+      const positionCall = calls.find((call: unknown[]) =>
+        typeof call[0] === 'string' && call[0].includes('position')
       );
       expect(positionCall).toBeDefined();
     });
@@ -124,14 +131,14 @@ describe('ElliePositionContext', () => {
       });
 
       // Change pathname
-      (window as any).location.pathname = '/other';
+      (window as unknown as { location: { pathname: string } }).location.pathname = '/other';
 
       act(() => {
         result.current.setPosition({ x: 300, y: 400 });
       });
 
       // Switch back to original pathname
-      (window as any).location.pathname = '/test';
+      (window as unknown as { location: { pathname: string } }).location.pathname = '/test';
 
       // Position should restore (this would be tested in full integration)
       expect(result.current.position).toBeDefined();
@@ -178,9 +185,10 @@ describe('ElliePositionContext', () => {
       });
 
       expect(localStorage.setItem).toHaveBeenCalled();
-      const calls = (localStorage.setItem as any).mock.calls;
-      const modeCall = calls.find((call: any) =>
-        call[0].includes('mode') || call[0].includes('preferences')
+      const mockSetItem = localStorage.setItem as ReturnType<typeof vi.fn>;
+      const calls = mockSetItem.mock.calls;
+      const modeCall = calls.find((call: unknown[]) =>
+        typeof call[0] === 'string' && (call[0].includes('mode') || call[0].includes('preferences'))
       );
       expect(modeCall).toBeDefined();
     });

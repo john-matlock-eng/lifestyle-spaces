@@ -29,14 +29,12 @@ export enum PersonalityMovementType {
   SUBTLE = 'subtle',
 }
 
-const CUBIC_BEZIER = { x1: 0.4, y1: 0, x2: 0.2, y2: 1 };
-const FRAME_DURATION = 1000 / 60; // 60 FPS
-
 /**
  * Calculate cubic bezier easing
+ * Based on cubic-bezier(0.4, 0, 0.2, 1)
  */
 function cubicBezierEasing(t: number): number {
-  const { x1, y1, x2, y2 } = CUBIC_BEZIER;
+  // Using simplified cubic bezier for common easing curve
 
   // Simplified cubic bezier for common easing curve
   if (t < 0.5) {
@@ -78,7 +76,6 @@ export function animateToPosition(
 ): () => void {
   const {
     duration = 300,
-    easing = 'cubic-bezier(0.4, 0, 0.2, 1)',
     onUpdate,
     onComplete,
   } = options;
@@ -297,11 +294,11 @@ export function createAttentionAnimation(
 /**
  * Ensure function runs at max 60fps
  */
-export function ensureSixtyFPS<T extends (...args: any[]) => void>(fn: T): T {
+export function ensureSixtyFPS<T extends (...args: unknown[]) => void>(fn: T): T {
   let frameId: number | null = null;
-  let lastArgs: any[] | null = null;
+  let lastArgs: Parameters<T> | null = null;
 
-  const throttled = (...args: any[]) => {
+  const throttled = (...args: Parameters<T>) => {
     lastArgs = args;
 
     if (frameId === null) {

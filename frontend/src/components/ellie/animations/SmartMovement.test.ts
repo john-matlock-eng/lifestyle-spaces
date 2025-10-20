@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   Position,
-  AnimationOptions,
   PersonalityMovementType,
   animateToPosition,
   applyPersonalityMovement,
@@ -15,7 +14,7 @@ import {
 describe('SmartMovement', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: any) => {
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
       return setTimeout(cb, 16) as unknown as number; // ~60fps
     });
   });

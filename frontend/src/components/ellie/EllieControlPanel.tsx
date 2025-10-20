@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { EllieMode } from './modes/InteractionModes';
+import { EllieMode } from './modes/types';
 
 export interface EllieControlPanelProps {
   currentMode: EllieMode;
