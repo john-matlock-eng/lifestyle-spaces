@@ -112,8 +112,18 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   const [showMentions, setShowMentions] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [, setTimestampTick] = useState(0); // Forces re-render to update timestamps
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Update timestamps every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimestampTick(tick => tick + 1);
+    }, 30000); // Update every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Detect dark mode
   useEffect(() => {
