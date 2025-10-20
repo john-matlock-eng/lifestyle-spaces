@@ -54,7 +54,7 @@ const getUserColor = (userId: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-// Format timestamp smartly (just now, 5m ago, 2h ago, etc.)
+// Format timestamp smartly (just now, 5m ago, 2h ago, etc.) - Timezone agnostic
 const formatTimestamp = (isoString: string): string => {
   const now = new Date();
   const then = new Date(isoString);
@@ -64,13 +64,24 @@ const formatTimestamp = (isoString: string): string => {
   const diffHour = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHour / 24);
 
+  // Relative times (timezone agnostic)
   if (diffSec < 10) return 'just now';
   if (diffSec < 60) return `${diffSec}s ago`;
   if (diffMin < 60) return `${diffMin}m ago`;
   if (diffHour < 24) return `${diffHour}h ago`;
   if (diffDay < 7) return `${diffDay}d ago`;
 
-  return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  // For older dates, show full date in user's locale with year if different
+  const currentYear = now.getFullYear();
+  const thenYear = then.getFullYear();
+
+  if (currentYear === thenYear) {
+    // Same year - show month and day in user's locale
+    return then.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  } else {
+    // Different year - include year
+    return then.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
 };
 
 // Highlight @mentions in text using theme colors (dark mode compatible)
