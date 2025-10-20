@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import {
-  EllieMode,
+import type {
   InteractionModeManagerProps,
   ModeContextMenuProps,
+} from './types';
+import {
+  EllieMode,
   MODE_DESCRIPTIONS,
   PLAYFUL_MIN_INTERVAL,
   PLAYFUL_MAX_INTERVAL,

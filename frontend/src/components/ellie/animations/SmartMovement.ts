@@ -23,11 +23,13 @@ export interface AttentionAnimationOptions {
   onComplete?: () => void;
 }
 
-export enum PersonalityMovementType {
-  FLOATING = 'floating',
-  BREATHING = 'breathing',
-  SUBTLE = 'subtle',
-}
+export type PersonalityMovementType = 'floating' | 'breathing' | 'subtle';
+
+export const PersonalityMovementType = {
+  FLOATING: 'floating',
+  BREATHING: 'breathing',
+  SUBTLE: 'subtle',
+} as const;
 
 /**
  * Calculate cubic bezier easing

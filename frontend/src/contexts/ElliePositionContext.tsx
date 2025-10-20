@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
+import type {
   EllieMode,
   Position,
   ElliePreferences,
   PagePositions,
+  ElliePositionContextValue,
+} from './ElliePositionContextDefinition';
+import {
   ElliePositionContext,
 } from './ElliePositionContextDefinition';
 

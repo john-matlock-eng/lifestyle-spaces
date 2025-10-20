@@ -1,7 +1,9 @@
 import { useContext } from 'react';
+import type {
+  ElliePositionContextValue,
+} from './ElliePositionContextDefinition';
 import {
   ElliePositionContext,
-  ElliePositionContextValue,
 } from './ElliePositionContextDefinition';
 
 export const useElliePosition = (): ElliePositionContextValue => {

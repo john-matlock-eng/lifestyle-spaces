@@ -110,6 +110,8 @@ export const useEllieSmartPosition = (
       distanceToBottom
     );
 
+    const centerX = window.innerWidth / 2;
+
     // Snap to the nearest edge (prefer right > left > top > bottom)
     if (minDistance === distanceToRight || (x > centerX && minDistance !== distanceToTop)) {
       return { x: window.innerWidth - SAFE_ZONE_MARGIN - 100, y };

@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 
-export enum EllieMode {
-  COMPANION = 'companion',
-  ASSISTANT = 'assistant',
-  PLAYFUL = 'playful',
-  FOCUS = 'focus',
-}
+export type EllieMode = 'companion' | 'assistant' | 'playful' | 'focus';
+
+export const EllieMode = {
+  COMPANION: 'companion',
+  ASSISTANT: 'assistant',
+  PLAYFUL: 'playful',
+  FOCUS: 'focus',
+} as const;
 
 export interface Position {
   x: number;
