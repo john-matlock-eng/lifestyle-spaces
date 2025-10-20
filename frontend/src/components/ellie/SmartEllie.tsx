@@ -75,6 +75,30 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
   // Use global position if smart positioning is disabled
   const activePosition = enableSmartPositioning ? smartPosition : globalPosition;
 
+  // Ensure position is visible on screen (only on mount)
+  useEffect(() => {
+    const checkPosition = () => {
+      const isVisible =
+        activePosition.x >= 0 &&
+        activePosition.x < window.innerWidth - 150 &&
+        activePosition.y >= 0 &&
+        activePosition.y < window.innerHeight - 150;
+
+      if (!isVisible) {
+        // Reset to default visible position
+        const newPos = {
+          x: Math.min(window.innerWidth - 200, Math.max(20, window.innerWidth * 0.8)),
+          y: Math.min(window.innerHeight - 200, 100)
+        };
+        setPosition(newPos);
+        setGlobalPosition(newPos);
+      }
+    };
+
+    checkPosition();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount to avoid infinite loops
+
   // Sync positions
   useEffect(() => {
     if (enableSmartPositioning) {
@@ -152,7 +176,7 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
         />
       )}
 
-      {/* Main Ellie Component */}
+      {/* Main Ellie Component with fixed positioning */}
       <div
         role="img"
         aria-label={getAriaLabel()}
@@ -173,7 +197,7 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
       >
         {/* Control Panel */}
         {showControlPanel && (
-          <div className="absolute top-0 right-0 translate-x-full ml-2">
+          <div className="absolute top-0 left-full ml-2">
             <EllieControlPanel
               currentMode={mode}
               onModeChange={handleModeChange}
