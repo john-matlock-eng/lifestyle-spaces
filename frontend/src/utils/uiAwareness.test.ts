@@ -327,7 +327,7 @@ describe('uiAwareness', () => {
       expect(observer.disconnect).toBeDefined();
     });
 
-    it('should call callback when DOM changes', () => {
+    it('should call callback when DOM changes', async () => {
       const callback = vi.fn();
       const observer = createUIAwarenessObserver(callback);
 
@@ -341,14 +341,14 @@ describe('uiAwareness', () => {
       const button = document.createElement('button');
       container.appendChild(button);
 
-      // Wait for mutation observer
-      setTimeout(() => {
-        expect(callback).toHaveBeenCalled();
-        observer.disconnect();
-      }, 100);
+      // Wait for mutation observer to trigger
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      expect(callback).toHaveBeenCalled();
+      observer.disconnect();
     });
 
-    it('should throttle callbacks', () => {
+    it('should throttle callbacks', async () => {
       const callback = vi.fn();
       const observer = createUIAwarenessObserver(callback, 100);
 
@@ -363,15 +363,16 @@ describe('uiAwareness', () => {
         container.appendChild(button);
       }
 
+      // Wait for throttled callback
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       // Callback should be throttled (called less than 5 times)
-      setTimeout(() => {
-        expect(callback).toHaveBeenCalled();
-        expect(callback.mock.calls.length).toBeLessThan(5);
-        observer.disconnect();
-      }, 200);
+      expect(callback).toHaveBeenCalled();
+      expect(callback.mock.calls.length).toBeLessThan(5);
+      observer.disconnect();
     });
 
-    it('should be able to disconnect', () => {
+    it('should be able to disconnect', async () => {
       const callback = vi.fn();
       const observer = createUIAwarenessObserver(callback);
 
@@ -386,9 +387,10 @@ describe('uiAwareness', () => {
       const button = document.createElement('button');
       container.appendChild(button);
 
-      setTimeout(() => {
-        expect(callback).not.toHaveBeenCalled();
-      }, 100);
+      // Wait a bit
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      expect(callback).not.toHaveBeenCalled();
     });
   });
 

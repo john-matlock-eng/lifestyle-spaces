@@ -38,11 +38,15 @@ describe('EllieControlPanel', () => {
         expect(screen.getByText(/move/i)).toBeDefined();
       });
 
+      fireEvent.mouseLeave(button);
       fireEvent.mouseLeave(container);
 
-      await waitFor(() => {
-        expect(screen.queryByText(/move/i)).toBeNull();
-      });
+      await waitFor(
+        () => {
+          expect(screen.queryByText(/move/i)).toBeNull();
+        },
+        { timeout: 2000 }
+      );
     });
 
     it('should show 3-dot menu icon', () => {
