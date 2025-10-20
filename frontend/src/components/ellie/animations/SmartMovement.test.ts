@@ -178,7 +178,7 @@ describe('SmartMovement', () => {
       // Calling cancel should not crash the test (fake timers have issues with RAF)
       try {
         cancel();
-      } catch (e) {
+      } catch {
         // Ignore fake timer errors
       }
 
@@ -372,7 +372,7 @@ describe('SmartMovement', () => {
       // Calling cancel (fake timers may cause errors)
       try {
         cancel();
-      } catch (e) {
+      } catch {
         // Ignore fake timer errors
       }
 
