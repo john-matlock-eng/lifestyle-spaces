@@ -9,7 +9,7 @@ import type { DisplaySection } from '../../../lib/journal/types'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Template } from '../types/template.types'
-import { Ellie } from '../../../components/ellie'
+import { SmartEllie } from '../../../components/ellie'
 import { useShihTzuCompanion } from '../../../hooks'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { AIAssistantDock } from '../components/AIAssistantDock'
@@ -57,7 +57,7 @@ export const JournalViewPage: React.FC = () => {
   } = useHighlightsRealtime(spaceId || '', journalId || '')
 
   // Ellie companion
-  const { mood, setMood, position } = useShihTzuCompanion({
+  const { mood, setMood } = useShihTzuCompanion({
     initialMood: 'happy',
     initialPosition: {
       x: Math.min(window.innerWidth * 0.8, window.innerWidth - 150),
@@ -554,10 +554,9 @@ ${content}
         />
       )}
 
-      {/* Ellie companion */}
-      <Ellie
+      {/* Ellie companion with smart positioning */}
+      <SmartEllie
         mood={mood}
-        position={position}
         showThoughtBubble={true}
         thoughtText={journal.wordCount > 500 ? "Great writing! 📝" : "Nice entry! 😊"}
         size="md"
@@ -566,6 +565,8 @@ ${content}
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
+        enableSmartPositioning={true}
+        showControlPanel={true}
       />
     </div>
   )
