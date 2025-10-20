@@ -58,7 +58,7 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
     opacity,
     setOpacity,
     isDocked,
-    setIsDocked,
+    setDocked,
   } = useElliePosition();
 
   // Use smart positioning hook
@@ -68,9 +68,8 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
     hasCollision,
     collidingElements,
   } = useEllieSmartPosition({
-    enableCollisionDetection: enableSmartPositioning,
-    enableFollow: mode === 'companion',
-    isDocked,
+    followMode: mode === 'companion',
+    initialPosition: globalPosition,
   });
 
   // Use global position if smart positioning is disabled
@@ -96,13 +95,13 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
 
   // Handle minimize (dock)
   const handleMinimize = useCallback(() => {
-    setIsDocked(true);
-  }, [setIsDocked]);
+    setDocked(true);
+  }, [setDocked]);
 
   // Handle restore from dock
   const handleRestore = useCallback(() => {
-    setIsDocked(false);
-  }, [setIsDocked]);
+    setDocked(false);
+  }, [setDocked]);
 
   // Handle opacity changes
   const handleOpacityChange = useCallback((newOpacity: number) => {
