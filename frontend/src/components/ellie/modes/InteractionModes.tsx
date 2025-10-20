@@ -1,0 +1,281 @@
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+
+export enum EllieMode {
+  COMPANION = 'companion',
+  ASSISTANT = 'assistant',
+  PLAYFUL = 'playful',
+  FOCUS = 'focus',
+}
+
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export interface InteractionModeManagerProps {
+  currentMode: EllieMode;
+  onModeChange: (mode: EllieMode) => void;
+  position?: Position;
+  onPositionChange?: (position: Position) => void;
+  onDockChange?: (docked: boolean) => void;
+  children?: React.ReactNode;
+}
+
+export interface ModeContextMenuProps {
+  currentMode: EllieMode;
+  onModeSelect: (mode: EllieMode) => void;
+  children: React.ReactNode;
+}
+
+const MODE_DESCRIPTIONS: Record<EllieMode, string> = {
+  [EllieMode.COMPANION]: 'Follows user activity subtly, moves to avoid cursor',
+  [EllieMode.ASSISTANT]: 'Stays docked in bottom-right until called',
+  [EllieMode.PLAYFUL]: 'Occasionally moves on her own every 30-60 seconds',
+  [EllieMode.FOCUS]: 'Minimizes to tiny bubble during work',
+};
+
+const PLAYFUL_MIN_INTERVAL = 30000; // 30 seconds
+const PLAYFUL_MAX_INTERVAL = 60000; // 60 seconds
+const CURSOR_AVOID_DISTANCE = 100;
+const NUDGE_DISTANCE = 30;
+
+/**
+ * InteractionModeManager component manages Ellie's behavior based on the selected mode
+ */
+export const InteractionModeManager: React.FC<InteractionModeManagerProps> = ({
+  currentMode,
+  onModeChange,
+  position = { x: 0, y: 0 },
+  onPositionChange,
+  onDockChange,
+  children,
+}) => {
+  const playfulTimerRef = useRef<number | null>(null);
+  const [showModeSelector, setShowModeSelector] = useState(false);
+
+  // Companion mode: Move away from cursor
+  useEffect(() => {
+    if (currentMode !== EllieMode.COMPANION || !onPositionChange) {
+      return;
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const distance = Math.sqrt(
+        Math.pow(e.clientX - position.x, 2) + Math.pow(e.clientY - position.y, 2)
+      );
+
+      if (distance < CURSOR_AVOID_DISTANCE) {
+        // Calculate direction away from cursor
+        const dx = position.x - e.clientX;
+        const dy = position.y - e.clientY;
+        const magnitude = Math.sqrt(dx * dx + dy * dy);
+
+        if (magnitude > 0) {
+          const nudgeX = (dx / magnitude) * NUDGE_DISTANCE;
+          const nudgeY = (dy / magnitude) * NUDGE_DISTANCE;
+
+          onPositionChange({
+            x: position.x + nudgeX,
+            y: position.y + nudgeY,
+          });
+        }
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [currentMode, position, onPositionChange]);
+
+  // Assistant mode: Dock to bottom-right
+  useEffect(() => {
+    if (currentMode === EllieMode.ASSISTANT) {
+      if (onDockChange) {
+        onDockChange(true);
+      }
+      if (onPositionChange) {
+        const dockPosition = {
+          x: window.innerWidth - 120,
+          y: window.innerHeight - 120,
+        };
+        onPositionChange(dockPosition);
+      }
+    }
+  }, [currentMode, onDockChange, onPositionChange]);
+
+  // Playful mode: Random movements
+  useEffect(() => {
+    if (currentMode !== EllieMode.PLAYFUL || !onPositionChange) {
+      return;
+    }
+
+    const scheduleRandomMovement = () => {
+      const interval =
+        Math.random() * (PLAYFUL_MAX_INTERVAL - PLAYFUL_MIN_INTERVAL) + PLAYFUL_MIN_INTERVAL;
+
+      playfulTimerRef.current = window.setTimeout(() => {
+        // Generate random position
+        const randomX = Math.random() * (window.innerWidth - 200) + 100;
+        const randomY = Math.random() * (window.innerHeight - 200) + 100;
+
+        onPositionChange({ x: randomX, y: randomY });
+
+        // Schedule next movement
+        scheduleRandomMovement();
+      }, interval);
+    };
+
+    scheduleRandomMovement();
+
+    return () => {
+      if (playfulTimerRef.current) {
+        clearTimeout(playfulTimerRef.current);
+      }
+    };
+  }, [currentMode, onPositionChange]);
+
+  // Focus mode: Minimize to tiny bubble
+  useEffect(() => {
+    if (currentMode === EllieMode.FOCUS && onDockChange) {
+      onDockChange(true);
+    }
+  }, [currentMode, onDockChange]);
+
+  return (
+    <div data-mode={currentMode}>
+      {/* Mode description */}
+      <div className="mode-description">
+        <p>{MODE_DESCRIPTIONS[currentMode]}</p>
+      </div>
+
+      {/* Mode selector */}
+      {showModeSelector && (
+        <div className="mode-selector">
+          <button onClick={() => setShowModeSelector(false)}>Close</button>
+          {Object.values(EllieMode).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => {
+                onModeChange(mode);
+                setShowModeSelector(false);
+              }}
+              className={currentMode === mode ? 'active' : ''}
+            >
+              {mode.charAt(0).toUpperCase() + mode.slice(1)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <button
+        role="button"
+        aria-label="Change mode"
+        onClick={() => setShowModeSelector(!showModeSelector)}
+      >
+        Change Mode
+      </button>
+
+      {children}
+    </div>
+  );
+};
+
+/**
+ * ModeContextMenu component provides a right-click context menu for mode selection
+ */
+export const ModeContextMenu: React.FC<ModeContextMenuProps> = ({
+  currentMode,
+  onModeSelect,
+  children,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setPosition({ x: e.clientX, y: e.clientY });
+    setIsOpen(true);
+  }, []);
+
+  const handleSelect = useCallback(
+    (mode: EllieMode) => {
+      onModeSelect(mode);
+      setIsOpen(false);
+    },
+    [onModeSelect]
+  );
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isOpen]);
+
+  return (
+    <>
+      <div onContextMenu={handleContextMenu}>{children}</div>
+
+      {isOpen && (
+        <div
+          ref={menuRef}
+          className="context-menu"
+          style={{
+            position: 'fixed',
+            left: position.x,
+            top: position.y,
+            zIndex: 10000,
+          }}
+        >
+          {Object.values(EllieMode).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => handleSelect(mode)}
+              className={currentMode === mode ? 'active' : ''}
+            >
+              {mode.charAt(0).toUpperCase() + mode.slice(1)} Mode
+            </button>
+          ))}
+        </div>
+      )}
+    </>
+  );
+};
+
+/**
+ * Custom hook for mode keyboard shortcuts
+ */
+export const useModeKeyboardShortcuts = (
+  currentMode: EllieMode,
+  onModeChange: (mode: EllieMode) => void
+) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Shift+E to cycle modes
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+
+        const modes = [
+          EllieMode.COMPANION,
+          EllieMode.ASSISTANT,
+          EllieMode.PLAYFUL,
+          EllieMode.FOCUS,
+        ];
+
+        const currentIndex = modes.indexOf(currentMode);
+        const nextIndex = (currentIndex + 1) % modes.length;
+        onModeChange(modes[nextIndex]);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [currentMode, onModeChange]);
+};
