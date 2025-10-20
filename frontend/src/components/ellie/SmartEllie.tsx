@@ -85,12 +85,12 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
         activePosition.y < window.innerHeight - 150;
 
       if (!isVisible) {
-        // Reset to default visible position
+        // Reset to default visible position (no animation on mount)
         const newPos = {
           x: Math.min(window.innerWidth - 200, Math.max(20, window.innerWidth * 0.8)),
           y: Math.min(window.innerHeight - 200, 100)
         };
-        setPosition(newPos);
+        setPosition(newPos, { animate: false });
         setGlobalPosition(newPos);
       }
     };
@@ -106,9 +106,9 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
     }
   }, [smartPosition, enableSmartPositioning, setGlobalPosition]);
 
-  // Handle position changes
+  // Handle position changes (disable animation during drag for smooth movement)
   const handlePositionChange = useCallback((newPosition: { x: number; y: number }) => {
-    setPosition(newPosition);
+    setPosition(newPosition, { animate: false });
     setGlobalPosition(newPosition);
   }, [setPosition, setGlobalPosition]);
 
