@@ -142,8 +142,10 @@ export function createArcPath(
   const distance = Math.sqrt(dx * dx + dy * dy);
 
   const arcHeight = Math.max(50, distance * 0.3);
-  const perpX = -dy / distance;
-  const perpY = dx / distance;
+  // Handle case where obstacle is at midpoint (distance = 0)
+  const safeDist = distance || 1;
+  const perpX = -dy / safeDist;
+  const perpY = dx / safeDist;
 
   const control1 = {
     x: start.x + (midX - start.x) * 0.5 + perpX * arcHeight,

@@ -1,12 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
-import {
-  EllieMode,
-  InteractionModeManager,
-  ModeContextMenu,
-  useModeKeyboardShortcuts,
-} from './InteractionModes';
+import { InteractionModeManager, ModeContextMenu } from './InteractionModes';
+import { EllieMode, useModeKeyboardShortcuts } from './types';
 
 describe('InteractionModes', () => {
   describe('EllieMode enum', () => {

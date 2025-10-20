@@ -131,6 +131,19 @@ describe('uiAwareness', () => {
       button.style.height = '50px';
       container.appendChild(button);
 
+      // Mock getBoundingClientRect for JSDOM
+      vi.spyOn(button, 'getBoundingClientRect').mockReturnValue({
+        left: 100,
+        top: 100,
+        width: 100,
+        height: 50,
+        right: 200,
+        bottom: 150,
+        x: 100,
+        y: 100,
+        toJSON: () => ({}),
+      });
+
       const zones = getNoGoZones();
       const zone = zones.find((z) => z.element.id === 'test-btn');
 
@@ -381,7 +394,8 @@ describe('uiAwareness', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty document', () => {
-      document.body.innerHTML = '';
+      // Clear just the container, not the entire body
+      container.innerHTML = '';
 
       const elements = scanInteractiveElements();
       const zones = getNoGoZones();
