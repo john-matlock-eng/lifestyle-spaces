@@ -1,5 +1,7 @@
 export { Ellie } from './Ellie'
 export type { EllieProps } from './Ellie'
+export { SmartEllie } from './SmartEllie'
+export type { SmartEllieProps } from './SmartEllie'
 export { AnimatedShihTzu } from './AnimatedShihTzu'
 export { EllieCustomizer, type EllieCustomization } from './EllieCustomizer'
 
