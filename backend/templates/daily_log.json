@@ -1,0 +1,173 @@
+{
+  "id": "daily_log",
+  "name": "Daily Log",
+  "description": "Quick notes about your day",
+  "version": 1,
+  "icon": "📝",
+  "color": "#60A5FA",
+  "ellie": {
+    "onSelect": {
+      "mood": "curious",
+      "message": "Let's capture today's moments together! 📝",
+      "animation": "bounce"
+    },
+    "onStart": {
+      "mood": "excited",
+      "message": "Tell me about your day - the big moments and the small ones!"
+    },
+    "onComplete": {
+      "mood": "proud",
+      "message": "Another day documented! You're building such a meaningful record 📚",
+      "particleEffect": "sparkles"
+    },
+    "onSave": {
+      "mood": "celebrating",
+      "message": "Day captured! See you tomorrow? 🌟",
+      "particleEffect": "hearts"
+    },
+    "theme": {
+      "supportive": true,
+      "energetic": false,
+      "reflective": false
+    }
+  },
+  "sections": [
+    {
+      "id": "summary",
+      "title": "What happened today?",
+      "type": "paragraph",
+      "placeholder": "Summarize the key events of your day...",
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "Start anywhere - what's the first thing that comes to mind? 💭"
+        },
+        "onComplete": {
+          "mood": "happy",
+          "message": "Great summary! I can already picture your day 🌅"
+        },
+        "hints": [
+          "Think about your day in chapters - morning, afternoon, evening",
+          "What surprised you today?",
+          "Who did you interact with?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "30": {
+              "mood": "happy",
+              "message": "Good start! Keep going..."
+            },
+            "75": {
+              "mood": "excited",
+              "message": "You're really capturing the day! ✨"
+            },
+            "150": {
+              "mood": "proud",
+              "message": "Wonderful detail! This is a great record 📝"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "highlights",
+      "title": "Highlights",
+      "type": "paragraph",
+      "placeholder": "What were the best moments?",
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "excited",
+          "message": "What made you smile today? Even tiny moments count! 😊"
+        },
+        "onComplete": {
+          "mood": "celebrating",
+          "message": "I love these highlights! They're worth celebrating 🎉",
+          "particleEffect": "hearts"
+        },
+        "hints": [
+          "What's something that made you laugh?",
+          "Did anything go better than expected?",
+          "What moment would you like to relive?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "25": {
+              "mood": "happy",
+              "message": "Yes! Tell me more about these good moments 🌟"
+            },
+            "75": {
+              "mood": "excited",
+              "message": "Your positivity is contagious! ✨"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "challenges",
+      "title": "Challenges",
+      "type": "paragraph",
+      "placeholder": "What challenges did you face?",
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "concerned",
+          "message": "It's okay to acknowledge the tough parts. I'm here 💙"
+        },
+        "onComplete": {
+          "mood": "proud",
+          "message": "Thank you for being honest. You handled this with grace 🌱"
+        },
+        "onSkip": {
+          "mood": "happy",
+          "message": "That's okay! Some days are easier than others 😊"
+        },
+        "hints": [
+          "What did you learn from this challenge?",
+          "How did you cope or adapt?",
+          "Is there anything you'd do differently next time?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "50": {
+              "mood": "concerned",
+              "message": "You're being so brave in reflecting on this 💪"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "mood",
+      "title": "How I felt",
+      "type": "paragraph",
+      "placeholder": "Describe your overall mood and energy level...",
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "zen",
+          "message": "Take a moment to check in with yourself... how do you feel? 💭"
+        },
+        "onComplete": {
+          "mood": "proud",
+          "message": "Self-awareness is a superpower! Thank you for sharing 💝"
+        },
+        "hints": [
+          "Rate your energy level from 1-10",
+          "What physical sensations did you notice?",
+          "How does this compare to yesterday?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "30": {
+              "mood": "zen",
+              "message": "Beautiful awareness... keep exploring 🌸"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

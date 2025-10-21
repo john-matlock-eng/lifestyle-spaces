@@ -1,0 +1,271 @@
+"""
+DynamoDB database client and utilities.
+"""
+from typing import Optional
+import boto3
+from boto3.dynamodb.conditions import Key
+from functools import lru_cache
+from app.core.config import settings
+
+
+@lru_cache(maxsize=1)
+def get_dynamodb_resource():
+    """
+    Get DynamoDB resource (cached singleton).
+    
+    Returns:
+        DynamoDB resource
+    """
+    return boto3.resource(
+        'dynamodb',
+        region_name=settings.aws_region
+    )
+
+
+def get_dynamodb_table():
+    """
+    Get DynamoDB table instance.
+    
+    Returns:
+        DynamoDB Table resource
+    """
+    dynamodb = get_dynamodb_resource()
+    return dynamodb.Table(settings.dynamodb_table)
+
+
+class DynamoDBClient:
+    """
+    DynamoDB client for single table design operations.
+    """
+    
+    def __init__(self):
+        """Initialize DynamoDB client."""
+        self.table = get_dynamodb_table()
+    
+    def put_item(self, item: dict) -> dict:
+        """
+        Put an item into the DynamoDB table.
+
+        Args:
+            item: Item to put into the table
+
+        Returns:
+            dict: Response from DynamoDB
+
+        Raises:
+            RuntimeError: If DynamoDB table is not found
+        """
+        try:
+            return self.table.put_item(Item=item)
+        except Exception as e:
+            # Check if it's a ResourceNotFoundException
+            error_code = getattr(e, 'response', {}).get('Error', {}).get('Code', '')
+            if error_code == 'ResourceNotFoundException':
+                raise RuntimeError(
+                    f"DynamoDB table '{settings.dynamodb_table}' not found. "
+                    f"Please ensure the table exists and the table name is configured correctly."
+                ) from e
+            raise
+    
+    def get_item(self, pk: str, sk: str) -> Optional[dict]:
+        """
+        Get an item from the DynamoDB table.
+        
+        Args:
+            pk: Partition key
+            sk: Sort key
+        
+        Returns:
+            Optional[dict]: Item if found, None otherwise
+        """
+        response = self.table.get_item(
+            Key={'PK': pk, 'SK': sk}
+        )
+        return response.get('Item')
+    
+    def query(self, pk: str, sk_prefix: Optional[str] = None, index_name: Optional[str] = None) -> list:
+        """
+        Query items from the DynamoDB table.
+
+        Args:
+            pk: Partition key value
+            sk_prefix: Optional sort key prefix for filtering
+            index_name: Optional GSI name to query
+
+        Returns:
+            list: List of items matching the query
+        """
+        # Determine key names based on whether we're querying a GSI
+        if index_name == 'GSI1':
+            pk_key = 'GSI1PK'
+            sk_key = 'GSI1SK'
+        else:
+            pk_key = 'PK'
+            sk_key = 'SK'
+
+        # Build key condition expression
+        kwargs = {
+            'KeyConditionExpression': Key(pk_key).eq(pk)
+        }
+
+        if sk_prefix:
+            kwargs['KeyConditionExpression'] = kwargs['KeyConditionExpression'] & Key(sk_key).begins_with(sk_prefix)
+
+        if index_name:
+            kwargs['IndexName'] = index_name
+
+        response = self.table.query(**kwargs)
+        return response.get('Items', [])
+
+    def scan(self, filter_expression: Optional[str] = None, expression_attribute_values: Optional[dict] = None, expression_attribute_names: Optional[dict] = None) -> list:
+        """
+        Scan items from the DynamoDB table.
+        
+        Args:
+            filter_expression: Optional filter expression
+            expression_attribute_values: Optional dictionary of expression attribute values
+            expression_attribute_names: Optional dictionary of expression attribute names
+        
+        Returns:
+            list: List of items matching the scan
+        """
+        kwargs = {}
+        if filter_expression:
+            kwargs['FilterExpression'] = filter_expression
+        if expression_attribute_values:
+            kwargs['ExpressionAttributeValues'] = expression_attribute_values
+        if expression_attribute_names:
+            kwargs['ExpressionAttributeNames'] = expression_attribute_names
+        
+        response = self.table.scan(**kwargs)
+        return response.get('Items', [])
+    
+    def update_item(self, pk: str, sk: str, updates: dict, return_values: str = "ALL_NEW") -> Optional[dict]:
+        """
+        Update an item in the DynamoDB table.
+        
+        Args:
+            pk: Partition key
+            sk: Sort key
+            updates: Dictionary of fields to update
+            return_values: Use 'ALL_NEW' to return all attributes of the item after the update.
+        
+        Returns:
+            Optional[dict]: Updated item if successful, None otherwise
+        """
+        if not updates:
+            return None
+            
+        # Build update expression
+        update_expression = "SET "
+        expression_attribute_values = {}
+        expression_attribute_names = {}
+        
+        for i, (key, value) in enumerate(updates.items()):
+            # Use attribute names to handle reserved keywords
+            attr_name = f"#attr{i}"
+            attr_value = f":val{i}"
+            
+            if i > 0:
+                update_expression += ", "
+            update_expression += f"{attr_name} = {attr_value}"
+            
+            expression_attribute_names[attr_name] = key
+            expression_attribute_values[attr_value] = value
+        
+        response = self.table.update_item(
+            Key={'PK': pk, 'SK': sk},
+            UpdateExpression=update_expression,
+            ExpressionAttributeNames=expression_attribute_names,
+            ExpressionAttributeValues=expression_attribute_values,
+            ReturnValues=return_values
+        )
+        
+        return response.get('Attributes')
+    
+    def delete_item(self, pk: str, sk: str) -> dict:
+        """
+        Delete an item from the DynamoDB table.
+        
+        Args:
+            pk: Partition key
+            sk: Sort key
+        
+        Returns:
+            dict: Response from DynamoDB
+        """
+        return self.table.delete_item(
+            Key={'PK': pk, 'SK': sk}
+        )
+    
+    def batch_write_items(self, items: list) -> dict:
+        """
+        Batch write items to the DynamoDB table.
+        
+        Args:
+            items: List of items to write
+        
+        Returns:
+            dict: Response from DynamoDB
+        """
+        with self.table.batch_writer() as batch:
+            for item in items:
+                batch.put_item(Item=item)
+        
+        return {'ResponseMetadata': {'HTTPStatusCode': 200}}
+    
+    def batch_get_items(self, keys: list) -> list:
+        """
+        Batch get items from the DynamoDB table.
+        
+        Args:
+            keys: List of key dictionaries with PK and SK
+        
+        Returns:
+            list: List of items found
+        """
+        if not keys:
+            return []
+        
+        # DynamoDB batch_get_item requires the table name in the request
+        response = boto3.client('dynamodb', region_name=settings.aws_region).batch_get_item(
+            RequestItems={
+                settings.dynamodb_table: {
+                    'Keys': [
+                        {
+                            'PK': {'S': key['PK']},
+                            'SK': {'S': key['SK']}
+                        }
+                        for key in keys
+                    ]
+                }
+            }
+        )
+        
+        # Convert DynamoDB format to regular format
+        items = []
+        for item in response.get('Responses', {}).get(settings.dynamodb_table, []):
+            # Use boto3's TypeDeserializer to convert DynamoDB format to Python
+            from boto3.dynamodb.types import TypeDeserializer
+            deserializer = TypeDeserializer()
+            python_item = {k: deserializer.deserialize(v) for k, v in item.items()}
+            items.append(python_item)
+        
+        return items
+
+
+# Singleton instance
+_db_client: Optional[DynamoDBClient] = None
+
+
+def get_db() -> DynamoDBClient:
+    """
+    Get DynamoDB client instance (singleton).
+    
+    Returns:
+        DynamoDBClient: Database client instance
+    """
+    global _db_client
+    if _db_client is None:
+        _db_client = DynamoDBClient()
+    return _db_client

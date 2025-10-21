@@ -1,0 +1,228 @@
+/* JoinSpace component styles */
+
+.join-space-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.join-space-card {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid var(--theme-border-light);
+  border-radius: 0.75rem;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.join-space-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.join-space-header h2 {
+  margin: 0 0 0.5rem 0;
+  color: var(--theme-text-primary);
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.join-space-header p {
+  margin: 0;
+  color: var(--theme-text-secondary);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.error-message {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.invite-code-display {
+  margin-bottom: 2rem;
+}
+
+.invite-code-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--theme-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.invite-code-value {
+  background-color: var(--theme-bg-base);
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 1rem;
+  color: var(--theme-text-primary);
+  text-align: center;
+  word-break: break-all;
+}
+
+.join-space-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.join-button {
+  flex: 1;
+  background-color: var(--theme-primary-600);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.join-button:hover:not(:disabled) {
+  background-color: var(--theme-primary-700);
+  transform: translateY(-1px);
+}
+
+.join-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.join-button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancel-button {
+  flex: 1;
+  background-color: var(--theme-bg-base);
+  color: var(--theme-text-primary);
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.cancel-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.3);
+}
+
+.cancel-button:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.join-space-info {
+  text-align: center;
+  color: var(--theme-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1.5rem;
+}
+
+.loading-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive design for mobile devices */
+@media (max-width: 640px) {
+  .join-space-container {
+    padding: 1rem;
+  }
+
+  .join-space-card {
+    padding: 1.5rem;
+  }
+
+  .join-space-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .join-space-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .join-button,
+  .cancel-button {
+    padding: 1rem;
+  }
+}
+
+/* Focus management for accessibility */
+.join-space-container:focus {
+  outline: none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .join-space-card {
+    border-color: #000000;
+    border-width: 2px;
+  }
+
+  .error-message {
+    border-color: #dc2626;
+    border-width: 2px;
+  }
+
+  .invite-code-value {
+    border-color: #000000;
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .join-button:hover:not(:disabled),
+  .cancel-button:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .loading-spinner {
+    animation: none;
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest tests/ -k \"invite\" -v --collect-only)",
+      "Bash(python -m pytest tests/ -v -k \"invite\" --collect-only)",
+      "Bash(python -m pytest tests/integration/test_invite_code_visibility.py -v)",
+      "Bash(python -m pytest tests/ -v --tb=short)",
+      "Bash(npm test:*)",
+      "Bash(python -m pytest tests/test_spaces.py tests/unit/test_space_service_coverage.py tests/integration/test_invite_code_visibility.py -v --tb=short)",
+      "Bash(python -m pytest --cov=app --cov-report=term-missing --cov-report=html -q)",
+      "Bash(python -m pytest --cov=app.services.space --cov-report=term-missing tests/test_spaces.py tests/unit/test_space_service_coverage.py tests/integration/test_invite_code_visibility.py -q)",
+      "Bash(python -m pytest tests/ --cov=app.services.space --cov-report=term-missing -q)",
+      "Bash(python -m pytest tests/ --cov=app.api.routes.spaces --cov-report=term-missing -q)",
+      "Bash(python -m pytest tests/ --cov=app.models.space --cov-report=term-missing -q)",
+      "Bash(python -m pytest tests/integration/test_invite_code_visibility.py tests/test_spaces.py::TestSpaceRetrieval -v)",
+      "Bash(python -m pytest tests/integration/test_invite_code_visibility.py -v --tb=short)",
+      "Bash(python -m pytest tests/ -k \"invite\" -v --tb=short)",
+      "Bash(python -m pytest tests/integration/test_invite_code_visibility.py tests/test_spaces.py -v --tb=short)",
+      "Bash(python -m pytest tests/ -k \"not invitation_service\" --tb=short -q)",
+      "Bash(python -m pytest tests/ -k \"invite_code or InviteCode\" -v)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

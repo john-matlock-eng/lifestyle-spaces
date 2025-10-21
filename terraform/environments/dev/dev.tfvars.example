@@ -1,0 +1,40 @@
+# Development Environment Example Variables
+# Copy this file to dev.tfvars and customize for your environment
+
+# Basic Configuration
+aws_region        = "us-east-1"
+project_name      = "lifestyle-spaces"
+environment       = "dev"
+github_repository = "your-org/lifestyle-spaces"
+
+# Database Configuration (POC-optimized for cost)
+enable_point_in_time_recovery = false
+enable_deletion_protection    = false
+create_health_check_item      = true
+
+# Backend Configuration
+cors_origins       = "*"                    # Permissive for dev
+log_retention_days = 7                      # Short retention for cost
+
+# Frontend Configuration (POC-optimized for cost)
+enable_s3_versioning      = false
+cloudfront_price_class    = "PriceClass_100"
+
+# Security Configuration
+create_lambda_security_policy = true
+create_waf                    = false       # Disabled for cost in dev
+waf_rate_limit                = 10000
+
+# Cognito Configuration (POC-friendly)
+cognito_password_minimum_length          = 8
+cognito_password_require_lowercase       = true
+cognito_password_require_numbers         = true
+cognito_password_require_symbols         = false    # Disabled for better UX
+cognito_password_require_uppercase       = true
+cognito_temporary_password_validity_days = 7
+cognito_access_token_validity_minutes    = 60       # 1 hour
+cognito_id_token_validity_minutes        = 60       # 1 hour
+cognito_refresh_token_validity_days      = 30       # 30 days
+cognito_callback_urls                    = ["http://localhost:3000", "https://localhost:3000", "https://your-dev-domain.com"]
+cognito_logout_urls                      = ["http://localhost:3000", "https://localhost:3000", "https://your-dev-domain.com"]
+cognito_create_domain                    = false    # Disabled for POC simplicity

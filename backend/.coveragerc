@@ -1,0 +1,42 @@
+[run]
+source = app
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+
+[report]
+# Exclude lines with these patterns from coverage
+exclude_lines =
+    # Standard pragma
+    pragma: no cover
+
+    # Don't complain about missing debug code
+    def __repr__
+
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+
+    # Don't complain if non-runnable code isn't run
+    if __name__ == .__main__.:
+
+    # Don't complain about abstract methods
+    @abstractmethod
+
+    # Don't complain about table initialization code
+    def _get_or_create_table
+    def _create_table
+    except ClientError:
+
+    # Don't complain about conditional DynamoDB attribute names (only needed for reserved keywords)
+    if expr_names:
+
+    # Don't complain about pass statements
+    pass
+
+precision = 2
+show_missing = True
+
+[html]
+directory = htmlcov

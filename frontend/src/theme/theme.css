@@ -1,0 +1,65 @@
+/**
+ * Theme CSS - Applies CSS variables from the theme system
+ * These variables are set by ThemeProvider.tsx
+ */
+
+/* Base theme application */
+:root {
+  /* The theme provider sets these CSS variables dynamically */
+  /* Background colors */
+  background-color: var(--theme-bg-base, #ffffff);
+  color: var(--theme-text-primary, #1a1a1a);
+}
+
+/* Body styling */
+body {
+  background-color: var(--theme-bg-base, #ffffff);
+  color: var(--theme-text-primary, #1a1a1a);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Main app container */
+#root {
+  background-color: var(--theme-bg-base, #ffffff);
+  min-height: 100vh;
+}
+
+/* Light theme (default) */
+[data-theme="wellness-light"],
+:root:not(.dark) {
+  color-scheme: light;
+}
+
+/* Dark theme */
+[data-theme="midnight-dark"],
+:root.dark {
+  color-scheme: dark;
+}
+
+/* Apply theme colors to common elements */
+a {
+  color: var(--theme-primary-600, #646cff);
+}
+
+a:hover {
+  color: var(--theme-primary-700, #535bf2);
+}
+
+/* Update button defaults to use theme */
+button {
+  background-color: var(--theme-bg-surface, #f9f9f9);
+  color: var(--theme-text-primary, #1a1a1a);
+  border-color: var(--theme-border-light, #e5e7eb);
+}
+
+button:hover {
+  border-color: var(--theme-primary-500, #646cff);
+}
+
+/* Override media query defaults - theme system handles this */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    background-color: var(--theme-bg-base, #1a1a1a);
+    color: var(--theme-text-primary, #ffffff);
+  }
+}

@@ -1,0 +1,107 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+
+# Required for OIDC
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest-cov
+    
+    - name: Run tests with coverage
+      env:
+        PYTEST_CURRENT_TEST: true
+        JWT_SECRET_KEY: test-secret-key-for-ci
+        JWT_ALGORITHM: HS256
+        ACCESS_TOKEN_EXPIRE_MINUTES: 30
+        DYNAMODB_TABLE: lifestyle-spaces-test
+        AWS_REGION: us-east-1
+        AWS_DEFAULT_REGION: us-east-1
+        CORS_ORIGINS: '["*"]'
+        ENVIRONMENT: test
+      run: |
+        cd backend
+        pytest --cov=app --cov-report=term-missing --cov-report=xml --cov-fail-under=90
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+        flags: backend
+        fail_ci_if_error: false
+    
+    # Coverage comment action temporarily disabled due to Docker image issues
+    # TODO: Re-enable when py-cov-action fixes their Docker image
+    # - name: Comment coverage on PR
+    #   if: github.event_name == 'pull_request'
+    #   uses: py-cov-action/python-coverage-comment-action@v3
+    #   with:
+    #     GITHUB_TOKEN: ${{ github.token }}
+    #     MINIMUM_GREEN: 95
+    #     MINIMUM_ORANGE: 85
+        
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Build Lambda package
+      run: |
+        cd backend
+        python build_lambda_package.py
+        
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+        aws-region: us-east-1
+    
+    - name: Deploy Lambda
+      run: |
+        aws lambda update-function-code \
+          --function-name lifestyle-spaces-api \
+          --zip-file fileb://backend/lambda-deployment.zip

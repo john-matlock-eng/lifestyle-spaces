@@ -1,0 +1,70 @@
+# Terraform gitignore
+
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# .tfvars files (if they contain sensitive information)
+# Remove the comment if you want to ignore .tfvars files
+# *.tfvars
+# *.tfvars.json
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude all .tfvars files, which are likely to contain sensitive data
+# like passwords, but keep example files
+*.tfvars
+!terraform.tfvars.example
+
+# Ignore override files as they are usually used to override resources locally
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore transient lock info files
+.terraform.tfstate.lock.info
+
+# Include override files you do wish to add to version control using negated pattern
+# !example_override.tf
+
+# Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
+*.tfplan
+terraform.plan
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Ignore backend configuration files (they contain sensitive information)
+backend-config.hcl
+backend.hcl
+*backend*.hcl
+
+# Ignore lambda zip files
+*.zip
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Ignore editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
