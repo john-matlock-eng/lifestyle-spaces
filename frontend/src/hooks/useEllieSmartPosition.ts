@@ -72,9 +72,11 @@ export const useEllieSmartPosition = (
   const isAnimatingRef = useRef(false);
 
   // Constrain position to viewport with safe zones
+  // Assumes Ellie + control panel is ~200px wide/tall
   function constrainPosition(pos: ElliePosition): ElliePosition {
-    const maxX = Math.max(SAFE_ZONE_MARGIN, window.innerWidth - SAFE_ZONE_MARGIN);
-    const maxY = Math.max(SAFE_ZONE_MARGIN, window.innerHeight - SAFE_ZONE_MARGIN);
+    const ELLIE_SIZE = 200; // Approximate size including control panel
+    const maxX = window.innerWidth - ELLIE_SIZE - SAFE_ZONE_MARGIN;
+    const maxY = window.innerHeight - ELLIE_SIZE - SAFE_ZONE_MARGIN;
 
     return {
       x: Math.max(SAFE_ZONE_MARGIN, Math.min(pos.x, maxX)),
