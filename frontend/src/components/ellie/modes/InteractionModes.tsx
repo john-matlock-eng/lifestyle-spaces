@@ -8,8 +8,6 @@ import {
   MODE_DESCRIPTIONS,
   PLAYFUL_MIN_INTERVAL,
   PLAYFUL_MAX_INTERVAL,
-  CURSOR_AVOID_DISTANCE,
-  NUDGE_DISTANCE,
 } from './types';
 
 /**
@@ -18,7 +16,6 @@ import {
 export const InteractionModeManager: React.FC<InteractionModeManagerProps> = ({
   currentMode,
   onModeChange,
-  position = { x: 0, y: 0 },
   onPositionChange,
   onDockChange,
   children,
