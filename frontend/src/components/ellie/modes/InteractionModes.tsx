@@ -27,6 +27,10 @@ export const InteractionModeManager: React.FC<InteractionModeManagerProps> = ({
   const [showModeSelector, setShowModeSelector] = useState(false);
 
   // Companion mode: Move away from cursor
+  // DISABLED: This was preventing users from dragging Ellie
+  // The cursor avoidance made it impossible to click and drag since
+  // Ellie would move away as soon as the cursor got close
+  /*
   useEffect(() => {
     if (currentMode !== EllieMode.COMPANION || !onPositionChange) {
       return;
@@ -58,6 +62,7 @@ export const InteractionModeManager: React.FC<InteractionModeManagerProps> = ({
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [currentMode, position, onPositionChange]);
+  */
 
   // Assistant mode: Dock to bottom-right
   useEffect(() => {

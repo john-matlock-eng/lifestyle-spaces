@@ -22,8 +22,6 @@ export interface UseEllieSmartPositionReturn {
 }
 
 const SAFE_ZONE_MARGIN = 20;
-const NUDGE_DISTANCE = 50; // Reduced from 100 to be less aggressive
-const NUDGE_OFFSET = 20; // Reduced from 30 for gentler nudging
 const FOLLOW_DELAY = 500;
 const STORAGE_KEY = 'ellie-position';
 
@@ -177,10 +175,9 @@ export const useEllieSmartPosition = (
     });
   }, [position, setPosition]);
 
-  // Handle mouse move for proximity detection and nudging
+  // Handle mouse move for proximity detection
+  // DISABLED nudging as it was interfering with dragging
   useEffect(() => {
-    let nudgeTimeoutId: number | null = null;
-
     const handleMouseMove = (e: MouseEvent) => {
       setPositionState((currentPos) => {
         const distance = Math.sqrt(
@@ -189,40 +186,14 @@ export const useEllieSmartPosition = (
 
         setCursorProximity(distance);
 
-        // Nudge away if cursor is too close (throttled)
-        if (distance < NUDGE_DISTANCE && distance > 0 && !nudgeTimeoutId) {
-          nudgeTimeoutId = window.setTimeout(() => {
-            nudgeTimeoutId = null;
-          }, 100); // Throttle nudge to avoid spam
-
-          // Calculate direction away from cursor
-          const dx = currentPos.x - e.clientX;
-          const dy = currentPos.y - e.clientY;
-          const magnitude = Math.sqrt(dx * dx + dy * dy);
-
-          if (magnitude > 0) {
-            const nudgeX = (dx / magnitude) * NUDGE_OFFSET;
-            const nudgeY = (dy / magnitude) * NUDGE_OFFSET;
-
-            const newPos = constrainPosition({
-              x: currentPos.x + nudgeX,
-              y: currentPos.y + nudgeY,
-            });
-
-            return newPos;
-          }
-        }
-
-        return currentPos; // No change
+        // Just track proximity, no nudging to avoid interfering with drag
+        return currentPos;
       });
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      if (nudgeTimeoutId) {
-        clearTimeout(nudgeTimeoutId);
-      }
     };
   }, []);
 
