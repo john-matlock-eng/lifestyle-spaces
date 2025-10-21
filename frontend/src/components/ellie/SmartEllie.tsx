@@ -76,18 +76,20 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
   const activePosition = enableSmartPositioning ? smartPosition : globalPosition;
 
   // Ensure position is visible on screen (only on mount)
+  // Only reset if position is truly off-screen, not just near edges
   useEffect(() => {
     const checkPosition = () => {
+      const margin = 20;
       const isVisible =
-        activePosition.x >= 0 &&
-        activePosition.x < window.innerWidth - 150 &&
-        activePosition.y >= 0 &&
-        activePosition.y < window.innerHeight - 150;
+        activePosition.x >= -50 && // Allow some off-screen for edge cases
+        activePosition.x < window.innerWidth + 50 &&
+        activePosition.y >= -50 &&
+        activePosition.y < window.innerHeight + 50;
 
       if (!isVisible) {
         // Reset to default visible position (no animation on mount)
         const newPos = {
-          x: Math.min(window.innerWidth - 200, Math.max(20, window.innerWidth * 0.8)),
+          x: Math.min(window.innerWidth - 200, Math.max(margin, window.innerWidth * 0.8)),
           y: Math.min(window.innerHeight - 200, 100)
         };
         setPosition(newPos, { animate: false });

@@ -22,8 +22,8 @@ export interface UseEllieSmartPositionReturn {
 }
 
 const SAFE_ZONE_MARGIN = 20;
-const NUDGE_DISTANCE = 100;
-const NUDGE_OFFSET = 30;
+const NUDGE_DISTANCE = 50; // Reduced from 100 to be less aggressive
+const NUDGE_OFFSET = 20; // Reduced from 30 for gentler nudging
 const EDGE_SNAP_TIMEOUT = 3000;
 const FOLLOW_DELAY = 500;
 const STORAGE_KEY = 'ellie-position';
@@ -186,20 +186,14 @@ export const useEllieSmartPosition = (
         savePosition(constrainedPos);
       }
 
-      // Reset edge snap timeout
+      // Clear any existing edge snap timeout
+      // Removed auto edge-snapping as it was causing Ellie to get stuck at edges
       if (edgeSnapTimeoutRef.current) {
         clearTimeout(edgeSnapTimeoutRef.current);
+        edgeSnapTimeoutRef.current = null;
       }
-      edgeSnapTimeoutRef.current = window.setTimeout(() => {
-        const edgePos = getNearestEdge(constrainedPos);
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-        }
-        setPositionState(edgePos);
-        savePosition(edgePos);
-      }, EDGE_SNAP_TIMEOUT);
     },
-    [savePosition, getNearestEdge, animateToPosition]
+    [savePosition, animateToPosition]
   );
 
   // Toggle dock mode
