@@ -14,7 +14,7 @@ import {
 export const InteractionModeManager: React.FC<InteractionModeManagerProps> = ({
   currentMode,
   onModeChange,
-  onPositionChange,
+  onPositionChange: _onPositionChange, // Prefixed with _ - currently unused due to disabled auto-positioning
   onDockChange,
   children,
 }) => {
