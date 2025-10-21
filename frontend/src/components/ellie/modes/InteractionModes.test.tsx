@@ -134,7 +134,7 @@ describe('InteractionModes', () => {
     });
 
     describe('Assistant Mode Behavior', () => {
-      it('should stay docked in bottom-right', () => {
+      it('should NOT auto-dock (auto-positioning disabled)', () => {
         const onPositionChange = vi.fn();
 
         render(
@@ -145,13 +145,8 @@ describe('InteractionModes', () => {
           />
         );
 
-        // Should automatically dock
-        expect(onPositionChange).toHaveBeenCalledWith(
-          expect.objectContaining({
-            x: expect.any(Number),
-            y: expect.any(Number),
-          })
-        );
+        // Auto-docking disabled to allow user control and dragging
+        expect(onPositionChange).not.toHaveBeenCalled();
       });
 
       it('should not move on cursor proximity', () => {
