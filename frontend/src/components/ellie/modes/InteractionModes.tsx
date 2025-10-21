@@ -11,10 +11,11 @@ import {
 /**
  * InteractionModeManager component manages Ellie's behavior based on the selected mode
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const InteractionModeManager: React.FC<InteractionModeManagerProps> = ({
   currentMode,
   onModeChange,
-  onPositionChange: _onPositionChange, // Prefixed with _ - currently unused due to disabled auto-positioning
+  onPositionChange, // Currently unused - all auto-positioning behaviors disabled to allow dragging
   onDockChange,
   children,
 }) => {
