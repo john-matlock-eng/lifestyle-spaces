@@ -24,7 +24,6 @@ export interface UseEllieSmartPositionReturn {
 const SAFE_ZONE_MARGIN = 20;
 const NUDGE_DISTANCE = 50; // Reduced from 100 to be less aggressive
 const NUDGE_OFFSET = 20; // Reduced from 30 for gentler nudging
-const EDGE_SNAP_TIMEOUT = 3000;
 const FOLLOW_DELAY = 500;
 const STORAGE_KEY = 'ellie-position';
 
@@ -67,7 +66,6 @@ export const useEllieSmartPosition = (
   const [collidingElements] = useState<HTMLElement[]>([]);
 
   // Refs
-  const edgeSnapTimeoutRef = useRef<number | null>(null);
   const followTimeoutRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const dockedPositionRef = useRef<ElliePosition | null>(null);
@@ -90,37 +88,6 @@ export const useEllieSmartPosition = (
       localStorage.setItem(STORAGE_KEY, JSON.stringify(pos));
     } catch (error) {
       console.warn('Failed to save Ellie position to localStorage:', error);
-    }
-  }, []);
-
-  // Get nearest edge position
-  const getNearestEdge = useCallback((pos: ElliePosition): ElliePosition => {
-    const { x, y } = pos;
-
-    // Determine which edge is closest
-    const distanceToLeft = x;
-    const distanceToRight = window.innerWidth - x;
-    const distanceToTop = y;
-    const distanceToBottom = window.innerHeight - y;
-
-    const minDistance = Math.min(
-      distanceToLeft,
-      distanceToRight,
-      distanceToTop,
-      distanceToBottom
-    );
-
-    const centerX = window.innerWidth / 2;
-
-    // Snap to the nearest edge (prefer right > left > top > bottom)
-    if (minDistance === distanceToRight || (x > centerX && minDistance !== distanceToTop)) {
-      return { x: window.innerWidth - SAFE_ZONE_MARGIN - 100, y };
-    } else if (minDistance === distanceToLeft || (x <= centerX && minDistance !== distanceToTop)) {
-      return { x: SAFE_ZONE_MARGIN, y };
-    } else if (minDistance === distanceToTop) {
-      return { x, y: SAFE_ZONE_MARGIN };
-    } else {
-      return { x, y: window.innerHeight - SAFE_ZONE_MARGIN - 100 };
     }
   }, []);
 
@@ -185,13 +152,7 @@ export const useEllieSmartPosition = (
         setPositionState(constrainedPos);
         savePosition(constrainedPos);
       }
-
-      // Clear any existing edge snap timeout
-      // Removed auto edge-snapping as it was causing Ellie to get stuck at edges
-      if (edgeSnapTimeoutRef.current) {
-        clearTimeout(edgeSnapTimeoutRef.current);
-        edgeSnapTimeoutRef.current = null;
-      }
+      // Note: Auto edge-snapping removed as it was causing Ellie to get stuck at edges
     },
     [savePosition, animateToPosition]
   );
@@ -312,9 +273,6 @@ export const useEllieSmartPosition = (
   // Cleanup
   useEffect(() => {
     return () => {
-      if (edgeSnapTimeoutRef.current) {
-        clearTimeout(edgeSnapTimeoutRef.current);
-      }
       if (followTimeoutRef.current) {
         clearTimeout(followTimeoutRef.current);
       }
