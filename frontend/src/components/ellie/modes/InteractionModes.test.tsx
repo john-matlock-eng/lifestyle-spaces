@@ -94,7 +94,7 @@ describe('InteractionModes', () => {
     });
 
     describe('Companion Mode Behavior', () => {
-      it('should follow user activity subtly', () => {
+      it('should NOT move away from cursor (cursor avoidance disabled)', () => {
         const onPositionChange = vi.fn();
 
         render(
@@ -102,18 +102,17 @@ describe('InteractionModes', () => {
             currentMode={EllieMode.COMPANION}
             onModeChange={onModeChange}
             onPositionChange={onPositionChange}
-            position={{ x: 500, y: 500 }}
           />
         );
 
         // Simulate user activity (mouse move near Ellie)
         fireEvent.mouseMove(document, { clientX: 520, clientY: 520 });
 
-        // Should move away from cursor
-        expect(onPositionChange).toHaveBeenCalled();
+        // Cursor avoidance is disabled to allow dragging, so position should NOT change
+        expect(onPositionChange).not.toHaveBeenCalled();
       });
 
-      it('should move to avoid cursor', () => {
+      it('should allow cursor proximity without moving (enables dragging)', () => {
         const onPositionChange = vi.fn();
 
         render(
@@ -121,7 +120,6 @@ describe('InteractionModes', () => {
             currentMode={EllieMode.COMPANION}
             onModeChange={onModeChange}
             onPositionChange={onPositionChange}
-            position={{ x: 500, y: 500 }}
           />
         );
 
@@ -130,7 +128,8 @@ describe('InteractionModes', () => {
 
         vi.advanceTimersByTime(100);
 
-        expect(onPositionChange).toHaveBeenCalled();
+        // Should NOT move away - cursor avoidance disabled to allow dragging
+        expect(onPositionChange).not.toHaveBeenCalled();
       });
     });
 
