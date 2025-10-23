@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { ModularEnhancedShihTzu } from './ModularEnhancedShihTzu';
 import { EllieControlPanel } from './EllieControlPanel';
-import { InteractionModeManager } from './modes/InteractionModes';
+// import { InteractionModeManager } from './modes/InteractionModes'; // Disabled - was blocking interactions
 import { useElliePosition } from '../../contexts/useElliePosition';
 import { useEllieSmartPosition } from '../../hooks/useEllieSmartPosition';
 import type { EllieMode } from './modes/types';
@@ -168,7 +168,9 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
 
   return (
     <>
-      {/* Interaction Mode Manager for behavioral changes */}
+      {/* Interaction Mode Manager DISABLED - was rendering UI that blocked interactions
+          and all automatic positioning behaviors are disabled anyway */}
+      {/*
       {enableSmartPositioning && (
         <InteractionModeManager
           currentMode={mode}
@@ -177,6 +179,7 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
           onPositionChange={handlePositionChange}
         />
       )}
+      */}
 
       {/* Main Ellie Component with fixed positioning */}
       <div
