@@ -22,7 +22,7 @@ export interface UseEllieSmartPositionReturn {
 }
 
 const SAFE_ZONE_MARGIN = 20;
-const FOLLOW_DELAY = 500;
+// const FOLLOW_DELAY = 500; // Removed - scroll following disabled
 const STORAGE_KEY = 'ellie-position';
 
 export const useEllieSmartPosition = (
@@ -74,7 +74,7 @@ export const useEllieSmartPosition = (
   const [collidingElements] = useState<HTMLElement[]>([]);
 
   // Refs
-  const followTimeoutRef = useRef<number | null>(null);
+  // const followTimeoutRef = useRef<number | null>(null); // Removed - scroll following disabled
   const animationFrameRef = useRef<number | null>(null);
   const dockedPositionRef = useRef<ElliePosition | null>(null);
   const isAnimatingRef = useRef(false);
@@ -217,7 +217,9 @@ export const useEllieSmartPosition = (
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Handle follow mode
+  // Handle follow mode (scroll following)
+  // DISABLED: This was causing position updates on scroll, interfering with user control
+  /*
   useEffect(() => {
     if (!followMode) {
       return;
@@ -252,13 +254,11 @@ export const useEllieSmartPosition = (
       }
     };
   }, [followMode]);
+  */
 
   // Cleanup
   useEffect(() => {
     return () => {
-      if (followTimeoutRef.current) {
-        clearTimeout(followTimeoutRef.current);
-      }
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }

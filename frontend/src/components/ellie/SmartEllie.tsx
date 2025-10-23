@@ -113,12 +113,15 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount to avoid infinite loops
 
-  // Sync positions
+  // Sync positions ONLY when user drags (via handlePositionChange), not automatically
+  // Removed automatic sync that was causing infinite loop
+  /*
   useEffect(() => {
     if (enableSmartPositioning) {
       setGlobalPosition(smartPosition);
     }
   }, [smartPosition, enableSmartPositioning, setGlobalPosition]);
+  */
 
   // Handle position changes (disable animation during drag for smooth movement)
   const handlePositionChange = useCallback((newPosition: { x: number; y: number }) => {
