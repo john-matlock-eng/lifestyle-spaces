@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { RichTextEditor } from '../components/RichTextEditor'
 import { EmotionSelector } from '../components/EmotionSelector'
@@ -42,6 +42,9 @@ export const JournalEditPage: React.FC = () => {
   const [showAIDock, setShowAIDock] = useState(false)
   const [currentSectionId, setCurrentSectionId] = useState<string | undefined>()
 
+  // Track if journal has been initialized to prevent duplicate template loads
+  const initializedJournalId = useRef<string | null>(null)
+
   // Ellie customization
   const { customization } = useEllieCustomizationContext()
 
@@ -81,7 +84,10 @@ export const JournalEditPage: React.FC = () => {
   }, [spaceId, journalId, loadJournal])
 
   useEffect(() => {
-    if (journal) {
+    if (journal && initializedJournalId.current !== journal.journalId) {
+      // Mark this journal as initialized to prevent duplicate template loads
+      initializedJournalId.current = journal.journalId
+
       setTitle(journal.title)
       setTags(journal.tags.join(', '))
       setEmotions(journal.emotions || [])
@@ -224,7 +230,8 @@ export const JournalEditPage: React.FC = () => {
         }
       }
     }
-  }, [journal, onEllieTemplateSelect, handleJournalStart])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [journal])
 
   const handleTemplateDataChange = (sectionId: string, value: string | QAPair[] | ListItem[] | number) => {
     // Get previous value before updating
