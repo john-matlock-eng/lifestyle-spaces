@@ -34,26 +34,36 @@ export const useEllieSmartPosition = (
   const getDefaultPosition = useCallback((): ElliePosition => {
     const x = window.innerWidth - 200 - SAFE_ZONE_MARGIN;
     const y = window.innerHeight - 200 - SAFE_ZONE_MARGIN;
-    return { x: Math.max(SAFE_ZONE_MARGIN, x), y: Math.max(SAFE_ZONE_MARGIN, y) };
+    const defaultPos = { x: Math.max(SAFE_ZONE_MARGIN, x), y: Math.max(SAFE_ZONE_MARGIN, y) };
+    console.log('[useEllieSmartPosition] getDefaultPosition:', defaultPos, 'viewport:', { width: window.innerWidth, height: window.innerHeight });
+    return defaultPos;
   }, []);
 
   // Load position from localStorage or use default
   const getInitialPosition = useCallback((): ElliePosition => {
+    console.log('[useEllieSmartPosition] getInitialPosition called with initialPosition:', initialPosition);
+
     if (initialPosition) {
-      return constrainPosition(initialPosition);
+      const constrained = constrainPosition(initialPosition);
+      console.log('[useEllieSmartPosition] Using provided initialPosition:', initialPosition, '=> constrained:', constrained);
+      return constrained;
     }
 
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as ElliePosition;
-        return constrainPosition(parsed);
+        const constrained = constrainPosition(parsed);
+        console.log('[useEllieSmartPosition] Loaded from localStorage:', parsed, '=> constrained:', constrained);
+        return constrained;
       }
     } catch (error) {
       console.warn('Failed to load Ellie position from localStorage:', error);
     }
 
-    return getDefaultPosition();
+    const defaultPos = getDefaultPosition();
+    console.log('[useEllieSmartPosition] Using default position:', defaultPos);
+    return defaultPos;
   }, [initialPosition, getDefaultPosition]);
 
   // State

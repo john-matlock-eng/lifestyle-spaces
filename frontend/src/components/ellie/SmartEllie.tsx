@@ -75,6 +75,18 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
   // Use global position if smart positioning is disabled
   const activePosition = enableSmartPositioning ? smartPosition : globalPosition;
 
+  // Debug logging
+  useEffect(() => {
+    console.log('[SmartEllie] Position update:', {
+      enableSmartPositioning,
+      mode,
+      globalPosition,
+      smartPosition,
+      activePosition,
+      isDocked
+    });
+  }, [enableSmartPositioning, mode, globalPosition, smartPosition, activePosition, isDocked]);
+
   // Ensure position is visible on screen (only on mount)
   // Only reset if position is truly off-screen, not just near edges
   useEffect(() => {
