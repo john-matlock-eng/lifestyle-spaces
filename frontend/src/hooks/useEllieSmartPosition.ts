@@ -28,7 +28,8 @@ const STORAGE_KEY = 'ellie-position';
 export const useEllieSmartPosition = (
   options: UseEllieSmartPositionOptions = {}
 ): UseEllieSmartPositionReturn => {
-  const { followMode = false, initialPosition } = options;
+  const { initialPosition } = options;
+  // followMode removed - scroll-following behavior disabled
 
   // Get default position (bottom-right with safe zone)
   const getDefaultPosition = useCallback((): ElliePosition => {
