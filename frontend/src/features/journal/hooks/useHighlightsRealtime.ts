@@ -259,7 +259,7 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
         // Rollback optimistic update
         if (originalHighlight) {
           setHighlights((prev) =>
-            prev.map((h) => (h.id === highlightId ? originalHighlight : h))
+            prev.map((h) => (h.id === highlightId ? originalHighlight! : h))
           );
         }
         setPendingActions((prev) =>
