@@ -54,12 +54,7 @@ export const JournalCard: React.FC<JournalCardProps> = ({ journal, onDelete }) =
           // Build preview from sections
           const sectionPreviews = sections
             .map(section => {
-              const cleanSection = section.content
-                .replace(/[#*`[\]()]/g, '') // Remove markdown formatting
-                .replace(/\n+/g, ' ') // Replace newlines with spaces
-                .trim()
-
-              if (cleanSection) {
+              if (section.content) {
                 // For Q&A sections, try to parse and show question/answer
                 if (section.type === 'q_and_a') {
                   try {
@@ -69,7 +64,8 @@ export const JournalCard: React.FC<JournalCardProps> = ({ journal, onDelete }) =
                       return `${section.title}: ${firstPair.question}...`
                     }
                   } catch {
-                    // Fall through to regular section display
+                    // If parsing fails, show a generic message
+                    return `${section.title}: Q&A entries`
                   }
                 }
 
@@ -78,14 +74,27 @@ export const JournalCard: React.FC<JournalCardProps> = ({ journal, onDelete }) =
                   try {
                     const listItems = JSON.parse(section.content)
                     if (Array.isArray(listItems) && listItems.length > 0) {
-                      return `${section.title}: ${listItems.map((item: { text: string }) => item.text).join(', ')}`
+                      const texts = listItems.map((item: { text: string }) => item.text).join(', ')
+                      return `${section.title}: ${texts}`
                     }
+                    // If list is empty
+                    return `${section.title}: (empty)`
                   } catch {
-                    // Fall through to regular section display
+                    // If parsing fails, show a generic message
+                    return `${section.title}: List items`
                   }
                 }
 
-                return `${section.title}: ${cleanSection.substring(0, 50)}`
+                // For regular paragraph sections
+                const cleanSection = section.content
+                  .replace(/[#*`[\](){}]/g, '') // Remove markdown formatting and JSON braces
+                  .replace(/\n+/g, ' ') // Replace newlines with spaces
+                  .replace(/[",]/g, '') // Remove quotes and commas from potential JSON
+                  .trim()
+
+                if (cleanSection) {
+                  return `${section.title}: ${cleanSection.substring(0, 50)}`
+                }
               }
               return ''
             })
