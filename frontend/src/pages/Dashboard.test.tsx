@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
@@ -39,8 +38,6 @@ vi.mock('../hooks/useEllieCustomizationContext', () => ({
 }));
 
 vi.mock('../components/ellie', () => {
-  const React = require('react');
-
   const EllieComponent = ({ mood, thoughtText, onClick }: { mood: string; thoughtText: string; onClick: () => void }) => (
     <div data-testid="ellie-companion">
       <div data-testid="ellie-mood">{mood}</div>
