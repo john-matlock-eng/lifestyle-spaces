@@ -79,6 +79,9 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
       clearTimeout(selectionTimeoutRef.current);
     }
 
+    // Longer delay in edit mode to give mobile users time to adjust selection handles
+    const delay = editingHighlightId ? 1500 : 500;
+
     // Wait a bit to see if user is still adjusting selection
     selectionTimeoutRef.current = setTimeout(() => {
       const windowSelection = window.getSelection();
@@ -150,8 +153,8 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
       } catch (error) {
         console.error('[HighlightableText] Error calculating selection:', error);
       }
-    }, 500); // 500ms delay allows for selection adjustment
-  }, [isReadOnly, sectionId]);
+    }, delay);
+  }, [isReadOnly, sectionId, editingHighlightId]);
 
   // Handle text selection on desktop (mouse events)
   const handleMouseUp = useCallback(() => {
