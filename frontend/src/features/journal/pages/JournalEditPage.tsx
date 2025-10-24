@@ -5,6 +5,7 @@ import { EmotionSelector } from '../components/EmotionSelector'
 import { QASection } from '../components/sections/QASection'
 import { AddSectionButton } from '../components/AddSectionButton'
 import { ListSection } from '../components/sections/ListSection'
+import { CheckboxSection } from '../components/sections/CheckboxSection'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
@@ -124,7 +125,7 @@ export const JournalEditPage: React.FC = () => {
                   // If parsing fails, default to empty array
                   parsedContent = []
                 }
-              } else if (section.type === 'list') {
+              } else if (section.type === 'list' || section.type === 'checkbox') {
                 try {
                   // Parse JSON string back to ListItem array
                   parsedContent = JSON.parse(section.content) as ListItem[]
@@ -191,7 +192,7 @@ export const JournalEditPage: React.FC = () => {
                 } catch {
                   parsedContent = []
                 }
-              } else if (section.type === 'list') {
+              } else if (section.type === 'list' || section.type === 'checkbox') {
                 try {
                   parsedContent = JSON.parse(section.content) as ListItem[]
                 } catch {
@@ -304,7 +305,7 @@ export const JournalEditPage: React.FC = () => {
                   type: section.type
                 }
               }
-            } else if (section.type === 'list') {
+            } else if (section.type === 'list' || section.type === 'checkbox') {
               // List sections store arrays of ListItem objects
               if (Array.isArray(sectionContent) && sectionContent.length > 0) {
                 sections[section.id] = {
@@ -328,7 +329,7 @@ export const JournalEditPage: React.FC = () => {
 
         // Add custom sections
         customSections.forEach(section => {
-          if (section.type === 'q_and_a' || section.type === 'list') {
+          if (section.type === 'q_and_a' || section.type === 'list' || section.type === 'checkbox' || section.type === 'checkbox') {
             // Q&A and List sections store arrays
             if (Array.isArray(section.content) && section.content.length > 0) {
               sections[section.id] = {
@@ -602,6 +603,15 @@ export const JournalEditPage: React.FC = () => {
                     placeholder={section.placeholder}
                     disabled={isSubmitting}
                   />
+                ) : section.type === 'checkbox' ? (
+                  <CheckboxSection
+                    value={(Array.isArray(templateData[section.id]) ? templateData[section.id] :
+                      Array.isArray(section.defaultValue) ? section.defaultValue :
+                      []) as ListItem[]}
+                    onChange={(value) => handleTemplateDataChange(section.id, value)}
+                    placeholder={section.placeholder}
+                    disabled={isSubmitting}
+                  />
                 ) : (
                   <RichTextEditor
                     content={typeof templateData[section.id] === 'string' ? templateData[section.id] as string :
@@ -725,7 +735,7 @@ export const JournalEditPage: React.FC = () => {
                   }}
                 />
               )}
-              {section.type === 'list' && (
+              {section.type === 'list' || section.type === 'checkbox' && (
                 <ListSection
                   value={Array.isArray(section.content) ? section.content as ListItem[] : []}
                   onChange={(content) => handleUpdateCustomSection(section.id, { content })}

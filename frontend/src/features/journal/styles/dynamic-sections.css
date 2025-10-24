@@ -470,6 +470,42 @@
 }
 
 /* ============================
+   Checkbox View Styles (read-only)
+   ============================ */
+
+.checkbox-view-section {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.checkbox-view-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--theme-text-primary);
+}
+
+.checkbox-view-input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: default;
+  accent-color: var(--theme-primary-600);
+}
+
+.dark .checkbox-view-input {
+  accent-color: var(--theme-primary-400);
+}
+
+.checkbox-view-label {
+  flex: 1;
+}
+
+/* ============================
    Responsive Design
    ============================ */
 

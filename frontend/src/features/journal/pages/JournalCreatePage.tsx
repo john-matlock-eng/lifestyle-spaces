@@ -6,6 +6,7 @@ import { EmotionSelector } from '../components/EmotionSelector'
 import { QASection } from '../components/sections/QASection'
 import { AddSectionButton } from '../components/AddSectionButton'
 import { ListSection } from '../components/sections/ListSection'
+import { CheckboxSection } from '../components/sections/CheckboxSection'
 import AIWritingPrompts from '../../../components/AIWritingPrompts'
 import { useJournal } from '../hooks/useJournal'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
@@ -86,7 +87,7 @@ export const JournalCreatePage: React.FC = () => {
           // Cast default value based on section type
           if (section.type === 'q_and_a') {
             initialData[section.id] = (Array.isArray(section.defaultValue) ? section.defaultValue : []) as QAPair[]
-          } else if (section.type === 'list') {
+          } else if (section.type === 'list' || section.type === 'checkbox') {
             initialData[section.id] = (Array.isArray(section.defaultValue) ? section.defaultValue : []) as ListItem[]
           } else if (section.type === 'scale') {
             initialData[section.id] = typeof section.defaultValue === 'number' ? section.defaultValue : 5
@@ -95,7 +96,7 @@ export const JournalCreatePage: React.FC = () => {
           }
         } else if (section.type === 'q_and_a') {
           initialData[section.id] = [] as QAPair[]
-        } else if (section.type === 'list') {
+        } else if (section.type === 'list' || section.type === 'checkbox') {
           initialData[section.id] = [] as ListItem[]
         } else if (section.type === 'scale') {
           initialData[section.id] = 5
@@ -183,8 +184,8 @@ export const JournalCreatePage: React.FC = () => {
                   type: section.type
                 }
               }
-            } else if (section.type === 'list') {
-              // List sections store arrays of ListItem objects
+            } else if (section.type === 'list' || section.type === 'checkbox') {
+              // List and checkbox sections store arrays of ListItem objects
               if (Array.isArray(sectionContent) && sectionContent.length > 0) {
                 sections[section.id] = {
                   content: JSON.stringify(sectionContent),
@@ -207,8 +208,8 @@ export const JournalCreatePage: React.FC = () => {
 
         // Add custom sections
         customSections.forEach(section => {
-          if (section.type === 'q_and_a' || section.type === 'list') {
-            // Q&A and List sections store arrays
+          if (section.type === 'q_and_a' || section.type === 'list' || section.type === 'checkbox') {
+            // Q&A, List, and Checkbox sections store arrays
             if (Array.isArray(section.content) && section.content.length > 0) {
               sections[section.id] = {
                 content: JSON.stringify(section.content),
@@ -484,6 +485,15 @@ export const JournalCreatePage: React.FC = () => {
                       placeholder={section.placeholder}
                       disabled={loading}
                     />
+                  ) : section.type === 'checkbox' ? (
+                    <CheckboxSection
+                      value={(Array.isArray(templateData[section.id]) ? templateData[section.id] :
+                        Array.isArray(section.defaultValue) ? section.defaultValue :
+                        []) as ListItem[]}
+                      onChange={(value) => handleTemplateDataChange(section.id, value)}
+                      placeholder={section.placeholder}
+                      disabled={loading}
+                    />
                   ) : (
                     <RichTextEditor
                       content={typeof templateData[section.id] === 'string' ? templateData[section.id] as string :
@@ -615,6 +625,13 @@ export const JournalCreatePage: React.FC = () => {
                 )}
                 {section.type === 'list' && (
                   <ListSection
+                    value={Array.isArray(section.content) ? section.content as ListItem[] : []}
+                    onChange={(content) => handleUpdateCustomSection(section.id, { content })}
+                    disabled={loading}
+                  />
+                )}
+                {section.type === 'checkbox' && (
+                  <CheckboxSection
                     value={Array.isArray(section.content) ? section.content as ListItem[] : []}
                     onChange={(content) => handleUpdateCustomSection(section.id, { content })}
                     disabled={loading}
