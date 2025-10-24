@@ -201,16 +201,22 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
 
       // Check if click/tap is on any highlight UI element
       if (!target.closest('.highlight-button') &&
+          !target.closest('.highlight-edit-buttons') &&
           !target.closest('.highlight-color-picker') &&
           !target.closest('.highlight-menu') &&
           !target.closest('.highlightable-text')) {
         console.log('[HighlightableText] Clearing selection due to outside click/tap');
-        setSelection(null);
-        setShowCreateButton(false);
-        setShowColorPicker(false);
+
+        // Don't clear selection if we're in edit mode
+        if (!editingHighlightId) {
+          setSelection(null);
+          setShowCreateButton(false);
+          setShowColorPicker(false);
+          window.getSelection()?.removeAllRanges();
+        }
+
         setClickedHighlight(null);
         setHighlightMenuPosition(null);
-        window.getSelection()?.removeAllRanges();
       }
     };
 
@@ -225,12 +231,17 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
     };
-  }, [selection, showCreateButton, showColorPicker, clickedHighlight]);
+  }, [selection, showCreateButton, showColorPicker, clickedHighlight, editingHighlightId]);
 
   // Handle escape key to close UI
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // If in edit mode, cancel the edit
+        if (editingHighlightId) {
+          setEditingHighlightId(null);
+        }
+
         setSelection(null);
         setShowCreateButton(false);
         setShowColorPicker(false);
@@ -242,7 +253,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, []);
+  }, [editingHighlightId]);
 
   // Show color picker when user clicks "Create Highlight" button
   const handleShowColorPicker = useCallback(() => {
@@ -377,6 +388,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         }
 
         // Highlighted text
+        const isBeingEdited = highlight.id === editingHighlightId;
         parts.push(
           <mark
             key={`h-${highlight.id}-${idx}`}
@@ -385,9 +397,12 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
               backgroundColor: highlight.color || HIGHLIGHT_COLORS.yellow,
               padding: '2px 0',
               borderRadius: '2px',
+              border: isBeingEdited ? '2px dashed var(--theme-primary-500)' : undefined,
+              outline: isBeingEdited ? '2px solid var(--theme-primary-300)' : undefined,
+              animation: isBeingEdited ? 'pulse 2s ease-in-out infinite' : undefined,
             }}
             onClick={(e) => handleExistingHighlightClick(e, highlight)}
-            title={`Click for options (${highlight.commentCount || 0} comments)`}
+            title={isBeingEdited ? 'Editing - select new text and click Save' : `Click for options (${highlight.commentCount || 0} comments)`}
           >
             {text.substring(relStart, relEnd)}
             {highlight.commentCount > 0 && (
@@ -886,6 +901,14 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
 
   return (
     <>
+      {/* Global styles for animations */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+      `}</style>
+
       <div className={`relative ${className}`}>
         <div
           ref={contentRef}
