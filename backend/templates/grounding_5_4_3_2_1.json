@@ -1,0 +1,289 @@
+{
+  "id": "grounding_5_4_3_2_1",
+  "name": "5-4-3-2-1 Grounding Technique",
+  "description": "A sensory awareness exercise to return to the present moment and reduce anxiety",
+  "version": 1,
+  "icon": "🧘",
+  "color": "#F472B6",
+  "ellie": {
+    "onSelect": {
+      "mood": "zen",
+      "message": "Let's ground ourselves together. This technique will help you feel present 🧘",
+      "animation": "sway"
+    },
+    "onStart": {
+      "mood": "zen",
+      "message": "Take a deep breath. Let's focus on the present moment together."
+    },
+    "onComplete": {
+      "mood": "zen",
+      "message": "I hope you feel more centered. Remember this tool whenever you feel overwhelmed.",
+      "particleEffect": "sparkles",
+      "animation": "sway"
+    },
+    "onSave": {
+      "mood": "zen",
+      "message": "Your grounding practice has been saved. You can return to this anytime you need 🌸",
+      "particleEffect": "sparkles"
+    },
+    "theme": {
+      "supportive": true,
+      "energetic": false,
+      "reflective": true
+    }
+  },
+  "sections": [
+    {
+      "id": "five_things_see",
+      "title": "Acknowledge FIVE things you see",
+      "type": "list",
+      "placeholder": "Look around you. What do you notice?",
+      "defaultValue": [],
+      "config": {
+        "min": 5,
+        "max": 5
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "zen",
+          "message": "Take a slow breath in... and out. Now, look around you. What do you see? 👁️"
+        },
+        "onComplete": {
+          "mood": "zen",
+          "message": "Good. You're becoming aware of your surroundings. Let's continue... 🌿",
+          "animation": "sway"
+        },
+        "hints": [
+          "Notice colors, shapes, and textures",
+          "Look for details you might normally overlook",
+          "There's no right or wrong - just observe",
+          "Take your time with each observation"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "1": {
+              "mood": "zen",
+              "message": "One thing noticed. Breathe... keep looking 🌸"
+            },
+            "3": {
+              "mood": "zen",
+              "message": "You're bringing yourself into the present moment 🧘"
+            },
+            "5": {
+              "mood": "zen",
+              "message": "Beautiful. Your awareness is expanding ✨"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "four_things_touch",
+      "title": "Acknowledge FOUR things you can touch",
+      "type": "list",
+      "placeholder": "Notice the texture and temperature around you.",
+      "defaultValue": [],
+      "config": {
+        "min": 4,
+        "max": 4
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "zen",
+          "message": "Another breath. Now, what can you feel? Touch the surfaces around you 🤲"
+        },
+        "onComplete": {
+          "mood": "zen",
+          "message": "Feel the connection between you and the physical world 🌍",
+          "animation": "sway"
+        },
+        "hints": [
+          "Notice the texture - smooth, rough, soft, hard?",
+          "Is it warm or cool to the touch?",
+          "Feel the fabric of your clothes",
+          "Notice the ground beneath your feet",
+          "Touch your hands together and notice the sensation"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "2": {
+              "mood": "zen",
+              "message": "You're grounding into your body... 🌿"
+            },
+            "4": {
+              "mood": "zen",
+              "message": "Your nervous system is calming. Well done 💚"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "three_things_hear",
+      "title": "Acknowledge THREE things you can hear",
+      "type": "list",
+      "placeholder": "Pay attention to the sounds in your environment.",
+      "defaultValue": [],
+      "config": {
+        "min": 3,
+        "max": 3
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "zen",
+          "message": "Close your eyes if you'd like. Listen... what sounds do you hear? 👂"
+        },
+        "onComplete": {
+          "mood": "zen",
+          "message": "The world is full of sound. You're here, present in this moment 🎵",
+          "animation": "sway"
+        },
+        "hints": [
+          "Listen for distant sounds, then close sounds",
+          "Notice the quiet sounds beneath the obvious ones",
+          "Your own breathing counts",
+          "Maybe a clock ticking, wind, or voices?",
+          "Don't judge the sounds - just notice them"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "1": {
+              "mood": "zen",
+              "message": "Listen deeper... what else? 🌊"
+            },
+            "3": {
+              "mood": "zen",
+              "message": "You're anchored in the present through sound 🔔"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "two_things_smell",
+      "title": "Acknowledge TWO things you can smell",
+      "type": "list",
+      "placeholder": "What scents are present right now?",
+      "defaultValue": [],
+      "config": {
+        "min": 2,
+        "max": 2
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "zen",
+          "message": "Breathe in slowly through your nose. What do you smell? 🌸"
+        },
+        "onComplete": {
+          "mood": "zen",
+          "message": "Scent connects us to memory and place. You're right here, right now 🍃",
+          "animation": "sway"
+        },
+        "hints": [
+          "It might be subtle - your clothes, the air, your skin",
+          "Maybe coffee, fresh air, or something cooking?",
+          "If you can't smell much, that's okay - notice that",
+          "Sometimes we can smell our own hair products or soap",
+          "The absence of scent is also worth noting"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "1": {
+              "mood": "zen",
+              "message": "One more scent to notice... breathe in 🌺"
+            },
+            "2": {
+              "mood": "zen",
+              "message": "Your senses are bringing you home to yourself 🏡"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "one_thing_taste",
+      "title": "Acknowledge ONE thing you can taste",
+      "type": "list",
+      "placeholder": "Can be a sip of water or just noticing the taste in your mouth.",
+      "defaultValue": [],
+      "config": {
+        "min": 1,
+        "max": 1
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "zen",
+          "message": "Take a sip of water if you have it, or just notice the taste in your mouth 💧"
+        },
+        "onComplete": {
+          "mood": "zen",
+          "message": "You've completed the grounding sequence. Well done 🙏",
+          "particleEffect": "sparkles",
+          "animation": "sway"
+        },
+        "hints": [
+          "The taste might be very subtle",
+          "Notice any lingering flavors from what you ate or drank",
+          "Even the taste of your own mouth counts",
+          "You could take a sip of water to notice taste more clearly",
+          "There's no wrong answer here"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "1": {
+              "mood": "zen",
+              "message": "Perfect. You've engaged all five senses ✨"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "post_exercise_checkin",
+      "title": "Post-Exercise Check-in",
+      "type": "paragraph",
+      "placeholder": "How has your emotional state shifted? What do you notice in your body and mind now?",
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "zen",
+          "message": "Take a moment to notice how you feel now. What's different? 🌿"
+        },
+        "onComplete": {
+          "mood": "proud",
+          "message": "This awareness is powerful. You're learning to regulate yourself 💜",
+          "particleEffect": "hearts"
+        },
+        "onSkip": {
+          "mood": "zen",
+          "message": "That's okay. The important work has been done 🌸"
+        },
+        "hints": [
+          "Is your breathing slower or deeper?",
+          "Do you feel more settled in your body?",
+          "Has the anxious feeling reduced even a little?",
+          "What physical sensations do you notice?",
+          "Are your thoughts clearer or quieter?",
+          "It's okay if you don't feel dramatically different"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "30": {
+              "mood": "zen",
+              "message": "You're building self-awareness... 🧘"
+            },
+            "60": {
+              "mood": "proud",
+              "message": "This reflection deepens the practice. Beautiful work 🌸"
+            },
+            "100": {
+              "mood": "proud",
+              "message": "Your insight is profound. Keep coming back to this practice 💎",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
