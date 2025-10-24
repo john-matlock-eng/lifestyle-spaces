@@ -155,8 +155,9 @@ export const SimpleSmartEllie: React.FC<SimpleSmartEllieProps> = ({
 
   return (
     <div
-      className={`fixed ${className || ''}`}
+      className={className || ''}
       style={{
+        position: 'fixed',
         left: `${position.x}px`,
         top: `${position.y}px`,
         zIndex: 9999,
