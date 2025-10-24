@@ -48,6 +48,7 @@ export const JournalViewPage: React.FC = () => {
     isConnecting,
     error: highlightError,
     createHighlight,
+    updateHighlight,
     deleteHighlight,
     createComment,
     deleteComment,
@@ -410,6 +411,7 @@ ${content}
                             spaceId={spaceId || ''}
                             onHighlightCreate={(selection, color) => createHighlight(selection, color)}
                             onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
                             onHighlightDelete={deleteHighlight}
                           />
                         )
@@ -443,6 +445,7 @@ ${content}
                             spaceId={spaceId || ''}
                             onHighlightCreate={(selection, color) => createHighlight(selection, color)}
                             onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
                             onHighlightDelete={deleteHighlight}
                           />
                         )
@@ -458,6 +461,7 @@ ${content}
                       spaceId={spaceId || ''}
                       onHighlightCreate={(selection, color) => createHighlight(selection, color)}
                       onHighlightClick={handleHighlightClick}
+                      onHighlightUpdate={updateHighlight}
                       onHighlightDelete={deleteHighlight}
                     />
                   )}
@@ -476,6 +480,7 @@ ${content}
             spaceId={spaceId || ''}
             onHighlightCreate={(selection, color) => createHighlight(selection, color)}
             onHighlightClick={handleHighlightClick}
+            onHighlightUpdate={updateHighlight}
             onHighlightDelete={deleteHighlight}
           />
         )}

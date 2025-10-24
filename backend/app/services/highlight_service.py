@@ -12,6 +12,7 @@ from app.models.highlight import (
     HighlightModel,
     CommentModel,
     CreateHighlightRequest,
+    UpdateHighlightRequest,
     CreateCommentRequest,
     TextRange,
 )
@@ -116,6 +117,37 @@ class HighlightService:
 
         # TODO: Also delete associated comments in a batch operation
         return True
+
+    async def update_highlight(
+        self,
+        space_id: str,
+        highlight_id: str,
+        user_id: str,
+        request: UpdateHighlightRequest,
+    ) -> Optional[HighlightModel]:
+        """Update a highlight's text selection. Only the creator can update."""
+        # First verify ownership
+        highlight = await self.get_highlight(space_id, highlight_id)
+        if not highlight or highlight.created_by != user_id:
+            return None
+
+        # Update the highlight
+        now = datetime.utcnow().isoformat()
+        self.db.update_item(
+            pk=f"SPACE#{space_id}",
+            sk=f"HIGHLIGHT#{highlight_id}",
+            updates={
+                "highlightedText": request.highlighted_text,
+                "textRange": request.text_range.dict(by_alias=True),
+                "updatedAt": now,
+            }
+        )
+
+        # Update the model and return
+        highlight.highlighted_text = request.highlighted_text
+        highlight.text_range = request.text_range
+        highlight.updated_at = now
+        return highlight
 
     async def increment_comment_count(self, space_id: str, highlight_id: str) -> None:
         """Increment the comment count for a highlight."""

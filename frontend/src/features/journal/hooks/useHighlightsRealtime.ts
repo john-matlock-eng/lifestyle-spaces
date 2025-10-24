@@ -41,7 +41,7 @@ const getAuthHeaders = async (): Promise<Record<string, string>> => {
 
 interface PendingAction {
   id: string;
-  type: 'CREATE_HIGHLIGHT' | 'DELETE_HIGHLIGHT' | 'CREATE_COMMENT' | 'DELETE_COMMENT';
+  type: 'CREATE_HIGHLIGHT' | 'UPDATE_HIGHLIGHT' | 'DELETE_HIGHLIGHT' | 'CREATE_COMMENT' | 'DELETE_COMMENT';
   timestamp: number;
 }
 
@@ -208,6 +208,70 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
     [spaceId]
   );
 
+  // Update a highlight's text selection with optimistic update
+  const updateHighlight = useCallback(
+    async (highlightId: string, selection: HighlightSelection) => {
+      // Store original highlight for rollback
+      let originalHighlight: Highlight | null = null;
+
+      try {
+        // Optimistic update
+        setHighlights((prev) => prev.map((h) => {
+          if (h.id === highlightId) {
+            originalHighlight = h;
+            return {
+              ...h,
+              highlightedText: selection.text,
+              textRange: selection.range,
+              updatedAt: new Date().toISOString(),
+            };
+          }
+          return h;
+        }));
+        setPendingActions((prev) => [
+          ...prev,
+          { id: highlightId, type: 'UPDATE_HIGHLIGHT', timestamp: Date.now() },
+        ]);
+
+        const headers = await getAuthHeaders();
+        const request = {
+          highlightedText: selection.text,
+          textRange: selection.range,
+        };
+
+        const response = await axios.put<Highlight>(
+          `${API_BASE_URL}/api/highlights/spaces/${spaceId}/highlights/${highlightId}`,
+          request,
+          { headers }
+        );
+
+        // Replace optimistic with real data from server
+        setHighlights((prev) =>
+          prev.map((h) => (h.id === highlightId ? response.data : h))
+        );
+        setPendingActions((prev) =>
+          prev.filter((a) => !(a.type === 'UPDATE_HIGHLIGHT' && a.id === highlightId))
+        );
+
+        return response.data;
+      } catch (err) {
+        console.error('Error updating highlight:', err);
+        // Rollback optimistic update
+        if (originalHighlight) {
+          setHighlights((prev) =>
+            prev.map((h) => (h.id === highlightId ? originalHighlight! : h))
+          );
+        }
+        setPendingActions((prev) =>
+          prev.filter((a) => !(a.type === 'UPDATE_HIGHLIGHT' && a.id === highlightId))
+        );
+        setError('Failed to update highlight');
+        return null;
+      }
+    },
+    [spaceId]
+  );
+
   // Create a comment on a highlight
   const createComment = useCallback(
     async (highlightId: string, text: string, parentCommentId?: string) => {
@@ -337,6 +401,7 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
     isConnecting,
     pendingActions,
     createHighlight,
+    updateHighlight,
     deleteHighlight,
     createComment,
     deleteComment,

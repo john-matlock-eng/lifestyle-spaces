@@ -10,6 +10,7 @@ from app.services.highlight_service import HighlightService, CommentService
 from app.models.highlight import (
     CreateHighlightRequest,
     CreateCommentRequest,
+    UpdateHighlightRequest,
     TextRange,
 )
 
@@ -49,6 +50,15 @@ def sample_comment_request():
         text="Great point!",
         parentCommentId=None,
         mentions=["user1"],
+    )
+
+
+@pytest.fixture
+def sample_update_highlight_request():
+    """Sample highlight update request."""
+    return UpdateHighlightRequest(
+        highlightedText="Updated text selection",
+        textRange=TextRange(startOffset=5, endOffset=30),
     )
 
 
@@ -192,6 +202,101 @@ class TestHighlightService:
             # Verify failure
             assert result is False
             mock_db.delete_item.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_update_highlight_success(self, mock_db, sample_update_highlight_request):
+        """Test updating a highlight (owner)."""
+        space_id = "space-123"
+        highlight_id = "highlight-456"
+        user_id = "user-789"
+
+        # Mock get_item to return owned highlight
+        mock_db.get_item.return_value = {
+            "id": highlight_id,
+            "journalEntryId": "journal-123",
+            "spaceId": space_id,
+            "highlightedText": "Original text",
+            "textRange": {"startOffset": 0, "endOffset": 13},
+            "color": "yellow",
+            "createdBy": user_id,
+            "createdByName": "User",
+            "createdAt": "2025-01-01T00:00:00",
+            "updatedAt": "2025-01-01T00:00:00",
+            "commentCount": 2,
+        }
+
+        with patch("app.services.highlight_service.get_db", return_value=mock_db):
+            service = HighlightService()
+
+            # Update highlight
+            updated = await service.update_highlight(
+                space_id, highlight_id, user_id, sample_update_highlight_request
+            )
+
+            # Verify success
+            assert updated is not None
+            assert updated.highlighted_text == "Updated text selection"
+            assert updated.text_range.start_offset == 5
+            assert updated.text_range.end_offset == 30
+            assert updated.id == highlight_id
+            assert updated.comment_count == 2  # Should preserve comment count
+            mock_db.update_item.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_update_highlight_not_found(self, mock_db, sample_update_highlight_request):
+        """Test updating a highlight that doesn't exist."""
+        space_id = "space-123"
+        highlight_id = "nonexistent-highlight"
+        user_id = "user-789"
+
+        # Mock get_item to return None
+        mock_db.get_item.return_value = None
+
+        with patch("app.services.highlight_service.get_db", return_value=mock_db):
+            service = HighlightService()
+
+            # Update highlight
+            updated = await service.update_highlight(
+                space_id, highlight_id, user_id, sample_update_highlight_request
+            )
+
+            # Verify failure
+            assert updated is None
+            mock_db.update_item.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_update_highlight_not_owner(self, mock_db, sample_update_highlight_request):
+        """Test updating a highlight (not owner)."""
+        space_id = "space-123"
+        highlight_id = "highlight-456"
+        user_id = "user-789"
+
+        # Mock get_item to return highlight owned by different user
+        mock_db.get_item.return_value = {
+            "id": highlight_id,
+            "journalEntryId": "journal-123",
+            "spaceId": space_id,
+            "highlightedText": "Original text",
+            "textRange": {"startOffset": 0, "endOffset": 13},
+            "color": "yellow",
+            "createdBy": "different-user",
+            "createdByName": "Different User",
+            "createdAt": "2025-01-01T00:00:00",
+            "updatedAt": "2025-01-01T00:00:00",
+            "commentCount": 0,
+        }
+
+        with patch("app.services.highlight_service.get_db", return_value=mock_db):
+            service = HighlightService()
+
+            # Update highlight
+            updated = await service.update_highlight(
+                space_id, highlight_id, user_id, sample_update_highlight_request
+            )
+
+            # Verify failure
+            assert updated is None
+            mock_db.update_item.assert_not_called()
 
 
 class TestCommentService:
