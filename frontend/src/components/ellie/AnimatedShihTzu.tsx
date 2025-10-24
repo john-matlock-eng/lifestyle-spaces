@@ -127,15 +127,93 @@ export function AnimatedShihTzu({ mood, size = 100 }: AnimatedShihTzuProps) {
         )}
 
         {/* Tail */}
-        <ellipse
-          cx="145"
-          cy="140"
-          rx="20"
-          ry="8"
-          fill="#D4A574"
-          transform={mood === 'excited' || mood === 'happy' ? "rotate(-20 145 140)" : "rotate(0 145 140)"}
-          className={mood === 'excited' || mood === 'happy' ? 'ellie-wag' : ''}
-        />
+        <g transform={mood === 'excited' || mood === 'happy' ? "rotate(-20 145 140)" : "rotate(0 145 140)"}>
+          {/* Base tail */}
+          <ellipse
+            cx="145"
+            cy="140"
+            rx="20"
+            ry="8"
+            fill="#D4A574"
+            className={mood === 'excited' || mood === 'happy' ? 'ellie-wag' : ''}
+          />
+
+          {/* Fluff indicators - curved fur texture lines */}
+          {/* Top fur strands */}
+          <path
+            d="M 130 136 Q 132 134 135 135"
+            stroke="rgba(0, 0, 0, 0.2)"
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinecap="round"
+            opacity="0.6"
+          />
+          <path
+            d="M 138 135 Q 140 133 143 134"
+            stroke="rgba(0, 0, 0, 0.2)"
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinecap="round"
+            opacity="0.6"
+          />
+          <path
+            d="M 146 135 Q 149 133 152 134"
+            stroke="rgba(0, 0, 0, 0.2)"
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinecap="round"
+            opacity="0.6"
+          />
+
+          {/* Bottom fur strands */}
+          <path
+            d="M 130 144 Q 132 146 135 145"
+            stroke="rgba(0, 0, 0, 0.2)"
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinecap="round"
+            opacity="0.6"
+          />
+          <path
+            d="M 138 145 Q 140 147 143 146"
+            stroke="rgba(0, 0, 0, 0.2)"
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinecap="round"
+            opacity="0.6"
+          />
+          <path
+            d="M 146 145 Q 149 147 152 146"
+            stroke="rgba(0, 0, 0, 0.2)"
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinecap="round"
+            opacity="0.6"
+          />
+
+          {/* Tip fluff - small radiating lines at the end */}
+          <path
+            d="M 162 137 L 167 135"
+            stroke="rgba(0, 0, 0, 0.2)"
+            strokeWidth="1"
+            strokeLinecap="round"
+            opacity="0.5"
+          />
+          <path
+            d="M 164 140 L 169 140"
+            stroke="rgba(0, 0, 0, 0.2)"
+            strokeWidth="1"
+            strokeLinecap="round"
+            opacity="0.5"
+          />
+          <path
+            d="M 162 143 L 167 145"
+            stroke="rgba(0, 0, 0, 0.2)"
+            strokeWidth="1"
+            strokeLinecap="round"
+            opacity="0.5"
+          />
+        </g>
 
         {/* Paws */}
         <ellipse cx="75" cy="165" rx="12" ry="8" fill="#D4A574" />
