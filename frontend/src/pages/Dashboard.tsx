@@ -5,8 +5,7 @@ import { useSpace } from '../stores/spaceStore';
 import { SpaceList } from '../components/spaces/SpaceList';
 import { CreateSpaceModal } from '../components/spaces/CreateSpaceModal';
 import { JoinByCodeForm } from '../components/invitations/JoinByCodeForm';
-import { Ellie } from '../components/ellie';
-import { useShihTzuCompanion } from '../hooks';
+import { SmartEllie } from '../components/ellie';
 import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationContext';
 import type { Space } from '../types';
 import './Dashboard.css';
@@ -18,17 +17,17 @@ export const Dashboard: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [showJoinByCode, setShowJoinByCode] = useState(false);
 
-  // Ellie companion
-  const { mood, setMood, position, celebrate } = useShihTzuCompanion({
-    initialMood: 'excited',
-    initialPosition: {
-      x: Math.min(window.innerWidth * 0.75, window.innerWidth - 200),
-      y: 100
-    }
-  });
+  // Ellie companion state
+  const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('excited');
 
   // Ellie customization
   const { customization } = useEllieCustomizationContext();
+
+  // Celebration function for Ellie
+  const celebrate = () => {
+    setMood('celebrating');
+    setTimeout(() => setMood('happy'), 3000);
+  };
 
   useEffect(() => {
     loadSpaces();
@@ -161,9 +160,8 @@ export const Dashboard: React.FC = () => {
       )}
 
       {/* Ellie companion */}
-      <Ellie
+      <SmartEllie
         mood={mood}
-        position={position}
         showThoughtBubble={true}
         thoughtText={spaces.length === 0
           ? "Welcome! Create your first space to get started! 🎉"
@@ -175,6 +173,8 @@ export const Dashboard: React.FC = () => {
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
+        enableSmartPositioning={true}
+        showControlPanel={true}
       />
     </div>
   );

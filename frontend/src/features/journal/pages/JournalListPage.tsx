@@ -1,8 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { JournalList } from '../components/JournalList'
-import { Ellie } from '../../../components/ellie'
-import { useShihTzuCompanion } from '../../../hooks'
+import { SmartEllie } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import '../styles/journal.css'
 
@@ -12,14 +11,8 @@ import '../styles/journal.css'
 export const JournalListPage: React.FC = () => {
   const { spaceId } = useParams<{ spaceId: string }>()
 
-  // Ellie companion
-  const { mood, setMood, position } = useShihTzuCompanion({
-    initialMood: 'curious',
-    initialPosition: {
-      x: Math.min(window.innerWidth * 0.8, window.innerWidth - 150),
-      y: 100
-    }
-  })
+  // Ellie companion state
+  const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('curious');
 
   // Ellie customization
   const { customization } = useEllieCustomizationContext()
@@ -37,9 +30,8 @@ export const JournalListPage: React.FC = () => {
       <JournalList spaceId={spaceId} />
 
       {/* Ellie companion */}
-      <Ellie
+      <SmartEllie
         mood={mood}
-        position={position}
         showThoughtBubble={true}
         thoughtText="Browse your journals! 📖"
         size="md"
@@ -48,6 +40,8 @@ export const JournalListPage: React.FC = () => {
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
+        enableSmartPositioning={true}
+        showControlPanel={true}
       />
     </>
   )

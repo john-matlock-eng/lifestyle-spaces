@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../stores/authStore'
-import { Ellie } from '../components/ellie'
-import { useShihTzuCompanion } from '../hooks'
+import { SmartEllie } from '../components/ellie'
 import { ThemeToggle } from '../components/theme'
 import { useEffect, useState } from 'react'
 import './Landing.css'
@@ -11,19 +10,14 @@ export function Landing() {
   const { user } = useAuth()
   const [isVisible, setIsVisible] = useState(false)
 
-  // Use the companion hook for Ellie's behavior (must be called before any returns)
-  const {
-    mood,
-    position,
-    setMood,
-    celebrate,
-  } = useShihTzuCompanion({
-    initialMood: 'excited',
-    initialPosition: {
-      x: Math.min(window.innerWidth * 0.75, window.innerWidth - 200),
-      y: 200
-    }
-  })
+  // Ellie companion state
+  const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('excited');
+
+  // Celebration function for Ellie
+  const celebrate = () => {
+    setMood('celebrating');
+    setTimeout(() => setMood('excited'), 3000);
+  };
 
   useEffect(() => {
     setIsVisible(true)
@@ -199,15 +193,17 @@ export function Landing() {
       </footer>
 
       {/* Ellie Companion */}
-      <Ellie
+      <SmartEllie
         mood={mood}
-        position={position}
         size="md"
         variant="default"
         showThoughtBubble={true}
         thoughtText="Welcome! Ready to start your wellness journey? 🎉"
         onClick={() => setMood(mood === 'happy' ? 'excited' : 'happy')}
+        particleEffect={mood === 'celebrating' ? 'hearts' : null}
         className="hidden lg:block"
+        enableSmartPositioning={true}
+        showControlPanel={true}
       />
     </div>
   )
