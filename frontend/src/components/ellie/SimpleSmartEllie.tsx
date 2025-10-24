@@ -19,6 +19,7 @@ export interface SimpleSmartEllieProps {
   collarColor?: string;
   collarTag?: boolean;
   showControlPanel?: boolean;
+  enableSmartPositioning?: boolean; // Accepted for compatibility but always enabled
 }
 
 const STORAGE_KEY = 'ellie-simple-position';
@@ -102,7 +103,7 @@ export const SimpleSmartEllie: React.FC<SimpleSmartEllieProps> = ({
   // Handle window resize - keep Ellie on screen
   useEffect(() => {
     const handleResize = () => {
-      setPosition(prev => ({
+      setPosition((prev: { x: number; y: number }) => ({
         x: Math.max(0, Math.min(prev.x, window.innerWidth - ELLIE_SIZE)),
         y: Math.max(0, Math.min(prev.y, window.innerHeight - ELLIE_SIZE))
       }));
