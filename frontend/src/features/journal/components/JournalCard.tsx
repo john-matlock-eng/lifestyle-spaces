@@ -43,71 +43,73 @@ export const JournalCard: React.FC<JournalCardProps> = ({ journal, onDelete }) =
   // Extract clean preview text from journal content
   const getJournalPreview = (content: string, maxLength: number = 150): string => {
     try {
-      // First, try to extract clean markdown (for non-templated journals)
-      const cleanContent = JournalContentManager.extractCleanMarkdown(content)
+      // First, try to parse as structured sections (for templated journals)
+      const sections = JournalContentManager.extractDisplaySections(content)
 
-      // If no clean content, parse sections instead
-      if (!cleanContent || cleanContent.trim().length === 0) {
-        const sections = JournalContentManager.extractDisplaySections(content)
-
-        if (sections.length > 0) {
-          // Build preview from sections
-          const sectionPreviews = sections
-            .map(section => {
-              if (section.content) {
-                // For Q&A sections, try to parse and show question/answer
-                if (section.type === 'q_and_a') {
-                  try {
-                    const qaPairs = JSON.parse(section.content)
-                    if (Array.isArray(qaPairs) && qaPairs.length > 0) {
-                      const firstPair = qaPairs[0]
-                      return `${section.title}: ${firstPair.question}...`
-                    }
-                  } catch {
-                    // If parsing fails, show a generic message
-                    return `${section.title}: Q&A entries`
+      // If we have structured sections, use them for preview
+      if (sections.length > 0) {
+        // Build preview from sections
+        const sectionPreviews = sections
+          .map(section => {
+            if (section.content) {
+              // For Q&A sections, try to parse and show question/answer
+              if (section.type === 'q_and_a') {
+                try {
+                  const qaPairs = JSON.parse(section.content)
+                  if (Array.isArray(qaPairs) && qaPairs.length > 0) {
+                    const firstPair = qaPairs[0]
+                    return `${section.title}: ${firstPair.question}...`
                   }
-                }
-
-                // For list sections, try to parse and show items
-                if (section.type === 'list') {
-                  try {
-                    const listItems = JSON.parse(section.content)
-                    if (Array.isArray(listItems) && listItems.length > 0) {
-                      const texts = listItems.map((item: { text: string }) => item.text).join(', ')
-                      return `${section.title}: ${texts}`
-                    }
-                    // If list is empty
-                    return `${section.title}: (empty)`
-                  } catch {
-                    // If parsing fails, show a generic message
-                    return `${section.title}: List items`
-                  }
-                }
-
-                // For regular paragraph sections
-                const cleanSection = section.content
-                  .replace(/[#*`[\](){}]/g, '') // Remove markdown formatting and JSON braces
-                  .replace(/\n+/g, ' ') // Replace newlines with spaces
-                  .replace(/[",]/g, '') // Remove quotes and commas from potential JSON
-                  .trim()
-
-                if (cleanSection) {
-                  return `${section.title}: ${cleanSection.substring(0, 50)}`
+                } catch {
+                  // If parsing fails, show a generic message
+                  return `${section.title}: Q&A entries`
                 }
               }
-              return ''
-            })
-            .filter(Boolean)
 
-          if (sectionPreviews.length > 0) {
-            const fullPreview = sectionPreviews.join(' | ')
-            return fullPreview.length > maxLength
-              ? fullPreview.substring(0, maxLength) + '...'
-              : fullPreview
-          }
+              // For list sections, try to parse and show items
+              if (section.type === 'list') {
+                try {
+                  const listItems = JSON.parse(section.content)
+                  if (Array.isArray(listItems) && listItems.length > 0) {
+                    const texts = listItems.map((item: { text: string }) => item.text).join(', ')
+                    return `${section.title}: ${texts}`
+                  }
+                  // If list is empty
+                  return `${section.title}: (empty)`
+                } catch {
+                  // If parsing fails, show a generic message
+                  return `${section.title}: List items`
+                }
+              }
+
+              // For regular paragraph sections
+              const cleanSection = section.content
+                .replace(/[#*`[\](){}]/g, '') // Remove markdown formatting and JSON braces
+                .replace(/\n+/g, ' ') // Replace newlines with spaces
+                .replace(/[",]/g, '') // Remove quotes and commas from potential JSON
+                .trim()
+
+              if (cleanSection) {
+                return `${section.title}: ${cleanSection.substring(0, 50)}`
+              }
+            }
+            return ''
+          })
+          .filter(Boolean)
+
+        if (sectionPreviews.length > 0) {
+          const fullPreview = sectionPreviews.join(' | ')
+          return fullPreview.length > maxLength
+            ? fullPreview.substring(0, maxLength) + '...'
+            : fullPreview
         }
+      }
 
+      // Fall back to extracting clean markdown (for non-templated journals)
+      const cleanContent = JournalContentManager.extractCleanMarkdown(content)
+
+      // If still no clean content
+      if (!cleanContent || cleanContent.trim().length === 0) {
         return 'No content available'
       }
 
