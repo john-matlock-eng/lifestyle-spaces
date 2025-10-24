@@ -7,6 +7,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 // Mock Ellie components and hooks
 vi.mock('../components/ellie', () => ({
   Ellie: () => <div data-testid="ellie-companion">Ellie</div>,
+  SmartEllie: () => <div data-testid="ellie-companion">Ellie</div>,
 }));
 
 vi.mock('../hooks', () => ({

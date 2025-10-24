@@ -11,7 +11,7 @@ import { getTemplate } from '../services/templateApi'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { aiService } from '../../../services/ai'
-import { Ellie } from '../../../components/ellie'
+import { SmartEllie } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { useEllieJournalGuide } from '../hooks/useEllieJournalGuide'
 import type { Template, TemplateData, QAPair, ListItem } from '../types/template.types'
@@ -51,7 +51,6 @@ export const JournalEditPage: React.FC = () => {
   // Template-driven Ellie guidance
   const {
     mood,
-    position,
     thoughtText,
     particleEffect,
     handleTemplateSelect: onEllieTemplateSelect,
@@ -860,9 +859,8 @@ export const JournalEditPage: React.FC = () => {
       )}
 
       {/* Ellie companion */}
-      <Ellie
+      <SmartEllie
         mood={mood}
-        position={position}
         showThoughtBubble={true}
         thoughtText={thoughtText || "Let's refine this masterpiece! ✨"}
         size="md"
@@ -878,6 +876,8 @@ export const JournalEditPage: React.FC = () => {
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
+        enableSmartPositioning={true}
+        showControlPanel={true}
       />
     </div>
   )

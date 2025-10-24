@@ -7,8 +7,7 @@ import { MembersList } from '../components/spaces/MembersList';
 import { InviteMemberModal } from '../components/spaces/InviteMemberModal';
 import { JournalList } from '../features/journal/components/JournalList';
 import { regenerateInviteCode } from '../services/spaces';
-import { Ellie } from '../components/ellie';
-import { useShihTzuCompanion } from '../hooks';
+import { SmartEllie } from '../components/ellie';
 import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationContext';
 import type { SpaceMemberRole, SpaceMember } from '../types';
 import './SpaceDetail.css';
@@ -38,14 +37,8 @@ export const SpaceDetail: React.FC = () => {
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
 
-  // Ellie companion
-  const { mood, setMood, position } = useShihTzuCompanion({
-    initialMood: 'happy',
-    initialPosition: {
-      x: Math.min(window.innerWidth * 0.75, window.innerWidth - 150),
-      y: 120
-    }
-  });
+  // Ellie companion state
+  const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('happy');
 
   // Ellie customization
   const { customization } = useEllieCustomizationContext();
@@ -727,9 +720,8 @@ export const SpaceDetail: React.FC = () => {
       )}
 
       {/* Ellie companion */}
-      <Ellie
+      <SmartEllie
         mood={mood}
-        position={position}
         showThoughtBubble={true}
         thoughtText={
           activeTab === 'journals'
@@ -744,6 +736,8 @@ export const SpaceDetail: React.FC = () => {
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
+        enableSmartPositioning={true}
+        showControlPanel={true}
       />
     </div>
   );
