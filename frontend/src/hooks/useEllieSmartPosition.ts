@@ -22,41 +22,49 @@ export interface UseEllieSmartPositionReturn {
 }
 
 const SAFE_ZONE_MARGIN = 20;
-const NUDGE_DISTANCE = 100;
-const NUDGE_OFFSET = 30;
-const EDGE_SNAP_TIMEOUT = 3000;
-const FOLLOW_DELAY = 500;
+// const FOLLOW_DELAY = 500; // Removed - scroll following disabled
 const STORAGE_KEY = 'ellie-position';
 
 export const useEllieSmartPosition = (
   options: UseEllieSmartPositionOptions = {}
 ): UseEllieSmartPositionReturn => {
-  const { followMode = false, initialPosition } = options;
+  const { initialPosition } = options;
+  // followMode removed - scroll-following behavior disabled
 
   // Get default position (bottom-right with safe zone)
   const getDefaultPosition = useCallback((): ElliePosition => {
     const x = window.innerWidth - 200 - SAFE_ZONE_MARGIN;
     const y = window.innerHeight - 200 - SAFE_ZONE_MARGIN;
-    return { x: Math.max(SAFE_ZONE_MARGIN, x), y: Math.max(SAFE_ZONE_MARGIN, y) };
+    const defaultPos = { x: Math.max(SAFE_ZONE_MARGIN, x), y: Math.max(SAFE_ZONE_MARGIN, y) };
+    console.log('[useEllieSmartPosition] getDefaultPosition:', defaultPos, 'viewport:', { width: window.innerWidth, height: window.innerHeight });
+    return defaultPos;
   }, []);
 
   // Load position from localStorage or use default
   const getInitialPosition = useCallback((): ElliePosition => {
+    console.log('[useEllieSmartPosition] getInitialPosition called with initialPosition:', initialPosition);
+
     if (initialPosition) {
-      return constrainPosition(initialPosition);
+      const constrained = constrainPosition(initialPosition);
+      console.log('[useEllieSmartPosition] Using provided initialPosition:', initialPosition, '=> constrained:', constrained);
+      return constrained;
     }
 
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as ElliePosition;
-        return constrainPosition(parsed);
+        const constrained = constrainPosition(parsed);
+        console.log('[useEllieSmartPosition] Loaded from localStorage:', parsed, '=> constrained:', constrained);
+        return constrained;
       }
     } catch (error) {
       console.warn('Failed to load Ellie position from localStorage:', error);
     }
 
-    return getDefaultPosition();
+    const defaultPos = getDefaultPosition();
+    console.log('[useEllieSmartPosition] Using default position:', defaultPos);
+    return defaultPos;
   }, [initialPosition, getDefaultPosition]);
 
   // State
@@ -67,16 +75,17 @@ export const useEllieSmartPosition = (
   const [collidingElements] = useState<HTMLElement[]>([]);
 
   // Refs
-  const edgeSnapTimeoutRef = useRef<number | null>(null);
-  const followTimeoutRef = useRef<number | null>(null);
+  // const followTimeoutRef = useRef<number | null>(null); // Removed - scroll following disabled
   const animationFrameRef = useRef<number | null>(null);
   const dockedPositionRef = useRef<ElliePosition | null>(null);
   const isAnimatingRef = useRef(false);
 
   // Constrain position to viewport with safe zones
+  // Assumes Ellie + control panel is ~200px wide/tall
   function constrainPosition(pos: ElliePosition): ElliePosition {
-    const maxX = Math.max(SAFE_ZONE_MARGIN, window.innerWidth - SAFE_ZONE_MARGIN);
-    const maxY = Math.max(SAFE_ZONE_MARGIN, window.innerHeight - SAFE_ZONE_MARGIN);
+    const ELLIE_SIZE = 200; // Approximate size including control panel
+    const maxX = window.innerWidth - ELLIE_SIZE - SAFE_ZONE_MARGIN;
+    const maxY = window.innerHeight - ELLIE_SIZE - SAFE_ZONE_MARGIN;
 
     return {
       x: Math.max(SAFE_ZONE_MARGIN, Math.min(pos.x, maxX)),
@@ -90,37 +99,6 @@ export const useEllieSmartPosition = (
       localStorage.setItem(STORAGE_KEY, JSON.stringify(pos));
     } catch (error) {
       console.warn('Failed to save Ellie position to localStorage:', error);
-    }
-  }, []);
-
-  // Get nearest edge position
-  const getNearestEdge = useCallback((pos: ElliePosition): ElliePosition => {
-    const { x, y } = pos;
-
-    // Determine which edge is closest
-    const distanceToLeft = x;
-    const distanceToRight = window.innerWidth - x;
-    const distanceToTop = y;
-    const distanceToBottom = window.innerHeight - y;
-
-    const minDistance = Math.min(
-      distanceToLeft,
-      distanceToRight,
-      distanceToTop,
-      distanceToBottom
-    );
-
-    const centerX = window.innerWidth / 2;
-
-    // Snap to the nearest edge (prefer right > left > top > bottom)
-    if (minDistance === distanceToRight || (x > centerX && minDistance !== distanceToTop)) {
-      return { x: window.innerWidth - SAFE_ZONE_MARGIN - 100, y };
-    } else if (minDistance === distanceToLeft || (x <= centerX && minDistance !== distanceToTop)) {
-      return { x: SAFE_ZONE_MARGIN, y };
-    } else if (minDistance === distanceToTop) {
-      return { x, y: SAFE_ZONE_MARGIN };
-    } else {
-      return { x, y: window.innerHeight - SAFE_ZONE_MARGIN - 100 };
     }
   }, []);
 
@@ -185,21 +163,9 @@ export const useEllieSmartPosition = (
         setPositionState(constrainedPos);
         savePosition(constrainedPos);
       }
-
-      // Reset edge snap timeout
-      if (edgeSnapTimeoutRef.current) {
-        clearTimeout(edgeSnapTimeoutRef.current);
-      }
-      edgeSnapTimeoutRef.current = window.setTimeout(() => {
-        const edgePos = getNearestEdge(constrainedPos);
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-        }
-        setPositionState(edgePos);
-        savePosition(edgePos);
-      }, EDGE_SNAP_TIMEOUT);
+      // Note: Auto edge-snapping removed as it was causing Ellie to get stuck at edges
     },
-    [savePosition, getNearestEdge, animateToPosition]
+    [savePosition, animateToPosition]
   );
 
   // Toggle dock mode
@@ -220,10 +186,9 @@ export const useEllieSmartPosition = (
     });
   }, [position, setPosition]);
 
-  // Handle mouse move for proximity detection and nudging
+  // Handle mouse move for proximity detection
+  // DISABLED nudging as it was interfering with dragging
   useEffect(() => {
-    let nudgeTimeoutId: number | null = null;
-
     const handleMouseMove = (e: MouseEvent) => {
       setPositionState((currentPos) => {
         const distance = Math.sqrt(
@@ -232,40 +197,14 @@ export const useEllieSmartPosition = (
 
         setCursorProximity(distance);
 
-        // Nudge away if cursor is too close (throttled)
-        if (distance < NUDGE_DISTANCE && distance > 0 && !nudgeTimeoutId) {
-          nudgeTimeoutId = window.setTimeout(() => {
-            nudgeTimeoutId = null;
-          }, 100); // Throttle nudge to avoid spam
-
-          // Calculate direction away from cursor
-          const dx = currentPos.x - e.clientX;
-          const dy = currentPos.y - e.clientY;
-          const magnitude = Math.sqrt(dx * dx + dy * dy);
-
-          if (magnitude > 0) {
-            const nudgeX = (dx / magnitude) * NUDGE_OFFSET;
-            const nudgeY = (dy / magnitude) * NUDGE_OFFSET;
-
-            const newPos = constrainPosition({
-              x: currentPos.x + nudgeX,
-              y: currentPos.y + nudgeY,
-            });
-
-            return newPos;
-          }
-        }
-
-        return currentPos; // No change
+        // Just track proximity, no nudging to avoid interfering with drag
+        return currentPos;
       });
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      if (nudgeTimeoutId) {
-        clearTimeout(nudgeTimeoutId);
-      }
     };
   }, []);
 
@@ -279,7 +218,9 @@ export const useEllieSmartPosition = (
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Handle follow mode
+  // Handle follow mode (scroll following)
+  // DISABLED: This was causing position updates on scroll, interfering with user control
+  /*
   useEffect(() => {
     if (!followMode) {
       return;
@@ -314,16 +255,11 @@ export const useEllieSmartPosition = (
       }
     };
   }, [followMode]);
+  */
 
   // Cleanup
   useEffect(() => {
     return () => {
-      if (edgeSnapTimeoutRef.current) {
-        clearTimeout(edgeSnapTimeoutRef.current);
-      }
-      if (followTimeoutRef.current) {
-        clearTimeout(followTimeoutRef.current);
-      }
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }

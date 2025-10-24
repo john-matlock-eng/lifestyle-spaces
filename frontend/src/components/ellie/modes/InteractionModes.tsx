@@ -6,27 +6,25 @@ import type {
 import {
   EllieMode,
   MODE_DESCRIPTIONS,
-  PLAYFUL_MIN_INTERVAL,
-  PLAYFUL_MAX_INTERVAL,
-  CURSOR_AVOID_DISTANCE,
-  NUDGE_DISTANCE,
 } from './types';
 
 /**
  * InteractionModeManager component manages Ellie's behavior based on the selected mode
+ * Note: onPositionChange prop is accepted but not used - all auto-positioning disabled to allow dragging
  */
 export const InteractionModeManager: React.FC<InteractionModeManagerProps> = ({
   currentMode,
   onModeChange,
-  position = { x: 0, y: 0 },
-  onPositionChange,
   onDockChange,
   children,
 }) => {
-  const playfulTimerRef = useRef<number | null>(null);
   const [showModeSelector, setShowModeSelector] = useState(false);
 
   // Companion mode: Move away from cursor
+  // DISABLED: This was preventing users from dragging Ellie
+  // The cursor avoidance made it impossible to click and drag since
+  // Ellie would move away as soon as the cursor got close
+  /*
   useEffect(() => {
     if (currentMode !== EllieMode.COMPANION || !onPositionChange) {
       return;
@@ -58,8 +56,12 @@ export const InteractionModeManager: React.FC<InteractionModeManagerProps> = ({
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [currentMode, position, onPositionChange]);
+  */
 
   // Assistant mode: Dock to bottom-right
+  // DISABLED: This was forcing Ellie to bottom-right corner, preventing dragging
+  // Users should be able to position Ellie wherever they want, regardless of mode
+  /*
   useEffect(() => {
     if (currentMode === EllieMode.ASSISTANT) {
       if (onDockChange) {
@@ -74,8 +76,12 @@ export const InteractionModeManager: React.FC<InteractionModeManagerProps> = ({
       }
     }
   }, [currentMode, onDockChange, onPositionChange]);
+  */
 
   // Playful mode: Random movements
+  // DISABLED: This was randomly moving Ellie, preventing users from keeping her in one place
+  // Users should have full control over Ellie's position
+  /*
   useEffect(() => {
     if (currentMode !== EllieMode.PLAYFUL || !onPositionChange) {
       return;
@@ -105,6 +111,7 @@ export const InteractionModeManager: React.FC<InteractionModeManagerProps> = ({
       }
     };
   }, [currentMode, onPositionChange]);
+  */
 
   // Focus mode: Minimize to tiny bubble
   useEffect(() => {

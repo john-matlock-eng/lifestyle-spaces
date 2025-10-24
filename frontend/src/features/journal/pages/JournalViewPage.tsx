@@ -10,7 +10,6 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Template } from '../types/template.types'
 import { SmartEllie } from '../../../components/ellie'
-import { useShihTzuCompanion } from '../../../hooks'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { HighlightableText } from '../components/HighlightableText'
@@ -56,14 +55,8 @@ export const JournalViewPage: React.FC = () => {
     reconnect
   } = useHighlightsRealtime(spaceId || '', journalId || '')
 
-  // Ellie companion
-  const { mood, setMood } = useShihTzuCompanion({
-    initialMood: 'happy',
-    initialPosition: {
-      x: Math.min(window.innerWidth * 0.8, window.innerWidth - 150),
-      y: 120
-    }
-  })
+  // Ellie companion - just use mood state, SmartEllie manages position
+  const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('happy')
 
   // Ellie customization
   const { customization } = useEllieCustomizationContext()

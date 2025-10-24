@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { ModularEnhancedShihTzu } from './ModularEnhancedShihTzu';
 import { EllieControlPanel } from './EllieControlPanel';
-import { InteractionModeManager } from './modes/InteractionModes';
+// import { InteractionModeManager } from './modes/InteractionModes'; // Disabled - was blocking interactions
 import { useElliePosition } from '../../contexts/useElliePosition';
 import { useEllieSmartPosition } from '../../hooks/useEllieSmartPosition';
 import type { EllieMode } from './modes/types';
@@ -75,19 +75,33 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
   // Use global position if smart positioning is disabled
   const activePosition = enableSmartPositioning ? smartPosition : globalPosition;
 
+  // Debug logging
+  useEffect(() => {
+    console.log('[SmartEllie] Position update:', {
+      enableSmartPositioning,
+      mode,
+      globalPosition,
+      smartPosition,
+      activePosition,
+      isDocked
+    });
+  }, [enableSmartPositioning, mode, globalPosition, smartPosition, activePosition, isDocked]);
+
   // Ensure position is visible on screen (only on mount)
+  // Only reset if position is truly off-screen, not just near edges
   useEffect(() => {
     const checkPosition = () => {
+      const margin = 20;
       const isVisible =
-        activePosition.x >= 0 &&
-        activePosition.x < window.innerWidth - 150 &&
-        activePosition.y >= 0 &&
-        activePosition.y < window.innerHeight - 150;
+        activePosition.x >= -50 && // Allow some off-screen for edge cases
+        activePosition.x < window.innerWidth + 50 &&
+        activePosition.y >= -50 &&
+        activePosition.y < window.innerHeight + 50;
 
       if (!isVisible) {
         // Reset to default visible position (no animation on mount)
         const newPos = {
-          x: Math.min(window.innerWidth - 200, Math.max(20, window.innerWidth * 0.8)),
+          x: Math.min(window.innerWidth - 200, Math.max(margin, window.innerWidth * 0.8)),
           y: Math.min(window.innerHeight - 200, 100)
         };
         setPosition(newPos, { animate: false });
@@ -99,12 +113,15 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount to avoid infinite loops
 
-  // Sync positions
+  // Sync positions ONLY when user drags (via handlePositionChange), not automatically
+  // Removed automatic sync that was causing infinite loop
+  /*
   useEffect(() => {
     if (enableSmartPositioning) {
       setGlobalPosition(smartPosition);
     }
   }, [smartPosition, enableSmartPositioning, setGlobalPosition]);
+  */
 
   // Handle position changes (disable animation during drag for smooth movement)
   const handlePositionChange = useCallback((newPosition: { x: number; y: number }) => {
@@ -166,7 +183,9 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
 
   return (
     <>
-      {/* Interaction Mode Manager for behavioral changes */}
+      {/* Interaction Mode Manager DISABLED - was rendering UI that blocked interactions
+          and all automatic positioning behaviors are disabled anyway */}
+      {/*
       {enableSmartPositioning && (
         <InteractionModeManager
           currentMode={mode}
@@ -175,6 +194,7 @@ export const SmartEllie: React.FC<SmartEllieProps> = ({
           onPositionChange={handlePositionChange}
         />
       )}
+      */}
 
       {/* Main Ellie Component with fixed positioning */}
       <div
