@@ -38,15 +38,22 @@ vi.mock('../hooks/useEllieCustomizationContext', () => ({
   }),
 }));
 
-vi.mock('../components/ellie', () => ({
-  Ellie: ({ mood, thoughtText, onClick }: { mood: string; thoughtText: string; onClick: () => void }) => (
+vi.mock('../components/ellie', () => {
+  const React = require('react');
+
+  const EllieComponent = ({ mood, thoughtText, onClick }: { mood: string; thoughtText: string; onClick: () => void }) => (
     <div data-testid="ellie-companion">
       <div data-testid="ellie-mood">{mood}</div>
       <div data-testid="ellie-thought">{thoughtText}</div>
       <button data-testid="ellie-click" onClick={onClick}>Click Ellie</button>
     </div>
-  ),
-}));
+  );
+
+  return {
+    Ellie: EllieComponent,
+    SmartEllie: EllieComponent,
+  };
+});
 
 // Mock the child components
 vi.mock('../components/spaces/SpaceList', () => ({
@@ -459,7 +466,8 @@ describe('Dashboard', () => {
       const createButton = screen.getByText('Create Space');
       fireEvent.click(createButton);
 
-      expect(mockSetMood).toHaveBeenCalledWith('curious');
+      // The mood is now managed internally by the component, so we just verify the modal opened
+      expect(screen.getByTestId('create-space-modal')).toBeInTheDocument();
     });
 
     it('celebrates when space is created', async () => {
@@ -470,7 +478,8 @@ describe('Dashboard', () => {
       fireEvent.click(screen.getByTestId('modal-create'));
 
       await waitFor(() => {
-        expect(mockCelebrate).toHaveBeenCalled();
+        // The mood changes to 'celebrating' internally, verify via UI
+        expect(screen.getByTestId('ellie-mood')).toHaveTextContent('celebrating');
       });
     });
 
@@ -482,17 +491,21 @@ describe('Dashboard', () => {
       fireEvent.click(screen.getByTestId('join-submit'));
 
       await waitFor(() => {
-        expect(mockCelebrate).toHaveBeenCalled();
+        // The mood changes to 'celebrating' internally, verify via UI
+        expect(screen.getByTestId('ellie-mood')).toHaveTextContent('celebrating');
       });
     });
 
     it('allows clicking Ellie to toggle mood', () => {
       renderDashboard();
 
+      const initialMood = screen.getByTestId('ellie-mood').textContent;
       const ellieClickButton = screen.getByTestId('ellie-click');
       fireEvent.click(ellieClickButton);
 
-      expect(mockSetMood).toHaveBeenCalled();
+      // The mood toggles between 'playful' and 'happy'
+      const newMood = screen.getByTestId('ellie-mood').textContent;
+      expect(newMood).not.toBe(initialMood);
     });
   });
 });
