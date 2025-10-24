@@ -39,6 +39,7 @@ async def websocket_endpoint(
     Message types (server -> client):
         - CONNECTION_CONFIRMED: Connection established with history
         - NEW_HIGHLIGHT: New highlight created
+        - UPDATE_HIGHLIGHT: Highlight updated (text selection changed)
         - DELETE_HIGHLIGHT: Highlight deleted
         - NEW_COMMENT: New comment added
         - UPDATE_COMMENT: Comment updated

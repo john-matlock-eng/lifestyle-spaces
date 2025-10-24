@@ -76,6 +76,16 @@ class CreateHighlightRequest(BaseModel):
         by_alias = True
 
 
+class UpdateHighlightRequest(BaseModel):
+    """Request to update a highlight's text selection."""
+    highlighted_text: str = Field(alias="highlightedText")
+    text_range: TextRange = Field(alias="textRange")
+
+    class Config:
+        populate_by_name = True
+        by_alias = True
+
+
 class CreateCommentRequest(BaseModel):
     """Request to create a new comment."""
     text: str

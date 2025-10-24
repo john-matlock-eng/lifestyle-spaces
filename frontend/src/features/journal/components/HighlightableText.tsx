@@ -27,6 +27,7 @@ interface HighlightableTextProps {
   sectionId?: string; // Optional section ID for template journals
   onHighlightCreate: (selection: HighlightSelection, color: HighlightColor) => void;
   onHighlightClick: (highlight: Highlight) => void;
+  onHighlightUpdate?: (highlightId: string, selection: HighlightSelection) => void;
   onHighlightDelete?: (highlightId: string) => void;
   isReadOnly?: boolean;
   className?: string;
@@ -38,6 +39,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
   sectionId,
   onHighlightCreate,
   onHighlightClick,
+  onHighlightUpdate,
   onHighlightDelete,
   isReadOnly = false,
   className = '',
@@ -49,6 +51,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
   const [selectedColor, setSelectedColor] = useState<HighlightColor>('yellow');
   const [clickedHighlight, setClickedHighlight] = useState<Highlight | null>(null);
   const [highlightMenuPosition, setHighlightMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const [editingHighlightId, setEditingHighlightId] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const selectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -299,6 +302,34 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     }
   }, [clickedHighlight, onHighlightClick]);
 
+  // Handle entering edit mode for a highlight
+  const handleEditSelection = useCallback(() => {
+    if (clickedHighlight) {
+      setEditingHighlightId(clickedHighlight.id);
+      setClickedHighlight(null);
+      setHighlightMenuPosition(null);
+    }
+  }, [clickedHighlight]);
+
+  // Handle saving edited selection
+  const handleSaveEdit = useCallback(() => {
+    if (editingHighlightId && selection && onHighlightUpdate) {
+      onHighlightUpdate(editingHighlightId, selection);
+      setEditingHighlightId(null);
+      setSelection(null);
+      setShowCreateButton(false);
+      setButtonPosition(null);
+    }
+  }, [editingHighlightId, selection, onHighlightUpdate]);
+
+  // Handle canceling edit mode
+  const handleCancelEdit = useCallback(() => {
+    setEditingHighlightId(null);
+    setSelection(null);
+    setShowCreateButton(false);
+    setButtonPosition(null);
+  }, []);
+
   // Render text with highlights - preserves markdown formatting
   const renderHighlightedContent = () => {
     // If no highlights, render markdown normally
@@ -436,12 +467,87 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     );
   };
 
-  // Render "Create Highlight" button
+  // Render "Create Highlight" button or "Save/Cancel" buttons for edit mode
   const renderCreateButton = () => {
     if (!showCreateButton || !buttonPosition || isReadOnly) {
       return null;
     }
 
+    // If in edit mode, show Save and Cancel buttons
+    if (editingHighlightId) {
+      const buttonElement = (
+        <div
+          className="highlight-edit-buttons"
+          style={{
+            position: 'fixed',
+            left: `${buttonPosition.x}px`,
+            top: `${buttonPosition.y}px`,
+            transform: 'translate(-50%, 0%)',
+            zIndex: 99999,
+            animation: 'fadeIn 0.2s ease-out',
+            display: 'flex',
+            gap: '8px',
+          }}
+        >
+          <button
+            onClick={handleSaveEdit}
+            style={{
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: 'white',
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+            }}
+          >
+            ✓ Save
+          </button>
+          <button
+            onClick={handleCancelEdit}
+            style={{
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#374151',
+              background: 'white',
+              border: '1px solid rgba(0, 0, 0, 0.2)',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.background = '#f9fafb';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.background = 'white';
+            }}
+          >
+            ✕ Cancel
+          </button>
+        </div>
+      );
+
+      return ReactDOM.createPortal(buttonElement, document.body);
+    }
+
+    // Otherwise, show the normal "Create Highlight" button
     const buttonElement = (
       <div
         className="highlight-button"
@@ -709,6 +815,38 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           <span style={{ fontSize: '18px' }}>💬</span>
           <span>View Comments ({clickedHighlight.commentCount || 0})</span>
         </button>
+
+        {/* Edit Selection Button */}
+        {onHighlightUpdate && (
+          <button
+            onClick={handleEditSelection}
+            style={{
+              width: '100%',
+              padding: '14px 18px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: 'var(--theme-primary-600)',
+              background: 'none',
+              border: 'none',
+              borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              transition: 'background-color 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.08)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>✏️</span>
+            <span>Edit Selection</span>
+          </button>
+        )}
 
         {/* Delete Highlight Button */}
         {onHighlightDelete && (

@@ -9,6 +9,7 @@ from app.models.highlight import (
     HighlightModel,
     CommentModel,
     CreateHighlightRequest,
+    UpdateHighlightRequest,
     CreateCommentRequest,
 )
 from app.services.highlight_service import HighlightService, CommentService
@@ -121,6 +122,54 @@ async def delete_highlight(
     )
 
     return None
+
+
+@router.put(
+    "/spaces/{space_id}/highlights/{highlight_id}",
+    response_model=HighlightModel,
+)
+async def update_highlight(
+    space_id: str,
+    highlight_id: str,
+    request: UpdateHighlightRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Update a highlight's text selection. Only the creator can update."""
+    service = HighlightService()
+    ws_manager = get_websocket_manager()
+
+    user_id = current_user.get("sub") or current_user.get("userId")
+
+    # Get highlight first to find journal_entry_id
+    highlight = await service.get_highlight(space_id, highlight_id)
+    if not highlight:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Highlight not found",
+        )
+
+    updated_highlight = await service.update_highlight(
+        space_id=space_id,
+        highlight_id=highlight_id,
+        user_id=user_id,
+        request=request,
+    )
+
+    if not updated_highlight:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Highlight not found or you don't have permission to update it",
+        )
+
+    # Broadcast to WebSocket clients
+    await ws_manager.broadcast_message(
+        journal_entry_id=highlight.journal_entry_id,
+        message_type="UPDATE_HIGHLIGHT",
+        payload=updated_highlight.dict(by_alias=True),
+        sender_id=user_id
+    )
+
+    return updated_highlight
 
 
 # Comment endpoints

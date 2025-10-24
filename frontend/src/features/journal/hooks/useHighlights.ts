@@ -141,6 +141,36 @@ export const useHighlights = (spaceId: string, journalEntryId: string) => {
     [spaceId]
   );
 
+  // Update a highlight's text selection
+  const updateHighlight = useCallback(
+    async (highlightId: string, selection: HighlightSelection) => {
+      try {
+        const headers = await getAuthHeaders();
+        const request = {
+          highlightedText: selection.text,
+          textRange: selection.range,
+        };
+
+        const response = await axios.put<Highlight>(
+          `${API_BASE_URL}/api/highlights/spaces/${spaceId}/highlights/${highlightId}`,
+          request,
+          { headers }
+        );
+
+        setHighlights((prev) =>
+          prev.map((h) => (h.id === highlightId ? response.data : h))
+        );
+
+        return response.data;
+      } catch (err) {
+        console.error('Error updating highlight:', err);
+        setError('Failed to update highlight');
+        return null;
+      }
+    },
+    [spaceId]
+  );
+
   // Create a comment on a highlight
   const createComment = useCallback(
     async (highlightId: string, text: string, parentCommentId?: string) => {
@@ -229,6 +259,7 @@ export const useHighlights = (spaceId: string, journalEntryId: string) => {
     loading,
     error,
     createHighlight,
+    updateHighlight,
     deleteHighlight,
     createComment,
     deleteComment,
