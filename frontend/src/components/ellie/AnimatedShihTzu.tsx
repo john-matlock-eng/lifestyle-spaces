@@ -138,80 +138,109 @@ export function AnimatedShihTzu({ mood, size = 100 }: AnimatedShihTzuProps) {
             className={mood === 'excited' || mood === 'happy' ? 'ellie-wag' : ''}
           />
 
-          {/* Fluff indicators - curved fur texture lines */}
-          {/* Top fur strands */}
-          <path
-            d="M 130 136 Q 132 134 135 135"
-            stroke="rgba(0, 0, 0, 0.2)"
-            strokeWidth="1.2"
-            fill="none"
-            strokeLinecap="round"
-            opacity="0.6"
-          />
-          <path
-            d="M 138 135 Q 140 133 143 134"
-            stroke="rgba(0, 0, 0, 0.2)"
-            strokeWidth="1.2"
-            fill="none"
-            strokeLinecap="round"
-            opacity="0.6"
-          />
-          <path
-            d="M 146 135 Q 149 133 152 134"
-            stroke="rgba(0, 0, 0, 0.2)"
-            strokeWidth="1.2"
-            fill="none"
-            strokeLinecap="round"
-            opacity="0.6"
+          {/* Lion-style tuft at the end (slightly bulbous) */}
+          <ellipse
+            cx="163"
+            cy="140"
+            rx="5"
+            ry="8"
+            fill="#D4A574"
+            opacity="0.95"
           />
 
-          {/* Bottom fur strands */}
+          {/* Fluff indicators - curved fur texture lines INSIDE the tail */}
+          {/* Top fur strands - positioned inside tail boundaries */}
           <path
-            d="M 130 144 Q 132 146 135 145"
-            stroke="rgba(0, 0, 0, 0.2)"
-            strokeWidth="1.2"
+            d="M 132 137 Q 135 135 138 137"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth="2"
             fill="none"
             strokeLinecap="round"
-            opacity="0.6"
           />
           <path
-            d="M 138 145 Q 140 147 143 146"
-            stroke="rgba(0, 0, 0, 0.2)"
-            strokeWidth="1.2"
+            d="M 142 136.5 Q 145 134.5 148 136.5"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth="2"
             fill="none"
             strokeLinecap="round"
-            opacity="0.6"
           />
           <path
-            d="M 146 145 Q 149 147 152 146"
-            stroke="rgba(0, 0, 0, 0.2)"
-            strokeWidth="1.2"
+            d="M 152 137 Q 155 135 158 137"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth="2"
             fill="none"
             strokeLinecap="round"
-            opacity="0.6"
           />
 
-          {/* Tip fluff - small radiating lines at the end */}
+          {/* Middle fur strands */}
           <path
-            d="M 162 137 L 167 135"
-            stroke="rgba(0, 0, 0, 0.2)"
-            strokeWidth="1"
+            d="M 136 140 Q 140 138 144 140"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth="2"
+            fill="none"
             strokeLinecap="round"
-            opacity="0.5"
           />
           <path
-            d="M 164 140 L 169 140"
-            stroke="rgba(0, 0, 0, 0.2)"
-            strokeWidth="1"
+            d="M 148 140 Q 152 138 156 140"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth="2"
+            fill="none"
             strokeLinecap="round"
-            opacity="0.5"
+          />
+
+          {/* Bottom fur strands - positioned inside tail boundaries */}
+          <path
+            d="M 132 143 Q 135 145 138 143"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth="2"
+            fill="none"
+            strokeLinecap="round"
           />
           <path
-            d="M 162 143 L 167 145"
-            stroke="rgba(0, 0, 0, 0.2)"
-            strokeWidth="1"
+            d="M 142 143.5 Q 145 145.5 148 143.5"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth="2"
+            fill="none"
             strokeLinecap="round"
-            opacity="0.5"
+          />
+          <path
+            d="M 152 143 Q 155 145 158 143"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth="2"
+            fill="none"
+            strokeLinecap="round"
+          />
+
+          {/* Tuft fluff lines - radiating from the bulbous end */}
+          <path
+            d="M 163 134 Q 165 132 167 131"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 165 137 Q 168 136 171 136"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 167 140 L 172 140"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 165 143 Q 168 144 171 144"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 163 146 Q 165 148 167 149"
+            stroke="rgba(0, 0, 0, 0.6)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
           />
         </g>
 

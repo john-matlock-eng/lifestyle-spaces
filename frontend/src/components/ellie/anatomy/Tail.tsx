@@ -7,19 +7,38 @@ export const Tail: React.FC<BodyPartProps> = ({ furColor, mood, className = '' }
   const rotation = getTailRotation(mood);
   const { tail } = ELLIE_COORDINATES;
 
-  // Calculate darker shade for fur texture lines
-  const getDarkerShade = (color: string) => {
-    // Simple darkening for common color formats
+  // Calculate brightness and provide contrasting color
+  const getContrastingFluffColor = (color: string) => {
+    let r = 0, g = 0, b = 0;
+
     if (color.startsWith('#')) {
-      const r = parseInt(color.slice(1, 3), 16);
-      const g = parseInt(color.slice(3, 5), 16);
-      const b = parseInt(color.slice(5, 7), 16);
-      return `rgb(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)})`;
+      r = parseInt(color.slice(1, 3), 16);
+      g = parseInt(color.slice(3, 5), 16);
+      b = parseInt(color.slice(5, 7), 16);
+    } else if (color.startsWith('rgb')) {
+      const match = color.match(/\d+/g);
+      if (match) {
+        r = parseInt(match[0]);
+        g = parseInt(match[1]);
+        b = parseInt(match[2]);
+      }
     }
-    return 'rgba(0, 0, 0, 0.15)';
+
+    // Calculate relative luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    // For light fur (high luminance), use dark strokes
+    // For dark fur (low luminance), use light strokes
+    if (luminance > 0.5) {
+      // Light fur - use dark strokes with good contrast
+      return `rgba(${Math.max(0, r - 80)}, ${Math.max(0, g - 80)}, ${Math.max(0, b - 80)}, 0.7)`;
+    } else {
+      // Dark fur - use light strokes
+      return `rgba(${Math.min(255, r + 100)}, ${Math.min(255, g + 100)}, ${Math.min(255, b + 100)}, 0.6)`;
+    }
   };
 
-  const furStrokeColor = getDarkerShade(furColor);
+  const furStrokeColor = getContrastingFluffColor(furColor);
 
   return (
     <g
@@ -36,80 +55,109 @@ export const Tail: React.FC<BodyPartProps> = ({ furColor, mood, className = '' }
         className="ellie-tail-inner"
       />
 
-      {/* Fluff indicators - curved fur texture lines */}
-      {/* Top fur strands */}
-      <path
-        d={`M ${tail.cx - 10} ${tail.cy - 3} Q ${tail.cx - 8} ${tail.cy - 5} ${tail.cx - 6} ${tail.cy - 4}`}
-        stroke={furStrokeColor}
-        strokeWidth="0.8"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.6"
-      />
-      <path
-        d={`M ${tail.cx - 4} ${tail.cy - 4} Q ${tail.cx - 2} ${tail.cy - 6} ${tail.cx} ${tail.cy - 5}`}
-        stroke={furStrokeColor}
-        strokeWidth="0.8"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.6"
-      />
-      <path
-        d={`M ${tail.cx + 2} ${tail.cy - 4} Q ${tail.cx + 4} ${tail.cy - 6} ${tail.cx + 6} ${tail.cy - 4}`}
-        stroke={furStrokeColor}
-        strokeWidth="0.8"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.6"
+      {/* Lion-style tuft at the end (slightly bulbous) */}
+      <ellipse
+        cx={tail.cx + 10}
+        cy={tail.cy}
+        rx={3.5}
+        ry={5.5}
+        fill={furColor}
+        opacity="0.95"
       />
 
-      {/* Bottom fur strands */}
+      {/* Fluff indicators - curved fur texture lines INSIDE the tail */}
+      {/* Top fur strands - positioned inside tail boundaries */}
       <path
-        d={`M ${tail.cx - 10} ${tail.cy + 3} Q ${tail.cx - 8} ${tail.cy + 5} ${tail.cx - 6} ${tail.cy + 4}`}
+        d={`M ${tail.cx - 8} ${tail.cy - 2} Q ${tail.cx - 6} ${tail.cy - 3} ${tail.cx - 4} ${tail.cy - 2}`}
         stroke={furStrokeColor}
-        strokeWidth="0.8"
+        strokeWidth="1.2"
         fill="none"
         strokeLinecap="round"
-        opacity="0.6"
       />
       <path
-        d={`M ${tail.cx - 4} ${tail.cy + 4} Q ${tail.cx - 2} ${tail.cy + 6} ${tail.cx} ${tail.cy + 5}`}
+        d={`M ${tail.cx - 2} ${tail.cy - 2.5} Q ${tail.cx} ${tail.cy - 3.5} ${tail.cx + 2} ${tail.cy - 2.5}`}
         stroke={furStrokeColor}
-        strokeWidth="0.8"
+        strokeWidth="1.2"
         fill="none"
         strokeLinecap="round"
-        opacity="0.6"
       />
       <path
-        d={`M ${tail.cx + 2} ${tail.cy + 4} Q ${tail.cx + 4} ${tail.cy + 6} ${tail.cx + 6} ${tail.cy + 4}`}
+        d={`M ${tail.cx + 4} ${tail.cy - 2} Q ${tail.cx + 6} ${tail.cy - 3} ${tail.cx + 8} ${tail.cy - 2}`}
         stroke={furStrokeColor}
-        strokeWidth="0.8"
+        strokeWidth="1.2"
         fill="none"
         strokeLinecap="round"
-        opacity="0.6"
       />
 
-      {/* Tip fluff - small radiating lines at the end */}
+      {/* Middle fur strands */}
       <path
-        d={`M ${tail.cx + 10} ${tail.cy - 2} L ${tail.cx + 13} ${tail.cy - 3}`}
+        d={`M ${tail.cx - 6} ${tail.cy} Q ${tail.cx - 4} ${tail.cy - 1} ${tail.cx - 2} ${tail.cy}`}
         stroke={furStrokeColor}
-        strokeWidth="0.6"
+        strokeWidth="1.2"
+        fill="none"
         strokeLinecap="round"
-        opacity="0.5"
       />
       <path
-        d={`M ${tail.cx + 11} ${tail.cy} L ${tail.cx + 14} ${tail.cy}`}
+        d={`M ${tail.cx} ${tail.cy} Q ${tail.cx + 2} ${tail.cy - 1} ${tail.cx + 4} ${tail.cy}`}
         stroke={furStrokeColor}
-        strokeWidth="0.6"
+        strokeWidth="1.2"
+        fill="none"
         strokeLinecap="round"
-        opacity="0.5"
+      />
+
+      {/* Bottom fur strands - positioned inside tail boundaries */}
+      <path
+        d={`M ${tail.cx - 8} ${tail.cy + 2} Q ${tail.cx - 6} ${tail.cy + 3} ${tail.cx - 4} ${tail.cy + 2}`}
+        stroke={furStrokeColor}
+        strokeWidth="1.2"
+        fill="none"
+        strokeLinecap="round"
       />
       <path
-        d={`M ${tail.cx + 10} ${tail.cy + 2} L ${tail.cx + 13} ${tail.cy + 3}`}
+        d={`M ${tail.cx - 2} ${tail.cy + 2.5} Q ${tail.cx} ${tail.cy + 3.5} ${tail.cx + 2} ${tail.cy + 2.5}`}
         stroke={furStrokeColor}
-        strokeWidth="0.6"
+        strokeWidth="1.2"
+        fill="none"
         strokeLinecap="round"
-        opacity="0.5"
+      />
+      <path
+        d={`M ${tail.cx + 4} ${tail.cy + 2} Q ${tail.cx + 6} ${tail.cy + 3} ${tail.cx + 8} ${tail.cy + 2}`}
+        stroke={furStrokeColor}
+        strokeWidth="1.2"
+        fill="none"
+        strokeLinecap="round"
+      />
+
+      {/* Tuft fluff lines - radiating from the bulbous end */}
+      <path
+        d={`M ${tail.cx + 10} ${tail.cy - 3} Q ${tail.cx + 11} ${tail.cy - 4} ${tail.cx + 12} ${tail.cy - 4.5}`}
+        stroke={furStrokeColor}
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+      <path
+        d={`M ${tail.cx + 11} ${tail.cy - 1.5} Q ${tail.cx + 12.5} ${tail.cy - 2} ${tail.cx + 13.5} ${tail.cy - 2}`}
+        stroke={furStrokeColor}
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+      <path
+        d={`M ${tail.cx + 12} ${tail.cy} L ${tail.cx + 14} ${tail.cy}`}
+        stroke={furStrokeColor}
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+      <path
+        d={`M ${tail.cx + 11} ${tail.cy + 1.5} Q ${tail.cx + 12.5} ${tail.cy + 2} ${tail.cx + 13.5} ${tail.cy + 2}`}
+        stroke={furStrokeColor}
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+      <path
+        d={`M ${tail.cx + 10} ${tail.cy + 3} Q ${tail.cx + 11} ${tail.cy + 4} ${tail.cx + 12} ${tail.cy + 4.5}`}
+        stroke={furStrokeColor}
+        strokeWidth="1"
+        strokeLinecap="round"
       />
     </g>
   );
