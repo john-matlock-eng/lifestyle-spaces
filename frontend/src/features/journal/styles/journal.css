@@ -74,6 +74,11 @@
   border-radius: 8px;
   background-color: var(--theme-bg-surface);
   overflow: hidden;
+  /* Constrain editor to viewport/container */
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .editor-toolbar {
@@ -127,6 +132,12 @@
   padding: 16px;
   background-color: var(--theme-bg-surface);
   color: var(--theme-text-primary);
+  /* Ensure editor content never exceeds container */
+  max-width: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 /* TipTap Editor Content Styles */
@@ -134,6 +145,28 @@
   outline: none;
   min-height: inherit;
   text-align: left;
+
+  /* Prevents editor horizontal expansion when users enter/paste
+     long unbroken strings (URLs, repeated characters, etc.)
+     See: Bug fix for text overflow issue - Journal entry page */
+
+  /* Core word wrapping - prevents horizontal expansion */
+  overflow-wrap: break-word;  /* Modern standard for wrapping long words */
+  word-break: break-word;     /* Breaks long unbreakable strings like URLs */
+
+  /* Legacy support */
+  word-wrap: break-word;      /* Older browsers */
+
+  /* Whitespace handling */
+  white-space: pre-wrap;      /* Preserves whitespace/line breaks but allows wrapping */
+
+  /* Container constraints */
+  max-width: 100%;            /* Never exceed parent container */
+  width: 100%;                /* Fill available space */
+  overflow-x: hidden;         /* Absolutely prevent horizontal scrolling */
+
+  /* Allow flexbox/grid to shrink below content size */
+  min-width: 0;
 }
 
 .ProseMirror > * {
