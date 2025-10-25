@@ -50,6 +50,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: left;
+  position: relative;
 }
 
 .template-card:hover {
@@ -62,6 +63,27 @@
   border-width: 3px;
   box-shadow: 0 4px 16px rgba(100, 108, 255, 0.2);
   background-color: var(--theme-primary-50, #f5f7ff);
+}
+
+/* Special styling for gold/gratitude templates */
+.template-card[data-template-color="#FBBF24"],
+.template-card[data-template-color="#fbbf24"] {
+  background: linear-gradient(to bottom right, rgba(251, 191, 36, 0.05), rgba(251, 191, 36, 0.1));
+  border: 2px solid rgba(251, 191, 36, 0.3);
+}
+
+.template-card[data-template-color="#FBBF24"]:hover,
+.template-card[data-template-color="#fbbf24"]:hover {
+  border-color: #FBBF24;
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.3);
+}
+
+.template-card[data-template-color="#FBBF24"].selected,
+.template-card[data-template-color="#fbbf24"].selected {
+  border-color: #FBBF24;
+  border-width: 3px;
+  background: linear-gradient(to bottom right, rgba(251, 191, 36, 0.1), rgba(251, 191, 36, 0.15));
+  box-shadow: 0 4px 20px rgba(251, 191, 36, 0.4);
 }
 
 .template-card-header {

@@ -1,0 +1,225 @@
+{
+  "id": "weekly_gratitude_reflection",
+  "name": "🌟 Weekly Gratitude & Reflection",
+  "description": "Deeply reflect on meaningful moments, connections, and growth from the past week",
+  "version": 1,
+  "icon": "🌟",
+  "color": "#FBBF24",
+  "ellie": {
+    "onSelect": {
+      "mood": "zen",
+      "message": "Ready for some deep reflection? Let's honor this week together... 🌟",
+      "animation": "sway"
+    },
+    "onStart": {
+      "mood": "zen",
+      "message": "Let's take a moment to honor the past week. It's not just about what you did, but how you felt. 💖",
+      "delay": 2000
+    },
+    "onComplete": {
+      "mood": "celebrating",
+      "message": "It feels wonderful to acknowledge the good in your life. Carry this warmth into the week ahead.",
+      "particleEffect": "hearts",
+      "animation": "bounce"
+    },
+    "onSave": {
+      "mood": "proud",
+      "message": "Week reflected and saved! Your gratitude practice is beautiful 🌟",
+      "particleEffect": "hearts"
+    },
+    "theme": {
+      "supportive": true,
+      "energetic": false,
+      "reflective": true
+    }
+  },
+  "sections": [
+    {
+      "id": "meaningful_moments",
+      "title": "Meaningful Moments & Connections",
+      "type": "list",
+      "placeholder": "A conversation with...",
+      "defaultValue": [],
+      "config": {
+        "min": 0,
+        "max": 10,
+        "suggestedItems": "3-5"
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "What moments this week brought you joy, peace, or connection? 💫"
+        },
+        "onComplete": {
+          "mood": "happy",
+          "message": "These moments are treasures! Beautiful reflections! 🌸",
+          "particleEffect": "sparkles"
+        },
+        "hints": [
+          "Think about interactions that warmed your heart",
+          "What unexpected joys appeared?",
+          "What quiet realizations came to you?",
+          "Which moments made you feel most alive?"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "1": {
+              "mood": "happy",
+              "message": "A beautiful start! What else? 🌟"
+            },
+            "3": {
+              "mood": "excited",
+              "message": "Three moments captured! You're really reflecting deeply 💖"
+            },
+            "5": {
+              "mood": "celebrating",
+              "message": "Five meaningful moments! Your week was rich with blessings! ✨",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "savoring_experience",
+      "title": "Savoring an Experience",
+      "type": "q_and_a",
+      "placeholder": "Choose one moment from above and explore it deeply...",
+      "defaultValue": [],
+      "config": {
+        "min_pairs": 0,
+        "max_pairs": 3,
+        "suggested_questions": [
+          "What exactly happened, and what did it look, sound, and feel like?",
+          "What emotions were present during this experience?",
+          "Why did this moment resonate so deeply with me?"
+        ]
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "zen",
+          "message": "Take your time with this one. Really try to relive that feeling.",
+          "particleEffect": "sparkles"
+        },
+        "onComplete": {
+          "mood": "proud",
+          "message": "This depth of reflection is powerful. You're truly savoring life 💎"
+        },
+        "hints": [
+          "Close your eyes and picture the moment",
+          "What sensory details do you remember?",
+          "How did your body feel during this experience?",
+          "What made this moment different from others?"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "1": {
+              "mood": "zen",
+              "message": "Beautiful reflection... keep exploring 🌸"
+            },
+            "2": {
+              "mood": "proud",
+              "message": "You're going deep. This is meaningful work 💫"
+            },
+            "3": {
+              "mood": "celebrating",
+              "message": "Such rich detail! You've truly savored this moment ✨",
+              "particleEffect": "hearts"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "emotional_landscape",
+      "title": "The Emotional Landscape",
+      "type": "paragraph",
+      "placeholder": "This week felt like...",
+      "defaultValue": "",
+      "config": {
+        "minWords": 50,
+        "recommendedWords": 100
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "If this week were a weather pattern or color, what would it be? 🌈"
+        },
+        "onComplete": {
+          "mood": "proud",
+          "message": "You've painted a beautiful picture of your week. This awareness is powerful 🎨"
+        },
+        "hints": [
+          "What was the overall emotional tone?",
+          "Were there shifts throughout the week?",
+          "What colors or weather describe your feelings?",
+          "What patterns do you notice?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "25": {
+              "mood": "curious",
+              "message": "You're finding the words... keep going 📝"
+            },
+            "50": {
+              "mood": "happy",
+              "message": "Halfway there! Your insights are emerging 🌟"
+            },
+            "100": {
+              "mood": "celebrating",
+              "message": "What a vivid emotional portrait! This self-awareness is beautiful ✨",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "cultivating_joy",
+      "title": "Cultivating Joy",
+      "type": "list",
+      "placeholder": "I will make time for...",
+      "defaultValue": [],
+      "config": {
+        "min": 0,
+        "max": 8,
+        "suggestedItems": "2-3",
+        "listStyle": "intention"
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "excited",
+          "message": "How can you create more of what brought you fulfillment? 🌱"
+        },
+        "onComplete": {
+          "mood": "celebrating",
+          "message": "These intentions will shape a beautiful week ahead! 🚀",
+          "particleEffect": "hearts"
+        },
+        "hints": [
+          "What activities or people brought you the most joy?",
+          "How can you make space for similar experiences?",
+          "What small actions could amplify these feelings?",
+          "Be specific and actionable"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "1": {
+              "mood": "excited",
+              "message": "Great intention! What else will you cultivate? 🌟"
+            },
+            "2": {
+              "mood": "celebrating",
+              "message": "Two intentions set! You're designing your joy intentionally! 💖"
+            },
+            "3": {
+              "mood": "celebrating",
+              "message": "Three ways to cultivate joy! Your week will be wonderful! 🌸",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

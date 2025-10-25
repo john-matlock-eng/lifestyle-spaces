@@ -78,9 +78,8 @@ export const TemplatePicker: React.FC<TemplatePickerProps> = ({
             key={template.id}
             onClick={() => handleSelectTemplate(template)}
             className={`template-card ${selectedTemplateId === template.id ? 'selected' : ''}`}
-            style={{
-              borderColor: selectedTemplateId === template.id ? template.color : undefined
-            }}
+            data-template-color={template.color || ''}
+            aria-label={`${template.name} template`}
           >
             <div className="template-card-header">
               {template.icon && (
