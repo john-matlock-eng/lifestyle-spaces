@@ -33,8 +33,8 @@ export const ELLIE_COORDINATES = {
 
   // Muzzle/Snout positioning (relative to head)
   muzzle: {
-    lower: { cx: 60, cy: 43, rx: 10, ry: 5 },
-    upper: { cx: 60, cy: 42, rx: 8, ry: 5 },
+    lower: { cx: 60, cy: 41, rx: 10, ry: 4.5 },
+    upper: { cx: 60, cy: 40, rx: 8, ry: 5 },
   },
 
   // Facial features
@@ -51,13 +51,13 @@ export const ELLIE_COORDINATES = {
   // Mouth positioning (below nose)
   mouth: {
     baseX: 60,
-    baseY: 42,
+    baseY: 40,
   },
 
   // Tongue positioning
   tongue: {
     baseX: 60,
-    baseY: 46,
+    baseY: 44,
   },
 
   // Legs positioning
