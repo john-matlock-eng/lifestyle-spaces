@@ -20,7 +20,7 @@ export const activityService = {
     });
 
     return apiService.get<ActivityListResponse>(
-      `/spaces/${spaceId}/activities?${params.toString()}`
+      `/api/spaces/${spaceId}/activities?${params.toString()}`
     );
   },
 };
