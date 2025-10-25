@@ -451,6 +451,47 @@ ${content}
                         )
                       }
                     })()
+                  ) : section.type === 'checkbox' ? (
+                    // Render Checkbox section
+                    (() => {
+                      try {
+                        const checkboxItems = JSON.parse(section.content) as Array<{
+                          id?: string
+                          text: string
+                          checked?: boolean
+                        }>
+                        return (
+                          <ul className="checkbox-view-section checkbox-view-section-compact">
+                            {checkboxItems.map((item, index: number) => (
+                              <li key={item.id || index} className="checkbox-view-item checkbox-view-item-compact">
+                                <input
+                                  type="checkbox"
+                                  checked={item.checked !== undefined ? item.checked : true}
+                                  readOnly
+                                  className="checkbox-view-input"
+                                />
+                                <span className="checkbox-view-label">{item.text}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )
+                      } catch {
+                        // If parsing fails, use highlightable text
+                        return (
+                          <HighlightableText
+                            content={section.content}
+                            highlights={highlights}
+                            sectionId={section.id}
+                            journalEntryId={journalId || ''}
+                            spaceId={spaceId || ''}
+                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                            onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
+                            onHighlightDelete={deleteHighlight}
+                          />
+                        )
+                      }
+                    })()
                   ) : (
                     // Render other section types with highlighting
                     <HighlightableText

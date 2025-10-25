@@ -1,0 +1,274 @@
+{
+  "id": "weekly_reset",
+  "name": "The Weekly Reset",
+  "description": "Reflection & Planning - Close out the previous week and intentionally design the week ahead",
+  "version": 1,
+  "icon": "🗓️",
+  "color": "#2DD4BF",
+  "ellie": {
+    "onSelect": {
+      "mood": "reflective",
+      "message": "Ready for your weekly reset? Let's look at the big picture together! 🗓️",
+      "animation": "sway"
+    },
+    "onStart": {
+      "mood": "zen",
+      "message": "Time to zoom out and look at the big picture."
+    },
+    "onComplete": {
+      "mood": "celebrating",
+      "message": "Great job reviewing your week, [User]! You're all set for success. 🚀",
+      "particleEffect": "sparkles",
+      "animation": "bounce"
+    },
+    "onSave": {
+      "mood": "proud",
+      "message": "Week reset complete! You're setting yourself up for success 🌟",
+      "particleEffect": "hearts"
+    },
+    "theme": {
+      "supportive": true,
+      "energetic": false,
+      "reflective": true
+    }
+  },
+  "sections": [
+    {
+      "id": "weekly_wins",
+      "title": "Weekly Wins",
+      "type": "list",
+      "placeholder": "Add your biggest achievements and best moments from this week...",
+      "defaultValue": [],
+      "config": {
+        "min": 1,
+        "max": 10
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "excited",
+          "message": "Let's celebrate your wins! What went well this week? 🎉"
+        },
+        "onComplete": {
+          "mood": "proud",
+          "message": "Look at all these wins! You should be proud! 💫",
+          "particleEffect": "sparkles"
+        },
+        "hints": [
+          "Big or small - all wins count!",
+          "What made you feel accomplished?",
+          "What progress did you make toward your goals?",
+          "What moments brought you joy?"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "1": {
+              "mood": "happy",
+              "message": "Great start! Keep going... 🌟"
+            },
+            "3": {
+              "mood": "excited",
+              "message": "Three wins already! You had a good week! 🎯"
+            },
+            "5": {
+              "mood": "celebrating",
+              "message": "Five wins! You're crushing it! 🚀",
+              "particleEffect": "hearts"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "challenges_lessons",
+      "title": "Challenges & Lessons",
+      "type": "q_and_a",
+      "placeholder": "Reflect on what didn't go as planned and what you learned...",
+      "defaultValue": [],
+      "config": {
+        "min_pairs": 1,
+        "max_pairs": 5,
+        "suggested_questions": [
+          "What didn't go as planned?",
+          "What did I learn from it?",
+          "What challenge taught me the most?",
+          "How did I grow from this difficulty?",
+          "What would I do differently?",
+          "What surprised me this week?"
+        ]
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "concerned",
+          "message": "Let's reflect on the tough parts. Growth happens here 🌱"
+        },
+        "onComplete": {
+          "mood": "proud",
+          "message": "These lessons are valuable! You're turning challenges into wisdom 💎"
+        },
+        "onSkip": {
+          "mood": "celebrating",
+          "message": "A smooth week? That's wonderful! Keep that momentum! 🎉"
+        },
+        "hints": [
+          "Be honest but kind to yourself",
+          "Every challenge contains a lesson",
+          "What would you tell a friend in this situation?",
+          "How can this make you stronger?"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "1": {
+              "mood": "concerned",
+              "message": "Good reflection. Keep exploring... 💭"
+            },
+            "2": {
+              "mood": "zen",
+              "message": "You're processing this beautifully 🌸"
+            },
+            "3": {
+              "mood": "proud",
+              "message": "This level of reflection shows real growth! 💪",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "start_stop_continue",
+      "title": "Start, Stop, Continue",
+      "type": "list",
+      "placeholder": "What behaviors should you start, stop, or continue doing next week?",
+      "defaultValue": [],
+      "config": {
+        "min": 1,
+        "max": 10,
+        "labels": {
+          "start": "START: New behaviors to begin",
+          "stop": "STOP: Habits to eliminate",
+          "continue": "CONTINUE: What's working well"
+        }
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "Time to design your next week! What needs to change? 🔄"
+        },
+        "onComplete": {
+          "mood": "excited",
+          "message": "You're taking control of your habits! Intentional living! 🎯"
+        },
+        "hints": [
+          "START: What new habit would serve you?",
+          "STOP: What's holding you back?",
+          "CONTINUE: What's already working?",
+          "Be specific and actionable"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "1": {
+              "mood": "curious",
+              "message": "Good start! What else? 🤔"
+            },
+            "3": {
+              "mood": "excited",
+              "message": "You're being intentional about your choices! 💫"
+            },
+            "5": {
+              "mood": "celebrating",
+              "message": "This clarity will transform your week! 🚀",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "top_priorities",
+      "title": "Top 3 Priorities",
+      "type": "checkbox",
+      "placeholder": "List the three most important tasks for the upcoming week...",
+      "defaultValue": [],
+      "config": {
+        "min": 1,
+        "max": 3
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "If you could only accomplish 3 things, what would they be? 🎯"
+        },
+        "onComplete": {
+          "mood": "celebrating",
+          "message": "Three clear priorities! You're set up for a focused week! 💪",
+          "particleEffect": "sparkles"
+        },
+        "hints": [
+          "What will have the biggest impact?",
+          "What aligns with your long-term goals?",
+          "What would make you feel accomplished?",
+          "Be specific about what 'done' looks like"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "1": {
+              "mood": "curious",
+              "message": "Good first priority! What else matters? 🎯"
+            },
+            "2": {
+              "mood": "excited",
+              "message": "Two down, one more! Almost there! 💫"
+            },
+            "3": {
+              "mood": "celebrating",
+              "message": "Perfect! Three focused priorities = success! 🚀",
+              "particleEffect": "hearts"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "personal_focus",
+      "title": "Personal Focus",
+      "type": "paragraph",
+      "placeholder": "What is one thing you will do next week just for yourself?",
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "concerned",
+          "message": "Don't forget about YOU! What will you do for yourself? 💜"
+        },
+        "onComplete": {
+          "mood": "celebrating",
+          "message": "Self-care is essential! You deserve this time for yourself! 🌸",
+          "particleEffect": "hearts",
+          "animation": "bounce"
+        },
+        "hints": [
+          "What would recharge your energy?",
+          "What brings you joy outside of work/obligations?",
+          "What have you been putting off for yourself?",
+          "How will you nurture your own wellbeing?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "20": {
+              "mood": "happy",
+              "message": "Yes! You're prioritizing yourself! 💖"
+            },
+            "50": {
+              "mood": "celebrating",
+              "message": "This commitment to self-care is beautiful! 🌟"
+            },
+            "100": {
+              "mood": "celebrating",
+              "message": "You're designing intentional self-care! Amazing! 🦋",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

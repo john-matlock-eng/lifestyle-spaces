@@ -172,6 +172,24 @@
   cursor: not-allowed;
 }
 
+/* Checkbox item specific styles */
+.checkbox-item-input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--theme-primary-600);
+}
+
+.dark .checkbox-item-input {
+  accent-color: var(--theme-primary-400);
+}
+
+.checkbox-item-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 /* ============================
    Q&A Section Styles
    ============================ */
