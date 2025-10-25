@@ -7,6 +7,8 @@ import { QASection } from '../components/sections/QASection'
 import { AddSectionButton } from '../components/AddSectionButton'
 import { ListSection } from '../components/sections/ListSection'
 import { CheckboxSection } from '../components/sections/CheckboxSection'
+import { ScaleSection } from '../components/sections/ScaleSection'
+import { TableSection } from '../components/sections/TableSection'
 import AIWritingPrompts from '../../../components/AIWritingPrompts'
 import { useJournal } from '../hooks/useJournal'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
@@ -15,7 +17,7 @@ import { aiService } from '../../../services/ai'
 import { SmartEllie } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { useEllieJournalGuide } from '../hooks/useEllieJournalGuide'
-import type { Template, TemplateData, QAPair, ListItem } from '../types/template.types'
+import type { Template, TemplateData, QAPair, ListItem, TableRow } from '../types/template.types'
 import type { CustomSection } from '../types/customSection.types'
 import { Trash2, Edit2, Bot } from 'lucide-react'
 import '../styles/journal.css'
@@ -89,6 +91,8 @@ export const JournalCreatePage: React.FC = () => {
             initialData[section.id] = (Array.isArray(section.defaultValue) ? section.defaultValue : []) as QAPair[]
           } else if (section.type === 'list' || section.type === 'checkbox') {
             initialData[section.id] = (Array.isArray(section.defaultValue) ? section.defaultValue : []) as ListItem[]
+          } else if (section.type === 'table') {
+            initialData[section.id] = (Array.isArray(section.defaultValue) ? section.defaultValue : []) as TableRow[]
           } else if (section.type === 'scale') {
             initialData[section.id] = typeof section.defaultValue === 'number' ? section.defaultValue : 5
           } else {
@@ -98,6 +102,8 @@ export const JournalCreatePage: React.FC = () => {
           initialData[section.id] = [] as QAPair[]
         } else if (section.type === 'list' || section.type === 'checkbox') {
           initialData[section.id] = [] as ListItem[]
+        } else if (section.type === 'table') {
+          initialData[section.id] = [] as TableRow[]
         } else if (section.type === 'scale') {
           initialData[section.id] = 5
         } else {
@@ -114,7 +120,7 @@ export const JournalCreatePage: React.FC = () => {
     }
   }
 
-  const handleTemplateDataChange = (sectionId: string, value: string | QAPair[] | ListItem[] | number) => {
+  const handleTemplateDataChange = (sectionId: string, value: string | QAPair[] | ListItem[] | TableRow[] | number) => {
     // Get previous value before updating
     const previousValue = templateData[sectionId]
 
@@ -139,8 +145,13 @@ export const JournalCreatePage: React.FC = () => {
       if (wordCount > 0 && (!previousValue || previousValue === '')) {
         handleSectionComplete(sectionId)
       }
+    } else if (typeof value === 'number') {
+      // Scale sections - mark as complete when user interacts
+      if (previousValue === undefined || previousValue === 5) {
+        handleSectionComplete(sectionId)
+      }
     } else if (Array.isArray(value)) {
-      // Item count for Q&A and list sections
+      // Item count for Q&A, list, and table sections
       updateSectionProgress(sectionId, { itemCount: value.length })
 
       // Mark section as complete if it has items and was previously empty
@@ -493,6 +504,29 @@ export const JournalCreatePage: React.FC = () => {
                       onChange={(value) => handleTemplateDataChange(section.id, value)}
                       placeholder={section.placeholder}
                       disabled={loading}
+                    />
+                  ) : section.type === 'table' ? (
+                    <TableSection
+                      value={(Array.isArray(templateData[section.id]) ? templateData[section.id] :
+                        Array.isArray(section.defaultValue) ? section.defaultValue :
+                        []) as TableRow[]}
+                      onChange={(value) => handleTemplateDataChange(section.id, value)}
+                      placeholder={section.placeholder}
+                      disabled={loading}
+                      config={section.config}
+                    />
+                  ) : section.type === 'scale' ? (
+                    <ScaleSection
+                      value={(() => {
+                        const val = templateData[section.id]
+                        if (typeof val === 'number') return val
+                        if (typeof section.defaultValue === 'number') return section.defaultValue
+                        return 5
+                      })()}
+                      onChange={(value) => handleTemplateDataChange(section.id, value)}
+                      placeholder={section.placeholder}
+                      disabled={loading}
+                      config={section.config}
                     />
                   ) : (
                     <RichTextEditor

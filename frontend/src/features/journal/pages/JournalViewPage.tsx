@@ -492,6 +492,45 @@ ${content}
                         )
                       }
                     })()
+                  ) : section.type === 'table' ? (
+                    // Render Table section
+                    (() => {
+                      try {
+                        const tableRows = JSON.parse(section.content) as Array<Record<string, string | number>>
+                        if (tableRows.length === 0) return <div className="empty-section">No data</div>
+                        // Get column keys from first row (excluding 'id')
+                        const columns = Object.keys(tableRows[0]).filter(key => key !== 'id')
+                        return (
+                          <div className="table-view-section">
+                            <table className="journal-table-view">
+                              <thead>
+                                <tr>
+                                  {columns.map(col => (
+                                    <th key={col}>{col.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {tableRows.map((row, index) => (
+                                  <tr key={row.id || index}>
+                                    {columns.map(col => (
+                                      <td key={col}>{row[col]}</td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )
+                      } catch {
+                        return <div className="empty-section">Invalid table data</div>
+                      }
+                    })()
+                  ) : section.type === 'scale' ? (
+                    // Render Scale section
+                    <div className="scale-view-section">
+                      <div className="scale-value-large">{section.content} / 10</div>
+                    </div>
                   ) : (
                     // Render other section types with highlighting
                     <HighlightableText

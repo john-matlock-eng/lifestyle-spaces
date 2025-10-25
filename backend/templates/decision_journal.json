@@ -1,0 +1,220 @@
+{
+  "id": "decision_journal",
+  "name": "The Decision Journal",
+  "description": "Structure decision-making, analyze outcomes, and reduce cognitive bias",
+  "version": 1,
+  "icon": "🤔",
+  "color": "#F87171",
+  "ellie": {
+    "onSelect": {
+      "mood": "curious",
+      "message": "Time to think clearly and decide wisely. I'm here to help you analyze 🧠",
+      "animation": "sway"
+    },
+    "onStart": {
+      "mood": "curious",
+      "message": "A clear mind leads to clear decisions. Let's break this down."
+    },
+    "onComplete": {
+      "mood": "proud",
+      "message": "You've analyzed this thoroughly. Trust your judgment moving forward!",
+      "particleEffect": "sparkles",
+      "animation": "bounce"
+    },
+    "onSave": {
+      "mood": "celebrating",
+      "message": "Decision documented! This is how you build better judgment over time 🎯",
+      "particleEffect": "hearts"
+    },
+    "theme": {
+      "supportive": false,
+      "energetic": false,
+      "reflective": true
+    }
+  },
+  "sections": [
+    {
+      "id": "dilemma",
+      "title": "The Dilemma",
+      "type": "paragraph",
+      "placeholder": "What decision needs to be made, and what is the context? Include relevant background, constraints, and why this decision matters.",
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "Let's define the decision clearly. What are you facing? 🤔"
+        },
+        "onComplete": {
+          "mood": "zen",
+          "message": "Good. Clear problem definition is half the solution 📝"
+        },
+        "hints": [
+          "What is the core decision you need to make?",
+          "What is the deadline or timeframe?",
+          "What constraints or limitations exist?",
+          "Why is this decision important?",
+          "What triggered the need for this decision?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "40": {
+              "mood": "curious",
+              "message": "You're clarifying the situation... keep going 🔍"
+            },
+            "100": {
+              "mood": "zen",
+              "message": "This context is valuable. You're thinking systematically 🧠"
+            },
+            "200": {
+              "mood": "proud",
+              "message": "Thorough context like this reduces blind spots! Excellent! 💎"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "options_analysis",
+      "title": "Options Analysis",
+      "type": "table",
+      "placeholder": "Analyze each option...",
+      "defaultValue": [],
+      "config": {
+        "columns": [
+          {
+            "key": "option",
+            "label": "Option",
+            "type": "text",
+            "width": "20%"
+          },
+          {
+            "key": "pros",
+            "label": "Pros",
+            "type": "text",
+            "width": "30%"
+          },
+          {
+            "key": "cons",
+            "label": "Cons",
+            "type": "text",
+            "width": "30%"
+          },
+          {
+            "key": "gut_feeling",
+            "label": "Gut Feeling (1-10)",
+            "type": "number",
+            "width": "20%"
+          }
+        ]
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "Let's systematically compare your options. Structure beats intuition! 📊"
+        },
+        "onComplete": {
+          "mood": "excited",
+          "message": "Great analysis! Seeing options side-by-side reveals patterns 🔍"
+        },
+        "hints": [
+          "Consider at least 2-3 viable options",
+          "Be honest about the pros and cons",
+          "Your gut feeling is data too - what does it tell you?",
+          "Think about short-term vs long-term consequences",
+          "What assumptions are you making?"
+        ],
+        "encouragement": {
+          "itemCount": {
+            "1": {
+              "mood": "curious",
+              "message": "First option down. What are your alternatives? 🤔"
+            },
+            "2": {
+              "mood": "excited",
+              "message": "Two options! Now you can compare. Keep going! 📊"
+            },
+            "3": {
+              "mood": "proud",
+              "message": "Three options! This is thorough decision-making! 🎯",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "choice_rationale",
+      "title": "The Choice & Rationale",
+      "type": "paragraph",
+      "placeholder": "State your final decision and explain your reasoning. What factors were most important? What trade-offs are you accepting?",
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "zen",
+          "message": "Time to decide. Trust the analysis you've done 💭"
+        },
+        "onComplete": {
+          "mood": "celebrating",
+          "message": "Decision made! Clear reasoning beats second-guessing 🎯",
+          "particleEffect": "hearts",
+          "animation": "bounce"
+        },
+        "hints": [
+          "Which option did you choose?",
+          "What were the deciding factors?",
+          "What trade-offs are you accepting?",
+          "What might you regret if you don't choose this?",
+          "How does this align with your values and goals?",
+          "What's your backup plan if this doesn't work?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "50": {
+              "mood": "zen",
+              "message": "You're articulating your reasoning clearly... 📝"
+            },
+            "100": {
+              "mood": "excited",
+              "message": "This level of clarity will help you commit to the decision! 💪"
+            },
+            "150": {
+              "mood": "celebrating",
+              "message": "Thorough rationale! You'll thank yourself later for this! 🌟"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "confidence_score",
+      "title": "Confidence Score",
+      "type": "scale",
+      "placeholder": "How confident are you that this is the right decision?",
+      "defaultValue": 5,
+      "config": {
+        "min": 1,
+        "max": 10,
+        "labels": {
+          "1": "Very Uncertain",
+          "10": "Highly Confident"
+        }
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "Rate your confidence honestly. This is data for future you 📈"
+        },
+        "onComplete": {
+          "mood": "zen",
+          "message": "Confidence tracked! You can review this later to improve your judgment 🎯"
+        },
+        "hints": [
+          "Low confidence (1-4): Consider gathering more information",
+          "Medium confidence (5-7): Typical for most decisions",
+          "High confidence (8-10): Strong conviction, but watch for overconfidence",
+          "Confidence should match your analysis, not just your feelings"
+        ]
+      }
+    }
+  ]
+}

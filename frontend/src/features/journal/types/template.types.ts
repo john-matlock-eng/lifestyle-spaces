@@ -35,6 +35,18 @@ export interface ListItem {
   text: string
 }
 
+export interface TableRow {
+  id: string
+  [key: string]: string | number
+}
+
+export interface TableColumn {
+  key: string
+  label: string
+  type?: 'text' | 'number'
+  width?: string
+}
+
 export interface TemplateSection {
   id: string
   title: string
@@ -48,6 +60,7 @@ export interface TemplateSection {
     min?: number
     max?: number
     labels?: Record<string, string>
+    columns?: TableColumn[]
   }
 
   // Ellie guidance fields
@@ -94,5 +107,5 @@ export interface TemplateListResponse {
 }
 
 export interface TemplateData {
-  [sectionId: string]: string | QAPair[] | ListItem[] | number
+  [sectionId: string]: string | QAPair[] | ListItem[] | TableRow[] | number
 }

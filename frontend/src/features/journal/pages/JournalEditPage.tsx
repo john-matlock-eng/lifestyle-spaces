@@ -6,6 +6,8 @@ import { QASection } from '../components/sections/QASection'
 import { AddSectionButton } from '../components/AddSectionButton'
 import { ListSection } from '../components/sections/ListSection'
 import { CheckboxSection } from '../components/sections/CheckboxSection'
+import { ScaleSection } from '../components/sections/ScaleSection'
+import { TableSection } from '../components/sections/TableSection'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
@@ -15,7 +17,7 @@ import { aiService } from '../../../services/ai'
 import { SmartEllie } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { useEllieJournalGuide } from '../hooks/useEllieJournalGuide'
-import type { Template, TemplateData, QAPair, ListItem } from '../types/template.types'
+import type { Template, TemplateData, QAPair, ListItem, TableRow } from '../types/template.types'
 import type { CustomSection } from '../types/customSection.types'
 import { Trash2, Edit2, Bot } from 'lucide-react'
 import '../styles/journal.css'
@@ -116,7 +118,7 @@ export const JournalEditPage: React.FC = () => {
               const isCustomSection = sectionId.startsWith('custom_')
 
               // Parse content based on section type
-              let parsedContent: string | QAPair[] | ListItem[] | number
+              let parsedContent: string | QAPair[] | ListItem[] | TableRow[] | number
               if (section.type === 'q_and_a') {
                 try {
                   // Parse JSON string back to QAPair array
@@ -133,8 +135,19 @@ export const JournalEditPage: React.FC = () => {
                   // If parsing fails, default to empty array
                   parsedContent = []
                 }
+              } else if (section.type === 'table') {
+                try {
+                  // Parse JSON string back to TableRow array
+                  parsedContent = JSON.parse(section.content) as TableRow[]
+                } catch {
+                  // If parsing fails, default to empty array
+                  parsedContent = []
+                }
+              } else if (section.type === 'scale') {
+                // Parse number for scale type
+                parsedContent = typeof section.content === 'number' ? section.content : parseInt(section.content) || 5
               } else {
-                // Other sections are plain strings or numbers
+                // Other sections are plain strings
                 parsedContent = section.content
               }
 
@@ -184,7 +197,7 @@ export const JournalEditPage: React.FC = () => {
               mainContent = section.content
             } else if (sectionId.startsWith('custom_')) {
               // This is a custom section
-              let parsedContent: string | QAPair[] | ListItem[] | number
+              let parsedContent: string | QAPair[] | ListItem[] | TableRow[] | number
 
               if (section.type === 'q_and_a') {
                 try {
@@ -198,6 +211,14 @@ export const JournalEditPage: React.FC = () => {
                 } catch {
                   parsedContent = []
                 }
+              } else if (section.type === 'table') {
+                try {
+                  parsedContent = JSON.parse(section.content) as TableRow[]
+                } catch {
+                  parsedContent = []
+                }
+              } else if (section.type === 'scale') {
+                parsedContent = typeof section.content === 'number' ? section.content : parseInt(section.content) || 5
               } else {
                 parsedContent = section.content
               }
@@ -233,7 +254,7 @@ export const JournalEditPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [journal])
 
-  const handleTemplateDataChange = (sectionId: string, value: string | QAPair[] | ListItem[] | number) => {
+  const handleTemplateDataChange = (sectionId: string, value: string | QAPair[] | ListItem[] | TableRow[] | number) => {
     // Get previous value before updating
     const previousValue = templateData[sectionId]
 
@@ -258,8 +279,13 @@ export const JournalEditPage: React.FC = () => {
       if (wordCount > 0 && (!previousValue || previousValue === '')) {
         handleSectionComplete(sectionId)
       }
+    } else if (typeof value === 'number') {
+      // Scale sections - mark as complete when user interacts
+      if (previousValue === undefined || previousValue === 5) {
+        handleSectionComplete(sectionId)
+      }
     } else if (Array.isArray(value)) {
-      // Item count for Q&A and list sections
+      // Item count for Q&A, list, and table sections
       updateSectionProgress(sectionId, { itemCount: value.length })
 
       // Mark section as complete if it has items and was previously empty
@@ -314,6 +340,24 @@ export const JournalEditPage: React.FC = () => {
                   type: section.type
                 }
               }
+            } else if (section.type === 'table') {
+              // Table sections store arrays of TableRow objects
+              if (Array.isArray(sectionContent) && sectionContent.length > 0) {
+                sections[section.id] = {
+                  content: JSON.stringify(sectionContent),
+                  title: section.title,
+                  type: section.type
+                }
+              }
+            } else if (section.type === 'scale') {
+              // Scale sections store numbers
+              if (typeof sectionContent === 'number') {
+                sections[section.id] = {
+                  content: String(sectionContent),
+                  title: section.title,
+                  type: section.type
+                }
+              }
             } else {
               // Other sections store strings
               if (sectionContent && typeof sectionContent === 'string' && sectionContent.trim()) {
@@ -329,11 +373,20 @@ export const JournalEditPage: React.FC = () => {
 
         // Add custom sections
         customSections.forEach(section => {
-          if (section.type === 'q_and_a' || section.type === 'list' || section.type === 'checkbox' || section.type === 'checkbox') {
-            // Q&A and List sections store arrays
+          if (section.type === 'q_and_a' || section.type === 'list' || section.type === 'checkbox' || section.type === 'table') {
+            // Q&A, List, Checkbox, and Table sections store arrays
             if (Array.isArray(section.content) && section.content.length > 0) {
               sections[section.id] = {
                 content: JSON.stringify(section.content),
+                title: section.title,
+                type: section.type
+              }
+            }
+          } else if (section.type === 'scale') {
+            // Scale sections store numbers
+            if (typeof section.content === 'number') {
+              sections[section.id] = {
+                content: String(section.content),
                 title: section.title,
                 type: section.type
               }
@@ -611,6 +664,29 @@ export const JournalEditPage: React.FC = () => {
                     onChange={(value) => handleTemplateDataChange(section.id, value)}
                     placeholder={section.placeholder}
                     disabled={isSubmitting}
+                  />
+                ) : section.type === 'table' ? (
+                  <TableSection
+                    value={(Array.isArray(templateData[section.id]) ? templateData[section.id] :
+                      Array.isArray(section.defaultValue) ? section.defaultValue :
+                      []) as TableRow[]}
+                    onChange={(value) => handleTemplateDataChange(section.id, value)}
+                    placeholder={section.placeholder}
+                    disabled={isSubmitting}
+                    config={section.config}
+                  />
+                ) : section.type === 'scale' ? (
+                  <ScaleSection
+                    value={(() => {
+                      const val = templateData[section.id]
+                      if (typeof val === 'number') return val
+                      if (typeof section.defaultValue === 'number') return section.defaultValue
+                      return 5
+                    })()}
+                    onChange={(value) => handleTemplateDataChange(section.id, value)}
+                    placeholder={section.placeholder}
+                    disabled={isSubmitting}
+                    config={section.config}
                   />
                 ) : (
                   <RichTextEditor
