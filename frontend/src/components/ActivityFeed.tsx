@@ -8,7 +8,7 @@
  * - Member joins
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Activity, ActivityType } from '../types/activity';
 import { activityService } from '../services/activityService';
 import './ActivityFeed.css';
@@ -23,11 +23,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ spaceId }) => {
   const [error, setError] = useState<string | null>(null);
   const [nextToken, setNextToken] = useState<string | undefined>();
 
-  useEffect(() => {
-    loadActivities();
-  }, [spaceId]);
-
-  const loadActivities = async () => {
+  const loadActivities = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -40,7 +36,11 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ spaceId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [spaceId]);
+
+  useEffect(() => {
+    loadActivities();
+  }, [loadActivities]);
 
   const loadMore = async () => {
     if (!nextToken) return;

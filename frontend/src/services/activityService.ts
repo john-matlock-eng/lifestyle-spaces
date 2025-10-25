@@ -2,7 +2,7 @@
  * Activity service for fetching space activities.
  */
 
-import { Activity, ActivityListResponse } from '../types/activity';
+import { ActivityListResponse } from '../types/activity';
 import apiClient from '../lib/api';
 
 export const activityService = {
