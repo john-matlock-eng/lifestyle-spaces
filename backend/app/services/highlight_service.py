@@ -6,6 +6,7 @@ Handles business logic for creating, retrieving, and managing highlights and com
 from datetime import datetime
 from typing import List, Optional
 from uuid import uuid4
+import logging
 
 from app.core.database import get_db
 from app.models.highlight import (
@@ -16,6 +17,9 @@ from app.models.highlight import (
     CreateCommentRequest,
     TextRange,
 )
+from app.models.activity import ActivityType
+
+logger = logging.getLogger(__name__)
 
 
 class HighlightService:
@@ -23,6 +27,19 @@ class HighlightService:
 
     def __init__(self):
         self.db = get_db()
+
+    def _get_journal_title(self, space_id: str, journal_entry_id: str) -> str:
+        """Get the title of a journal entry."""
+        try:
+            item = self.db.get_item(
+                pk=f"SPACE#{space_id}",
+                sk=f"JOURNAL#{journal_entry_id}"
+            )
+            if item:
+                return item.get('title', 'Untitled')
+        except Exception as e:
+            logger.warning(f"Failed to get journal title for {journal_entry_id}: {e}")
+        return 'Untitled'
 
     async def create_highlight(
         self,
@@ -71,6 +88,27 @@ class HighlightService:
         }
 
         self.db.put_item(item)
+
+        # Record activity
+        try:
+            from app.services.activity import get_activity_service
+            activity_service = get_activity_service()
+            journal_title = self._get_journal_title(space_id, journal_entry_id)
+            activity_service.record_activity(
+                space_id=space_id,
+                activity_type=ActivityType.HIGHLIGHT_CREATED,
+                user_id=user_id,
+                user_name=user_name,
+                metadata={
+                    'highlight_id': highlight_id,
+                    'journal_id': journal_entry_id,
+                    'journal_title': journal_title,
+                    'highlighted_text': request.highlighted_text[:100] if len(request.highlighted_text) > 100 else request.highlighted_text
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Failed to record highlight created activity: {e}")
+
         return highlight
 
     async def get_highlights_for_journal(
@@ -109,11 +147,35 @@ class HighlightService:
         if not highlight or highlight.created_by != user_id:
             return False
 
+        # Save metadata before deleting
+        journal_entry_id = highlight.journal_entry_id
+        highlighted_text = highlight.highlighted_text
+        journal_title = self._get_journal_title(space_id, journal_entry_id)
+
         # Delete the highlight
         self.db.delete_item(
             pk=f"SPACE#{space_id}",
             sk=f"HIGHLIGHT#{highlight_id}"
         )
+
+        # Record activity
+        try:
+            from app.services.activity import get_activity_service
+            activity_service = get_activity_service()
+            activity_service.record_activity(
+                space_id=space_id,
+                activity_type=ActivityType.HIGHLIGHT_DELETED,
+                user_id=user_id,
+                user_name=activity_service._get_user_display_name(user_id),
+                metadata={
+                    'highlight_id': highlight_id,
+                    'journal_id': journal_entry_id,
+                    'journal_title': journal_title,
+                    'highlighted_text': highlighted_text[:100] if len(highlighted_text) > 100 else highlighted_text
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Failed to record highlight deleted activity: {e}")
 
         # TODO: Also delete associated comments in a batch operation
         return True
@@ -243,6 +305,32 @@ class CommentService:
 
         # Increment comment count on highlight
         await self.highlight_service.increment_comment_count(space_id, highlight_id)
+
+        # Record activity
+        try:
+            from app.services.activity import get_activity_service
+            activity_service = get_activity_service()
+
+            # Get highlight and journal info for metadata
+            highlight = await self.highlight_service.get_highlight(space_id, highlight_id)
+            journal_id = highlight.journal_entry_id if highlight else ''
+            journal_title = self.highlight_service._get_journal_title(space_id, journal_id) if journal_id else 'Untitled'
+
+            activity_service.record_activity(
+                space_id=space_id,
+                activity_type=ActivityType.COMMENT_CREATED,
+                user_id=user_id,
+                user_name=user_name,
+                metadata={
+                    'comment_id': comment_id,
+                    'highlight_id': highlight_id,
+                    'journal_id': journal_id,
+                    'journal_title': journal_title,
+                    'comment_text': request.text[:100] if len(request.text) > 100 else request.text
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Failed to record comment created activity: {e}")
 
         return comment
 

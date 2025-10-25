@@ -16,6 +16,7 @@ from app.services.exceptions import (
     ValidationError,
     JournalNotFoundError
 )
+from app.models.activity import ActivityType
 
 logger = logging.getLogger(__name__)
 
@@ -177,6 +178,26 @@ class JournalService:
 
         logger.info(f"[CREATE_JOURNAL] Journal created: {journal_id}")
 
+        # Record activity
+        try:
+            from app.services.activity import get_activity_service
+            activity_service = get_activity_service()
+            activity_service.record_activity(
+                space_id=space_id,
+                activity_type=ActivityType.JOURNAL_CREATED,
+                user_id=user_id,
+                user_name=activity_service._get_user_display_name(user_id),
+                metadata={
+                    'journal_id': journal_id,
+                    'journal_title': data.title.strip(),
+                    'content_preview': data.content[:100] if len(data.content) > 100 else data.content,
+                    'template_id': data.template_id
+                }
+            )
+        except Exception as e:
+            # Don't fail the request if activity tracking fails
+            logger.warning(f"Failed to record journal created activity: {e}")
+
         return {
             'journal_id': journal_id,
             'space_id': space_id,
@@ -332,6 +353,25 @@ class JournalService:
         response = self.table.update_item(**update_params)
         updated_journal = response['Attributes']
 
+        # Record activity
+        try:
+            from app.services.activity import get_activity_service
+            activity_service = get_activity_service()
+            activity_service.record_activity(
+                space_id=space_id,
+                activity_type=ActivityType.JOURNAL_UPDATED,
+                user_id=user_id,
+                user_name=activity_service._get_user_display_name(user_id),
+                metadata={
+                    'journal_id': journal_id,
+                    'journal_title': updated_journal['title'],
+                    'content_preview': updated_journal['content'][:100] if len(updated_journal['content']) > 100 else updated_journal['content']
+                }
+            )
+        except Exception as e:
+            # Don't fail the request if activity tracking fails
+            logger.warning(f"Failed to record journal updated activity: {e}")
+
         # Get author info
         author_info = self._get_author_info(updated_journal['user_id'])
 
@@ -390,10 +430,31 @@ class JournalService:
         if not (is_author or is_space_owner):
             raise UnauthorizedError("Only the author or space owner can delete this journal")
 
+        # Save journal title before deleting
+        journal_title = journal.get('title', 'Untitled')
+
         # Delete the journal
         self.table.delete_item(
             Key={'PK': journal['PK'], 'SK': journal['SK']}
         )
+
+        # Record activity
+        try:
+            from app.services.activity import get_activity_service
+            activity_service = get_activity_service()
+            activity_service.record_activity(
+                space_id=space_id,
+                activity_type=ActivityType.JOURNAL_DELETED,
+                user_id=user_id,
+                user_name=activity_service._get_user_display_name(user_id),
+                metadata={
+                    'journal_id': journal_id,
+                    'journal_title': journal_title
+                }
+            )
+        except Exception as e:
+            # Don't fail the request if activity tracking fails
+            logger.warning(f"Failed to record journal deleted activity: {e}")
 
         logger.info(f"[DELETE_JOURNAL] Journal deleted: {journal_id}")
         return True

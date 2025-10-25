@@ -6,6 +6,7 @@ import { useInvitations } from '../hooks/useInvitations';
 import { MembersList } from '../components/spaces/MembersList';
 import { InviteMemberModal } from '../components/spaces/InviteMemberModal';
 import { JournalList } from '../features/journal/components/JournalList';
+import { ActivityFeed } from '../components/ActivityFeed';
 import { regenerateInviteCode } from '../services/spaces';
 import { SmartEllie } from '../components/ellie';
 import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationContext';
@@ -449,7 +450,7 @@ export const SpaceDetail: React.FC = () => {
         role="main"
         aria-labelledby="space-title"
       >
-        {activeTab === 'content' && (
+        {activeTab === 'content' && spaceId && (
           <div
             role="tabpanel"
             id="content-panel"
@@ -457,33 +458,7 @@ export const SpaceDetail: React.FC = () => {
             className="tab-panel"
           >
             <div className="space-detail__content">
-              <div className="space-detail__coming-soon">
-                <h3>Content</h3>
-                <p>Content management features coming soon!</p>
-                <div className="space-detail__placeholder-content">
-                  <div className="space-detail__placeholder-item">
-                    <div className="space-detail__placeholder-icon">📄</div>
-                    <div>
-                      <h4>Documents</h4>
-                      <p>Shared documents and files</p>
-                    </div>
-                  </div>
-                  <div className="space-detail__placeholder-item">
-                    <div className="space-detail__placeholder-icon">💬</div>
-                    <div>
-                      <h4>Discussions</h4>
-                      <p>Team conversations and announcements</p>
-                    </div>
-                  </div>
-                  <div className="space-detail__placeholder-item">
-                    <div className="space-detail__placeholder-icon">📊</div>
-                    <div>
-                      <h4>Analytics</h4>
-                      <p>Space activity and insights</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ActivityFeed spaceId={spaceId} />
             </div>
           </div>
         )}
