@@ -33,8 +33,8 @@ export const ELLIE_COORDINATES = {
 
   // Muzzle/Snout positioning (relative to head)
   muzzle: {
-    lower: { cx: 60, cy: 46, rx: 10, ry: 6 },
-    upper: { cx: 60, cy: 44, rx: 8, ry: 5 },
+    lower: { cx: 60, cy: 41, rx: 10, ry: 4.5 },
+    upper: { cx: 60, cy: 40, rx: 8, ry: 5 },
   },
 
   // Facial features
@@ -51,13 +51,13 @@ export const ELLIE_COORDINATES = {
   // Mouth positioning (below nose)
   mouth: {
     baseX: 60,
-    baseY: 44,
+    baseY: 40,
   },
 
   // Tongue positioning
   tongue: {
     baseX: 60,
-    baseY: 48,
+    baseY: 44,
   },
 
   // Legs positioning
@@ -96,11 +96,11 @@ export const ELLIE_COORDINATES = {
 
   // Collar positioning (on neck - using rect instead of ellipse)
   collar: {
-    x: 48,      // Left edge (neck center 60 - half width 12)
+    x: 45,      // Left edge (neck center 60 - half width 15) - elegant proportions
     y: 48,      // Top of neck area
-    width: 24,  // Matches neck width (rx: 12 * 2)
-    height: 6,  // Thinner collar
-    rx: 3,      // Border radius
+    width: 30,  // Reduced from 44 for elegant, non-chunky appearance
+    height: 8,  // Keep height for visibility
+    rx: 3,      // Border radius (reduced proportionally)
   },
 
   // Shadow positioning
