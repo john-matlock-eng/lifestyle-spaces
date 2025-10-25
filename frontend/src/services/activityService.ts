@@ -3,7 +3,7 @@
  */
 
 import { ActivityListResponse } from '../types/activity';
-import apiClient from '../lib/api';
+import { apiService } from './api';
 
 export const activityService = {
   /**
@@ -19,10 +19,8 @@ export const activityService = {
       ...(nextToken && { next_token: nextToken }),
     });
 
-    const response = await apiClient.get<ActivityListResponse>(
+    return apiService.get<ActivityListResponse>(
       `/spaces/${spaceId}/activities?${params.toString()}`
     );
-
-    return response.data;
   },
 };
