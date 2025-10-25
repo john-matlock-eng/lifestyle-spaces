@@ -105,6 +105,7 @@ class TestTemplateService:
         """Test that expected default templates exist."""
         expected_templates = [
             'gratitude_daily',
+            'weekly_gratitude_reflection',
             'daily_log',
             'mood_tracker',
             'goal_progress',
@@ -116,3 +117,114 @@ class TestTemplateService:
 
         for expected_id in expected_templates:
             assert expected_id in template_ids, f"Template '{expected_id}' not found"
+
+    def test_weekly_gratitude_reflection_template_structure(self, template_service):
+        """Test Weekly Gratitude & Reflection template has correct structure."""
+        template = template_service.get_template('weekly_gratitude_reflection')
+
+        # Test metadata
+        assert template.id == 'weekly_gratitude_reflection'
+        assert template.name == '🌟 Weekly Gratitude & Reflection'
+        assert template.icon == '🌟'
+        assert template.color == '#FBBF24'
+        assert 'meaningful moments' in template.description.lower()
+
+        # Test has exactly 4 sections
+        assert len(template.sections) == 4
+
+        # Test section 1: Meaningful Moments & Connections (list)
+        section1 = template.sections[0]
+        assert section1.id == 'meaningful_moments'
+        assert section1.title == 'Meaningful Moments & Connections'
+        assert section1.type == 'list'
+        assert section1.config is not None
+        assert section1.config.get('max') == 10
+
+        # Test section 2: Savoring an Experience (q_and_a)
+        section2 = template.sections[1]
+        assert section2.id == 'savoring_experience'
+        assert section2.title == 'Savoring an Experience'
+        assert section2.type == 'q_and_a'
+        assert section2.config is not None
+        assert section2.config.get('max_pairs') == 3
+        assert 'suggested_questions' in section2.config
+
+        # Test section 3: The Emotional Landscape (paragraph)
+        section3 = template.sections[2]
+        assert section3.id == 'emotional_landscape'
+        assert section3.title == 'The Emotional Landscape'
+        assert section3.type == 'paragraph'
+        assert section3.config is not None
+        assert section3.config.get('minWords') == 50
+
+        # Test section 4: Cultivating Joy (list)
+        section4 = template.sections[3]
+        assert section4.id == 'cultivating_joy'
+        assert section4.title == 'Cultivating Joy'
+        assert section4.type == 'list'
+        assert section4.config is not None
+        assert section4.config.get('max') == 8
+
+    def test_weekly_gratitude_reflection_ellie_guidance(self, template_service):
+        """Test Weekly Gratitude & Reflection template has Ellie guidance."""
+        template = template_service.get_template('weekly_gratitude_reflection')
+
+        # Template-level Ellie configuration
+        assert template.ellie is not None
+        assert 'onStart' in template.ellie
+        assert 'onComplete' in template.ellie
+        assert 'onSave' in template.ellie
+
+        # Check onStart message has delay
+        assert template.ellie['onStart'].get('delay') == 2000
+
+        # Check all sections have Ellie guidance
+        for section in template.sections:
+            assert section.ellie is not None
+            assert 'onStart' in section.ellie
+            assert 'onComplete' in section.ellie
+            assert 'hints' in section.ellie
+            assert 'encouragement' in section.ellie
+
+        # Section 2 should have sparkle particles on start
+        section2 = template.sections[1]
+        assert section2.ellie['onStart'].get('particleEffect') == 'sparkles'
+
+    def test_weekly_gratitude_reflection_validation(self, template_service):
+        """Test validating Weekly Gratitude & Reflection template data."""
+        # Valid data
+        valid_data = {
+            'meaningful_moments': '["moment1", "moment2"]',
+            'savoring_experience': '[]',
+            'emotional_landscape': 'This week felt like...',
+            'cultivating_joy': '["intention1", "intention2"]'
+        }
+
+        assert template_service.validate_template_data('weekly_gratitude_reflection', valid_data) is True
+
+        # Invalid data with wrong section IDs
+        invalid_data = {
+            'wrong_section': 'Some content'
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            template_service.validate_template_data('weekly_gratitude_reflection', invalid_data)
+
+        assert 'Invalid sections' in str(exc_info.value)
+
+    def test_weekly_gratitude_reflection_defaults(self, template_service):
+        """Test default values for Weekly Gratitude & Reflection template."""
+        defaults = template_service.apply_template_defaults('weekly_gratitude_reflection')
+
+        assert 'meaningful_moments' in defaults
+        assert 'savoring_experience' in defaults
+        assert 'emotional_landscape' in defaults
+        assert 'cultivating_joy' in defaults
+
+        # List sections should have empty array defaults
+        assert defaults['meaningful_moments'] == []
+        assert defaults['savoring_experience'] == []
+        assert defaults['cultivating_joy'] == []
+
+        # Paragraph section should have empty string default
+        assert defaults['emotional_landscape'] == ''
