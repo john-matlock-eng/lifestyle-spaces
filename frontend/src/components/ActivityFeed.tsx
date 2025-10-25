@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Activity, ActivityType } from '../types/activity';
+import type { Activity, ActivityType } from '../types/activity';
 import { activityService } from '../services/activityService';
 import './ActivityFeed.css';
 
