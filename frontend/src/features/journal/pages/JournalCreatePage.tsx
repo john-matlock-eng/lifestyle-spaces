@@ -517,9 +517,12 @@ export const JournalCreatePage: React.FC = () => {
                     />
                   ) : section.type === 'scale' ? (
                     <ScaleSection
-                      value={typeof templateData[section.id] === 'number' ? templateData[section.id] :
-                        typeof section.defaultValue === 'number' ? section.defaultValue :
-                        5}
+                      value={(() => {
+                        const val = templateData[section.id]
+                        if (typeof val === 'number') return val
+                        if (typeof section.defaultValue === 'number') return section.defaultValue
+                        return 5
+                      })()}
                       onChange={(value) => handleTemplateDataChange(section.id, value)}
                       placeholder={section.placeholder}
                       disabled={loading}
