@@ -46,12 +46,12 @@ export const FabricCollar: React.FC<FabricCollarProps> = ({ color, showTag = fal
         opacity="0.6"
       />
 
-      {/* Enhanced polka dot pattern - larger and more visible */}
-      <circle cx={collar.x + 6} cy={collar.y + collar.height / 2} r="1.5" fill="#fff" opacity="0.8" />
-      <circle cx={collar.x + 13} cy={collar.y + collar.height / 2} r="1.5" fill="#fff" opacity="0.8" />
+      {/* Enhanced polka dot pattern - redistributed for narrower collar */}
+      <circle cx={collar.x + 4} cy={collar.y + collar.height / 2} r="1.5" fill="#fff" opacity="0.8" />
+      <circle cx={collar.x + 10} cy={collar.y + collar.height / 2} r="1.5" fill="#fff" opacity="0.8" />
+      <circle cx={collar.x + 15} cy={collar.y + collar.height / 2} r="1.5" fill="#fff" opacity="0.8" />
       <circle cx={collar.x + 20} cy={collar.y + collar.height / 2} r="1.5" fill="#fff" opacity="0.8" />
-      <circle cx={collar.x + 27} cy={collar.y + collar.height / 2} r="1.5" fill="#fff" opacity="0.8" />
-      <circle cx={collar.x + 34} cy={collar.y + collar.height / 2} r="1.5" fill="#fff" opacity="0.8" />
+      <circle cx={collar.x + 26} cy={collar.y + collar.height / 2} r="1.5" fill="#fff" opacity="0.8" />
 
       {/* Stitching detail along top and bottom edges */}
       <line

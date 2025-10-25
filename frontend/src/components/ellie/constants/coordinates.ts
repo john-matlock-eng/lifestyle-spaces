@@ -96,11 +96,11 @@ export const ELLIE_COORDINATES = {
 
   // Collar positioning (on neck - using rect instead of ellipse)
   collar: {
-    x: 38,      // Left edge (neck center 60 - half width 22) - wider for better visibility
+    x: 45,      // Left edge (neck center 60 - half width 15) - elegant proportions
     y: 48,      // Top of neck area
-    width: 44,  // Increased from 24 for prominence (nearly 2x wider)
-    height: 8,  // Increased from 6 for better visibility
-    rx: 4,      // Border radius (increased proportionally)
+    width: 30,  // Reduced from 44 for elegant, non-chunky appearance
+    height: 8,  // Keep height for visibility
+    rx: 3,      // Border radius (reduced proportionally)
   },
 
   // Shadow positioning
