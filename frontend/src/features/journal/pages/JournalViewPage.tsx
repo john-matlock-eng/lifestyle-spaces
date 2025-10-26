@@ -18,6 +18,11 @@ import { PresenceAvatars } from '../components/PresenceAvatars'
 import { ConnectionStatus } from '../components/ConnectionStatus'
 import { useHighlightsRealtime } from '../hooks/useHighlightsRealtime'
 import type { Highlight } from '../types/highlight.types'
+import { ListSectionDisplay } from '../components/sections/ListSectionDisplay'
+import { QASectionDisplay } from '../components/sections/QASectionDisplay'
+import { CheckboxSectionDisplay } from '../components/sections/CheckboxSectionDisplay'
+import { ScaleSectionDisplay } from '../components/sections/ScaleSectionDisplay'
+import { TableSectionDisplay } from '../components/sections/TableSectionDisplay'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -377,160 +382,59 @@ ${content}
                 <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
                 <div className="template-section-content">
                   {section.type === 'q_and_a' ? (
-                    // Render Q&A section (without highlighting for structured content)
-                    (() => {
-                      try {
-                        const qaPairs = JSON.parse(section.content) as Array<{
-                          id?: string
-                          question: string
-                          answer: string
-                        }>
-                        return (
-                          <div className="qa-view-section qa-view-section-compact">
-                            {qaPairs.map((pair, index: number) => (
-                              <div key={pair.id || index} className="qa-view-pair qa-view-pair-compact">
-                                <div className="qa-view-question qa-view-question-compact">
-                                  <span className="qa-number qa-number-compact">Q{index + 1}</span>
-                                  <strong>{pair.question}</strong>
-                                </div>
-                                <div className="qa-view-answer qa-view-answer-compact">
-                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{pair.answer}</ReactMarkdown>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )
-                      } catch {
-                        // If parsing fails, use highlightable text
-                        return (
-                          <HighlightableText
-                            content={section.content}
-                            highlights={highlights}
-                            sectionId={section.id}
-                            journalEntryId={journalId || ''}
-                            spaceId={spaceId || ''}
-                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-                            onHighlightClick={handleHighlightClick}
-                            onHighlightUpdate={updateHighlight}
-                            onHighlightDelete={deleteHighlight}
-                          />
-                        )
-                      }
-                    })()
+                    // Render Q&A section with highlighting support
+                    <QASectionDisplay
+                      value={section.content}
+                      sectionId={section.id}
+                      journalEntryId={journalId || ''}
+                      spaceId={spaceId || ''}
+                      highlights={highlights}
+                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                      onHighlightClick={handleHighlightClick}
+                      onHighlightUpdate={updateHighlight}
+                      onHighlightDelete={deleteHighlight}
+                      className="qa-view-section-compact"
+                    />
                   ) : section.type === 'list' ? (
-                    // Render List section
-                    (() => {
-                      try {
-                        const listItems = JSON.parse(section.content) as Array<{
-                          id?: string
-                          text: string
-                        }>
-                        return (
-                          <ul className="list-view-section list-view-section-compact">
-                            {listItems.map((item, index: number) => (
-                              <li key={item.id || index} className="list-view-item list-view-item-compact">
-                                {item.text}
-                              </li>
-                            ))}
-                          </ul>
-                        )
-                      } catch {
-                        // If parsing fails, use highlightable text
-                        return (
-                          <HighlightableText
-                            content={section.content}
-                            highlights={highlights}
-                            sectionId={section.id}
-                            journalEntryId={journalId || ''}
-                            spaceId={spaceId || ''}
-                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-                            onHighlightClick={handleHighlightClick}
-                            onHighlightUpdate={updateHighlight}
-                            onHighlightDelete={deleteHighlight}
-                          />
-                        )
-                      }
-                    })()
+                    // Render List section with highlighting support
+                    <ListSectionDisplay
+                      value={section.content}
+                      sectionId={section.id}
+                      journalEntryId={journalId || ''}
+                      spaceId={spaceId || ''}
+                      highlights={highlights}
+                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                      onHighlightClick={handleHighlightClick}
+                      onHighlightUpdate={updateHighlight}
+                      onHighlightDelete={deleteHighlight}
+                      className="list-view-section-compact"
+                    />
                   ) : section.type === 'checkbox' ? (
-                    // Render Checkbox section
-                    (() => {
-                      try {
-                        const checkboxItems = JSON.parse(section.content) as Array<{
-                          id?: string
-                          text: string
-                          checked?: boolean
-                        }>
-                        return (
-                          <ul className="checkbox-view-section checkbox-view-section-compact">
-                            {checkboxItems.map((item, index: number) => (
-                              <li key={item.id || index} className="checkbox-view-item checkbox-view-item-compact">
-                                <input
-                                  type="checkbox"
-                                  checked={item.checked !== undefined ? item.checked : true}
-                                  readOnly
-                                  className="checkbox-view-input"
-                                />
-                                <span className="checkbox-view-label">{item.text}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        )
-                      } catch {
-                        // If parsing fails, use highlightable text
-                        return (
-                          <HighlightableText
-                            content={section.content}
-                            highlights={highlights}
-                            sectionId={section.id}
-                            journalEntryId={journalId || ''}
-                            spaceId={spaceId || ''}
-                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-                            onHighlightClick={handleHighlightClick}
-                            onHighlightUpdate={updateHighlight}
-                            onHighlightDelete={deleteHighlight}
-                          />
-                        )
-                      }
-                    })()
+                    // Render Checkbox section with highlighting support
+                    <CheckboxSectionDisplay
+                      value={section.content}
+                      sectionId={section.id}
+                      journalEntryId={journalId || ''}
+                      spaceId={spaceId || ''}
+                      highlights={highlights}
+                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                      onHighlightClick={handleHighlightClick}
+                      onHighlightUpdate={updateHighlight}
+                      onHighlightDelete={deleteHighlight}
+                      className="checkbox-view-section-compact"
+                    />
                   ) : section.type === 'table' ? (
-                    // Render Table section
-                    (() => {
-                      try {
-                        const tableRows = JSON.parse(section.content) as Array<Record<string, string | number>>
-                        if (tableRows.length === 0) return <div className="empty-section">No data</div>
-                        // Get column keys from first row (excluding 'id')
-                        const columns = Object.keys(tableRows[0]).filter(key => key !== 'id')
-                        return (
-                          <div className="table-view-section">
-                            <table className="journal-table-view">
-                              <thead>
-                                <tr>
-                                  {columns.map(col => (
-                                    <th key={col}>{col.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</th>
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {tableRows.map((row, index) => (
-                                  <tr key={row.id || index}>
-                                    {columns.map(col => (
-                                      <td key={col}>{row[col]}</td>
-                                    ))}
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )
-                      } catch {
-                        return <div className="empty-section">Invalid table data</div>
-                      }
-                    })()
+                    // Render Table section (no highlighting for tables)
+                    <TableSectionDisplay
+                      value={section.content}
+                      className="table-view-section"
+                    />
                   ) : section.type === 'scale' ? (
-                    // Render Scale section
-                    <div className="scale-view-section">
-                      <div className="scale-value-large">{section.content} / 10</div>
-                    </div>
+                    // Render Scale section (no highlighting for numeric values)
+                    <ScaleSectionDisplay
+                      value={section.content}
+                      className="scale-view-section"
+                    />
                   ) : (
                     // Render other section types with highlighting
                     <HighlightableText
