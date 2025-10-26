@@ -42,9 +42,18 @@ export const CheckboxSectionDisplay: React.FC<CheckboxSectionDisplayProps> = ({
   className = ''
 }) => {
   // Parse value to checkbox items
-  const items: CheckboxItem[] = typeof value === 'string'
-    ? JSON.parse(value || '[]')
-    : value || [];
+  let items: CheckboxItem[] = [];
+
+  if (typeof value === 'string') {
+    try {
+      items = JSON.parse(value || '[]');
+    } catch {
+      // If parsing fails, return empty array
+      items = [];
+    }
+  } else {
+    items = value || [];
+  }
 
   // Convert checkbox items to markdown format with checkbox syntax
   const markdownContent = items

@@ -33,7 +33,28 @@ describe('ListSectionDisplay', () => {
     expect(document.querySelector('.list-section-display')).toBeInTheDocument();
   });
 
-  it('should render list items from string value', () => {
+  it('should render list items from JSON string value', () => {
+    const listItems = [
+      { id: '1', text: 'First item' },
+      { id: '2', text: 'Second item' },
+    ];
+    const jsonString = JSON.stringify(listItems);
+
+    render(
+      <ListSectionDisplay
+        value={jsonString}
+        sectionId="test-section"
+        journalEntryId="journal-1"
+        spaceId="space-1"
+        highlights={mockHighlights}
+        {...mockHandlers}
+      />
+    );
+
+    expect(document.querySelector('.list-section-display')).toBeInTheDocument();
+  });
+
+  it('should render list items from plain text string (fallback)', () => {
     const stringValue = 'Item 1\nItem 2\nItem 3';
 
     render(

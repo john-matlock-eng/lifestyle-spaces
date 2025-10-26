@@ -41,9 +41,19 @@ export const ListSectionDisplay: React.FC<ListSectionDisplayProps> = ({
   className = ''
 }) => {
   // Parse value to list items
-  const items: ListItem[] = typeof value === 'string'
-    ? (value ? value.split('\n').map((text, idx) => ({ id: `item-${idx}`, text })) : [])
-    : value || [];
+  let items: ListItem[] = [];
+
+  if (typeof value === 'string') {
+    try {
+      // Try to parse as JSON first (structured data)
+      items = JSON.parse(value || '[]');
+    } catch {
+      // Fallback: split by newlines (plain text)
+      items = value ? value.split('\n').map((text, idx) => ({ id: `item-${idx}`, text })) : [];
+    }
+  } else {
+    items = value || [];
+  }
 
   // Convert list items to markdown format for HighlightableText
   // Use bullet points to make it look like a list
