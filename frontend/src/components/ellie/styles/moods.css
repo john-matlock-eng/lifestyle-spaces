@@ -74,10 +74,8 @@
 
 /* Curious */
 /* Removed ear animation - ears should be static */
-
-.mood-curious .ellie-nose {
-  animation: noseSniff 0.5s ease-in-out infinite;
-}
+/* Removed nose sniff animation - too distracting, curious should be calm and attentive */
+/* Curious mood is now conveyed through ear position and calm demeanor */
 
 /* Sleeping */
 .mood-sleeping .ellie-body {
