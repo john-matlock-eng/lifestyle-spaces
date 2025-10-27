@@ -18,6 +18,7 @@ export interface UseEllieJournalGuideReturn {
   thoughtText: string
   particleEffect: 'hearts' | 'sparkles' | 'treats' | 'zzz' | null
   currentGuidance: EllieGuidance | null
+  isTyping: boolean
 
   // Actions
   handleTemplateSelect: () => void
@@ -27,6 +28,7 @@ export interface UseEllieJournalGuideReturn {
   handleSectionComplete: (sectionId: string) => void
   handleSave: () => void
   getHint: () => string | null
+  handleTyping: () => void
 
   // Progress tracking
   sectionProgress: Map<string, SectionProgress>
@@ -38,7 +40,7 @@ export function useEllieJournalGuide(
   currentSectionId?: string
 ): UseEllieJournalGuideReturn {
   const { mood, setMood, position, celebrate } = useShihTzuCompanion({
-    initialMood: template?.ellie?.onSelect?.mood || 'curious',
+    initialMood: template?.ellie?.onSelect?.mood || 'zen',
     initialPosition: {
       x: Math.min(window.innerWidth * 0.8, window.innerWidth - 150),
       y: 120
@@ -49,7 +51,10 @@ export function useEllieJournalGuide(
   const [particleEffect, setParticleEffect] = useState<'hearts' | 'sparkles' | 'treats' | 'zzz' | null>(null)
   const [sectionProgress, setSectionProgress] = useState<Map<string, SectionProgress>>(new Map())
   const [currentGuidance, setCurrentGuidance] = useState<EllieGuidance | null>(null)
+  const [isTyping, setIsTyping] = useState<boolean>(false)
   const appliedGuidanceRef = useRef<Set<string>>(new Set())
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastMoodBeforeTypingRef = useRef<string | null>(null)
 
   // Apply guidance (mood, message, effects)
   const applyGuidance = useCallback(
@@ -239,6 +244,44 @@ export function useEllieJournalGuide(
     }
   }, [template, applyGuidance])
 
+  // Handle typing - switch to zen mode while writing, idle after pause
+  const handleTyping = useCallback(() => {
+    // User is actively typing
+    if (!isTyping) {
+      // Save current mood to restore later
+      lastMoodBeforeTypingRef.current = mood
+      setIsTyping(true)
+      setMood('zen')
+      setThoughtText('') // Clear thought bubble during active writing
+    }
+
+    // Clear any existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+
+    // Set new timeout for idle detection (30 seconds)
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false)
+      setMood('idle')
+      setThoughtText('Take your time. I\'m here if you need me. 💭')
+
+      // After showing idle message, clear it after a bit
+      setTimeout(() => {
+        setThoughtText('')
+      }, 5000)
+    }, 30000) // 30 seconds
+  }, [isTyping, mood, setMood])
+
+  // Cleanup typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+    }
+  }, [])
+
   // Clear particle effect after animation
   useEffect(() => {
     if (particleEffect) {
@@ -274,6 +317,7 @@ export function useEllieJournalGuide(
     thoughtText,
     particleEffect,
     currentGuidance,
+    isTyping,
 
     // Actions
     handleTemplateSelect,
@@ -283,6 +327,7 @@ export function useEllieJournalGuide(
     handleSectionComplete,
     handleSave,
     getHint,
+    handleTyping,
 
     // Progress tracking
     sectionProgress,

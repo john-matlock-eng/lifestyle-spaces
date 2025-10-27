@@ -58,7 +58,8 @@ export const JournalCreatePage: React.FC = () => {
     updateSectionProgress,
     handleSectionComplete,
     handleSave: onEllieSave,
-    getHint
+    getHint,
+    handleTyping
   } = useEllieJournalGuide(selectedTemplate, currentSectionId)
 
   const handleAddCustomSection = (section: Omit<CustomSection, 'isEditing'>) => {
@@ -121,6 +122,9 @@ export const JournalCreatePage: React.FC = () => {
   }
 
   const handleTemplateDataChange = (sectionId: string, value: string | QAPair[] | ListItem[] | TableRow[] | number) => {
+    // Notify Ellie of typing activity
+    handleTyping()
+
     // Get previous value before updating
     const previousValue = templateData[sectionId]
 
@@ -425,7 +429,10 @@ export const JournalCreatePage: React.FC = () => {
               id="title"
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value)
+                handleTyping()
+              }}
               className="journal-form-input title-input"
               placeholder="Give your journal a title..."
               required
@@ -556,7 +563,10 @@ export const JournalCreatePage: React.FC = () => {
                 </label>
                 <RichTextEditor
                   content={content}
-                  onChange={setContent}
+                  onChange={(newContent) => {
+                    setContent(newContent)
+                    handleTyping()
+                  }}
                   placeholder="Start writing your thoughts..."
                   minHeight="400px"
                   showToolbar={true}
@@ -614,7 +624,10 @@ export const JournalCreatePage: React.FC = () => {
                 {section.type === 'paragraph' && (
                   <RichTextEditor
                     content={typeof section.content === 'string' ? section.content : ''}
-                    onChange={(content) => handleUpdateCustomSection(section.id, { content })}
+                    onChange={(content) => {
+                      handleUpdateCustomSection(section.id, { content })
+                      handleTyping()
+                    }}
                     placeholder="Write here..."
                     minHeight="200px"
                     showToolbar={true}
@@ -624,7 +637,10 @@ export const JournalCreatePage: React.FC = () => {
                 {section.type === 'q_and_a' && (
                   <QASection
                     value={Array.isArray(section.content) ? section.content as QAPair[] : []}
-                    onChange={(content) => handleUpdateCustomSection(section.id, { content })}
+                    onChange={(content) => {
+                      handleUpdateCustomSection(section.id, { content })
+                      handleTyping()
+                    }}
                     config={section.config}
                     disabled={loading}
                     showGenerateButton={true}
@@ -660,14 +676,20 @@ export const JournalCreatePage: React.FC = () => {
                 {section.type === 'list' && (
                   <ListSection
                     value={Array.isArray(section.content) ? section.content as ListItem[] : []}
-                    onChange={(content) => handleUpdateCustomSection(section.id, { content })}
+                    onChange={(content) => {
+                      handleUpdateCustomSection(section.id, { content })
+                      handleTyping()
+                    }}
                     disabled={loading}
                   />
                 )}
                 {section.type === 'checkbox' && (
                   <CheckboxSection
                     value={Array.isArray(section.content) ? section.content as ListItem[] : []}
-                    onChange={(content) => handleUpdateCustomSection(section.id, { content })}
+                    onChange={(content) => {
+                      handleUpdateCustomSection(section.id, { content })
+                      handleTyping()
+                    }}
                     disabled={loading}
                   />
                 )}
