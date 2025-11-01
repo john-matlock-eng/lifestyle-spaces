@@ -5,6 +5,8 @@ import pytest
 from unittest.mock import patch, Mock
 from datetime import datetime, timezone
 from moto import mock_dynamodb
+from fastapi.testclient import TestClient
+from app.main import app
 
 
 class TestFrameworkTemplatesAPIIntegration:
@@ -18,6 +20,18 @@ class TestFrameworkTemplatesAPIIntegration:
             "email": "test@example.com",
             "username": "testuser",
         }
+
+    @pytest.fixture(autouse=True)
+    def override_get_current_user(self, mock_auth_user):
+        """Override the get_current_user dependency for all tests."""
+        from app.core.dependencies import get_current_user
+
+        async def _get_current_user():
+            return mock_auth_user
+
+        app.dependency_overrides[get_current_user] = _get_current_user
+        yield
+        app.dependency_overrides.clear()
 
     @pytest.fixture
     def sample_template_payload(self):

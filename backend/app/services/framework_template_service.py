@@ -185,12 +185,14 @@ class FrameworkTemplateService:
         """Convert DynamoDB item to FrameworkTemplate."""
         item = _convert_decimals(item)
 
+        from app.models.framework_template import FrameworkTemplateSection
+
         return FrameworkTemplate(
             template_id=item['TemplateId'],
             name=item['Name'],
             description=item['Description'],
             sections=[
-                FrameworkTemplateField(**field) if 'fieldId' in field
+                FrameworkTemplateSection(**section) if isinstance(section, dict)
                 else section
                 for section in item.get('Sections', [])
             ],
