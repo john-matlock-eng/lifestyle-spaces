@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FrameworkTemplateForm } from '../components/framework-templates';
 import type {
   FrameworkTemplate,
-  FrameworkTemplateFormProps,
 } from '../components/framework-templates';
 import './FrameworkTemplateExample.css';
 
@@ -22,11 +21,6 @@ import './FrameworkTemplateExample.css';
  * - Connect to your space context
  */
 
-interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-}
-
 const FrameworkTemplateExamplePage: React.FC = () => {
   const [template, setTemplate] = useState<FrameworkTemplate | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +35,7 @@ const FrameworkTemplateExamplePage: React.FC = () => {
   /**
    * Fetch template from API
    */
-  const fetchTemplate = async (): Promise<void> => {
+  const fetchTemplate = useCallback(async (): Promise<void> => {
     setIsLoading(true);
     setError(null);
 
@@ -69,7 +63,7 @@ const FrameworkTemplateExamplePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [API_BASE_URL, TEMPLATE_ID]);
 
   /**
    * Submit completion to API

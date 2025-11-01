@@ -20,7 +20,7 @@ from app.services.framework_template_service import (
     FrameworkTemplateCompletionNotFoundError,
 )
 from app.services.exceptions import ValidationError, UnauthorizedError
-from app.api.deps import get_current_user
+from app.core.dependencies import get_current_user
 import logging
 
 logger = logging.getLogger(__name__)
