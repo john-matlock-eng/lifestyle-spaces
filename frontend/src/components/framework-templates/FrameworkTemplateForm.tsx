@@ -9,7 +9,7 @@ export interface FrameworkTemplateField {
   fieldType: 'text' | 'textarea' | 'date' | 'number' | 'scale_1_7' | 'scale_0_10' | 'scale_custom' | 'checkbox' | 'select' | 'multi_select';
   required: boolean;
   helpText?: string;
-  defaultValue?: any;
+  defaultValue?: string | number | boolean | string[];
   placeholder?: string;
   scaleConfig?: {
     minValue: number;
@@ -44,8 +44,8 @@ export interface FrameworkTemplate {
 
 export interface FrameworkTemplateFormProps {
   template: FrameworkTemplate;
-  initialValues?: Record<string, any>;
-  onSubmit: (data: Record<string, any>) => Promise<void>;
+  initialValues?: Record<string, string | number | boolean | string[]>;
+  onSubmit: (data: Record<string, string | number | boolean | string[]>) => Promise<void>;
   onCancel?: () => void;
   isLoading?: boolean;
   error?: string | null;
@@ -69,7 +69,6 @@ export const FrameworkTemplateForm: React.FC<FrameworkTemplateFormProps> = ({
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
     reset,
   } = useForm({
     mode: 'onBlur',
@@ -109,11 +108,11 @@ export const FrameworkTemplateForm: React.FC<FrameworkTemplateFormProps> = ({
     });
   };
 
-  const onFormSubmit = async (data: Record<string, any>) => {
+  const onFormSubmit = async (data: Record<string, string | number | boolean | string[]>) => {
     try {
       await onSubmit(data);
       reset();
-    } catch (err) {
+    } catch {
       // Error handled by parent
     }
   };

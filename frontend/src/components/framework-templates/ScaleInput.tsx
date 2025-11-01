@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './ScaleInput.css';
 
 export type ScaleType = 'scale_1_7' | 'scale_0_10' | 'scale_custom';
@@ -55,8 +55,6 @@ export const ScaleInput: React.FC<ScaleInputProps> = ({
   disabled = false,
   error,
 }) => {
-  const [isDragging, setIsDragging] = useState(false);
-
   // Determine scale configuration
   const scaleConfig =
     scaleType === 'scale_custom'
@@ -159,10 +157,6 @@ export const ScaleInput: React.FC<ScaleInputProps> = ({
           step={step}
           value={value ?? minValue}
           onChange={handleSliderChange}
-          onMouseDown={() => setIsDragging(true)}
-          onMouseUp={() => setIsDragging(false)}
-          onTouchStart={() => setIsDragging(true)}
-          onTouchEnd={() => setIsDragging(false)}
           disabled={disabled}
           className="scale-slider"
           aria-label={label}
@@ -185,7 +179,7 @@ export const ScaleInput: React.FC<ScaleInputProps> = ({
 
       {/* Number labels below scale */}
       <div className="scale-numbers">
-        {scalePoints.map((pointValue, index) => (
+        {scalePoints.map((pointValue) => (
           <span
             key={pointValue}
             className={`scale-number ${value === pointValue ? 'active' : ''}`}
