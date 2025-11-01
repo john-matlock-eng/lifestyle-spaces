@@ -7,6 +7,12 @@ from datetime import datetime, timezone
 from moto import mock_dynamodb
 from fastapi.testclient import TestClient
 from app.main import app
+from app.models.framework_template import (
+    FrameworkTemplate,
+    FrameworkTemplateCompletion,
+    FrameworkTemplateSection,
+    FrameworkTemplateField,
+)
 
 
 class TestFrameworkTemplatesAPIIntegration:
@@ -161,17 +167,23 @@ class TestFrameworkTemplatesAPIIntegration:
             ) as mock_get:
                 mock_get_user.return_value = mock_auth_user
 
-                # Mock template response
-                mock_template = Mock()
-                mock_template.template_id = "template-123"
-                mock_template.name = "Test Template"
-                mock_template.version = 1
-                mock_template.model_dump.return_value = {
-                    "templateId": "template-123",
-                    "name": "Test Template",
-                    "version": 1,
-                }
-                mock_get.return_value = mock_template
+                # Create proper FrameworkTemplate instance
+                template = FrameworkTemplate(
+                    template_id="template-123",
+                    name="Test Template",
+                    description="Test description",
+                    sections=[],
+                    icon="🧪",
+                    color="#9C27B0",
+                    tags=["test"],
+                    version=1,
+                    created_by="user-123",
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                    is_active=True,
+                    space_id="space-456",
+                )
+                mock_get.return_value = template
 
                 response = test_client.get("/api/framework-templates/template-123")
 
@@ -246,16 +258,19 @@ class TestFrameworkTemplatesAPIIntegration:
             ) as mock_create:
                 mock_get_user.return_value = mock_auth_user
 
-                # Mock completion response
-                mock_completion = Mock()
-                mock_completion.model_dump.return_value = {
-                    "completionId": "completion-123",
-                    "templateId": "template-123",
-                    "userId": "user-123",
-                    "spaceId": "space-456",
-                    "fieldValues": {"energy": 6, "sleep": 8},
-                }
-                mock_create.return_value = mock_completion
+                # Create proper FrameworkTemplateCompletion instance
+                completion = FrameworkTemplateCompletion(
+                    completion_id="completion-123",
+                    template_id="template-123",
+                    template_version=1,
+                    user_id="user-123",
+                    space_id="space-456",
+                    field_values={"energy": 6, "sleep": 8},
+                    completed_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                    auto_dated_fields=[],
+                )
+                mock_create.return_value = completion
 
                 response = test_client.post(
                     "/api/framework-templates/completions",
@@ -436,17 +451,21 @@ class TestFrameworkTemplatesAPIIntegration:
             ) as mock_create:
                 mock_get_user.return_value = mock_auth_user
 
-                # Mock completion with auto-dated fields
-                mock_completion = Mock()
-                mock_completion.model_dump.return_value = {
-                    "completionId": "completion-123",
-                    "templateId": "template-123",
-                    "fieldValues": {
+                # Create proper FrameworkTemplateCompletion instance
+                completion = FrameworkTemplateCompletion(
+                    completion_id="completion-123",
+                    template_id="template-123",
+                    template_version=1,
+                    user_id="user-123",
+                    space_id="space-456",
+                    field_values={
                         "date_field": datetime.now(timezone.utc).date().isoformat()
                     },
-                    "autoDatedFields": ["date_field"],
-                }
-                mock_create.return_value = mock_completion
+                    completed_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                    auto_dated_fields=["date_field"],
+                )
+                mock_create.return_value = completion
 
                 payload = {
                     "templateId": "template-123",
@@ -475,14 +494,23 @@ class TestFrameworkTemplatesAPIIntegration:
             ) as mock_update:
                 mock_get_user.return_value = mock_auth_user
 
-                # Mock updated template with new version
-                mock_template = Mock()
-                mock_template.model_dump.return_value = {
-                    "templateId": "template-123",
-                    "name": "Updated Name",
-                    "version": 2,  # Version incremented
-                }
-                mock_update.return_value = mock_template
+                # Create proper FrameworkTemplate instance
+                template = FrameworkTemplate(
+                    template_id="template-123",
+                    name="Updated Name",
+                    description="Updated description",
+                    sections=[],
+                    icon="🔄",
+                    color="#FF5722",
+                    tags=["updated"],
+                    version=2,  # Version incremented
+                    created_by="user-123",
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                    is_active=True,
+                    space_id="space-456",
+                )
+                mock_update.return_value = template
 
                 update_payload = {"name": "Updated Name"}
 
@@ -506,14 +534,23 @@ class TestFrameworkTemplatesAPIIntegration:
             ) as mock_get:
                 mock_get_user.return_value = mock_auth_user
 
-                # Mock old version
-                mock_template = Mock()
-                mock_template.model_dump.return_value = {
-                    "templateId": "template-123",
-                    "name": "Old Name",
-                    "version": 1,
-                }
-                mock_get.return_value = mock_template
+                # Create proper FrameworkTemplate instance for old version
+                template = FrameworkTemplate(
+                    template_id="template-123",
+                    name="Old Name",
+                    description="Old description",
+                    sections=[],
+                    icon="📝",
+                    color="#2196F3",
+                    tags=["old"],
+                    version=1,
+                    created_by="user-123",
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                    is_active=True,
+                    space_id="space-456",
+                )
+                mock_get.return_value = template
 
                 response = test_client.get(
                     "/api/framework-templates/template-123", params={"version": 1}
