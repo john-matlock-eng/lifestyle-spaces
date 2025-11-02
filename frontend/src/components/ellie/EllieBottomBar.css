@@ -1,0 +1,47 @@
+/**
+ * Ellie Bottom Bar Styles
+ * Transparent bottom bar with Ellie control button
+ */
+
+.ellie-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 0 24px 12px 24px;
+  z-index: 100;
+  pointer-events: none; /* Allow clicks through transparent areas */
+}
+
+.ellie-bottom-bar__content {
+  pointer-events: auto; /* Re-enable clicks on the control panel */
+}
+
+/* Dark mode support */
+.dark .ellie-bottom-bar {
+  background: linear-gradient(
+    to top,
+    rgba(15, 23, 42, 0.95) 0%,
+    rgba(15, 23, 42, 0.8) 50%,
+    rgba(15, 23, 42, 0) 100%
+  );
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ellie-bottom-bar {
+    padding: 0 16px 12px 16px;
+  }
+}

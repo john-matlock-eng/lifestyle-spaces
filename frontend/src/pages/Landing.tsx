@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../stores/authStore'
-import { SmartEllie } from '../components/ellie'
+import { SmartEllie, EllieBottomBar } from '../components/ellie'
 import { ThemeToggle } from '../components/theme'
 import { useEffect, useState } from 'react'
+import type { EllieMode } from '../components/ellie/modes/types'
 import './Landing.css'
 
 export function Landing() {
@@ -12,6 +13,8 @@ export function Landing() {
 
   // Ellie companion state
   const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('excited');
+  const [ellieMode, setEllieMode] = useState<EllieMode>('companion');
+  const [ellieOpacity, setEllieOpacity] = useState(1.0);
 
   // Celebration function for Ellie
   const celebrate = () => {
@@ -203,7 +206,15 @@ export function Landing() {
         particleEffect={mood === 'celebrating' ? 'hearts' : null}
         className="hidden lg:block"
         enableSmartPositioning={true}
-        showControlPanel={true}
+        showControlPanel={false}
+      />
+
+      {/* Transparent Bottom Bar with Ellie Control */}
+      <EllieBottomBar
+        currentMode={ellieMode}
+        onModeChange={setEllieMode}
+        opacity={ellieOpacity}
+        onOpacityChange={setEllieOpacity}
       />
     </div>
   )

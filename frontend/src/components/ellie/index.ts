@@ -5,6 +5,8 @@ export { SimpleSmartEllie as SmartEllie } from './SimpleSmartEllie'
 export type { SimpleSmartEllieProps as SmartEllieProps } from './SimpleSmartEllie'
 export { AnimatedShihTzu } from './AnimatedShihTzu'
 export { EllieCustomizer, type EllieCustomization } from './EllieCustomizer'
+export { EllieBottomBar } from './EllieBottomBar'
+export type { EllieBottomBarProps } from './EllieBottomBar'
 
 // Modular component system (recommended)
 export { ModularEnhancedShihTzu } from './ModularEnhancedShihTzu'
