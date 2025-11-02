@@ -425,12 +425,14 @@ ${content}
                     // Render Table section (no highlighting for tables)
                     <TableSectionDisplay
                       value={section.content}
+                      config={template?.sections.find(s => s.id === section.id)?.config}
                       className="table-view-section"
                     />
                   ) : section.type === 'scale' ? (
                     // Render Scale section (no highlighting for numeric values)
                     <ScaleSectionDisplay
                       value={section.content}
+                      config={template?.sections.find(s => s.id === section.id)?.config}
                       className="scale-view-section"
                     />
                   ) : (

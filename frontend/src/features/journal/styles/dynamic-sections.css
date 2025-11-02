@@ -676,6 +676,19 @@
   background: var(--theme-primary-400);
 }
 
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--theme-text-secondary);
+}
+
+.scale-label-min,
+.scale-label-max {
+  font-weight: 500;
+}
+
 .scale-error {
   color: var(--theme-error-600);
   font-size: 0.9rem;
