@@ -7,13 +7,24 @@
  */
 import React from 'react';
 
+interface TableColumn {
+  key: string;
+  label: string;
+  type?: 'text' | 'number';
+  width?: string;
+}
+
 interface TableSectionDisplayProps {
   value: Array<Record<string, string | number>> | string;
+  config?: {
+    columns?: TableColumn[];
+  };
   className?: string;
 }
 
 export const TableSectionDisplay: React.FC<TableSectionDisplayProps> = ({
   value,
+  config,
   className = ''
 }) => {
   // Parse value to table rows
@@ -39,10 +50,26 @@ export const TableSectionDisplay: React.FC<TableSectionDisplayProps> = ({
     );
   }
 
-  // Get column keys from first row (excluding 'id')
-  const columns = Object.keys(tableRows[0]).filter(key => key !== 'id');
+  // Use config columns if available, otherwise infer from data
+  let columnsToDisplay: Array<{ key: string; label: string; width?: string }>;
 
-  if (columns.length === 0) {
+  if (config?.columns && config.columns.length > 0) {
+    // Use template-defined columns
+    columnsToDisplay = config.columns.map(col => ({
+      key: col.key,
+      label: col.label,
+      width: col.width
+    }));
+  } else {
+    // Fallback: infer columns from first row (excluding 'id')
+    const columnKeys = Object.keys(tableRows[0]).filter(key => key !== 'id');
+    columnsToDisplay = columnKeys.map(key => ({
+      key,
+      label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    }));
+  }
+
+  if (columnsToDisplay.length === 0) {
     return (
       <div className={`table-section-display ${className}`}>
         <div className="table-error">No columns found</div>
@@ -55,9 +82,9 @@ export const TableSectionDisplay: React.FC<TableSectionDisplayProps> = ({
       <table className="journal-table-view">
         <thead>
           <tr>
-            {columns.map(col => (
-              <th key={col}>
-                {col.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            {columnsToDisplay.map(col => (
+              <th key={col.key} style={col.width ? { width: col.width } : undefined}>
+                {col.label}
               </th>
             ))}
           </tr>
@@ -65,8 +92,8 @@ export const TableSectionDisplay: React.FC<TableSectionDisplayProps> = ({
         <tbody>
           {tableRows.map((row, index) => (
             <tr key={(row.id as string) || index}>
-              {columns.map(col => (
-                <td key={col}>{row[col]}</td>
+              {columnsToDisplay.map(col => (
+                <td key={col.key}>{row[col.key]}</td>
               ))}
             </tr>
           ))}

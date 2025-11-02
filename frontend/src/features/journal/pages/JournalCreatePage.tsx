@@ -208,8 +208,26 @@ export const JournalCreatePage: React.FC = () => {
                   type: section.type
                 }
               }
+            } else if (section.type === 'table') {
+              // Table sections store arrays of TableRow objects
+              if (Array.isArray(sectionContent) && sectionContent.length > 0) {
+                sections[section.id] = {
+                  content: JSON.stringify(sectionContent),
+                  title: section.title,
+                  type: section.type
+                }
+              }
+            } else if (section.type === 'scale') {
+              // Scale sections store numbers - always save them
+              if (typeof sectionContent === 'number') {
+                sections[section.id] = {
+                  content: String(sectionContent),
+                  title: section.title,
+                  type: section.type
+                }
+              }
             } else {
-              // Other sections store strings
+              // Other sections (paragraph) store strings
               if (sectionContent && typeof sectionContent === 'string' && sectionContent.trim()) {
                 sections[section.id] = {
                   content: sectionContent,
