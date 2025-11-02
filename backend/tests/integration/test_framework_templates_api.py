@@ -2,6 +2,7 @@
 Integration tests for Framework Template API endpoints.
 """
 import pytest
+import boto3
 from unittest.mock import patch, Mock
 from datetime import datetime, timezone
 from moto import mock_dynamodb
@@ -17,6 +18,43 @@ from app.models.framework_template import (
 
 class TestFrameworkTemplatesAPIIntegration:
     """Integration tests for framework template API endpoints."""
+
+    @pytest.fixture
+    def mock_dynamodb_table(self):
+        """Create a mocked DynamoDB table and patch Database class."""
+        with mock_dynamodb():
+            # Create DynamoDB resource
+            dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+
+            # Create table with proper schema
+            table = dynamodb.create_table(
+                TableName='lifestyle-spaces-test',
+                KeySchema=[
+                    {'AttributeName': 'PK', 'KeyType': 'HASH'},
+                    {'AttributeName': 'SK', 'KeyType': 'RANGE'}
+                ],
+                AttributeDefinitions=[
+                    {'AttributeName': 'PK', 'AttributeType': 'S'},
+                    {'AttributeName': 'SK', 'AttributeType': 'S'},
+                    {'AttributeName': 'GSI1PK', 'AttributeType': 'S'},
+                    {'AttributeName': 'GSI1SK', 'AttributeType': 'S'},
+                ],
+                GlobalSecondaryIndexes=[
+                    {
+                        'IndexName': 'GSI1',
+                        'KeySchema': [
+                            {'AttributeName': 'GSI1PK', 'KeyType': 'HASH'},
+                            {'AttributeName': 'GSI1SK', 'KeyType': 'RANGE'}
+                        ],
+                        'Projection': {'ProjectionType': 'ALL'},
+                    }
+                ],
+                BillingMode='PAY_PER_REQUEST'
+            )
+
+            # Patch the Database class to use the mocked table
+            with patch('app.core.database.boto3.resource', return_value=dynamodb):
+                yield table
 
     @pytest.fixture
     def mock_auth_user(self):
@@ -84,28 +122,24 @@ class TestFrameworkTemplatesAPIIntegration:
 
     # ===== TEMPLATE CRUD TESTS =====
 
-    @mock_dynamodb
-    def test_create_template(self, test_client, mock_auth_user, sample_template_payload):
+    def test_create_template(self, test_client, mock_auth_user, sample_template_payload, mock_dynamodb_table):
         """Test creating a framework template."""
-        with patch("app.api.routes.framework_templates.get_current_user") as mock_get_user:
-            mock_get_user.return_value = mock_auth_user
+        response = test_client.post(
+            "/api/framework-templates",
+            json=sample_template_payload,
+            params={"space_id": "space-456"},
+        )
 
-            response = test_client.post(
-                "/api/framework-templates",
-                json=sample_template_payload,
-                params={"space_id": "space-456"},
-            )
+        assert response.status_code == 201
+        data = response.json()
 
-            assert response.status_code == 201
-            data = response.json()
-
-            assert data["name"] == "Wellness Check-in"
-            assert data["description"] == "Daily wellness assessment"
-            assert "templateId" in data
-            assert data["version"] == 1
-            assert data["createdBy"] == "user-123"
-            assert data["spaceId"] == "space-456"
-            assert len(data["sections"]) == 1
+        assert data["name"] == "Wellness Check-in"
+        assert data["description"] == "Daily wellness assessment"
+        assert "templateId" in data
+        assert data["version"] == 1
+        assert data["createdBy"] == "user-123"
+        assert data["spaceId"] == "space-456"
+        assert len(data["sections"]) == 1
 
     @mock_dynamodb
     def test_create_template_unauthorized(self, test_client, sample_template_payload):
@@ -119,44 +153,32 @@ class TestFrameworkTemplatesAPIIntegration:
 
             assert response.status_code == 500  # Will be caught by global handler
 
-    @mock_dynamodb
-    def test_list_templates(self, test_client, mock_auth_user):
+    def test_list_templates(self, test_client, mock_auth_user, mock_dynamodb_table):
         """Test listing framework templates."""
-        with patch("app.api.routes.framework_templates.get_current_user") as mock_get_user:
-            mock_get_user.return_value = mock_auth_user
+        response = test_client.get("/api/framework-templates")
 
-            response = test_client.get("/api/framework-templates")
+        assert response.status_code == 200
+        data = response.json()
 
-            assert response.status_code == 200
-            data = response.json()
+        assert "templates" in data
+        assert "total" in data
+        assert isinstance(data["templates"], list)
 
-            assert "templates" in data
-            assert "total" in data
-            assert isinstance(data["templates"], list)
-
-    @mock_dynamodb
-    def test_list_templates_by_space(self, test_client, mock_auth_user):
+    def test_list_templates_by_space(self, test_client, mock_auth_user, mock_dynamodb_table):
         """Test listing templates filtered by space."""
-        with patch("app.api.routes.framework_templates.get_current_user") as mock_get_user:
-            mock_get_user.return_value = mock_auth_user
+        response = test_client.get(
+            "/api/framework-templates", params={"space_id": "space-123"}
+        )
 
-            response = test_client.get(
-                "/api/framework-templates", params={"space_id": "space-123"}
-            )
+        assert response.status_code == 200
 
-            assert response.status_code == 200
-
-    @mock_dynamodb
-    def test_list_templates_with_tags(self, test_client, mock_auth_user):
+    def test_list_templates_with_tags(self, test_client, mock_auth_user, mock_dynamodb_table):
         """Test listing templates filtered by tags."""
-        with patch("app.api.routes.framework_templates.get_current_user") as mock_get_user:
-            mock_get_user.return_value = mock_auth_user
+        response = test_client.get(
+            "/api/framework-templates", params={"tags": "wellness,daily"}
+        )
 
-            response = test_client.get(
-                "/api/framework-templates", params={"tags": "wellness,daily"}
-            )
-
-            assert response.status_code == 200
+        assert response.status_code == 200
 
     @mock_dynamodb
     def test_get_template(self, test_client, mock_auth_user):
