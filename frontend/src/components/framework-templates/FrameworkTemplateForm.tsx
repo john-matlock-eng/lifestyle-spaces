@@ -40,6 +40,12 @@ export interface FrameworkTemplate {
   icon?: string;
   color?: string;
   tags: string[];
+  version: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  isActive: boolean;
+  spaceId?: string;
 }
 
 export interface FrameworkTemplateFormProps {
@@ -137,9 +143,9 @@ export const FrameworkTemplateForm: React.FC<FrameworkTemplateFormProps> = ({
                 id={field.fieldId}
                 name={field.fieldId}
                 label={field.fieldName}
-                value={value ?? null}
+                value={typeof value === 'number' ? value : null}
                 onChange={onChange}
-                scaleType={field.fieldType}
+                scaleType={field.fieldType as 'scale_1_7' | 'scale_0_10' | 'scale_custom'}
                 scaleConfig={field.scaleConfig}
                 helpText={field.helpText}
                 required={field.required}
@@ -174,7 +180,7 @@ export const FrameworkTemplateForm: React.FC<FrameworkTemplateFormProps> = ({
                 <input
                   type="text"
                   id={field.fieldId}
-                  value={value ?? ''}
+                  value={typeof value === 'string' || typeof value === 'number' ? value : ''}
                   onChange={onChange}
                   placeholder={field.placeholder}
                   disabled={isLoading}
@@ -215,7 +221,7 @@ export const FrameworkTemplateForm: React.FC<FrameworkTemplateFormProps> = ({
                 )}
                 <textarea
                   id={field.fieldId}
-                  value={value ?? ''}
+                  value={typeof value === 'string' || typeof value === 'number' ? value : ''}
                   onChange={onChange}
                   placeholder={field.placeholder}
                   disabled={isLoading}
@@ -261,7 +267,7 @@ export const FrameworkTemplateForm: React.FC<FrameworkTemplateFormProps> = ({
                 <input
                   type="date"
                   id={field.fieldId}
-                  value={value ?? ''}
+                  value={typeof value === 'string' ? value : ''}
                   onChange={onChange}
                   disabled={isLoading}
                   className={fieldError ? 'has-error' : ''}
@@ -302,7 +308,7 @@ export const FrameworkTemplateForm: React.FC<FrameworkTemplateFormProps> = ({
                 <input
                   type="number"
                   id={field.fieldId}
-                  value={value ?? ''}
+                  value={typeof value === 'number' || typeof value === 'string' ? value : ''}
                   onChange={(e) => onChange(e.target.value ? Number(e.target.value) : '')}
                   placeholder={field.placeholder}
                   disabled={isLoading}
@@ -332,7 +338,7 @@ export const FrameworkTemplateForm: React.FC<FrameworkTemplateFormProps> = ({
                   <input
                     type="checkbox"
                     id={field.fieldId}
-                    checked={value ?? false}
+                    checked={typeof value === 'boolean' ? value : false}
                     onChange={(e) => onChange(e.target.checked)}
                     disabled={isLoading}
                   />
@@ -380,7 +386,7 @@ export const FrameworkTemplateForm: React.FC<FrameworkTemplateFormProps> = ({
                 )}
                 <select
                   id={field.fieldId}
-                  value={value ?? ''}
+                  value={typeof value === 'string' || typeof value === 'number' ? value : ''}
                   onChange={onChange}
                   disabled={isLoading}
                   className={fieldError ? 'has-error' : ''}
@@ -414,7 +420,7 @@ export const FrameworkTemplateForm: React.FC<FrameworkTemplateFormProps> = ({
               required: field.required ? `${field.fieldName} is required` : false,
             }}
             render={({ field: { onChange, value } }) => {
-              const selectedValues = value ?? [];
+              const selectedValues = Array.isArray(value) ? value : [];
               const toggleOption = (option: string) => {
                 const newValues = selectedValues.includes(option)
                   ? selectedValues.filter((v: string) => v !== option)
