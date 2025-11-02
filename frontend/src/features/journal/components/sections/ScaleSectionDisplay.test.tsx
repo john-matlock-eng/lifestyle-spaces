@@ -20,8 +20,10 @@ describe('ScaleSectionDisplay', () => {
   it('should use custom max value from config', () => {
     render(<ScaleSectionDisplay value={5} config={{ max: 5 }} />);
 
-    expect(screen.getByText('5')).toBeInTheDocument();
+    // Use more specific query for the value display
     expect(screen.getByText('/ 5')).toBeInTheDocument();
+    const valueDisplay = screen.getByText('/ 5').previousSibling;
+    expect(valueDisplay).toHaveTextContent('5');
   });
 
   it('should display label for value if provided in config', () => {
@@ -38,7 +40,7 @@ describe('ScaleSectionDisplay', () => {
     expect(screen.getByText('Medium')).toBeInTheDocument();
   });
 
-  it('should not display label if not provided for value', () => {
+  it('should not display center label if not provided for value', () => {
     const config = {
       labels: {
         '1': 'Very Low',
@@ -48,8 +50,12 @@ describe('ScaleSectionDisplay', () => {
 
     render(<ScaleSectionDisplay value={5} config={config} />);
 
+    // Should not show "Medium" as a center label for value 5
     expect(screen.queryByText('Medium')).not.toBeInTheDocument();
-    expect(screen.queryByText('Very Low')).not.toBeInTheDocument();
+
+    // But SHOULD show min/max labels at the bottom
+    expect(screen.getByText('Very Low')).toBeInTheDocument(); // min label
+    expect(screen.getByText('Very High')).toBeInTheDocument(); // max label
   });
 
   it('should handle invalid numeric value', () => {
@@ -76,5 +82,32 @@ describe('ScaleSectionDisplay', () => {
 
     const fillElement = container.querySelector('.scale-fill');
     expect(fillElement).toHaveStyle({ width: '100%' });
+  });
+
+  it('should display min and max labels at the bottom', () => {
+    const config = {
+      min: 1,
+      max: 10,
+      labels: {
+        '1': 'Very Uncertain',
+        '10': 'Highly Confident',
+      },
+    };
+
+    render(<ScaleSectionDisplay value={7} config={config} />);
+
+    // Should show min and max labels
+    expect(screen.getByText('Very Uncertain')).toBeInTheDocument();
+    expect(screen.getByText('Highly Confident')).toBeInTheDocument();
+  });
+
+  it('should display numeric min/max when no labels provided', () => {
+    const { container } = render(<ScaleSectionDisplay value={5} config={{ min: 1, max: 10 }} />);
+
+    // Should show numeric values as labels when no label strings provided
+    const minLabel = container.querySelector('.scale-label-min');
+    const maxLabel = container.querySelector('.scale-label-max');
+    expect(minLabel).toHaveTextContent('1');
+    expect(maxLabel).toHaveTextContent('10');
   });
 });
