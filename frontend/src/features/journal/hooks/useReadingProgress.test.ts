@@ -16,7 +16,7 @@ mockIntersectionObserver.mockReturnValue({
   unobserve: () => null,
   disconnect: () => null
 })
-window.IntersectionObserver = mockIntersectionObserver as any
+window.IntersectionObserver = mockIntersectionObserver as unknown as typeof IntersectionObserver
 
 describe('useReadingProgress', () => {
   const mockContent = `
@@ -245,7 +245,7 @@ This is the main content section with more detailed information and analysis.
 
     it('should respect custom intersection threshold', () => {
       const customThreshold = 0.7
-      const { result } = renderHook(() =>
+      renderHook(() =>
         useReadingProgress(mockContent, mockSections, { intersectionThreshold: customThreshold })
       )
 

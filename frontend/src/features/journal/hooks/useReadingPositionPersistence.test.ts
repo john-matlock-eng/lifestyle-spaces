@@ -67,7 +67,7 @@ describe('useReadingPositionPersistence', () => {
   afterEach(() => {
     try {
       vi.runOnlyPendingTimers()
-    } catch (e) {
+    } catch {
       // Timers might not be mocked in some tests
     }
     vi.useRealTimers()

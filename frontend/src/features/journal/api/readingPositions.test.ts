@@ -97,9 +97,9 @@ describe('readingPositions API Client', () => {
         totalWords: 1100
       }
 
-      const response: ReadingPositionResponse = {
-        position: null as any
-      }
+      const response = {
+        position: null
+      } as unknown as ReadingPositionResponse
 
       vi.mocked(apiService.put).mockResolvedValue(response)
 
@@ -215,9 +215,9 @@ describe('readingPositions API Client', () => {
     })
 
     it('should return null when position is undefined', async () => {
-      const response: ReadingPositionResponse = {
-        position: undefined as any
-      }
+      const response = {
+        position: undefined
+      } as unknown as ReadingPositionResponse
 
       vi.mocked(apiService.get).mockResolvedValue(response)
 
@@ -408,9 +408,9 @@ describe('readingPositions API Client', () => {
     })
 
     it('should return empty array when positions is undefined', async () => {
-      const response: ReadingPositionResponse = {
-        positions: undefined as any
-      }
+      const response = {
+        positions: undefined
+      } as unknown as ReadingPositionResponse
 
       vi.mocked(apiService.get).mockResolvedValue(response)
 
@@ -420,9 +420,9 @@ describe('readingPositions API Client', () => {
     })
 
     it('should return empty array when positions is null', async () => {
-      const response: ReadingPositionResponse = {
-        positions: null as any
-      }
+      const response = {
+        positions: null
+      } as unknown as ReadingPositionResponse
 
       vi.mocked(apiService.get).mockResolvedValue(response)
 

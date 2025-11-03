@@ -395,19 +395,19 @@ describe('useSectionCollapse', () => {
     it('should handle null input', () => {
       const { result } = renderHook(() => useSectionCollapse())
 
-      expect(result.current.getWordCount(null as any)).toBe(0)
+      expect(result.current.getWordCount(null as unknown as string)).toBe(0)
     })
 
     it('should handle undefined input', () => {
       const { result } = renderHook(() => useSectionCollapse())
 
-      expect(result.current.getWordCount(undefined as any)).toBe(0)
+      expect(result.current.getWordCount(undefined as unknown as string)).toBe(0)
     })
 
     it('should handle non-string input', () => {
       const { result } = renderHook(() => useSectionCollapse())
 
-      expect(result.current.getWordCount(123 as any)).toBe(0)
+      expect(result.current.getWordCount(123 as unknown as string)).toBe(0)
     })
 
     it('should handle newlines and tabs', () => {

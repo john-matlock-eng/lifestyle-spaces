@@ -16,7 +16,12 @@ describe('StickyHeaderSection', () => {
     children: <div>Test section content</div>
   }
 
-  let mockObserver: any
+  let mockObserver: {
+    observe: ReturnType<typeof vi.fn>
+    unobserve: ReturnType<typeof vi.fn>
+    disconnect: ReturnType<typeof vi.fn>
+    callback?: IntersectionObserverCallback
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -32,7 +37,7 @@ describe('StickyHeaderSection', () => {
       // Store callback for later invocation
       mockObserver.callback = callback
       return mockObserver
-    }) as any
+    }) as unknown as typeof IntersectionObserver
   })
 
   afterEach(() => {
@@ -187,7 +192,7 @@ describe('StickyHeaderSection', () => {
     })
 
     it('should create and remove sentinel element', () => {
-      const { unmount, container } = render(<StickyHeaderSection {...defaultProps} />)
+      const { unmount } = render(<StickyHeaderSection {...defaultProps} />)
 
       // Check that sentinel was created (via observe being called)
       expect(mockObserver.observe).toHaveBeenCalled()

@@ -500,7 +500,7 @@ describe('ResumeReadingBanner', () => {
       const onDismiss = vi.fn()
       const user = userEvent.setup({ delay: null })
 
-      const { rerender } = render(
+      render(
         <ResumeReadingBanner
           {...defaultProps}
           onResume={onResume}

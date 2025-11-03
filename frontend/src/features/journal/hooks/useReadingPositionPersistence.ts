@@ -225,9 +225,6 @@ export function useReadingPositionPersistence({
 
       // Save position before unmounting
       if (enabled && journalId && spaceId) {
-        // Use sendBeacon for reliable save on page unload
-        const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop
-
         // Note: sendBeacon is more reliable but doesn't wait for response
         // If sendBeacon isn't available, the position will be saved by the interval
         savePosition()
@@ -247,7 +244,7 @@ export function useReadingPositionPersistence({
 
       // Try to save using navigator.sendBeacon for reliability
       if (navigator.sendBeacon && journalId && spaceId) {
-        const data = JSON.stringify({
+        JSON.stringify({
           journalId,
           spaceId,
           scrollPosition: currentScrollPosition,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type {
   Section,
   SectionProgress,
@@ -124,8 +124,6 @@ export function useReadingProgress(
   const calculateProgress = useCallback(() => {
     if (enrichedSections.length === 0) return
 
-    const container = containerRef?.current || document.documentElement
-    const scrollTop = containerRef?.current?.scrollTop || window.pageYOffset
     const containerHeight = containerRef?.current?.clientHeight || window.innerHeight
 
     let currentSectionId: string | null = null
@@ -230,7 +228,6 @@ export function useReadingProgress(
       return
     }
 
-    const container = containerRef?.current || window
     const yOffset = -80 // Offset for fixed headers
 
     if (containerRef?.current) {
