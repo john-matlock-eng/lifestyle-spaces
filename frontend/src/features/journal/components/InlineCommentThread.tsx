@@ -84,9 +84,9 @@ const highlightMentions = (text: string, isDarkMode: boolean = false): React.Rea
 };
 
 export const InlineCommentThread: React.FC<InlineCommentThreadProps> = ({
-  highlight: _highlight,
+  highlight,
   comments,
-  spaceMembers: _spaceMembers,
+  spaceMembers,
   currentUserId,
   position,
   onAddComment,
@@ -98,6 +98,8 @@ export const InlineCommentThread: React.FC<InlineCommentThreadProps> = ({
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<'all' | 'mine' | 'collaborators'>('all');
   const [showResolved, setShowResolved] = useState(true);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
   const threadRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -134,6 +136,54 @@ export const InlineCommentThread: React.FC<InlineCommentThreadProps> = ({
   const rootComments = filteredComments.filter((c) => !c.parentCommentId);
   const getReplies = (parentId: string) =>
     filteredComments.filter((c) => c.parentCommentId === parentId);
+
+  // Detect @mentions while typing
+  const handleTextChange = (text: string) => {
+    setCommentText(text);
+
+    // Check for @ mention trigger
+    const cursorPos = textareaRef.current?.selectionStart || 0;
+    const textBeforeCursor = text.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+
+    if (lastAtIndex !== -1 && lastAtIndex === cursorPos - 1) {
+      setShowMentions(true);
+      setMentionSearch('');
+    } else if (lastAtIndex !== -1) {
+      const searchTerm = textBeforeCursor.substring(lastAtIndex + 1);
+      if (searchTerm && !searchTerm.includes(' ')) {
+        setShowMentions(true);
+        setMentionSearch(searchTerm);
+      } else {
+        setShowMentions(false);
+      }
+    } else {
+      setShowMentions(false);
+    }
+  };
+
+  // Insert mention
+  const insertMention = (memberName: string) => {
+    const cursorPos = textareaRef.current?.selectionStart || 0;
+    const textBeforeCursor = commentText.substring(0, cursorPos);
+    const textAfterCursor = commentText.substring(cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+
+    const newText =
+      commentText.substring(0, lastAtIndex) +
+      `@${memberName} ` +
+      textAfterCursor;
+
+    setCommentText(newText);
+    setShowMentions(false);
+    setMentionSearch('');
+    textareaRef.current?.focus();
+  };
+
+  // Filter members for mention autocomplete
+  const filteredMembers = spaceMembers.filter((member) =>
+    member.name.toLowerCase().includes(mentionSearch.toLowerCase())
+  );
 
   // Submit comment
   const handleSubmit = () => {
@@ -332,7 +382,7 @@ export const InlineCommentThread: React.FC<InlineCommentThreadProps> = ({
           borderBottom: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.2)' : '#e2e8f0'}`,
         }}
       >
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <h3
             style={{
               margin: 0,
@@ -357,6 +407,34 @@ export const InlineCommentThread: React.FC<InlineCommentThreadProps> = ({
           >
             ×
           </button>
+        </div>
+
+        {/* Highlighted text context */}
+        <div
+          style={{
+            padding: '8px 12px',
+            borderRadius: '8px',
+            background: isDarkMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(254, 240, 138, 0.3)',
+            border: `1px solid ${isDarkMode ? 'rgba(59, 130, 246, 0.2)' : 'rgba(251, 191, 36, 0.3)'}`,
+            marginBottom: '12px',
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontSize: '13px',
+              color: isDarkMode ? '#e2e8f0' : '#0f172a',
+              fontStyle: 'italic',
+              lineHeight: '1.4',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
+            "{highlight.highlightedText}"
+          </p>
         </div>
 
         {/* Filters */}
@@ -498,11 +576,66 @@ export const InlineCommentThread: React.FC<InlineCommentThreadProps> = ({
             </button>
           </div>
         )}
-        <div className="flex gap-2">
+
+        {/* Mention autocomplete */}
+        {showMentions && filteredMembers.length > 0 && (
+          <div
+            style={{
+              position: 'relative',
+              marginBottom: '8px',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '0',
+                left: '0',
+                right: '0',
+                maxHeight: '150px',
+                overflowY: 'auto',
+                background: isDarkMode ? 'rgba(30, 41, 59, 0.95)' : '#ffffff',
+                border: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.3)' : '#cbd5e1'}`,
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                zIndex: 10,
+              }}
+            >
+              {filteredMembers.map((member) => (
+                <button
+                  key={member.id}
+                  onClick={() => insertMention(member.name)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    textAlign: 'left',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    color: isDarkMode ? '#f1f5f9' : '#0f172a',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = isDarkMode
+                      ? 'rgba(59, 130, 246, 0.2)'
+                      : 'rgba(59, 130, 246, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'none';
+                  }}
+                >
+                  @{member.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-2" style={{ position: 'relative' }}>
           <textarea
             ref={textareaRef}
             value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
+            onChange={(e) => handleTextChange(e.target.value)}
             placeholder="Add a comment... (Use @ to mention)"
             style={{
               flex: 1,
