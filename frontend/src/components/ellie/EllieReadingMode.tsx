@@ -86,7 +86,7 @@ export const EllieReadingMode: React.FC<EllieReadingModeProps> = ({
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Calculate initial position based on viewport
+  // Calculate initial position based on viewport and content
   useEffect(() => {
     const calculatePosition = () => {
       if (isMobile) {
@@ -96,9 +96,32 @@ export const EllieReadingMode: React.FC<EllieReadingModeProps> = ({
           y: window.innerHeight - 120
         }
       } else {
-        // Desktop: left margin at comfortable reading position
+        // Desktop: Position relative to content container
+        // Find the main content area to position Ellie near it
+        const contentContainer = document.querySelector('.journal-view-container, .journal-view-content')
+
+        if (contentContainer) {
+          const contentRect = contentContainer.getBoundingClientRect()
+          // Position to the left of content, with some margin
+          const idealX = Math.max(20, contentRect.left - 160) // 160px = Ellie width + margin
+
+          // If content is too far left (narrow screen), position inside
+          // If content is centered (ultrawide), position just to the left
+          const x = idealX > 20 ? idealX : Math.min(contentRect.left + 20, 40)
+
+          return {
+            x,
+            y: Math.max(200, window.innerHeight * 0.3)
+          }
+        }
+
+        // Fallback: Position at a reasonable distance from left on ultrawide
+        // Use max-width typical of content containers (1200-1400px)
+        const estimatedContentLeft = (window.innerWidth - 1200) / 2
+        const x = Math.max(20, Math.min(estimatedContentLeft - 160, window.innerWidth * 0.1))
+
         return {
-          x: 40,
+          x,
           y: Math.max(200, window.innerHeight * 0.3)
         }
       }
