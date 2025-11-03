@@ -7,8 +7,10 @@ import { getEmotionById } from '../data/emotionData'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { DisplaySection } from '../../../lib/journal/types'
 import type { Template } from '../types/template.types'
-import { SmartEllie } from '../../../components/ellie'
+import { EllieReadingMode } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
+import { useEllieReadingCompanion } from '../hooks/useEllieReadingCompanion'
+import { useReadingProgress } from '../hooks/useReadingProgress'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { HighlightableText } from '../components/HighlightableText'
 import { CommentThread } from '../components/CommentThread'
@@ -59,11 +61,24 @@ export const JournalViewPage: React.FC = () => {
     reconnect
   } = useHighlightsRealtime(spaceId || '', journalId || '')
 
-  // Ellie companion - just use mood state, SmartEllie manages position
-  const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('happy')
-
   // Ellie customization
   const { customization } = useEllieCustomizationContext()
+
+  // Ellie reading companion
+  const readingCompanion = useEllieReadingCompanion(
+    template,
+    displaySections.map(s => ({ id: s.id, title: s.title })),
+    journal?.content || '',
+    journal?.emotions
+  )
+
+  // Reading progress tracking
+  useReadingProgress({
+    onScrollProgress: readingCompanion.handleScrollProgress,
+    onSectionVisible: readingCompanion.handleSectionVisible,
+    throttleDelay: 100,
+    visibilityThreshold: 0.3
+  })
 
   // Handler to open highlight and load its comments
   const handleHighlightClick = (highlight: Highlight) => {
@@ -376,7 +391,11 @@ ${content}
           // Render template sections with highlighting
           <div className="template-content">
             {displaySections.map((section) => (
-              <div key={section.id} className="template-section template-section-compact">
+              <div
+                key={section.id}
+                className="template-section template-section-compact"
+                data-section-id={section.id}
+              >
                 <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
                 <div className="template-section-content">
                   {section.type === 'q_and_a' ? (
@@ -512,14 +531,17 @@ ${content}
         </div>
       </div>
 
-      {/* AI Assistant Dock */}
-      {showAIDock && (
+      {/* AI Assistant Dock - can be opened by Ellie or user */}
+      {(showAIDock || readingCompanion.isChatOpen) && (
         <AIAssistantDock
           journalContent={journal.content}
           journalTitle={journal.title}
           journalId={journalId}
           emotions={journal.emotions?.map(id => getEmotionById(id)?.label).filter((label): label is string => !!label)}
-          onClose={() => setShowAIDock(false)}
+          onClose={() => {
+            setShowAIDock(false)
+            readingCompanion.closeChat()
+          }}
         />
       )}
 
@@ -536,19 +558,26 @@ ${content}
         />
       )}
 
-      {/* Ellie companion with smart positioning */}
-      <SmartEllie
-        mood={mood}
-        showThoughtBubble={true}
-        thoughtText={journal.wordCount > 500 ? "Great writing! 📝" : "Nice entry! 😊"}
-        size="md"
-        onClick={() => setMood(mood === 'playful' ? 'happy' : 'playful')}
+      {/* Ellie reading companion */}
+      <EllieReadingMode
+        mood={readingCompanion.mood}
+        thoughtText={readingCompanion.thoughtText}
+        particleEffect={readingCompanion.particleEffect}
+        companionState={readingCompanion.companionState}
+        onClick={() => {
+          // Click Ellie to open chat or get insights
+          if (readingCompanion.companionState === 'resting') {
+            readingCompanion.offerInsight()
+          } else {
+            readingCompanion.openChat()
+          }
+        }}
+        onDismiss={() => readingCompanion.setCompanionState('hidden')}
+        onRestore={() => readingCompanion.setCompanionState('resting')}
         furColor={customization.furColor}
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
-        enableSmartPositioning={true}
-        showControlPanel={true}
       />
     </div>
   )
