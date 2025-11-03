@@ -299,6 +299,9 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           isEdited: false,
+          isResolved: false,
+          resolvedBy: undefined,
+          resolvedAt: undefined,
         };
 
         setComments((prev) => ({
