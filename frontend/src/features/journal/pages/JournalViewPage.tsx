@@ -21,11 +21,19 @@ import { QASectionDisplay } from '../components/sections/QASectionDisplay'
 import { CheckboxSectionDisplay } from '../components/sections/CheckboxSectionDisplay'
 import { ScaleSectionDisplay } from '../components/sections/ScaleSectionDisplay'
 import { TableSectionDisplay } from '../components/sections/TableSectionDisplay'
+import { SectionNavigator } from '../components/SectionNavigator'
+import { StickyHeaderSection } from '../components/StickyHeaderSection'
+import { useSectionCollapse } from '../hooks/useSectionCollapse'
+import { useReadingProgress } from '../hooks/useReadingProgress'
+import { useReadingPositionPersistence } from '../hooks/useReadingPositionPersistence'
+import { ResumeReadingBanner } from '../components/ResumeReadingBanner'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
 import '../styles/ai-assistant-dock.css'
 import '../styles/journal-compact.css'
+import '../styles/sticky-header.css'
+import '../styles/resume-banner.css'
 
 /**
  * Page for viewing a single journal entry
@@ -41,6 +49,34 @@ export const JournalViewPage: React.FC = () => {
   const [showAIDock, setShowAIDock] = useState(false)
   const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
+  const [showResumeBanner, setShowResumeBanner] = useState(true)
+
+  // Section collapse/expand state
+  const {
+    isCollapsed,
+    toggleCollapse,
+    getWordCount,
+  } = useSectionCollapse(`journal-${journalId}-sections`)
+
+  // Reading progress tracking for position persistence
+  const { readingProgress } = useReadingProgress(
+    journal?.content || '',
+    displaySections,
+    { wordsPerMinute: 250 }
+  )
+
+  // Reading position persistence (auto-save and restore)
+  const {
+    savedPosition,
+    hasUnreadContent,
+    clearPosition,
+    isRestoring
+  } = useReadingPositionPersistence({
+    journalId: journalId || '',
+    spaceId: spaceId || '',
+    readingProgress,
+    enabled: Boolean(journalId && spaceId && journal)
+  })
 
   // Highlights and comments real-time feature
   const {
@@ -70,6 +106,32 @@ export const JournalViewPage: React.FC = () => {
     setSelectedHighlight(highlight)
     // Fetch comments for this highlight
     fetchComments(highlight.id)
+  }
+
+  // Resume reading handlers
+  const handleResume = () => {
+    if (savedPosition) {
+      // Scroll to saved position with smooth behavior
+      window.scrollTo({
+        top: savedPosition.scrollPosition,
+        behavior: 'smooth'
+      })
+      setShowResumeBanner(false)
+    }
+  }
+
+  const handleStartFromBeginning = async () => {
+    // Clear the saved position and scroll to top
+    await clearPosition()
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
+    setShowResumeBanner(false)
+  }
+
+  const handleDismissBanner = () => {
+    setShowResumeBanner(false)
   }
 
   useEffect(() => {
@@ -230,6 +292,16 @@ ${content}
         ← Back
       </button>
 
+      {/* Resume Reading Banner */}
+      {!isRestoring && hasUnreadContent && showResumeBanner && savedPosition && (
+        <ResumeReadingBanner
+          position={savedPosition}
+          onResume={handleResume}
+          onStartFromBeginning={handleStartFromBeginning}
+          onDismiss={handleDismissBanner}
+        />
+      )}
+
       {/* Compact Header */}
       <div className="journal-header-compact">
         {/* Title Row */}
@@ -373,12 +445,33 @@ ${content}
 
       <div className="journal-view-content">
         {template && displaySections.length > 0 ? (
-          // Render template sections with highlighting
+          // Render template sections with sticky headers and highlighting
           <div className="template-content">
-            {displaySections.map((section) => (
-              <div key={section.id} className="template-section template-section-compact">
-                <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
-                <div className="template-section-content">
+            {displaySections.map((section, index) => {
+              // Get section icon - use template icon or default based on section type
+              const sectionIcon = template?.icon || (
+                section.type === 'q_and_a' ? '❓' :
+                section.type === 'list' ? '📋' :
+                section.type === 'checkbox' ? '✅' :
+                section.type === 'table' ? '📊' :
+                section.type === 'scale' ? '📈' :
+                '📝'
+              )
+              const wordCount = getWordCount(section.content)
+              const templateSection = template?.sections.find(s => s.id === section.id)
+
+              return (
+                <StickyHeaderSection
+                  key={section.id}
+                  sectionId={section.id}
+                  title={section.title}
+                  icon={sectionIcon}
+                  index={index}
+                  total={displaySections.length}
+                  isCollapsed={isCollapsed(section.id)}
+                  onToggleCollapse={() => toggleCollapse(section.id)}
+                  wordCount={wordCount}
+                >
                   {section.type === 'q_and_a' ? (
                     // Render Q&A section with highlighting support
                     <QASectionDisplay
@@ -425,14 +518,14 @@ ${content}
                     // Render Table section (no highlighting for tables)
                     <TableSectionDisplay
                       value={section.content}
-                      config={template?.sections.find(s => s.id === section.id)?.config}
+                      config={templateSection?.config}
                       className="table-view-section"
                     />
                   ) : section.type === 'scale' ? (
                     // Render Scale section (no highlighting for numeric values)
                     <ScaleSectionDisplay
                       value={section.content}
-                      config={template?.sections.find(s => s.id === section.id)?.config}
+                      config={templateSection?.config}
                       className="scale-view-section"
                     />
                   ) : (
@@ -449,9 +542,9 @@ ${content}
                       onHighlightDelete={deleteHighlight}
                     />
                   )}
-                </div>
-              </div>
-            ))}
+                </StickyHeaderSection>
+              )
+            })}
           </div>
         ) : (
           // Render regular content with highlighting
@@ -469,6 +562,16 @@ ${content}
           />
         )}
       </div>
+
+      {/* Section Navigator - shows reading progress and allows quick navigation */}
+      {displaySections.length > 0 && (
+        <SectionNavigator
+          content={journal.content}
+          sections={displaySections}
+          options={{ wordsPerMinute: 250 }}
+          position="right"
+        />
+      )}
 
       {/* Sticky Action Bar */}
       <div className="journal-actions-sticky">
