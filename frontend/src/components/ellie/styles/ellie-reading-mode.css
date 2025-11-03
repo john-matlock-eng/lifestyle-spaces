@@ -1,0 +1,192 @@
+/* Ellie Reading Mode Styles */
+
+.ellie-reading-mode {
+  position: fixed;
+  pointer-events: auto;
+  will-change: transform, opacity;
+}
+
+/* State transitions */
+.ellie-reading-mode.resting {
+  opacity: 0.7;
+  transform: scale(0.9);
+}
+
+.ellie-reading-mode.resting:hover {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.ellie-reading-mode.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Mobile positioning */
+.ellie-reading-mode.mobile {
+  bottom: 20px;
+  right: 20px;
+  left: auto !important;
+  top: auto !important;
+}
+
+/* Desktop positioning */
+.ellie-reading-mode.desktop {
+  /* Position is controlled by inline styles */
+}
+
+/* Dismiss button */
+.ellie-dismiss-button {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-danger, #ef4444);
+  color: white;
+  border: 2px solid white;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ellie-dismiss-button:hover {
+  background: var(--color-danger-dark, #dc2626);
+  transform: scale(1.1);
+}
+
+.ellie-dismiss-button:active {
+  transform: scale(0.95);
+}
+
+/* Restore button (when hidden) */
+.ellie-restore-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--color-primary, #4f46e5);
+  color: white;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 900;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+.ellie-restore-button:hover {
+  background: var(--color-primary-dark, #4338ca);
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.ellie-restore-button:active {
+  transform: scale(0.95);
+}
+
+.ellie-restore-icon {
+  display: inline-block;
+  animation: wave 1.5s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(15deg);
+  }
+  75% {
+    transform: rotate(-15deg);
+  }
+}
+
+/* Smooth position transitions */
+.ellie-reading-mode {
+  transition:
+    left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    top 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+/* Ensure Ellie doesn't block content */
+.ellie-reading-mode.resting {
+  pointer-events: auto;
+}
+
+.ellie-reading-mode.active {
+  pointer-events: auto;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .ellie-restore-button {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .ellie-dismiss-button {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .ellie-dismiss-button {
+    border-color: var(--color-bg-dark, #1f2937);
+  }
+
+  .ellie-restore-button {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .ellie-restore-button:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Accessibility */
+.ellie-dismiss-button:focus-visible,
+.ellie-restore-button:focus-visible {
+  outline: 2px solid var(--color-primary, #4f46e5);
+  outline-offset: 2px;
+}
+
+/* Performance optimizations */
+.ellie-reading-mode,
+.ellie-restore-button {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
