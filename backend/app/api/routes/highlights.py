@@ -280,3 +280,49 @@ async def delete_comment(
         )
 
     return None
+
+
+@router.patch(
+    "/spaces/{space_id}/comments/{comment_id}/resolve",
+    response_model=CommentModel,
+)
+async def resolve_comment(
+    space_id: str,
+    comment_id: str,
+    resolved: bool,
+    current_user: dict = Depends(get_current_user),
+):
+    """Resolve or unresolve a comment thread."""
+    comment_service = CommentService()
+    highlight_service = HighlightService()
+    ws_manager = get_websocket_manager()
+
+    user_id = current_user.get("sub") or current_user.get("userId")
+    user_name = current_user.get("profile", {}).get("display_name", "Unknown User")
+
+    comment = await comment_service.resolve_comment(
+        space_id=space_id,
+        comment_id=comment_id,
+        user_id=user_id,
+        user_name=user_name,
+        resolved=resolved,
+    )
+
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comment not found",
+        )
+
+    # Get highlight to find journal_entry_id for WebSocket broadcast
+    highlight = await highlight_service.get_highlight(space_id, comment.highlight_id)
+    if highlight:
+        # Broadcast to WebSocket clients
+        await ws_manager.broadcast_message(
+            journal_entry_id=highlight.journal_entry_id,
+            message_type="RESOLVE_COMMENT",
+            payload=comment.dict(by_alias=True),
+            sender_id=user_id
+        )
+
+    return comment

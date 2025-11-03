@@ -299,6 +299,9 @@ class CommentService:
             "createdAt": now,
             "updatedAt": now,
             "isEdited": False,
+            "isResolved": False,
+            "resolvedBy": None,
+            "resolvedAt": None,
         }
 
         self.db.put_item(item)
@@ -413,6 +416,47 @@ class CommentService:
 
         return True
 
+    async def resolve_comment(
+        self, space_id: str, comment_id: str, user_id: str, user_name: str, resolved: bool
+    ) -> Optional[CommentModel]:
+        """Resolve or unresolve a comment thread."""
+        # Get the comment
+        item = self.db.get_item(
+            pk=f"SPACE#{space_id}",
+            sk=f"COMMENT#{comment_id}"
+        )
+
+        if not item:
+            return None
+
+        # Update the resolution status
+        now = datetime.utcnow().isoformat()
+        updates = {
+            "isResolved": resolved,
+            "updatedAt": now,
+        }
+
+        if resolved:
+            updates["resolvedBy"] = user_id
+            updates["resolvedAt"] = now
+        else:
+            updates["resolvedBy"] = None
+            updates["resolvedAt"] = None
+
+        self.db.update_item(
+            pk=f"SPACE#{space_id}",
+            sk=f"COMMENT#{comment_id}",
+            updates=updates
+        )
+
+        # Return updated comment
+        comment = self._item_to_comment(item)
+        comment.is_resolved = resolved
+        comment.resolved_by = user_id if resolved else None
+        comment.resolved_at = now if resolved else None
+        comment.updated_at = now
+        return comment
+
     def _item_to_comment(self, item: dict) -> CommentModel:
         """Convert DynamoDB item to CommentModel."""
         return CommentModel(
@@ -427,4 +471,7 @@ class CommentService:
             createdAt=item["createdAt"],
             updatedAt=item["updatedAt"],
             isEdited=item.get("isEdited", False),
+            isResolved=item.get("isResolved", False),
+            resolvedBy=item.get("resolvedBy"),
+            resolvedAt=item.get("resolvedAt"),
         )

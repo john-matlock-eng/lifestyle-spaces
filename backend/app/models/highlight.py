@@ -59,6 +59,9 @@ class CommentModel(BaseModel):
     created_at: str = Field(alias="createdAt")
     updated_at: str = Field(alias="updatedAt")
     is_edited: bool = Field(default=False, alias="isEdited")
+    is_resolved: bool = Field(default=False, alias="isResolved")
+    resolved_by: Optional[str] = Field(None, alias="resolvedBy")
+    resolved_at: Optional[str] = Field(None, alias="resolvedAt")
 
     class Config:
         populate_by_name = True
@@ -156,6 +159,9 @@ def comment_to_db_item(comment: CommentModel) -> dict:
         "createdAt": comment.created_at,
         "updatedAt": comment.updated_at,
         "isEdited": comment.is_edited,
+        "isResolved": comment.is_resolved,
+        "resolvedBy": comment.resolved_by,
+        "resolvedAt": comment.resolved_at,
     }
 
 
@@ -173,4 +179,7 @@ def db_item_to_comment(item: dict) -> CommentModel:
         createdAt=item["createdAt"],
         updatedAt=item["updatedAt"],
         isEdited=item.get("isEdited", False),
+        isResolved=item.get("isResolved", False),
+        resolvedBy=item.get("resolvedBy"),
+        resolvedAt=item.get("resolvedAt"),
     )

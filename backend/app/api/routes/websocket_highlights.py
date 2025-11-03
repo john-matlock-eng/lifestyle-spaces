@@ -44,6 +44,7 @@ async def websocket_endpoint(
         - NEW_COMMENT: New comment added
         - UPDATE_COMMENT: Comment updated
         - DELETE_COMMENT: Comment deleted
+        - RESOLVE_COMMENT: Comment resolved/unresolved
         - USER_PRESENCE: User presence update
     """
     manager = get_websocket_manager()
