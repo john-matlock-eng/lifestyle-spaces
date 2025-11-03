@@ -107,7 +107,7 @@ export interface HighlightableTextProps {
   journalEntryId: string;
   spaceId: string;
   onHighlightCreate: (selection: HighlightSelection) => void;
-  onHighlightClick: (highlight: Highlight) => void;
+  onHighlightClick: (highlight: Highlight, event?: React.MouseEvent) => void;
   isReadOnly?: boolean;
   className?: string;
 }

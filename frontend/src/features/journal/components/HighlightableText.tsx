@@ -26,7 +26,7 @@ interface HighlightableTextProps {
   spaceId: string;
   sectionId?: string; // Optional section ID for template journals
   onHighlightCreate: (selection: HighlightSelection, color: HighlightColor) => void;
-  onHighlightClick: (highlight: Highlight) => void;
+  onHighlightClick: (highlight: Highlight, event?: React.MouseEvent) => void;
   onHighlightUpdate?: (highlightId: string, selection: HighlightSelection) => void;
   onHighlightDelete?: (highlightId: string) => void;
   isReadOnly?: boolean;
