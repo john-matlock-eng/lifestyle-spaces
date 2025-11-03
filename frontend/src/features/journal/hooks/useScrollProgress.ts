@@ -19,7 +19,7 @@ interface UseScrollProgressOptions {
   /** Scroll threshold for hidden state (default: 500px) */
   hideThreshold?: number
   /** Content element ref to calculate read progress */
-  contentRef?: React.RefObject<HTMLElement>
+  contentRef?: React.RefObject<HTMLElement | null>
 }
 
 /**
