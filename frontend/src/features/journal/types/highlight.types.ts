@@ -35,6 +35,9 @@ export interface Comment {
   createdAt: string;
   updatedAt: string;
   isEdited: boolean;
+  isResolved: boolean;
+  resolvedBy?: string;
+  resolvedAt?: string;
 }
 
 export interface CommentThread {
@@ -92,6 +95,7 @@ export type HighlightWebSocketMessage =
   | { type: 'comment:created'; data: Comment }
   | { type: 'comment:updated'; data: Comment }
   | { type: 'comment:deleted'; data: { id: string } }
+  | { type: 'comment:resolved'; data: Comment }
   | { type: 'presence:join'; data: PresenceUser }
   | { type: 'presence:leave'; data: { userId: string } }
   | { type: 'presence:typing'; data: { userId: string; highlightId: string } };
@@ -103,7 +107,7 @@ export interface HighlightableTextProps {
   journalEntryId: string;
   spaceId: string;
   onHighlightCreate: (selection: HighlightSelection) => void;
-  onHighlightClick: (highlight: Highlight) => void;
+  onHighlightClick: (highlight: Highlight, event?: React.MouseEvent) => void;
   isReadOnly?: boolean;
   className?: string;
 }
@@ -122,7 +126,10 @@ export interface CommentThreadProps {
   currentUserId: string;
   onAddComment: (text: string, parentId?: string) => void;
   onDeleteComment: (commentId: string) => void;
+  onResolveComment: (commentId: string, resolved: boolean) => void;
   onClose: () => void;
+  filterMode?: 'all' | 'mine' | 'collaborators';
+  onFilterChange?: (mode: 'all' | 'mine' | 'collaborators') => void;
 }
 
 export interface HighlightsSidebarProps {

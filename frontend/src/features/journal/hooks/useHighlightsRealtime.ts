@@ -299,6 +299,9 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           isEdited: false,
+          isResolved: false,
+          resolvedBy: undefined,
+          resolvedAt: undefined,
         };
 
         setComments((prev) => ({
@@ -386,6 +389,37 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
     // No-op - WebSocket not enabled
   }, []);
 
+  // Resolve or unresolve a comment
+  const resolveComment = useCallback(
+    async (highlightId: string, commentId: string, resolved: boolean) => {
+      try {
+        const headers = await getAuthHeaders();
+        const response = await axios.patch<Comment>(
+          `${API_BASE_URL}/api/highlights/spaces/${spaceId}/comments/${commentId}/resolve`,
+          null,
+          {
+            headers,
+            params: { resolved },
+          }
+        );
+
+        setComments((prev) => ({
+          ...prev,
+          [highlightId]: (prev[highlightId] || []).map((c) =>
+            c.id === commentId ? response.data : c
+          ),
+        }));
+
+        return response.data;
+      } catch (err) {
+        console.error('Error resolving comment:', err);
+        setError('Failed to resolve comment');
+        return null;
+      }
+    },
+    [spaceId]
+  );
+
   // Fetch highlights on mount
   useEffect(() => {
     fetchHighlights();
@@ -405,6 +439,7 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
     deleteHighlight,
     createComment,
     deleteComment,
+    resolveComment,
     fetchComments,
     refreshHighlights: fetchHighlights,
     notifyTyping,

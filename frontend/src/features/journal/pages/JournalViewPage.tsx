@@ -11,7 +11,7 @@ import { SmartEllie } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { HighlightableText } from '../components/HighlightableText'
-import { CommentThread } from '../components/CommentThread'
+import CommentThreadPopover from '../components/CommentThreadPopover'
 import { PresenceAvatars } from '../components/PresenceAvatars'
 import { ConnectionStatus } from '../components/ConnectionStatus'
 import { useHighlightsRealtime } from '../hooks/useHighlightsRealtime'
@@ -40,6 +40,7 @@ export const JournalViewPage: React.FC = () => {
   const [displaySections, setDisplaySections] = useState<DisplaySection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
   const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
+  const [filterMode, setFilterMode] = useState<'all' | 'mine' | 'collaborators'>('all')
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
 
   // Highlights and comments real-time feature
@@ -55,6 +56,7 @@ export const JournalViewPage: React.FC = () => {
     deleteHighlight,
     createComment,
     deleteComment,
+    resolveComment,
     fetchComments,
     reconnect
   } = useHighlightsRealtime(spaceId || '', journalId || '')
@@ -523,16 +525,20 @@ ${content}
         />
       )}
 
-      {/* Comment Thread - Renders as sliding panel with its own backdrop */}
+      {/* Comment Thread Popover - Desktop: margin popover, Mobile: bottom sheet */}
       {selectedHighlight && (
-        <CommentThread
+        <CommentThreadPopover
           highlight={selectedHighlight}
           comments={comments[selectedHighlight.id] || []}
           spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
           currentUserId={user?.userId || ''}
           onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
           onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
+          onResolveComment={(commentId, resolved) => resolveComment(selectedHighlight.id, commentId, resolved)}
           onClose={() => setSelectedHighlight(null)}
+          filterMode={filterMode}
+          onFilterChange={setFilterMode}
+          open={true}
         />
       )}
 
