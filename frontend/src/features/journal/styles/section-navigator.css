@@ -15,7 +15,7 @@
   border: 2px solid var(--border, #e5e7eb);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  z-index: 999;
+  z-index: 40; /* Below app header (100) and banner (50) */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -57,7 +57,7 @@
   border: 1px solid var(--border, #e5e7eb);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  z-index: 998;
+  z-index: 30; /* Below app header (100), banner (50), and toggle (40) */
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease;
@@ -338,7 +338,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 997;
+  z-index: 20; /* Below navigator (30) and other UI elements */
   animation: fadeIn 0.3s ease;
 }
 
