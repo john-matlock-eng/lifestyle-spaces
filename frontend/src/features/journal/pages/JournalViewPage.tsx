@@ -68,7 +68,7 @@ export const JournalViewPage: React.FC = () => {
   const { customization } = useEllieCustomizationContext()
 
   // Handler to open highlight and load its comments
-  const handleHighlightClick = (highlight: Highlight, _event?: React.MouseEvent) => {
+  const handleHighlightClick = (highlight: Highlight) => {
     setSelectedHighlight(highlight)
     // Fetch comments for this highlight
     fetchComments(highlight.id)

@@ -46,7 +46,7 @@ type FilterMode = 'all' | 'mine' | 'collaborators';
 const CommentThreadPopover: React.FC<CommentThreadPopoverProps> = ({
   highlight,
   comments,
-  spaceMembers: _, // Reserved for future @mention autocomplete
+  // spaceMembers reserved for future @mention autocomplete
   currentUserId,
   onAddComment,
   onDeleteComment,
@@ -54,7 +54,7 @@ const CommentThreadPopover: React.FC<CommentThreadPopoverProps> = ({
   onClose,
   filterMode = 'all',
   onFilterChange,
-  anchorRect: __, // Reserved for visual connector line positioning
+  // anchorRect reserved for visual connector line positioning
   open,
 }) => {
   const [isMobile, setIsMobile] = useState(false);
