@@ -309,12 +309,29 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
 
   // Handle viewing comments for a highlight
   const handleViewComments = useCallback(() => {
-    if (clickedHighlight) {
-      onHighlightClick(clickedHighlight);
+    if (clickedHighlight && highlightMenuPosition) {
+      // Create a synthetic event with the menu position
+      const syntheticEvent = {
+        target: {
+          getBoundingClientRect: () => ({
+            left: highlightMenuPosition.x,
+            top: highlightMenuPosition.y - 8, // Subtract the offset we added
+            bottom: highlightMenuPosition.y,
+            right: highlightMenuPosition.x,
+            width: 0,
+            height: 0,
+            x: highlightMenuPosition.x,
+            y: highlightMenuPosition.y - 8,
+            toJSON: () => ({})
+          })
+        }
+      } as unknown as React.MouseEvent;
+
+      onHighlightClick(clickedHighlight, syntheticEvent);
       setClickedHighlight(null);
       setHighlightMenuPosition(null);
     }
-  }, [clickedHighlight, onHighlightClick]);
+  }, [clickedHighlight, highlightMenuPosition, onHighlightClick]);
 
   // Handle entering edit mode for a highlight
   const handleEditSelection = useCallback(() => {

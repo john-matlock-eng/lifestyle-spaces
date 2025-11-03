@@ -11,7 +11,7 @@ import { SmartEllie } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { HighlightableText } from '../components/HighlightableText'
-import { CommentThread } from '../components/CommentThread'
+import { InlineCommentThread } from '../components/InlineCommentThread'
 import { PresenceAvatars } from '../components/PresenceAvatars'
 import { ConnectionStatus } from '../components/ConnectionStatus'
 import { useHighlightsRealtime } from '../hooks/useHighlightsRealtime'
@@ -40,6 +40,7 @@ export const JournalViewPage: React.FC = () => {
   const [displaySections, setDisplaySections] = useState<DisplaySection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
   const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
+  const [commentPosition, setCommentPosition] = useState({ top: 0, left: 0 })
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
 
   // Highlights and comments real-time feature
@@ -55,6 +56,7 @@ export const JournalViewPage: React.FC = () => {
     deleteHighlight,
     createComment,
     deleteComment,
+    resolveComment,
     fetchComments,
     reconnect
   } = useHighlightsRealtime(spaceId || '', journalId || '')
@@ -66,8 +68,24 @@ export const JournalViewPage: React.FC = () => {
   const { customization } = useEllieCustomizationContext()
 
   // Handler to open highlight and load its comments
-  const handleHighlightClick = (highlight: Highlight) => {
+  const handleHighlightClick = (highlight: Highlight, event?: React.MouseEvent) => {
     setSelectedHighlight(highlight)
+
+    // Calculate position for inline comment thread
+    if (event) {
+      const rect = (event.target as HTMLElement).getBoundingClientRect()
+      setCommentPosition({
+        top: rect.bottom + window.scrollY + 10,
+        left: rect.left + window.scrollX
+      })
+    } else {
+      // Fallback position if no event provided
+      setCommentPosition({
+        top: window.scrollY + 100,
+        left: window.scrollX + 100
+      })
+    }
+
     // Fetch comments for this highlight
     fetchComments(highlight.id)
   }
@@ -523,15 +541,17 @@ ${content}
         />
       )}
 
-      {/* Comment Thread - Renders as sliding panel with its own backdrop */}
+      {/* Inline Comment Thread - Renders inline at text selection point */}
       {selectedHighlight && (
-        <CommentThread
+        <InlineCommentThread
           highlight={selectedHighlight}
           comments={comments[selectedHighlight.id] || []}
           spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
           currentUserId={user?.userId || ''}
+          position={commentPosition}
           onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
           onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
+          onResolveComment={(commentId, resolved) => resolveComment(selectedHighlight.id, commentId, resolved)}
           onClose={() => setSelectedHighlight(null)}
         />
       )}
