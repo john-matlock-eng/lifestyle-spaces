@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
@@ -21,11 +21,14 @@ import { QASectionDisplay } from '../components/sections/QASectionDisplay'
 import { CheckboxSectionDisplay } from '../components/sections/CheckboxSectionDisplay'
 import { ScaleSectionDisplay } from '../components/sections/ScaleSectionDisplay'
 import { TableSectionDisplay } from '../components/sections/TableSectionDisplay'
+import { JournalHeaderCompact } from '../components/JournalHeaderCompact'
+import { useScrollProgress } from '../hooks/useScrollProgress'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
 import '../styles/ai-assistant-dock.css'
 import '../styles/journal-compact.css'
+import '../styles/journal-header-progressive.css'
 
 /**
  * Page for viewing a single journal entry
@@ -41,6 +44,7 @@ export const JournalViewPage: React.FC = () => {
   const [showAIDock, setShowAIDock] = useState(false)
   const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
+  const contentRef = useRef<HTMLDivElement>(null)
 
   // Highlights and comments real-time feature
   const {
@@ -58,6 +62,13 @@ export const JournalViewPage: React.FC = () => {
     fetchComments,
     reconnect
   } = useHighlightsRealtime(spaceId || '', journalId || '')
+
+  // Scroll progress tracking for header transitions
+  const { headerState, readProgress } = useScrollProgress({
+    contentRef,
+    compactThreshold: 100,
+    hideThreshold: 500
+  })
 
   // Ellie companion - just use mood state, SmartEllie manages position
   const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('happy')
@@ -225,142 +236,34 @@ ${content}
   const totalComments = Object.values(comments).reduce((sum, arr) => sum + arr.length, 0)
 
   return (
-    <div className={`journal-view-container compact density-${density} has-sticky-actions`}>
-      <button onClick={handleBack} className="button-secondary" style={{ marginBottom: '12px' }}>
-        ← Back
-      </button>
+    <>
+      {/* Progressive Disclosure Header - Fixed at top */}
+      <JournalHeaderCompact
+        title={journal.title}
+        content={journal.content}
+        template={template}
+        author={journal.author}
+        createdAt={journal.createdAt}
+        updatedAt={journal.updatedAt}
+        isPinned={journal.isPinned}
+        emotions={journal.emotions}
+        tags={journal.tags}
+        wordCount={journal.wordCount}
+        highlightCount={highlightCount}
+        commentCount={totalComments}
+        headerState={headerState}
+        readProgress={readProgress}
+        density={density}
+        onDensityChange={setDensity}
+        readTime={calculateReadTime(journal.wordCount)}
+      />
 
-      {/* Compact Header */}
-      <div className="journal-header-compact">
-        {/* Title Row */}
-        <div className="journal-title-row">
-          <div className="journal-title-content">
-            <h1 className="journal-title-compact">
-              {journal.title}
-              {journal.isPinned && <span style={{ marginLeft: '8px' }}>📌</span>}
-            </h1>
-            {template && (
-              <div className="journal-template-badge-compact">
-                <span>{template.icon}</span>
-                <span>{template.name}</span>
-              </div>
-            )}
-          </div>
+      <div className={`journal-view-container compact density-${density} has-sticky-actions has-progressive-header`}>
+        <button onClick={handleBack} className="button-secondary" style={{ marginBottom: '12px' }}>
+          ← Back
+        </button>
 
-          {/* Density Toggle */}
-          <div className="density-toggle">
-            <button
-              className={`density-option ${density === 'compact' ? 'active' : ''}`}
-              onClick={() => setDensity('compact')}
-              title="Compact view"
-            >
-              Compact
-            </button>
-            <button
-              className={`density-option ${density === 'comfortable' ? 'active' : ''}`}
-              onClick={() => setDensity('comfortable')}
-              title="Comfortable view"
-            >
-              Comfortable
-            </button>
-            <button
-              className={`density-option ${density === 'spacious' ? 'active' : ''}`}
-              onClick={() => setDensity('spacious')}
-              title="Spacious view"
-            >
-              Spacious
-            </button>
-          </div>
-        </div>
-
-        {/* Metadata Pills */}
-        <div className="journal-meta-pills">
-          {journal.author && (
-            <div className="journal-meta-pill">
-              <span>👤</span>
-              <span>{journal.author.displayName}</span>
-            </div>
-          )}
-
-          <div className="journal-meta-pill">
-            <span>📅</span>
-            <span>{formatDate(journal.createdAt)}</span>
-          </div>
-
-          {journal.updatedAt !== journal.createdAt && (
-            <div className="journal-meta-pill">
-              <span>✏️</span>
-              <span>Updated {formatDate(journal.updatedAt)}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Inline Emotions and Tags */}
-        {((journal.emotions && journal.emotions.length > 0) || (journal.tags && journal.tags.length > 0)) && (
-          <div className="journal-meta-inline">
-            {journal.emotions && journal.emotions.length > 0 && (
-              <>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>💭</span>
-                {journal.emotions.map((emotionId) => {
-                  const emotion = getEmotionById(emotionId)
-                  if (!emotion) return null
-                  return (
-                    <span
-                      key={emotionId}
-                      className="emotion-badge"
-                      style={{
-                        backgroundColor: emotion.color + '20',
-                        borderColor: emotion.color,
-                        color: emotion.color,
-                      }}
-                    >
-                      {emotion.label}
-                    </span>
-                  )
-                })}
-              </>
-            )}
-
-            {journal.tags && journal.tags.length > 0 && (
-              <>
-                <span className="journal-meta-separator">•</span>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>🏷️</span>
-                {journal.tags.map((tag) => (
-                  <span key={tag} className="journal-tag">
-                    {tag}
-                  </span>
-                ))}
-              </>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Quick Stats Bar */}
-      <div className="journal-stats-bar">
-        <div className="journal-stat-item">
-          <span>📝</span>
-          <span className="journal-stat-value">{journal.wordCount}</span>
-          <span className="journal-stat-label">words</span>
-        </div>
-        <div className="journal-stat-item">
-          <span>⏱️</span>
-          <span className="journal-stat-value">{calculateReadTime(journal.wordCount)}</span>
-          <span className="journal-stat-label">read</span>
-        </div>
-        <div className="journal-stat-item">
-          <span>🎨</span>
-          <span className="journal-stat-value">{highlightCount}</span>
-          <span className="journal-stat-label">{highlightCount === 1 ? 'highlight' : 'highlights'}</span>
-        </div>
-        <div className="journal-stat-item">
-          <span>💬</span>
-          <span className="journal-stat-value">{totalComments}</span>
-          <span className="journal-stat-label">{totalComments === 1 ? 'comment' : 'comments'}</span>
-        </div>
-      </div>
-
-      {/* Presence and Connection Status */}
+        {/* Presence and Connection Status */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <PresenceAvatars activeUsers={activeUsers} maxVisible={5} />
         <ConnectionStatus
@@ -371,7 +274,7 @@ ${content}
         />
       </div>
 
-      <div className="journal-view-content">
+      <div ref={contentRef} className="journal-view-content">
         {template && displaySections.length > 0 ? (
           // Render template sections with highlighting
           <div className="template-content">
@@ -550,6 +453,7 @@ ${content}
         enableSmartPositioning={true}
         showControlPanel={true}
       />
-    </div>
+      </div>
+    </>
   )
 }
