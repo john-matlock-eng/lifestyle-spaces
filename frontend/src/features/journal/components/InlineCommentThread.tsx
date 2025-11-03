@@ -84,9 +84,9 @@ const highlightMentions = (text: string, isDarkMode: boolean = false): React.Rea
 };
 
 export const InlineCommentThread: React.FC<InlineCommentThreadProps> = ({
-  highlight,
+  highlight: _highlight,
   comments,
-  spaceMembers,
+  spaceMembers: _spaceMembers,
   currentUserId,
   position,
   onAddComment,
