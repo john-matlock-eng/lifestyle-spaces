@@ -75,14 +75,18 @@ describe('useReadingPositionPersistence', () => {
   })
 
   describe('Initialization', () => {
-    it('should initialize with default state', () => {
+    it('should initialize with default state', async () => {
       vi.mocked(getReadingPosition).mockResolvedValue(null)
 
       const { result } = renderHook(() => useReadingPositionPersistence(defaultProps))
 
+      // Wait for initial load to complete
+      await waitFor(() => {
+        expect(result.current.isRestoring).toBe(false)
+      })
+
       expect(result.current.savedPosition).toBeNull()
       expect(result.current.isSaving).toBe(false)
-      expect(result.current.isRestoring).toBe(false)
       expect(result.current.error).toBeNull()
       expect(result.current.hasUnreadContent).toBe(false)
     })
