@@ -3,16 +3,16 @@
  */
 
 .resume-reading-banner {
-  position: sticky;
-  top: 64px; /* Position below app header (header height) */
+  position: relative; /* Changed from sticky to relative - no need to stick */
   left: 0;
   right: 0;
-  z-index: 50; /* Below app header (which is 100) */
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   max-width: 100%;
+  margin-bottom: 16px; /* Add spacing below banner */
+  border-radius: 8px; /* Match other content styling */
 }
 
 .resume-banner-content {
