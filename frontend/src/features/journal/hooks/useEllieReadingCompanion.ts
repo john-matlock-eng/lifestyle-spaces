@@ -76,7 +76,7 @@ export function useEllieReadingCompanion(
   journalContent: string,
   emotions?: string[]
 ): UseEllieReadingCompanionReturn {
-  const { mood, setMood, position, celebrate } = useShihTzuCompanion({
+  const { mood, setMood, celebrate } = useShihTzuCompanion({
     initialMood: 'idle',
     initialPosition: {
       x: Math.min(window.innerWidth * 0.85, window.innerWidth - 120),
@@ -123,101 +123,6 @@ export function useEllieReadingCompanion(
       return () => clearTimeout(timer)
     }
   }, [particleEffect])
-
-  // Handle scroll activity detection
-  const handleScrollProgress = useCallback((percentage: number) => {
-    setReadingProgress(prev => ({ ...prev, percentageRead: percentage, isReading: true }))
-
-    // Clear existing timeout
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current)
-    }
-
-    // Detect reading pause after 5 seconds of no scrolling
-    scrollTimeoutRef.current = setTimeout(() => {
-      setReadingProgress(prev => ({ ...prev, isReading: false }))
-
-      // Offer insight at natural break points (25%, 50%, 75%, 100%)
-      const breakPoints = [25, 50, 75, 100]
-      const nearBreakPoint = breakPoints.find(bp =>
-        Math.abs(percentage - bp) < 5
-      )
-
-      if (nearBreakPoint && companionState === 'resting') {
-        const now = Date.now()
-        const timeSinceLastInsight = (now - lastInsightTimeRef.current) / 1000
-
-        // Only offer insights if 30 seconds have passed since last one
-        if (timeSinceLastInsight > 30) {
-          offerInsightAtBreakPoint(nearBreakPoint)
-        }
-      }
-    }, 5000)
-  }, [companionState])
-
-  // Handle section visibility
-  const handleSectionVisible = useCallback((sectionId: string) => {
-    if (!viewedSections.current.has(sectionId)) {
-      viewedSections.current.add(sectionId)
-
-      setReadingProgress(prev => ({
-        ...prev,
-        currentSection: sectionId,
-        sectionsRead: viewedSections.current.size
-      }))
-
-      // Show section transition encouragement
-      const section = sections.find(s => s.id === sectionId)
-      if (section && companionState === 'resting') {
-        generateSectionTransitionInsight(section)
-      }
-    } else {
-      // Just update current section
-      setReadingProgress(prev => ({
-        ...prev,
-        currentSection: sectionId
-      }))
-    }
-  }, [sections, companionState])
-
-  // Generate section transition insight
-  const generateSectionTransitionInsight = useCallback((section: { id: string; title: string }) => {
-    const messages = [
-      `Moving to "${section.title}" 📖`,
-      `Let's explore "${section.title}" together`,
-      `Interesting section ahead: "${section.title}"`,
-      `Ready for "${section.title}"?`
-    ]
-
-    const message = messages[Math.floor(Math.random() * messages.length)]
-
-    const insight: ReadingInsight = {
-      id: `section-${section.id}-${Date.now()}`,
-      type: 'section-transition',
-      message,
-      mood: 'curious',
-      sectionId: section.id,
-      timestamp: Date.now()
-    }
-
-    // Only show if we haven't shown this section transition before
-    const key = `section-transition-${section.id}`
-    if (!shownInsightsRef.current.has(key)) {
-      shownInsightsRef.current.add(key)
-      setCurrentInsight(insight)
-      setMood('curious')
-      setThoughtText(message)
-      lastInsightTimeRef.current = Date.now()
-
-      // Auto-dismiss after 8 seconds
-      setTimeout(() => {
-        if (companionState === 'resting') {
-          setThoughtText('')
-          setCurrentInsight(null)
-        }
-      }, 8000)
-    }
-  }, [setMood, companionState])
 
   // Offer insight at break points
   const offerInsightAtBreakPoint = useCallback((percentage: number) => {
@@ -291,6 +196,101 @@ export function useEllieReadingCompanion(
     }, 12000)
   }, [setMood, celebrate, companionState])
 
+  // Handle scroll activity detection
+  const handleScrollProgress = useCallback((percentage: number) => {
+    setReadingProgress(prev => ({ ...prev, percentageRead: percentage, isReading: true }))
+
+    // Clear existing timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current)
+    }
+
+    // Detect reading pause after 5 seconds of no scrolling
+    scrollTimeoutRef.current = setTimeout(() => {
+      setReadingProgress(prev => ({ ...prev, isReading: false }))
+
+      // Offer insight at natural break points (25%, 50%, 75%, 100%)
+      const breakPoints = [25, 50, 75, 100]
+      const nearBreakPoint = breakPoints.find(bp =>
+        Math.abs(percentage - bp) < 5
+      )
+
+      if (nearBreakPoint && companionState === 'resting') {
+        const now = Date.now()
+        const timeSinceLastInsight = (now - lastInsightTimeRef.current) / 1000
+
+        // Only offer insights if 30 seconds have passed since last one
+        if (timeSinceLastInsight > 30) {
+          offerInsightAtBreakPoint(nearBreakPoint)
+        }
+      }
+    }, 5000)
+  }, [companionState, offerInsightAtBreakPoint])
+
+  // Generate section transition insight
+  const generateSectionTransitionInsight = useCallback((section: { id: string; title: string }) => {
+    const messages = [
+      `Moving to "${section.title}" 📖`,
+      `Let's explore "${section.title}" together`,
+      `Interesting section ahead: "${section.title}"`,
+      `Ready for "${section.title}"?`
+    ]
+
+    const message = messages[Math.floor(Math.random() * messages.length)]
+
+    const insight: ReadingInsight = {
+      id: `section-${section.id}-${Date.now()}`,
+      type: 'section-transition',
+      message,
+      mood: 'curious',
+      sectionId: section.id,
+      timestamp: Date.now()
+    }
+
+    // Only show if we haven't shown this section transition before
+    const key = `section-transition-${section.id}`
+    if (!shownInsightsRef.current.has(key)) {
+      shownInsightsRef.current.add(key)
+      setCurrentInsight(insight)
+      setMood('curious')
+      setThoughtText(message)
+      lastInsightTimeRef.current = Date.now()
+
+      // Auto-dismiss after 8 seconds
+      setTimeout(() => {
+        if (companionState === 'resting') {
+          setThoughtText('')
+          setCurrentInsight(null)
+        }
+      }, 8000)
+    }
+  }, [setMood, companionState])
+
+  // Handle section visibility
+  const handleSectionVisible = useCallback((sectionId: string) => {
+    if (!viewedSections.current.has(sectionId)) {
+      viewedSections.current.add(sectionId)
+
+      setReadingProgress(prev => ({
+        ...prev,
+        currentSection: sectionId,
+        sectionsRead: viewedSections.current.size
+      }))
+
+      // Show section transition encouragement
+      const section = sections.find(s => s.id === sectionId)
+      if (section && companionState === 'resting') {
+        generateSectionTransitionInsight(section)
+      }
+    } else {
+      // Just update current section
+      setReadingProgress(prev => ({
+        ...prev,
+        currentSection: sectionId
+      }))
+    }
+  }, [sections, companionState, generateSectionTransitionInsight])
+
   // Offer comprehension insight
   const offerInsight = useCallback(() => {
     // Generate contextual insights based on content
@@ -352,10 +352,9 @@ export function useEllieReadingCompanion(
   }, [companionState, setMood])
 
   // Ask a question (opens chat)
-  const askQuestion = useCallback((question: string) => {
+  const askQuestion = useCallback(() => {
     setCompanionState('active')
     setIsChatOpen(true)
-    // The question will be passed to the chat component
   }, [])
 
   // Open chat
@@ -385,15 +384,16 @@ export function useEllieReadingCompanion(
 
   // Initial greeting
   useEffect(() => {
-    if (companionState === 'resting') {
-      setMood('happy')
-      setThoughtText('Happy reading! 📖')
+    setMood('happy')
+    setThoughtText('Happy reading! 📖')
 
-      setTimeout(() => {
-        setThoughtText('')
-        setMood('idle')
-      }, 5000)
-    }
+    const timer = setTimeout(() => {
+      setThoughtText('')
+      setMood('idle')
+    }, 5000)
+
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only run once on mount
 
   return {

@@ -147,9 +147,7 @@ export const EllieReadingMode: React.FC<EllieReadingModeProps> = ({
   // Handle scroll-based repositioning
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY
-      const scrollDelta = currentScrollY - lastScrollY.current
-      lastScrollY.current = currentScrollY
+      lastScrollY.current = window.scrollY
 
       // On mobile, keep Ellie in viewport
       if (isMobile && companionState !== 'hidden') {

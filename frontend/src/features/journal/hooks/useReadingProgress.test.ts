@@ -34,7 +34,7 @@ describe('useReadingProgress', () => {
     })
 
     // Mock IntersectionObserver
-    global.IntersectionObserver = vi.fn().mockImplementation((callback) => ({
+    global.IntersectionObserver = vi.fn().mockImplementation(() => ({
       observe: vi.fn(),
       unobserve: vi.fn(),
       disconnect: vi.fn(),
@@ -44,7 +44,7 @@ describe('useReadingProgress', () => {
     }))
 
     // Mock MutationObserver
-    global.MutationObserver = vi.fn().mockImplementation((callback) => ({
+    global.MutationObserver = vi.fn().mockImplementation(() => ({
       observe: vi.fn(),
       disconnect: vi.fn(),
       takeRecords: vi.fn()

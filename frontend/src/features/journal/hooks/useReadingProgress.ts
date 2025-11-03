@@ -103,14 +103,16 @@ export function useReadingProgress(options: ReadingProgressTrackerOptions = {}) 
       observedSectionsRef.current.add(element)
     })
 
-    // Cleanup
+    // Cleanup - copy ref to local variable to avoid stale closure
+    const currentObserver = observerRef.current
+    const currentObservedSections = observedSectionsRef.current
     return () => {
-      if (observerRef.current) {
-        observedSectionsRef.current.forEach((element) => {
-          observerRef.current?.unobserve(element)
+      if (currentObserver) {
+        currentObservedSections.forEach((element) => {
+          currentObserver.unobserve(element)
         })
-        observerRef.current.disconnect()
-        observedSectionsRef.current.clear()
+        currentObserver.disconnect()
+        currentObservedSections.clear()
       }
     }
   }, [onSectionVisible, visibilityThreshold])

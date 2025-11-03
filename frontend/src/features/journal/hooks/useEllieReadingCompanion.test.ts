@@ -4,8 +4,8 @@ import { useEllieReadingCompanion } from './useEllieReadingCompanion'
 import type { Template } from '../types/template.types'
 
 // Mock useShihTzuCompanion with state management
-let currentMood: any = 'idle'
-const mockSetMood = vi.fn((newMood: any) => {
+let currentMood: string = 'idle'
+const mockSetMood = vi.fn((newMood: string) => {
   currentMood = newMood
 })
 const mockCelebrate = vi.fn()
@@ -292,7 +292,8 @@ describe('useEllieReadingCompanion', () => {
         vi.advanceTimersByTime(5000)
       })
 
-      const firstInsight = result.current.currentInsight
+      // Should have an insight
+      expect(result.current.currentInsight).toBeTruthy()
 
       // Dismiss insight
       act(() => {
@@ -330,7 +331,8 @@ describe('useEllieReadingCompanion', () => {
         vi.advanceTimersByTime(5000)
       })
 
-      const firstInsightTime = Date.now()
+      // First insight shown
+      expect(result.current.currentInsight).toBeTruthy()
 
       // Try to get insight at 50% immediately
       act(() => {

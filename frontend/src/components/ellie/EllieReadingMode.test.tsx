@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { EllieReadingMode } from './EllieReadingMode'
 
@@ -240,7 +240,7 @@ describe('EllieReadingMode', () => {
 
   describe('collision detection', () => {
     it('should check for collisions periodically', () => {
-      const { container } = render(<EllieReadingMode {...defaultProps} />)
+      render(<EllieReadingMode {...defaultProps} />)
 
       // Create a mock content element
       const contentElement = document.createElement('div')
@@ -396,28 +396,28 @@ describe('EllieReadingMode', () => {
 
   describe('customization', () => {
     it('should apply custom fur color', () => {
-      const { container } = render(
+      render(
         <EllieReadingMode {...defaultProps} furColor="#FF5733" />
       )
 
-      expect(container).toBeInTheDocument()
       // SmartEllie mock receives the prop
+      expect(screen.getByTestId('smart-ellie')).toBeInTheDocument()
     })
 
     it('should apply custom collar style', () => {
-      const { container } = render(
+      render(
         <EllieReadingMode {...defaultProps} collarStyle="bowtie" />
       )
 
-      expect(container).toBeInTheDocument()
+      expect(screen.getByTestId('smart-ellie')).toBeInTheDocument()
     })
 
     it('should apply custom class name', () => {
-      const { container } = render(
+      render(
         <EllieReadingMode {...defaultProps} className="custom-class" />
       )
 
-      const ellieWrapper = container.querySelector('.ellie-reading-mode')
+      const ellieWrapper = document.querySelector('.ellie-reading-mode')
       expect(ellieWrapper).toHaveClass('custom-class')
     })
   })
