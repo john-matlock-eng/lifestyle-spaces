@@ -1,0 +1,481 @@
+/**
+ * Sticky Header Section Styles
+ *
+ * Provides sticky positioning, collapse/expand animations, and responsive design
+ * for journal section headers with 60fps performance targets.
+ */
+
+/* ========================================
+   Sticky Header Section Container
+   ======================================== */
+
+.sticky-header-section {
+  position: relative;
+  margin-bottom: 24px;
+  background-color: var(--theme-bg-surface);
+  border-radius: 8px;
+  overflow: visible; /* Allow sticky header to work */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sticky-header-section.collapsed {
+  margin-bottom: 12px;
+}
+
+/* ========================================
+   Sticky Header
+   ======================================== */
+
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--theme-bg-surface);
+  border-bottom: 1px solid var(--theme-border-light);
+  border-radius: 8px 8px 0 0;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Performance optimizations */
+  will-change: padding, box-shadow;
+  transform: translateZ(0); /* Create compositing layer for better performance */
+}
+
+.sticky-header:hover {
+  background: var(--theme-bg-hover);
+}
+
+.sticky-header:focus {
+  outline: 2px solid var(--theme-primary-500);
+  outline-offset: -2px;
+}
+
+/* Sticky Active State - Compact Mode */
+.sticky-header.sticky-active {
+  padding: 10px 16px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+  border-radius: 0; /* Remove border radius when stuck to top */
+  background: var(--theme-bg-elevated);
+}
+
+/* ========================================
+   Header Content Layout
+   ======================================== */
+
+.sticky-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sticky-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0; /* Allow text to truncate */
+}
+
+.sticky-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ========================================
+   Header Elements
+   ======================================== */
+
+.sticky-header-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sticky-active .sticky-header-icon {
+  font-size: 1rem;
+}
+
+.sticky-header-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--theme-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sticky-active .sticky-header-title {
+  font-size: 0.875rem;
+}
+
+/* ========================================
+   Progress Badge
+   ======================================== */
+
+.sticky-header-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--theme-primary-100);
+  color: var(--theme-primary-700);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sticky-active .progress-badge {
+  padding: 2px 8px;
+  font-size: 0.7rem;
+}
+
+/* ========================================
+   Collapse/Expand Button
+   ======================================== */
+
+.collapse-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--theme-border-light);
+  border-radius: 6px;
+  color: var(--theme-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  /* Performance */
+  will-change: transform, background-color;
+}
+
+.collapse-toggle-btn:hover {
+  background: var(--theme-bg-elevated);
+  border-color: var(--theme-primary-500);
+  color: var(--theme-primary-600);
+  transform: scale(1.05);
+}
+
+.collapse-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.collapse-toggle-btn:focus {
+  outline: 2px solid var(--theme-primary-500);
+  outline-offset: 2px;
+}
+
+.sticky-active .collapse-toggle-btn {
+  width: 28px;
+  height: 28px;
+}
+
+/* ========================================
+   Sticky Mode Indicator
+   ======================================== */
+
+.sticky-header-indicator {
+  margin-top: 10px;
+  opacity: 1;
+  animation: fadeIn 0.3s ease;
+}
+
+.sticky-header-line {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--theme-primary-500) 0%,
+    transparent 100%
+  );
+  border-radius: 1px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ========================================
+   Section Content Wrapper
+   ======================================== */
+
+.section-content-wrapper {
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Performance */
+  will-change: max-height, opacity;
+}
+
+.section-content-wrapper[aria-hidden="true"] {
+  max-height: 0;
+  opacity: 0;
+}
+
+.section-content-wrapper[aria-hidden="false"] {
+  max-height: none;
+  opacity: 1;
+}
+
+.section-content-inner {
+  padding: 20px;
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   Collapsed Section Placeholder
+   ======================================== */
+
+.collapsed-section-placeholder {
+  padding: 16px 20px;
+  margin: 0;
+  background: var(--theme-bg-elevated);
+  border: 1px dashed var(--theme-border-light);
+  border-radius: 0 0 8px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  animation: fadeIn 0.3s ease;
+}
+
+.collapsed-section-placeholder:hover {
+  background: var(--theme-bg-hover);
+  border-color: var(--theme-primary-500);
+}
+
+.collapsed-section-placeholder:focus {
+  outline: 2px solid var(--theme-primary-500);
+  outline-offset: -2px;
+}
+
+.collapsed-placeholder-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.collapsed-placeholder-icon {
+  font-size: 1.5rem;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.collapsed-placeholder-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.collapsed-placeholder-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--theme-text-primary);
+  margin-bottom: 4px;
+}
+
+.collapsed-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: var(--theme-warning-100);
+  color: var(--theme-warning-700);
+  border-radius: 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.collapsed-placeholder-meta {
+  font-size: 0.8rem;
+  color: var(--theme-text-secondary);
+  font-style: italic;
+}
+
+/* ========================================
+   Density Adjustments
+   ======================================== */
+
+/* Compact Density */
+.density-compact .sticky-header {
+  padding: 12px 16px;
+}
+
+.density-compact .sticky-header.sticky-active {
+  padding: 8px 12px;
+}
+
+.density-compact .section-content-inner {
+  padding: 16px;
+}
+
+.density-compact .collapsed-section-placeholder {
+  padding: 12px 16px;
+}
+
+/* Spacious Density */
+.density-spacious .sticky-header {
+  padding: 20px 24px;
+}
+
+.density-spacious .sticky-header.sticky-active {
+  padding: 14px 20px;
+}
+
+.density-spacious .section-content-inner {
+  padding: 28px;
+}
+
+.density-spacious .collapsed-section-placeholder {
+  padding: 20px 24px;
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 768px) {
+  .sticky-header {
+    padding: 12px 16px;
+  }
+
+  .sticky-header.sticky-active {
+    padding: 8px 12px;
+  }
+
+  .sticky-header-title {
+    font-size: 1rem;
+  }
+
+  .sticky-active .sticky-header-title {
+    font-size: 0.8rem;
+  }
+
+  .sticky-header-icon {
+    font-size: 1rem;
+  }
+
+  .sticky-active .sticky-header-icon {
+    font-size: 0.875rem;
+  }
+
+  .progress-badge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+
+  .sticky-active .progress-badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+  }
+
+  .section-content-inner {
+    padding: 16px;
+  }
+
+  .collapsed-section-placeholder {
+    padding: 12px 16px;
+  }
+
+  .collapsed-placeholder-content {
+    gap: 12px;
+  }
+
+  .collapsed-placeholder-icon {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sticky-header-left {
+    gap: 8px;
+  }
+
+  .sticky-header-right {
+    gap: 8px;
+  }
+
+  .collapse-toggle-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .sticky-active .collapse-toggle-btn {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* ========================================
+   Accessibility - Reduced Motion
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .sticky-header,
+  .section-content-wrapper,
+  .collapse-toggle-btn,
+  .collapsed-section-placeholder,
+  .sticky-header-icon,
+  .sticky-header-title,
+  .progress-badge {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+
+@media print {
+  .sticky-header {
+    position: static;
+    box-shadow: none;
+  }
+
+  .collapse-toggle-btn,
+  .progress-badge,
+  .sticky-header-indicator {
+    display: none;
+  }
+
+  .section-content-wrapper[aria-hidden="true"] {
+    max-height: none;
+    opacity: 1;
+  }
+
+  .collapsed-section-placeholder {
+    display: none;
+  }
+}
