@@ -71,7 +71,7 @@ export interface UseEllieReadingCompanionReturn {
  * Provides context-aware support while reading journal entries
  */
 export function useEllieReadingCompanion(
-  template: Template | null,
+  _template: Template | null,
   sections: { id: string; title: string }[],
   journalContent: string,
   emotions?: string[]

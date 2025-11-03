@@ -190,7 +190,8 @@ export const EllieReadingMode: React.FC<EllieReadingModeProps> = ({
 
   // Resting or Active state - show Ellie
   const ellieSize = companionState === 'resting' ? 'sm' : 'md'
-  const showThoughtBubble = companionState === 'active' || (companionState === 'resting' && thoughtText)
+  const showThoughtBubble = companionState === 'active' || (companionState === 'resting' && !!thoughtText)
+  const ellieParticleEffect = particleEffect as 'hearts' | 'sparkles' | 'treats' | 'zzz' | null | undefined
 
   return (
     <div
@@ -210,7 +211,7 @@ export const EllieReadingMode: React.FC<EllieReadingModeProps> = ({
         size={ellieSize}
         showThoughtBubble={showThoughtBubble}
         thoughtText={thoughtText || ''}
-        particleEffect={particleEffect || undefined}
+        particleEffect={ellieParticleEffect}
         onClick={onClick}
         furColor={furColor}
         collarStyle={collarStyle}
