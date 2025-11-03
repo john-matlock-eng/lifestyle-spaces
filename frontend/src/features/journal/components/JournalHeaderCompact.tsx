@@ -80,7 +80,7 @@ export const JournalHeaderCompact: React.FC<JournalHeaderCompactProps> = ({
 
     // Remove markdown formatting and get plain text
     const plainText = cleanContent
-      .replace(/[#*_~`>\-\[\]()]/g, '')
+      .replace(/[#*_~`>\-[\]()]/g, '')
       .replace(/\s+/g, ' ')
       .trim()
 

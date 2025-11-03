@@ -26,7 +26,7 @@ describe('useScrollProgress', () => {
     global.requestAnimationFrame = vi.fn((cb) => {
       cb(0)
       return 0
-    }) as any
+    }) as unknown as typeof global.requestAnimationFrame
   })
 
   afterEach(() => {
@@ -261,7 +261,7 @@ describe('useScrollProgress', () => {
 
   describe('Performance Optimization', () => {
     it('should use requestAnimationFrame for throttling', () => {
-      const { result } = renderHook(() => useScrollProgress())
+      renderHook(() => useScrollProgress())
 
       act(() => {
         window.scrollY = 100

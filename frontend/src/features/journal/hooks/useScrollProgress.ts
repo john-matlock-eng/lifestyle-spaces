@@ -20,8 +20,6 @@ interface UseScrollProgressOptions {
   hideThreshold?: number
   /** Content element ref to calculate read progress */
   contentRef?: React.RefObject<HTMLElement>
-  /** Throttle delay in ms (default: 16ms for 60fps) */
-  throttleMs?: number
 }
 
 /**
@@ -36,8 +34,7 @@ interface UseScrollProgressOptions {
 export const useScrollProgress = ({
   compactThreshold = 100,
   hideThreshold = 500,
-  contentRef,
-  throttleMs = 16
+  contentRef
 }: UseScrollProgressOptions = {}): ScrollProgressResult => {
   const [scrollY, setScrollY] = useState(0)
   const [readProgress, setReadProgress] = useState(0)
