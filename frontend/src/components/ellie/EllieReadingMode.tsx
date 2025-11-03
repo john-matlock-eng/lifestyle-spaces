@@ -73,6 +73,7 @@ export const EllieReadingMode: React.FC<EllieReadingModeProps> = ({
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const ellieRef = useRef<HTMLDivElement>(null)
   const lastScrollY = useRef(0)
+  const repositionCooldown = useRef(false)
 
   // Detect mobile viewport
   useEffect(() => {
@@ -108,7 +109,7 @@ export const EllieReadingMode: React.FC<EllieReadingModeProps> = ({
 
   // Collision detection with content elements
   const checkCollisions = useCallback(() => {
-    if (!ellieRef.current || companionState === 'hidden') return
+    if (!ellieRef.current || companionState === 'hidden' || repositionCooldown.current) return
 
     const ellieRect = ellieRef.current.getBoundingClientRect()
 
@@ -117,30 +118,37 @@ export const EllieReadingMode: React.FC<EllieReadingModeProps> = ({
       '.journal-view-content, .template-section, .journal-header-compact'
     )
 
-    let hasCollision = false
+    let hasSignificantCollision = false
+    const COLLISION_THRESHOLD = 50 // Only reposition if overlap is > 50px
 
     contentElements.forEach(element => {
       const elementRect = element.getBoundingClientRect()
 
-      // Check if rectangles overlap
-      if (
-        ellieRect.left < elementRect.right &&
-        ellieRect.right > elementRect.left &&
-        ellieRect.top < elementRect.bottom &&
-        ellieRect.bottom > elementRect.top
-      ) {
-        hasCollision = true
+      // Calculate overlap area
+      const overlapX = Math.max(0, Math.min(ellieRect.right, elementRect.right) - Math.max(ellieRect.left, elementRect.left))
+      const overlapY = Math.max(0, Math.min(ellieRect.bottom, elementRect.bottom) - Math.max(ellieRect.top, elementRect.top))
+      const overlapArea = overlapX * overlapY
+
+      if (overlapArea > COLLISION_THRESHOLD * COLLISION_THRESHOLD) {
+        hasSignificantCollision = true
       }
     })
 
-    // If collision detected, adjust position
-    if (hasCollision && !isMobile) {
-      // On desktop, move to a safe position above or below
+    // If significant collision detected, adjust position with cooldown
+    if (hasSignificantCollision && !isMobile) {
+      repositionCooldown.current = true
+
+      // On desktop, move to a safe position
       const newY = ellieRect.top < window.innerHeight / 2
         ? window.innerHeight - 180
         : 40
 
       setPosition(prev => ({ ...prev, y: newY }))
+
+      // Set cooldown for 5 seconds to prevent bouncing
+      setTimeout(() => {
+        repositionCooldown.current = false
+      }, 5000)
     }
   }, [companionState, isMobile])
 
@@ -155,22 +163,19 @@ export const EllieReadingMode: React.FC<EllieReadingModeProps> = ({
         return
       }
 
-      // On desktop, check for collisions when scrolling
-      if (!isMobile) {
-        // Debounce collision check
-        requestAnimationFrame(checkCollisions)
-      }
+      // On desktop, only check collisions occasionally during scroll (not every frame)
+      // This prevents constant repositioning
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [isMobile, companionState, checkCollisions])
+  }, [isMobile, companionState])
 
-  // Run collision detection periodically
+  // Run collision detection only occasionally (every 3 seconds, not 1 second)
   useEffect(() => {
     if (companionState === 'hidden') return
 
-    const interval = setInterval(checkCollisions, 1000)
+    const interval = setInterval(checkCollisions, 3000)
     return () => clearInterval(interval)
   }, [companionState, checkCollisions])
 
