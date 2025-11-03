@@ -236,12 +236,8 @@ ${content}
   const totalComments = Object.values(comments).reduce((sum, arr) => sum + arr.length, 0)
 
   return (
-    <div className={`journal-view-container compact density-${density} has-sticky-actions`}>
-      <button onClick={handleBack} className="button-secondary" style={{ marginBottom: '12px' }}>
-        ← Back
-      </button>
-
-      {/* Progressive Disclosure Header */}
+    <>
+      {/* Progressive Disclosure Header - Fixed at top */}
       <JournalHeaderCompact
         title={journal.title}
         content={journal.content}
@@ -262,7 +258,12 @@ ${content}
         readTime={calculateReadTime(journal.wordCount)}
       />
 
-      {/* Presence and Connection Status */}
+      <div className={`journal-view-container compact density-${density} has-sticky-actions has-progressive-header`}>
+        <button onClick={handleBack} className="button-secondary" style={{ marginBottom: '12px' }}>
+          ← Back
+        </button>
+
+        {/* Presence and Connection Status */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <PresenceAvatars activeUsers={activeUsers} maxVisible={5} />
         <ConnectionStatus
@@ -452,6 +453,7 @@ ${content}
         enableSmartPositioning={true}
         showControlPanel={true}
       />
-    </div>
+      </div>
+    </>
   )
 }

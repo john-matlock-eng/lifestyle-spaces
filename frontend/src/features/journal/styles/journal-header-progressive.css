@@ -29,20 +29,38 @@
   --tag-topic-bg: rgba(59, 130, 246, 0.2);
 }
 
+/* Add top padding to accommodate fixed header */
+.journal-view-container.has-progressive-header {
+  padding-top: calc(var(--header-height-full) + 24px);
+}
+
+/* Adjust padding for compact state */
+@media (max-width: 768px) {
+  .journal-view-container.has-progressive-header {
+    padding-top: calc(var(--header-height-full) + 16px);
+  }
+}
+
 /* ===================================
    HEADER CONTAINER
    =================================== */
 
 .journal-header-progressive {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 50;
+  left: 0;
+  right: 0;
+  z-index: 100;
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-primary);
   transition: all var(--header-transition-duration) var(--header-transition-timing);
   will-change: transform, opacity;
   max-height: var(--header-height-full);
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Ensure header stays on top and has backdrop for readability */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 /* State transitions */
@@ -61,7 +79,7 @@
 .journal-header-progressive.hidden {
   transform: translateY(-100%);
   opacity: 0;
-  max-height: var(--header-height-hidden);
+  max-height: var(--header-height-compact);
 }
 
 /* ===================================
