@@ -8,7 +8,7 @@ export const shouldShowTongue = (mood: EllieMood): boolean => {
 };
 
 /**
- * Generate mouth path based on mood (simpler, shows lower jaw)
+ * Generate mouth path based on mood - now with friendly smiles
  */
 export const getMouthPath = (mood: EllieMood): string => {
   switch (mood) {
@@ -16,19 +16,26 @@ export const getMouthPath = (mood: EllieMood): string => {
     case 'excited':
     case 'playful':
     case 'celebrating':
-      return 'M 60 44 L 60 47 M 55 47 Q 60 49 65 47';
+      // Big happy smile with line from nose
+      return 'M 60 43 L 60 47 M 56 47 Q 60 50 64 47';
     case 'concerned':
-      return 'M 60 44 L 60 46 M 55 47 Q 60 45 65 47';
+      // Slight frown
+      return 'M 60 43 L 60 46 M 57 47 Q 60 46 63 47';
     case 'sleeping':
-      return 'M 60 44 L 60 45';
+      // Peaceful closed mouth
+      return 'M 60 43 L 60 45 M 58 45 L 62 45';
     case 'zen':
-      return 'M 60 44 L 60 46 M 56 46 Q 60 47 64 46';
+      // Calm gentle smile
+      return 'M 60 43 L 60 46 M 57 46 Q 60 47 63 46';
     case 'proud':
-      return 'M 60 44 L 60 46 M 55 46 Q 60 47 65 46';
+      // Confident smile
+      return 'M 60 43 L 60 46 M 57 46 Q 60 47.5 63 46';
     case 'curious':
-      return 'M 60 44 L 60 46 M 57 46 L 63 46';
+      // Slight interested expression
+      return 'M 60 43 L 60 46 M 58 46 L 62 46';
     default:
-      return 'M 60 44 L 60 46 M 57 46 L 63 46';
+      // Gentle smile for idle/default - friendly and approachable
+      return 'M 60 43 L 60 46 M 57 46 Q 60 47.5 63 46';
   }
 };
 

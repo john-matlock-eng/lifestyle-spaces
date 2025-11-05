@@ -15,22 +15,36 @@ export const Nose: React.FC<FacialFeatureProps> = ({ onClick, className = '' }) 
 
   return (
     <g className={`ellie-nose ${className}`} onClick={handleClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
-      {/* Main nose - Shih Tzu pink nose */}
+      {/* Main nose - smaller, more button-like */}
       <ellipse
         cx={nose.cx}
         cy={nose.cy}
-        rx={nose.rx}
-        ry={nose.ry}
+        rx={nose.rx * 0.8}
+        ry={nose.ry * 0.8}
         fill={ELLIE_NOSE_PINK}
       />
 
-      {/* Nose highlight for depth and shine */}
+      {/* Nose highlight - positioned at top left */}
       <ellipse
+        cx={nose.cx - 0.8}
+        cy={nose.cy - 0.8}
+        rx={1.5}
+        ry={1}
+        fill="rgba(255, 255, 255, 0.5)"
+      />
+
+      {/* Nostrils for definition */}
+      <circle
         cx={nose.cx - 1}
-        cy={nose.cy - 1}
-        rx={2}
-        ry={1.5}
-        fill="rgba(255, 255, 255, 0.4)"
+        cy={nose.cy + 0.5}
+        r="0.5"
+        fill="rgba(0, 0, 0, 0.3)"
+      />
+      <circle
+        cx={nose.cx + 1}
+        cy={nose.cy + 0.5}
+        r="0.5"
+        fill="rgba(0, 0, 0, 0.3)"
       />
     </g>
   );
