@@ -2,7 +2,13 @@ import type { EllieProps, EllieMood, EllieSize, CollarStyle } from '../types/ell
 
 export const DEFAULT_MOOD: EllieMood = 'idle';
 
-export const DEFAULT_FUR_COLOR = 'linear-gradient(135deg, #FDE2E4 0%, #E0B1CB 100%)';
+// Real Ellie's cream/tan coloring (Shih Tzu)
+export const DEFAULT_FUR_COLOR = 'linear-gradient(135deg, #F5E6D3 0%, #E8D4B8 100%)';
+
+// Additional color constants for Shih Tzu features
+export const ELLIE_TAN_PATCHES = '#D4B896';  // For ear and eye patches
+export const ELLIE_NOSE_PINK = '#E8A5A5';    // For the pink nose
+export const ELLIE_DARK_EYES = '#1a0f0a';    // Very dark brown eyes
 
 export const DEFAULT_COLLAR_STYLE: CollarStyle = 'leather';
 

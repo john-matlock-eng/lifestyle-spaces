@@ -1,6 +1,7 @@
 import React from 'react';
 import type { FacialFeatureProps } from '../types/ellie.types';
 import { ELLIE_COORDINATES } from '../constants/coordinates';
+import { ELLIE_DARK_EYES } from '../constants/defaults';
 
 export const Eyes: React.FC<FacialFeatureProps> = ({ mood, className = '' }) => {
   const { leftEye, rightEye } = ELLIE_COORDINATES.face;
@@ -16,7 +17,7 @@ export const Eyes: React.FC<FacialFeatureProps> = ({ mood, className = '' }) => 
               y1={leftEye.cy}
               x2={leftEye.cx + 3}
               y2={leftEye.cy}
-              stroke="#2c1810"
+              stroke={ELLIE_DARK_EYES}
               strokeWidth="2"
               strokeLinecap="round"
             />
@@ -25,7 +26,7 @@ export const Eyes: React.FC<FacialFeatureProps> = ({ mood, className = '' }) => 
               y1={rightEye.cy}
               x2={rightEye.cx + 3}
               y2={rightEye.cy}
-              stroke="#2c1810"
+              stroke={ELLIE_DARK_EYES}
               strokeWidth="2"
               strokeLinecap="round"
             />
@@ -40,14 +41,14 @@ export const Eyes: React.FC<FacialFeatureProps> = ({ mood, className = '' }) => 
           <>
             <path
               d={`M ${leftEye.cx - 3} ${leftEye.cy} Q ${leftEye.cx} ${leftEye.cy - 3} ${leftEye.cx + 3} ${leftEye.cy}`}
-              stroke="#2c1810"
+              stroke={ELLIE_DARK_EYES}
               strokeWidth="2"
               fill="none"
               strokeLinecap="round"
             />
             <path
               d={`M ${rightEye.cx - 3} ${rightEye.cy} Q ${rightEye.cx} ${rightEye.cy - 3} ${rightEye.cx + 3} ${rightEye.cy}`}
-              stroke="#2c1810"
+              stroke={ELLIE_DARK_EYES}
               strokeWidth="2"
               fill="none"
               strokeLinecap="round"
@@ -59,38 +60,38 @@ export const Eyes: React.FC<FacialFeatureProps> = ({ mood, className = '' }) => 
         // Concerned eyes - round with worried eyebrows
         return (
           <>
-            <circle cx={leftEye.cx} cy={leftEye.cy} r="2.5" fill="#2c1810" />
-            <circle cx={rightEye.cx} cy={rightEye.cy} r="2.5" fill="#2c1810" />
+            <circle cx={leftEye.cx} cy={leftEye.cy} r="2.5" fill={ELLIE_DARK_EYES} />
+            <circle cx={rightEye.cx} cy={rightEye.cy} r="2.5" fill={ELLIE_DARK_EYES} />
             {/* Eyebrows showing concern */}
             <path
               d={`M ${leftEye.cx - 3} ${leftEye.cy - 5} L ${leftEye.cx + 3} ${leftEye.cy - 7}`}
-              stroke="#2c1810"
+              stroke={ELLIE_DARK_EYES}
               strokeWidth="1.5"
               fill="none"
               strokeLinecap="round"
             />
             <path
               d={`M ${rightEye.cx + 3} ${rightEye.cy - 5} L ${rightEye.cx - 3} ${rightEye.cy - 7}`}
-              stroke="#2c1810"
+              stroke={ELLIE_DARK_EYES}
               strokeWidth="1.5"
               fill="none"
               strokeLinecap="round"
             />
-            {/* Eye shine */}
-            <circle cx={leftEye.cx - 0.5} cy={leftEye.cy - 0.5} r="0.8" fill="rgba(255, 255, 255, 0.8)" />
-            <circle cx={rightEye.cx - 0.5} cy={rightEye.cy - 0.5} r="0.8" fill="rgba(255, 255, 255, 0.8)" />
+            {/* Prominent eye shine for expressiveness */}
+            <circle cx={leftEye.cx - 0.5} cy={leftEye.cy - 0.5} r="1" fill="rgba(255, 255, 255, 0.9)" />
+            <circle cx={rightEye.cx - 0.5} cy={rightEye.cy - 0.5} r="1" fill="rgba(255, 255, 255, 0.9)" />
           </>
         );
 
       default:
-        // Normal eyes - circles with shine
+        // Normal eyes - circles with prominent shine
         return (
           <>
-            <circle cx={leftEye.cx} cy={leftEye.cy} r="2.5" fill="#2c1810" />
-            <circle cx={rightEye.cx} cy={rightEye.cy} r="2.5" fill="#2c1810" />
-            {/* Eye shine for life */}
-            <circle cx={leftEye.cx - 0.5} cy={leftEye.cy - 0.5} r="0.8" fill="rgba(255, 255, 255, 0.8)" />
-            <circle cx={rightEye.cx - 0.5} cy={rightEye.cy - 0.5} r="0.8" fill="rgba(255, 255, 255, 0.8)" />
+            <circle cx={leftEye.cx} cy={leftEye.cy} r="2.5" fill={ELLIE_DARK_EYES} />
+            <circle cx={rightEye.cx} cy={rightEye.cy} r="2.5" fill={ELLIE_DARK_EYES} />
+            {/* Prominent eye shine for expressiveness */}
+            <circle cx={leftEye.cx - 0.5} cy={leftEye.cy - 0.5} r="1" fill="rgba(255, 255, 255, 0.9)" />
+            <circle cx={rightEye.cx - 0.5} cy={rightEye.cy - 0.5} r="1" fill="rgba(255, 255, 255, 0.9)" />
           </>
         );
     }
