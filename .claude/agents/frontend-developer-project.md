@@ -1,3 +1,8 @@
+---
+name: frontend-developer
+description: Project-specific instructions for React/TypeScript frontend development with Vite, test-driven development, and 100% coverage requirements for Lifestyle Spaces
+---
+
 # Frontend Developer - Lifestyle Spaces Project Instructions
 
 ## Project-Specific Requirements

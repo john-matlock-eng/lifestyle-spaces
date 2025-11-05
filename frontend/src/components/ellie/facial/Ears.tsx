@@ -1,69 +1,87 @@
 import React from 'react';
 import type { BodyPartProps } from '../types/ellie.types';
 import { ELLIE_COORDINATES } from '../constants/coordinates';
+import { ELLIE_TAN_PATCHES } from '../constants/defaults';
 
 export const Ears: React.FC<BodyPartProps> = ({ furColor, mood, className = '' }) => {
   const { leftEar, rightEar } = ELLIE_COORDINATES.face;
 
-  // Ear rotation based on mood - subtle movements
-  const getEarRotation = () => {
+  // Ear sway based on mood - subtle movements for droopy ears
+  const getEarSway = () => {
     switch(mood) {
       case 'curious':
-        return { left: -5, right: 5 };    // Slightly perked up
+        return { left: -2, right: 2 };    // Slight forward lean
       case 'concerned':
-        return { left: -15, right: 15 };  // Slightly droopy
+        return { left: -5, right: 5 };    // More droopy/back
       case 'excited':
       case 'happy':
-        return { left: -3, right: 3 };    // Slightly alert
+        return { left: -3, right: 3 };    // Slight bounce
       default:
-        return { left: -10, right: 10 };  // Normal (reduced from -20, 20)
+        return { left: 0, right: 0 };     // Natural hang
     }
   };
 
-  const rotation = getEarRotation();
+  const sway = getEarSway();
+
+  // Droopy Shih Tzu ear paths (hang down beside face)
+  const leftEarPath = `
+    M ${leftEar.cx} ${leftEar.cy}
+    Q ${leftEar.cx - 4} ${leftEar.cy + 8}, ${leftEar.cx - 2} ${leftEar.cy + 18}
+    Q ${leftEar.cx} ${leftEar.cy + 24}, ${leftEar.cx + 2} ${leftEar.cy + 18}
+    Q ${leftEar.cx + 4} ${leftEar.cy + 8}, ${leftEar.cx} ${leftEar.cy}
+  `;
+
+  const leftEarInnerPath = `
+    M ${leftEar.cx} ${leftEar.cy + 2}
+    Q ${leftEar.cx - 2} ${leftEar.cy + 8}, ${leftEar.cx - 1} ${leftEar.cy + 16}
+    Q ${leftEar.cx} ${leftEar.cy + 20}, ${leftEar.cx + 1} ${leftEar.cy + 16}
+    Q ${leftEar.cx + 2} ${leftEar.cy + 8}, ${leftEar.cx} ${leftEar.cy + 2}
+  `;
+
+  const rightEarPath = `
+    M ${rightEar.cx} ${rightEar.cy}
+    Q ${rightEar.cx + 4} ${rightEar.cy + 8}, ${rightEar.cx + 2} ${rightEar.cy + 18}
+    Q ${rightEar.cx} ${rightEar.cy + 24}, ${rightEar.cx - 2} ${rightEar.cy + 18}
+    Q ${rightEar.cx - 4} ${rightEar.cy + 8}, ${rightEar.cx} ${rightEar.cy}
+  `;
+
+  const rightEarInnerPath = `
+    M ${rightEar.cx} ${rightEar.cy + 2}
+    Q ${rightEar.cx + 2} ${rightEar.cy + 8}, ${rightEar.cx + 1} ${rightEar.cy + 16}
+    Q ${rightEar.cx} ${rightEar.cy + 20}, ${rightEar.cx - 1} ${rightEar.cy + 16}
+    Q ${rightEar.cx - 2} ${rightEar.cy + 8}, ${rightEar.cx} ${rightEar.cy + 2}
+  `;
 
   return (
     <g className={`ellie-ears ${className}`}>
-      {/* Left ear */}
-      <ellipse
-        cx={leftEar.cx}
-        cy={leftEar.cy}
-        rx={leftEar.rx}
-        ry={leftEar.ry}
+      {/* Left ear - droopy floppy ear */}
+      <path
+        d={leftEarPath}
         fill={furColor}
-        transform={`rotate(${rotation.left} ${leftEar.cx} ${leftEar.cy})`}
+        transform={`translate(${sway.left}, 0)`}
         className="ellie-ear-left"
       />
-      {/* Left ear inner (darker) */}
-      <ellipse
-        cx={leftEar.cx + 2}
-        cy={leftEar.cy}
-        rx={leftEar.rx - 3}
-        ry={leftEar.ry - 4}
-        fill="#8B7355"
-        opacity="0.5"
-        transform={`rotate(${rotation.left} ${leftEar.cx} ${leftEar.cy})`}
+      {/* Left ear inner (tan patches) */}
+      <path
+        d={leftEarInnerPath}
+        fill={ELLIE_TAN_PATCHES}
+        opacity="0.7"
+        transform={`translate(${sway.left}, 0)`}
       />
 
-      {/* Right ear */}
-      <ellipse
-        cx={rightEar.cx}
-        cy={rightEar.cy}
-        rx={rightEar.rx}
-        ry={rightEar.ry}
+      {/* Right ear - droopy floppy ear */}
+      <path
+        d={rightEarPath}
         fill={furColor}
-        transform={`rotate(${rotation.right} ${rightEar.cx} ${rightEar.cy})`}
+        transform={`translate(${sway.right}, 0)`}
         className="ellie-ear-right"
       />
-      {/* Right ear inner (darker) */}
-      <ellipse
-        cx={rightEar.cx - 2}
-        cy={rightEar.cy}
-        rx={rightEar.rx - 3}
-        ry={rightEar.ry - 4}
-        fill="#8B7355"
-        opacity="0.5"
-        transform={`rotate(${rotation.right} ${rightEar.cx} ${rightEar.cy})`}
+      {/* Right ear inner (tan patches) */}
+      <path
+        d={rightEarInnerPath}
+        fill={ELLIE_TAN_PATCHES}
+        opacity="0.7"
+        transform={`translate(${sway.right}, 0)`}
       />
     </g>
   );

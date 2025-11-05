@@ -1,3 +1,8 @@
+---
+name: typescript-pro
+description: Project-specific TypeScript strict mode requirements, verbatimModuleSyntax configuration, and type safety guidelines for Lifestyle Spaces React application
+---
+
 # TypeScript Pro Agent - Lifestyle Spaces Project Instructions
 
 ## Project Context

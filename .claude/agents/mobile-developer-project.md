@@ -1,3 +1,8 @@
+---
+name: mobile-developer
+description: Project-specific planning and architecture guidelines for React Native mobile app development with code reuse from existing web application for Lifestyle Spaces
+---
+
 # Mobile Developer Agent - Lifestyle Spaces Project Instructions
 
 ## Project Context
