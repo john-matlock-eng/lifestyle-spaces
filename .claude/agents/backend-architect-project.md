@@ -1,3 +1,8 @@
+---
+name: backend-architect
+description: Project-specific instructions for designing FastAPI backend with single Lambda function, DynamoDB single-table design, and TDD methodology for Lifestyle Spaces
+---
+
 # Backend Architect - Lifestyle Spaces Project Instructions
 
 ## Project-Specific Requirements

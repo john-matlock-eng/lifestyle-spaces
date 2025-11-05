@@ -1,3 +1,8 @@
+---
+name: deployment-engineer
+description: Project-specific instructions for CI/CD pipelines, GitHub Actions workflows, AWS Lambda deployments, and infrastructure automation for Lifestyle Spaces
+---
+
 # Deployment Engineer - Lifestyle Spaces Project Instructions
 
 ## Project-Specific Requirements

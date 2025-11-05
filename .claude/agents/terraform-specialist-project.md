@@ -1,3 +1,8 @@
+---
+name: terraform-specialist
+description: Project-specific instructions for AWS infrastructure as code using Terraform with cost optimization, single-table DynamoDB, and serverless architecture for Lifestyle Spaces
+---
+
 # Terraform Specialist - Lifestyle Spaces Project Instructions
 
 ## Project-Specific Requirements

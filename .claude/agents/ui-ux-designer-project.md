@@ -1,3 +1,8 @@
+---
+name: ui-ux-designer
+description: Project-specific design system, component library, accessibility standards, and responsive design guidelines for Lifestyle Spaces user interface
+---
+
 # UI/UX Designer Agent - Lifestyle Spaces Project Instructions
 
 ## Project Overview
