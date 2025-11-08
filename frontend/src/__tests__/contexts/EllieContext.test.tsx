@@ -1,4 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
+import { vi } from 'vitest';
 import { EllieProvider, useEllie } from '../../contexts/EllieContext';
 
 describe('EllieContext', () => {
@@ -92,7 +93,7 @@ describe('EllieContext', () => {
 
   it('should throw error when used outside provider', () => {
     // Suppress console.error for this test
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     expect(() => {
       renderHook(() => useEllie());

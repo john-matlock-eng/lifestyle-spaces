@@ -6,7 +6,21 @@ import type { Template } from '../types/template.types'
 // Create mocks that will be reassigned per test
 let mockSetMood = vi.fn()
 let mockCelebrate = vi.fn()
+let mockSetIsTyping = vi.fn()
 let currentMood = 'curious'
+
+// Mock the useEllie hook
+vi.mock('../../../contexts/EllieContext', () => ({
+  useEllie: vi.fn(() => ({
+    mood: currentMood,
+    setMood: mockSetMood,
+    perchIndex: 1,
+    setPerch: vi.fn(),
+    cyclePerch: vi.fn(),
+    isTyping: false,
+    setIsTyping: mockSetIsTyping,
+  })),
+}))
 
 // Mock the useShihTzuCompanion hook with stateful mood
 vi.mock('../../../hooks', () => ({
@@ -31,6 +45,7 @@ describe('useEllieJournalGuide', () => {
       currentMood = newMood
     })
     mockCelebrate = vi.fn()
+    mockSetIsTyping = vi.fn()
 
     // Create a mock template with Ellie guidance
     mockTemplate = {
