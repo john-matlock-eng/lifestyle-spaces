@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useParams } from 'react-router-dom'
 import { JournalList } from '../components/JournalList'
-import { SmartEllie } from '../../../components/ellie'
+import { ElliePerch } from '../../../components/ellie'
+import { useEllie } from '../../../contexts/EllieContext'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import '../styles/journal.css'
 
@@ -12,7 +13,7 @@ export const JournalListPage: React.FC = () => {
   const { spaceId } = useParams<{ spaceId: string }>()
 
   // Ellie companion state
-  const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('curious');
+  const { mood, setMood } = useEllie();
 
   // Ellie customization
   const { customization } = useEllieCustomizationContext()
@@ -30,8 +31,7 @@ export const JournalListPage: React.FC = () => {
       <JournalList spaceId={spaceId} />
 
       {/* Ellie companion */}
-      <SmartEllie
-        mood={mood}
+      <ElliePerch
         showThoughtBubble={true}
         thoughtText="Browse your journals! 📖"
         size="md"
@@ -40,7 +40,7 @@ export const JournalListPage: React.FC = () => {
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
-        enableSmartPositioning={true}
+        showPerchControl={true}
         showControlPanel={true}
       />
     </>

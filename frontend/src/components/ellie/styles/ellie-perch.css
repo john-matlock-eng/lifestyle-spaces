@@ -1,0 +1,211 @@
+/* ============================================================================
+ * Ellie Perch Positioning System - MOBILE-FIRST
+ * ============================================================================
+ *
+ * Features:
+ * 1. Responsive perch positions (CSS variables with media queries)
+ * 2. Auto-hide on mobile when keyboard is active
+ * 3. Smooth transitions between perches
+ * 4. Pointer-events optimization for performance
+ */
+
+/* ----------------------------------------------------------------------------
+ * BASE PERCH CONTAINER
+ * ---------------------------------------------------------------------------- */
+.ellie-perch {
+  position: fixed;
+  z-index: 9999;
+
+  /* Smooth transitions when cycling perches */
+  transition:
+    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease-in-out;
+
+  /* Allow clicks through container */
+  pointer-events: none;
+}
+
+/* Make child elements interactive */
+.ellie-perch > * {
+  pointer-events: auto;
+}
+
+/* ----------------------------------------------------------------------------
+ * RESPONSIVE PERCH POSITIONS (CSS Variables)
+ * ---------------------------------------------------------------------------- */
+
+/* MOBILE-FIRST: Smaller perches, tighter to corners
+ * Assumes Ellie is ~100px on mobile
+ */
+:root {
+  --perch-0-x: 10px;
+  --perch-0-y: calc(100vh - 110px);
+  --perch-1-x: calc(100vw - 110px);
+  --perch-1-y: calc(100vh - 110px);
+  --perch-2-x: calc(100vw - 110px);
+  --perch-2-y: 10px;
+  --perch-3-x: 10px;
+  --perch-3-y: 10px;
+}
+
+/* DESKTOP/TABLET: Original positions
+ * Assumes Ellie is ~200px on desktop
+ */
+@media (min-width: 768px) {
+  :root {
+    --perch-0-x: 20px;
+    --perch-0-y: calc(100vh - 220px);
+    --perch-1-x: calc(100vw - 220px);
+    --perch-1-y: calc(100vh - 220px);
+    --perch-2-x: calc(100vw - 220px);
+    --perch-2-y: 120px;
+    --perch-3-x: 20px;
+    --perch-3-y: 120px;
+  }
+}
+
+/* Apply perch positions via transform */
+.perch-position-0 {
+  left: 0;
+  bottom: 0;
+  transform: translate(var(--perch-0-x), calc(-1 * (100vh - var(--perch-0-y))));
+}
+
+.perch-position-1 {
+  right: 0;
+  bottom: 0;
+  transform: translate(calc(-1 * (100vw - var(--perch-1-x))), calc(-1 * (100vh - var(--perch-1-y))));
+}
+
+.perch-position-2 {
+  right: 0;
+  top: 0;
+  transform: translate(calc(-1 * (100vw - var(--perch-2-x))), var(--perch-2-y));
+}
+
+.perch-position-3 {
+  left: 0;
+  top: 0;
+  transform: translate(var(--perch-3-x), var(--perch-3-y));
+}
+
+/* ----------------------------------------------------------------------------
+ * KEYBOARD AWARENESS (MOBILE ONLY)
+ * ---------------------------------------------------------------------------- */
+
+/* Hide Ellie when user is typing on mobile to avoid OSK conflicts */
+@media (max-width: 767px) {
+  .ellie-perch.is-typing {
+    opacity: 0;
+    pointer-events: none;
+    /* Keep in DOM for state preservation, just invisible */
+  }
+}
+
+/* Desktop: Show typing indicator instead of hiding */
+@media (min-width: 768px) {
+  .ellie-perch.is-typing {
+    /* Optional: Could add a subtle "zen mode" indicator */
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * CONTROL ELEMENTS
+ * ---------------------------------------------------------------------------- */
+
+.ellie-perch__controls {
+  position: absolute;
+  top: 0;
+}
+
+/* Left perches: controls on right side */
+.perch-position-0 .ellie-perch__controls,
+.perch-position-3 .ellie-perch__controls {
+  left: 100%;
+  margin-left: 8px;
+}
+
+/* Right perches: controls on left side */
+.perch-position-1 .ellie-perch__controls,
+.perch-position-2 .ellie-perch__controls {
+  right: 100%;
+  margin-right: 8px;
+}
+
+/* Perch Cycle Button */
+.ellie-perch__cycle-button {
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+
+  background: rgba(139, 92, 246, 0.9);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: white;
+
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ellie-perch__cycle-button:hover {
+  background: rgba(139, 92, 246, 1);
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.ellie-perch__cycle-button:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+/* Mobile: Smaller cycle button */
+@media (max-width: 767px) {
+  .ellie-perch__cycle-button {
+    width: 28px;
+    height: 28px;
+    bottom: -36px;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * ACCESSIBILITY
+ * ---------------------------------------------------------------------------- */
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .ellie-perch {
+    transition: opacity 0.1s ease-in-out;
+  }
+
+  .ellie-perch__cycle-button {
+    transition: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .ellie-perch__cycle-button {
+    border: 3px solid white;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * LOADING STATE
+ * ---------------------------------------------------------------------------- */
+
+.ellie-perch:not(.is-loaded) {
+  opacity: 0;
+}
+
+.ellie-perch.is-loaded {
+  opacity: 1;
+}

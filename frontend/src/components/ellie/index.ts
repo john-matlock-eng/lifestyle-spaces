@@ -1,8 +1,8 @@
 export { Ellie } from './Ellie'
 export type { EllieProps } from './Ellie'
-// Use SimpleSmartEllie as SmartEllie - simplified working version
-export { SimpleSmartEllie as SmartEllie } from './SimpleSmartEllie'
-export type { SimpleSmartEllieProps as SmartEllieProps } from './SimpleSmartEllie'
+// New perch-based positioning system
+export { ElliePerch } from './ElliePerch'
+export type { ElliePerchProps } from './ElliePerch'
 export { AnimatedShihTzu } from './AnimatedShihTzu'
 export { EllieCustomizer, type EllieCustomization } from './EllieCustomizer'
 

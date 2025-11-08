@@ -14,7 +14,7 @@ import { useJournal } from '../hooks/useJournal'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { aiService } from '../../../services/ai'
-import { SmartEllie } from '../../../components/ellie'
+import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { useEllieJournalGuide } from '../hooks/useEllieJournalGuide'
 import type { Template, TemplateData, QAPair, ListItem, TableRow } from '../types/template.types'
@@ -49,7 +49,6 @@ export const JournalCreatePage: React.FC = () => {
 
   // Template-driven Ellie guidance
   const {
-    mood,
     thoughtText,
     particleEffect,
     handleTemplateSelect: onEllieTemplateSelect,
@@ -847,8 +846,7 @@ export const JournalCreatePage: React.FC = () => {
 
       {/* Ellie companion */}
       {!showTemplatePicker && (
-        <SmartEllie
-          mood={mood}
+        <ElliePerch
           showThoughtBubble={true}
           thoughtText={thoughtText || "Let's create something meaningful! 💫"}
           size="md"
@@ -864,7 +862,7 @@ export const JournalCreatePage: React.FC = () => {
           collarStyle={customization.collarStyle}
           collarColor={customization.collarColor}
           collarTag={customization.collarTag}
-          enableSmartPositioning={true}
+          showPerchControl={true}
           showControlPanel={true}
         />
       )}

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../stores/authStore'
-import { SmartEllie } from '../components/ellie'
+import { ElliePerch } from '../components/ellie'
+import { useEllie } from '../contexts/EllieContext'
 import { ThemeToggle } from '../components/theme'
 import { useEffect, useState } from 'react'
 import './Landing.css'
@@ -10,8 +11,13 @@ export function Landing() {
   const { user } = useAuth()
   const [isVisible, setIsVisible] = useState(false)
 
-  // Ellie companion state
-  const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('excited');
+  // Ellie companion state from context
+  const { mood, setMood } = useEllie()
+
+  // Set initial excited mood
+  useEffect(() => {
+    setMood('excited')
+  }, [setMood])
 
   // Celebration function for Ellie
   const celebrate = () => {
@@ -193,8 +199,7 @@ export function Landing() {
       </footer>
 
       {/* Ellie Companion */}
-      <SmartEllie
-        mood={mood}
+      <ElliePerch
         size="md"
         variant="default"
         showThoughtBubble={true}
@@ -202,7 +207,7 @@ export function Landing() {
         onClick={() => setMood(mood === 'happy' ? 'excited' : 'happy')}
         particleEffect={mood === 'celebrating' ? 'hearts' : null}
         className="hidden lg:block"
-        enableSmartPositioning={true}
+        showPerchControl={true}
         showControlPanel={true}
       />
     </div>

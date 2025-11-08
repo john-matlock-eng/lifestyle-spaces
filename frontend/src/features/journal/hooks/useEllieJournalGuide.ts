@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useShihTzuCompanion } from '../../../hooks'
+import { useEllie } from '../../../contexts/EllieContext'
 import type { Template, EllieGuidance } from '../types/template.types'
 
 export interface SectionProgress {
@@ -39,6 +40,7 @@ export function useEllieJournalGuide(
   template: Template | null,
   currentSectionId?: string
 ): UseEllieJournalGuideReturn {
+  const { setIsTyping: setEllieContextTyping } = useEllie()
   const { mood, setMood, position, celebrate } = useShihTzuCompanion({
     initialMood: template?.ellie?.onSelect?.mood || 'zen',
     initialPosition: {
@@ -251,6 +253,7 @@ export function useEllieJournalGuide(
       // Save current mood to restore later
       lastMoodBeforeTypingRef.current = mood
       setIsTyping(true)
+      setEllieContextTyping(true) // Update context for mobile keyboard awareness
       setMood('zen')
       setThoughtText('') // Clear thought bubble during active writing
     }
@@ -263,6 +266,7 @@ export function useEllieJournalGuide(
     // Set new timeout for idle detection (30 seconds)
     typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false)
+      setEllieContextTyping(false) // Update context to show Ellie again on mobile
       setMood('idle')
       setThoughtText('Take your time. I\'m here if you need me. 💭')
 
@@ -271,7 +275,7 @@ export function useEllieJournalGuide(
         setThoughtText('')
       }, 5000)
     }, 30000) // 30 seconds
-  }, [isTyping, mood, setMood])
+  }, [isTyping, mood, setMood, setEllieContextTyping])
 
   // Cleanup typing timeout on unmount
   useEffect(() => {

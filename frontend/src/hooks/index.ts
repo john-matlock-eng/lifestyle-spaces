@@ -2,3 +2,4 @@ export { useShihTzuCompanion, default as useShihTzuCompanionDefault } from './us
 export type { Mood, Position, ElementSide, UseShihTzuCompanionParams, UseShihTzuCompanionReturn } from './useShihTzuCompanion'
 export { useEllieCustomization } from './useEllieCustomization'
 export type { EllieCustomization } from './useEllieCustomization'
+export { useEllie } from '../contexts/EllieContext'
