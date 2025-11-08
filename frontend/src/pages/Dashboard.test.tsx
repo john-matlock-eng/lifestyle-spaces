@@ -5,6 +5,7 @@ import { Dashboard } from './Dashboard';
 import { useAuth } from '../stores/authStore';
 import { useSpace } from '../stores/spaceStore';
 import { ThemeProvider } from '../theme/ThemeProvider';
+import { EllieProvider } from '../contexts/EllieContext';
 import type { User, Space } from '../types';
 
 // Mock the stores
@@ -38,17 +39,18 @@ vi.mock('../hooks/useEllieCustomizationContext', () => ({
 }));
 
 vi.mock('../components/ellie', () => {
-  const EllieComponent = ({ mood, thoughtText, onClick }: { mood: string; thoughtText: string; onClick: () => void }) => (
+  const EllieComponent = ({ mood, thoughtText, onClick, showThoughtBubble, showPerchControl }: any) => (
     <div data-testid="ellie-companion">
-      <div data-testid="ellie-mood">{mood}</div>
-      <div data-testid="ellie-thought">{thoughtText}</div>
-      <button data-testid="ellie-click" onClick={onClick}>Click Ellie</button>
+      <div data-testid="ellie-mood">{mood || 'idle'}</div>
+      {showThoughtBubble && <div data-testid="ellie-thought">{thoughtText}</div>}
+      {onClick && <button data-testid="ellie-click" onClick={onClick}>Click Ellie</button>}
     </div>
   );
 
   return {
     Ellie: EllieComponent,
     SmartEllie: EllieComponent,
+    ElliePerch: EllieComponent,
   };
 });
 
@@ -179,11 +181,13 @@ describe('Dashboard', () => {
 
   const renderDashboard = () => {
     return render(
-      <ThemeProvider>
-        <MemoryRouter>
-          <Dashboard />
-        </MemoryRouter>
-      </ThemeProvider>
+      <EllieProvider>
+        <ThemeProvider>
+          <MemoryRouter>
+            <Dashboard />
+          </MemoryRouter>
+        </ThemeProvider>
+      </EllieProvider>
     );
   };
 

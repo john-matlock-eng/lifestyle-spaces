@@ -9,6 +9,8 @@ import { Collar } from './accessories/Collar';
 import { VariantDecorations } from './accessories/VariantDecorations';
 import { useEllieMood } from './hooks/useEllieMood';
 import { useEllieAnimation } from './hooks/useEllieAnimation';
+import { useEllieAnimations } from './hooks/useEllieAnimations';
+import { useEllie } from '../../contexts/EllieContext';
 import { ELLIE_SIZES, VIEWBOX, DEFAULT_COLLAR_STYLE, DEFAULT_COLLAR_COLOR, ELLIE_COORDINATES } from './constants';
 import { getVariantColors, getEffectiveFurColor } from './utils/variants';
 import './styles';
@@ -36,7 +38,19 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
 }) => {
   // Hooks
   const { mood, setMood } = useEllieMood({ initialMood: propMood });
-  const { particles, particleEffect, celebrate } = useEllieAnimation();
+  const { isTyping } = useEllie();
+  const { refs: animRefs, celebrate: gsapCelebrate } = useEllieAnimations({
+    mood,
+    isTyping
+  });
+  const { particles, particleEffect, celebrate: particleCelebrate } = useEllieAnimation();
+
+  // Combine celebrations
+  const celebrate = useCallback((effect?: 'hearts' | 'sparkles' | 'treats' | 'zzz' | null) => {
+    console.log('[Ellie] celebrate() called with effect:', effect);
+    gsapCelebrate();
+    particleCelebrate(effect || 'hearts');
+  }, [gsapCelebrate, particleCelebrate]);
 
   // State
   const [isDragging, setIsDragging] = useState(false);
@@ -51,6 +65,7 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
   // Sync mood with prop
   useEffect(() => {
     if (propMood !== mood) {
+      console.log('[Ellie] Mood changed:', { from: mood, to: propMood });
       setMood(propMood);
     }
   }, [propMood, mood, setMood]);
@@ -341,13 +356,13 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
         {/* Render in proper layering order - back to front */}
 
         {/* 1. Tail (furthest back) */}
-        <Tail furColor={effectiveFurColor} mood={mood} />
+        <Tail furColor={effectiveFurColor} mood={mood} ref={animRefs.tail} />
 
-        {/* 2. Legs */}
+        {/* 2. Body */}
+        <Body furColor={effectiveFurColor} mood={mood} ref={animRefs.body} />
+
+        {/* 3. Legs (in front of body) */}
         <Legs furColor={effectiveFurColor} mood={mood} />
-
-        {/* 3. Body */}
-        <Body furColor={effectiveFurColor} mood={mood} />
 
         {/* 4. Neck */}
         <Neck furColor={effectiveFurColor} mood={mood} />
@@ -366,6 +381,7 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
           furColor={effectiveFurColor}
           mood={mood}
           onNoseBoop={handleNoseBoop}
+          ref={animRefs.head}
         />
 
         {/* 7. Variant decorations (balloons, snowflakes, etc.) */}

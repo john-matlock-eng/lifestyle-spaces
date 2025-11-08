@@ -21,26 +21,27 @@ export const getVariantColors = (variant: EllieVariant = 'default'): VariantColo
       // Vibrant balloon party colors - pink tones with hot pink accent
       return { primary: '#FDE2E4', secondary: '#E0B1CB', accent: '#BE185D' };
     default:
-      return { primary: 'white', secondary: '#e5e7eb', accent: '#8B4513' };
+      // Realistic cream/tan Shih Tzu palette
+      return { primary: '#F5E6D3', secondary: '#E8D9C8', accent: '#8B4513' };
   }
 };
 
 /**
  * Get the effective fur color based on furColor prop and variant
  * If furColor is provided, it takes precedence over variant colors
- * The variant parameter is used to determine gradient colors via getVariantColors()
+ * The variant parameter is used to determine the color via getVariantColors()
  */
 export const getEffectiveFurColor = (
   furColor?: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _variant: EllieVariant = 'default'
+  variant: EllieVariant = 'default'
 ): string => {
   if (furColor) {
     return furColor;
   }
 
-  // Use gradient from variant colors (variant is used by caller to set gradient stops)
-  return `url(#ellie-fur-gradient)`;
+  // Use variant primary color
+  const variantColors = getVariantColors(variant);
+  return variantColors.primary;
 };
 
 /**

@@ -91,9 +91,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Configure Amplify on mount
   useEffect(() => {
     // Configure Amplify with environment variables or defaults
-    const region = process.env.REACT_APP_AWS_REGION || 'us-east-1';
-    const userPoolId = process.env.REACT_APP_COGNITO_USER_POOL_ID || '';
-    const userPoolClientId = process.env.REACT_APP_COGNITO_USER_POOL_CLIENT_ID || '';
+    const region = import.meta.env.VITE_AWS_REGION || 'us-east-1';
+    const userPoolId = import.meta.env.VITE_COGNITO_USER_POOL_ID || '';
+    const userPoolClientId = import.meta.env.VITE_COGNITO_USER_POOL_CLIENT_ID || '';
 
     if (userPoolId && userPoolClientId) {
       configureAmplify(region, userPoolId, userPoolClientId);
@@ -196,7 +196,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Add internal methods for testing
-  if (process.env.NODE_ENV === 'test') {
+  if (import.meta.env.MODE === 'test') {
     const testContextValue = contextValue as AuthContextTypeWithTestMethods;
     testContextValue._setUser = (user: User | null) => {
       dispatch({ type: 'SET_USER', payload: user });

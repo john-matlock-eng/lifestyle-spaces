@@ -1,98 +1,22 @@
-/* Mood-specific styling classes */
+/* ============================================================================
+ * Ellie Moods - GSAP Powered (Phase 2)
+ * ============================================================================
+ *
+ * Mood-specific animations removed - now handled by useEllieAnimations hook
+ * Only static positioning/transforms remain
+ */
 
-/* Base mood class */
+/* Base mood transition */
 .ellie-mood {
   transition: all 0.3s ease;
 }
 
-/* Idle/Default */
-.mood-idle .ellie-body {
-  animation: breathe 4s ease-in-out infinite;
-}
-
-/* Happy - subtle animations only */
-.mood-happy .ellie-body {
-  animation: breathe 5s ease-in-out infinite;
-}
-
-.mood-happy .ellie-tail-inner {
-  animation: wag-enhanced 2s ease-in-out infinite;
-  transform-origin: center center;
-}
-
-/* Removed ear animation - ears should be static */
-
-.mood-happy .ellie-tongue {
-  animation: tongueGentle 2s ease-in-out infinite;
-}
-
-/* Excited */
-.mood-excited .ellie-tail-inner {
-  animation: wag-enhanced 0.6s ease-in-out infinite;
-  transform-origin: center center;
-}
-
-.mood-excited .ellie-body {
-  animation: bounce-subtle 0.8s ease-in-out infinite;
-}
-
-/* Removed ear animation - ears should be static */
-
-.mood-excited .ellie-tongue {
-  animation: tonguePant 0.6s ease-in-out infinite;
-}
-
-/* Playful */
-.mood-playful .ellie-tail-inner {
-  animation: wiggle 1s ease-in-out infinite;
-  transform-origin: center center;
-}
-
-.mood-playful .ellie-body {
-  animation: breathe 3s ease-in-out infinite;
-}
-
-.mood-playful .ellie-tongue {
-  animation: tongueWag 1s ease-in-out infinite;
-}
-
-/* Celebrating */
-.mood-celebrating .ellie-tail-inner {
-  animation: wag-enhanced 0.6s ease-in-out infinite;
-  transform-origin: center center;
-}
-
-.mood-celebrating .ellie-body {
-  animation: bounce-subtle 0.5s ease-in-out infinite;
-}
-
-/* Removed ear animation - ears should be static */
-
-.mood-celebrating .ellie-tongue {
-  animation: tonguePant 0.6s ease-in-out infinite;
-}
-
-/* Curious */
-/* Removed ear animation - ears should be static */
-/* Removed nose sniff animation - too distracting, curious should be calm and attentive */
-/* Curious mood is now conveyed through ear position and calm demeanor */
-
-/* Sleeping */
-.mood-sleeping .ellie-body {
-  animation: breathe 6s ease-in-out infinite;
-}
-
-/* Zen */
-.mood-zen .ellie-body {
-  animation: breathe 8s ease-in-out infinite;
-}
-
-/* Concerned */
+/* Concerned - ear position only */
 .mood-concerned .ellie-ears {
   transform: rotate(-5deg);
 }
 
-/* Proud */
+/* Proud - static positions only */
 .mood-proud .ellie-head {
   transform: translateY(-2px);
 }
@@ -101,11 +25,5 @@
   transform: rotate(50deg);
 }
 
-/* Walking */
-.mood-walking .ellie-body {
-  animation: bounce-subtle 1s ease-in-out infinite;
-}
-
-.mood-walking .ellie-tongue {
-  animation: tonguePant 0.8s ease-in-out infinite;
-}
+/* All other mood animations (breathe, wag, bounce, wiggle, tongue, etc.)
+   are now handled by GSAP in useEllieAnimations hook */

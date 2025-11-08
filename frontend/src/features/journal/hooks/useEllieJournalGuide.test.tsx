@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import React from 'react'
 import { useEllieJournalGuide } from './useEllieJournalGuide'
 import type { Template } from '../types/template.types'
+import { EllieProvider } from '../../../contexts/EllieContext'
 
 // Create mocks that will be reassigned per test
 let mockSetMood = vi.fn()
@@ -17,6 +19,11 @@ vi.mock('../../../hooks', () => ({
     celebrate: mockCelebrate
   }))
 }))
+
+// Wrapper component for hooks
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <EllieProvider>{children}</EllieProvider>
+)
 
 describe('useEllieJournalGuide', () => {
   let mockTemplate: Template
@@ -127,7 +134,7 @@ describe('useEllieJournalGuide', () => {
 
   describe('Initialization', () => {
     it('should initialize with default state when no template', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(null))
+      const { result } = renderHook(() => useEllieJournalGuide(null), { wrapper })
 
       expect(result.current.mood).toBe('curious')
       expect(result.current.thoughtText).toBe('')
@@ -137,14 +144,14 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should initialize with template-specific mood when template provided', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       // Should use onSelect mood from template
       expect(result.current.mood).toBe('curious')
     })
 
     it('should initialize position based on window width', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       expect(result.current.position).toHaveProperty('x')
       expect(result.current.position).toHaveProperty('y')
@@ -154,7 +161,7 @@ describe('useEllieJournalGuide', () => {
 
   describe('Template Selection', () => {
     it('should apply onSelect guidance when handleTemplateSelect is called', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       act(() => {
         result.current.handleTemplateSelect()
@@ -177,7 +184,7 @@ describe('useEllieJournalGuide', () => {
 
   describe('Journal Start', () => {
     it('should apply onStart guidance when handleJournalStart is called', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       act(() => {
         result.current.handleJournalStart()
@@ -204,7 +211,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should start time tracking when section starts', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('intro')
@@ -216,7 +223,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should mark section as complete when handleSectionComplete is called', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('intro')
@@ -232,7 +239,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should not apply duplicate guidance for the same section event', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('intro')
@@ -251,7 +258,7 @@ describe('useEllieJournalGuide', () => {
 
   describe('Progress Tracking', () => {
     it('should update word count progress', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('intro')
@@ -381,7 +388,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should return null when no current section', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       const hint = result.current.getHint()
 
@@ -391,7 +398,7 @@ describe('useEllieJournalGuide', () => {
 
   describe('Save Handling', () => {
     it('should apply save guidance with delay', async () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       act(() => {
         result.current.handleSave()
@@ -435,7 +442,7 @@ describe('useEllieJournalGuide', () => {
 
   describe('Template Completion', () => {
     it('should detect when all sections are complete', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('intro')
@@ -455,7 +462,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should not be complete when some sections incomplete', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('intro')
@@ -468,7 +475,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should apply template completion guidance when all done', async () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('intro')
@@ -550,7 +557,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should handle section not in template', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('nonexistent')
@@ -561,7 +568,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should handle updateSectionProgress without section being started', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       act(() => {
         result.current.updateSectionProgress('intro', { wordCount: 50 })
@@ -574,7 +581,7 @@ describe('useEllieJournalGuide', () => {
 
   describe('Multiple Sections Workflow', () => {
     it('should track progress across multiple sections', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate), { wrapper })
 
       // Work on first section
       act(() => {

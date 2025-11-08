@@ -4,7 +4,7 @@ import { AuthProvider } from './stores/authStore';
 import { SpaceProvider } from './stores/spaceStore';
 import { InvitationProvider } from './stores/invitationStore';
 import { EllieCustomizationProvider } from './contexts/EllieCustomizationContext';
-import { ElliePositionProvider } from './contexts/ElliePositionContext';
+import { EllieProvider } from './contexts/EllieContext';
 import { AuthenticatedLayout } from './components/layout/AuthenticatedLayout';
 import { Landing } from './pages/Landing';
 import { SignIn } from './pages/SignIn';
@@ -28,7 +28,7 @@ function App() {
         <SpaceProvider>
           <InvitationProvider>
             <EllieCustomizationProvider>
-              <ElliePositionProvider>
+              <EllieProvider>
                 <Router>
               <Routes>
                 {/* Public routes */}
@@ -55,7 +55,7 @@ function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
                 </Router>
-              </ElliePositionProvider>
+              </EllieProvider>
             </EllieCustomizationProvider>
           </InvitationProvider>
         </SpaceProvider>

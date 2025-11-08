@@ -43,9 +43,9 @@ export const ELLIE_COORDINATES = {
     // Eyes closer together (center is 60)
     leftEye: { cx: 54, cy: 32 },
     rightEye: { cx: 66, cy: 32 },
-    // Ears positioned on sides of head (head center: 60, 38, radius: 18)
-    leftEar: { cx: 45, cy: 30, rx: 6, ry: 10 },
-    rightEar: { cx: 75, cy: 30, rx: 6, ry: 10 },
+    // Ears positioned on sides of head (head center: 60, 38, radius: 18) - hanging down
+    leftEar: { cx: 44, cy: 38, rx: 5, ry: 14, rotation: 10 },
+    rightEar: { cx: 76, cy: 38, rx: 5, ry: 14, rotation: -10 },
   },
 
   // Mouth positioning (below nose)
@@ -86,12 +86,12 @@ export const ELLIE_COORDINATES = {
 
   // Tail positioning - attached to back of body, longer
   tail: {
-    cx: 42,     // Moved right to attach to body (body left edge is at 40)
-    cy: 68,     // Positioned at back-middle of body
+    cx: 60,     // Positioned for proper overlap with body
+    cy: 50,     // Higher for natural emergence from back
     rx: 12,     // Made longer (was 8)
     ry: 5,      // Slightly thicker (was 4)
-    rotation: -45,
-    transformOrigin: '42 68',
+    rotation: -25,
+    transformOrigin: '66 50',  // Base attachment point - tail rotates around this
   },
 
   // Collar positioning (on neck - using rect instead of ellipse)

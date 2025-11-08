@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { JournalList } from '../components/JournalList'
-import { SmartEllie } from '../../../components/ellie'
+import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import '../styles/journal.css'
 
@@ -30,8 +30,7 @@ export const JournalListPage: React.FC = () => {
       <JournalList spaceId={spaceId} />
 
       {/* Ellie companion */}
-      <SmartEllie
-        mood={mood}
+      <ElliePerch
         showThoughtBubble={true}
         thoughtText="Browse your journals! 📖"
         size="md"
@@ -40,8 +39,8 @@ export const JournalListPage: React.FC = () => {
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
-        enableSmartPositioning={true}
-        showControlPanel={true}
+        showPerchControl={true}
+        
       />
     </>
   )

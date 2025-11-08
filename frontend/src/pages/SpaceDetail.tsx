@@ -8,7 +8,7 @@ import { InviteMemberModal } from '../components/spaces/InviteMemberModal';
 import { JournalList } from '../features/journal/components/JournalList';
 import { ActivityFeed } from '../components/ActivityFeed';
 import { regenerateInviteCode } from '../services/spaces';
-import { SmartEllie } from '../components/ellie';
+import { ElliePerch } from '../components/ellie';
 import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationContext';
 import type { SpaceMemberRole, SpaceMember } from '../types';
 import './SpaceDetail.css';
@@ -695,8 +695,7 @@ export const SpaceDetail: React.FC = () => {
       )}
 
       {/* Ellie companion */}
-      <SmartEllie
-        mood={mood}
+      <ElliePerch
         showThoughtBubble={true}
         thoughtText={
           activeTab === 'journals'
@@ -711,8 +710,8 @@ export const SpaceDetail: React.FC = () => {
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
-        enableSmartPositioning={true}
-        showControlPanel={true}
+        showPerchControl={true}
+        
       />
     </div>
   );
