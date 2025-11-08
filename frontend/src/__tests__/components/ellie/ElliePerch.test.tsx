@@ -39,7 +39,7 @@ describe('ElliePerch', () => {
   });
 
   it('should apply is-typing class when typing', () => {
-    const { rerender } = render(<ElliePerch />, { wrapper });
+    render(<ElliePerch />, { wrapper });
 
     const perchElement = screen.getByTestId('ellie-perch');
     expect(perchElement).not.toHaveClass('is-typing');
