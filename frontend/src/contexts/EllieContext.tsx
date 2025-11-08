@@ -79,6 +79,7 @@ export const EllieProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useEllie = (): EllieContextValue => {
   const context = useContext(EllieContext);
   if (!context) {

@@ -38,19 +38,31 @@ vi.mock('../hooks/useEllieCustomizationContext', () => ({
   }),
 }));
 
-vi.mock('../components/ellie', () => {
-  const EllieComponent = ({ mood, thoughtText, onClick, showThoughtBubble, showPerchControl }: any) => (
-    <div data-testid="ellie-companion">
-      <div data-testid="ellie-mood">{mood || 'idle'}</div>
-      {showThoughtBubble && <div data-testid="ellie-thought">{thoughtText}</div>}
-      {onClick && <button data-testid="ellie-click" onClick={onClick}>Click Ellie</button>}
-    </div>
-  );
+vi.mock('../components/ellie', async () => {
+  interface EllieComponentProps {
+    thoughtText?: string;
+    onClick?: () => void;
+    showThoughtBubble?: boolean;
+  }
+
+  const React = await import('react');
+  const { useEllie } = await import('../contexts/EllieContext');
+
+  const ElliePerchComponent = ({ thoughtText, onClick, showThoughtBubble }: EllieComponentProps) => {
+    // Use the actual EllieContext to get mood
+    const { mood } = useEllie();
+
+    return React.createElement('div', { 'data-testid': 'ellie-companion' },
+      React.createElement('div', { 'data-testid': 'ellie-mood' }, mood),
+      showThoughtBubble && React.createElement('div', { 'data-testid': 'ellie-thought' }, thoughtText),
+      onClick && React.createElement('button', { 'data-testid': 'ellie-click', onClick }, 'Click Ellie')
+    );
+  };
 
   return {
-    Ellie: EllieComponent,
-    SmartEllie: EllieComponent,
-    ElliePerch: EllieComponent,
+    Ellie: ElliePerchComponent,
+    SmartEllie: ElliePerchComponent,
+    ElliePerch: ElliePerchComponent,
   };
 });
 

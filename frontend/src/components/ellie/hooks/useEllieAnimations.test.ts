@@ -3,6 +3,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useEllieAnimations } from './useEllieAnimations';
 import { gsap } from 'gsap';
 import type { EllieMood } from '../../../contexts/EllieContext';
+import type { Mock } from 'vitest';
 
 // Mock GSAP
 vi.mock('gsap', () => {
@@ -18,6 +19,7 @@ vi.mock('gsap', () => {
       timeline: vi.fn(() => mockTimeline),
       to: vi.fn(),
       registerPlugin: vi.fn(),
+      set: vi.fn(),
     },
   };
 });
@@ -26,8 +28,15 @@ vi.mock('@gsap/react', () => ({
   useGSAP: vi.fn(),
 }));
 
+interface MockTimeline {
+  to: Mock;
+  call: Mock;
+  eventCallback: Mock;
+  kill: Mock;
+}
+
 describe('useEllieAnimations', () => {
-  let mockTimeline: any;
+  let mockTimeline: MockTimeline;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -41,7 +50,7 @@ describe('useEllieAnimations', () => {
       kill: vi.fn(),
     };
 
-    (gsap.timeline as any).mockReturnValue(mockTimeline);
+    (gsap.timeline as Mock).mockReturnValue(mockTimeline);
   });
 
   afterEach(() => {
@@ -238,7 +247,7 @@ describe('useEllieAnimations', () => {
         { initialProps: { isTyping: false } }
       );
 
-      const initialTimelineCalls = (gsap.timeline as any).mock.calls.length;
+      const initialTimelineCalls = (gsap.timeline as Mock).mock.calls.length;
 
       rerender({ isTyping: true });
 
@@ -362,12 +371,12 @@ describe('useEllieAnimations', () => {
 
     it('should randomly decide ear twitches', () => {
       const originalRandom = Math.random;
-      let callCount = 0;
 
       // First call returns < 0.3 (trigger ear twitch)
+      let callIndex = 0;
       Math.random = vi.fn(() => {
-        callCount++;
-        return callCount === 1 ? 0.2 : 0.5;
+        callIndex++;
+        return callIndex === 1 ? 0.2 : 0.5;
       });
 
       renderHook(() => useEllieAnimations({ mood: 'idle', isTyping: false }));
@@ -379,11 +388,9 @@ describe('useEllieAnimations', () => {
 
     it('should randomly decide blinks', () => {
       const originalRandom = Math.random;
-      let callCount = 0;
 
       // Return value < 0.4 to trigger blink
       Math.random = vi.fn(() => {
-        callCount++;
         return 0.3;
       });
 
@@ -444,7 +451,7 @@ describe('useEllieAnimations', () => {
 
       renderHook(() => useEllieAnimations({ mood: 'idle', isTyping: false }));
 
-      const initialCalls = (gsap.timeline as any).mock.calls.length;
+      const initialCalls = (gsap.timeline as Mock).mock.calls.length;
 
       // Should create a reasonable number of timelines (not hundreds)
       expect(initialCalls).toBeLessThan(10);
