@@ -5,9 +5,22 @@ import { SpaceDetail } from './SpaceDetail';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 // Mock Ellie components and hooks
+vi.mock('../contexts/EllieContext', () => ({
+  useEllie: () => ({
+    mood: 'happy',
+    setMood: vi.fn(),
+    perchIndex: 1,
+    setPerch: vi.fn(),
+    cyclePerch: vi.fn(),
+    isTyping: false,
+    setIsTyping: vi.fn(),
+  }),
+  EllieProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 vi.mock('../components/ellie', () => ({
   Ellie: () => <div data-testid="ellie-companion">Ellie</div>,
-  SmartEllie: () => <div data-testid="ellie-companion">Ellie</div>,
+  ElliePerch: () => <div data-testid="ellie-companion">Ellie</div>,
 }));
 
 vi.mock('../hooks', () => ({

@@ -7,7 +7,7 @@ import { getEmotionById } from '../data/emotionData'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { DisplaySection } from '../../../lib/journal/types'
 import type { Template } from '../types/template.types'
-import { SmartEllie } from '../../../components/ellie'
+import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { HighlightableText } from '../components/HighlightableText'
@@ -59,7 +59,7 @@ export const JournalViewPage: React.FC = () => {
     reconnect
   } = useHighlightsRealtime(spaceId || '', journalId || '')
 
-  // Ellie companion - just use mood state, SmartEllie manages position
+  // Ellie companion - just use mood state, ElliePerch manages position
   const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('happy')
 
   // Ellie customization
@@ -537,8 +537,7 @@ ${content}
       )}
 
       {/* Ellie companion with smart positioning */}
-      <SmartEllie
-        mood={mood}
+      <ElliePerch
         showThoughtBubble={true}
         thoughtText={journal.wordCount > 500 ? "Great writing! 📝" : "Nice entry! 😊"}
         size="md"
@@ -547,7 +546,7 @@ ${content}
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
-        enableSmartPositioning={true}
+        showPerchControl={true}
         showControlPanel={true}
       />
     </div>

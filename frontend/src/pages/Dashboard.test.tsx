@@ -14,6 +14,23 @@ vi.mock('../stores/spaceStore');
 // Mock Ellie components and hooks
 const mockSetMood = vi.fn();
 const mockCelebrate = vi.fn();
+const mockSetPerch = vi.fn();
+const mockCyclePerch = vi.fn();
+const mockSetIsTyping = vi.fn();
+
+vi.mock('../contexts/EllieContext', () => ({
+  useEllie: () => ({
+    mood: 'excited',
+    setMood: mockSetMood,
+    perchIndex: 1,
+    setPerch: mockSetPerch,
+    cyclePerch: mockCyclePerch,
+    isTyping: false,
+    setIsTyping: mockSetIsTyping,
+  }),
+  EllieProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 vi.mock('../hooks', () => ({
   useShihTzuCompanion: () => ({
     mood: 'excited',
@@ -38,9 +55,8 @@ vi.mock('../hooks/useEllieCustomizationContext', () => ({
 }));
 
 vi.mock('../components/ellie', () => {
-  const EllieComponent = ({ mood, thoughtText, onClick }: { mood: string; thoughtText: string; onClick: () => void }) => (
+  const EllieComponent = ({ thoughtText, onClick }: { thoughtText: string; onClick?: () => void }) => (
     <div data-testid="ellie-companion">
-      <div data-testid="ellie-mood">{mood}</div>
       <div data-testid="ellie-thought">{thoughtText}</div>
       <button data-testid="ellie-click" onClick={onClick}>Click Ellie</button>
     </div>
@@ -48,7 +64,7 @@ vi.mock('../components/ellie', () => {
 
   return {
     Ellie: EllieComponent,
-    SmartEllie: EllieComponent,
+    ElliePerch: EllieComponent,
   };
 });
 
@@ -435,7 +451,8 @@ describe('Dashboard', () => {
       renderDashboard();
 
       expect(screen.getByTestId('ellie-companion')).toBeInTheDocument();
-      expect(screen.getByTestId('ellie-mood')).toHaveTextContent('excited');
+      // Mood is set to 'excited' on mount via useEffect
+      expect(mockSetMood).toHaveBeenCalledWith('excited');
     });
 
     it('shows welcome message for users with spaces', () => {
@@ -475,8 +492,8 @@ describe('Dashboard', () => {
       fireEvent.click(screen.getByTestId('modal-create'));
 
       await waitFor(() => {
-        // The mood changes to 'celebrating' internally, verify via UI
-        expect(screen.getByTestId('ellie-mood')).toHaveTextContent('celebrating');
+        // The celebrate function sets mood to 'celebrating'
+        expect(mockSetMood).toHaveBeenCalledWith('celebrating');
       });
     });
 
@@ -488,21 +505,23 @@ describe('Dashboard', () => {
       fireEvent.click(screen.getByTestId('join-submit'));
 
       await waitFor(() => {
-        // The mood changes to 'celebrating' internally, verify via UI
-        expect(screen.getByTestId('ellie-mood')).toHaveTextContent('celebrating');
+        // The celebrate function sets mood to 'celebrating'
+        expect(mockSetMood).toHaveBeenCalledWith('celebrating');
       });
     });
 
     it('allows clicking Ellie to toggle mood', () => {
       renderDashboard();
 
-      const initialMood = screen.getByTestId('ellie-mood').textContent;
       const ellieClickButton = screen.getByTestId('ellie-click');
+
+      // Clear previous calls from mount
+      mockSetMood.mockClear();
+
       fireEvent.click(ellieClickButton);
 
-      // The mood toggles between 'playful' and 'happy'
-      const newMood = screen.getByTestId('ellie-mood').textContent;
-      expect(newMood).not.toBe(initialMood);
+      // The mood toggles based on current mood (playful <-> happy)
+      expect(mockSetMood).toHaveBeenCalled();
     });
   });
 });

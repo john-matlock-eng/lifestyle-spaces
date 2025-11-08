@@ -5,7 +5,8 @@ import { useSpace } from '../stores/spaceStore';
 import { SpaceList } from '../components/spaces/SpaceList';
 import { CreateSpaceModal } from '../components/spaces/CreateSpaceModal';
 import { JoinByCodeForm } from '../components/invitations/JoinByCodeForm';
-import { SmartEllie } from '../components/ellie';
+import { ElliePerch } from '../components/ellie';
+import { useEllie } from '../contexts/EllieContext';
 import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationContext';
 import type { Space } from '../types';
 import './Dashboard.css';
@@ -17,11 +18,16 @@ export const Dashboard: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [showJoinByCode, setShowJoinByCode] = useState(false);
 
-  // Ellie companion state
-  const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('excited');
+  // Ellie companion state from context
+  const { mood, setMood } = useEllie();
 
   // Ellie customization
   const { customization } = useEllieCustomizationContext();
+
+  // Set initial excited mood on mount
+  useEffect(() => {
+    setMood('excited');
+  }, [setMood]);
 
   // Celebration function for Ellie
   const celebrate = () => {
@@ -160,8 +166,7 @@ export const Dashboard: React.FC = () => {
       )}
 
       {/* Ellie companion */}
-      <SmartEllie
-        mood={mood}
+      <ElliePerch
         showThoughtBubble={true}
         thoughtText={spaces.length === 0
           ? "Welcome! Create your first space to get started! 🎉"
@@ -173,8 +178,8 @@ export const Dashboard: React.FC = () => {
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
-        enableSmartPositioning={true}
         showControlPanel={true}
+        showPerchControl={true}
       />
     </div>
   );
