@@ -172,7 +172,7 @@ describe('useEllieJournalGuide', () => {
 
     it('should not apply guidance if template has no onSelect', () => {
       const templateWithoutSelect = { ...mockTemplate, ellie: undefined }
-      const { result } = renderHook(() => useEllieJournalGuide(templateWithoutSelect))
+      const { result } = renderHook(() => useEllieJournalGuide(templateWithoutSelect), { wrapper })
 
       act(() => {
         result.current.handleTemplateSelect()
@@ -196,7 +196,7 @@ describe('useEllieJournalGuide', () => {
 
   describe('Section Management', () => {
     it('should apply section onStart guidance when handleSectionStart is called', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('intro')
@@ -272,7 +272,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should trigger word count milestone guidance', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('intro')
@@ -287,7 +287,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should trigger higher word count milestone', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('intro')
@@ -302,7 +302,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should update item count progress for Q&A sections', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'reflection'))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'reflection'), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('reflection')
@@ -316,7 +316,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should trigger item count milestone guidance', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'reflection'))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'reflection'), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('reflection')
@@ -330,7 +330,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should calculate time spent correctly', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('intro')
@@ -348,7 +348,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should not trigger milestone twice for same value', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('intro')
@@ -371,7 +371,7 @@ describe('useEllieJournalGuide', () => {
 
   describe('Hints', () => {
     it('should return a random hint for current section', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'), { wrapper })
 
       const hint = result.current.getHint()
 
@@ -380,7 +380,7 @@ describe('useEllieJournalGuide', () => {
     })
 
     it('should return null when no hints available', () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'reflection'))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'reflection'), { wrapper })
 
       const hint = result.current.getHint()
 
@@ -429,7 +429,7 @@ describe('useEllieJournalGuide', () => {
         }
       }
 
-      const { result } = renderHook(() => useEllieJournalGuide(templateNoDelay))
+      const { result } = renderHook(() => useEllieJournalGuide(templateNoDelay), { wrapper })
 
       act(() => {
         result.current.handleSave()
@@ -503,7 +503,7 @@ describe('useEllieJournalGuide', () => {
 
   describe('Particle Effects', () => {
     it('should clear particle effect after applying', async () => {
-      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'))
+      const { result } = renderHook(() => useEllieJournalGuide(mockTemplate, 'intro'), { wrapper })
 
       act(() => {
         result.current.handleSectionStart('intro')
@@ -543,7 +543,7 @@ describe('useEllieJournalGuide', () => {
         ]
       }
 
-      const { result } = renderHook(() => useEllieJournalGuide(minimalTemplate))
+      const { result } = renderHook(() => useEllieJournalGuide(minimalTemplate), { wrapper })
 
       act(() => {
         result.current.handleTemplateSelect()
