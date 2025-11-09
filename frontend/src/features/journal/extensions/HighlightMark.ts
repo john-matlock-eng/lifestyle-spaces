@@ -116,54 +116,96 @@ export const HighlightMark = Mark.create<{
         return commands.toggleMark(this.name, attributes);
       },
 
-      unsetHighlight: (id?: string) => ({ state, commands, view }) => {
-        if (id) {
-          // Remove specific highlight by ID
-          const { tr } = state;
-          let updated = false;
-
-          state.doc.descendants((node, pos) => {
-            node.marks.forEach(mark => {
-              if (mark.type.name === this.name && mark.attrs.id === id) {
-                const from = pos;
-                const to = pos + node.nodeSize;
-                tr.removeMark(from, to, mark.type);
-                updated = true;
-              }
-            });
-          });
-
-          if (updated) {
-            view.dispatch(tr);
-            return true;
-          }
-          return false;
+      unsetHighlight: (id?: string) => ({ state, dispatch }) => {
+        if (!id) {
+          // No ID provided - remove all highlights at cursor
+          return dispatch ? dispatch(state.tr.removeMark(state.selection.from, state.selection.to, this.type)) : true;
         }
-        return commands.unsetMark(this.name);
-      },
 
-      updateHighlightCommentCount: (id: string, count: number) => ({ state, view }) => {
-        const { tr } = state;
-        let updated = false;
+        // Remove specific highlight by ID
+        // Collect all ranges with the target highlight mark
+        const ranges: { from: number; to: number }[] = [];
 
         state.doc.descendants((node, pos) => {
-          node.marks.forEach(mark => {
-            if (mark.type.name === this.name && mark.attrs.id === id) {
-              const from = pos;
-              const to = pos + node.nodeSize;
-              const newMark = mark.type.create({ ...mark.attrs, commentCount: count });
-              tr.removeMark(from, to, mark.type);
-              tr.addMark(from, to, newMark);
-              updated = true;
-            }
-          });
+          if (!node.isText) return;
+
+          const highlightMark = node.marks.find(
+            mark => mark.type.name === this.name && mark.attrs.id === id
+          );
+
+          if (highlightMark) {
+            ranges.push({
+              from: pos,
+              to: pos + node.nodeSize
+            });
+          }
         });
 
-        if (updated) {
-          view.dispatch(tr);
-          return true;
+        // If no ranges found, return false
+        if (ranges.length === 0) {
+          return false;
         }
-        return false;
+
+        // Create a new transaction
+        const { tr } = state;
+
+        // Apply all removals to the transaction
+        ranges.forEach(({ from, to }) => {
+          tr.removeMark(from, to, this.type);
+        });
+
+        // Dispatch the transaction if dispatch function is provided
+        if (dispatch) {
+          dispatch(tr);
+        }
+
+        return true;
+      },
+
+      updateHighlightCommentCount: (id: string, count: number) => ({ state, dispatch }) => {
+        // Collect all ranges with the target highlight mark and their new marks
+        const updates: { from: number; to: number; newMark: Mark }[] = [];
+
+        state.doc.descendants((node, pos) => {
+          if (!node.isText) return;
+
+          const highlightMark = node.marks.find(
+            mark => mark.type.name === this.name && mark.attrs.id === id
+          );
+
+          if (highlightMark) {
+            const newMark = highlightMark.type.create({
+              ...highlightMark.attrs,
+              commentCount: count
+            });
+            updates.push({
+              from: pos,
+              to: pos + node.nodeSize,
+              newMark
+            });
+          }
+        });
+
+        // If no updates found, return false
+        if (updates.length === 0) {
+          return false;
+        }
+
+        // Create a new transaction
+        const { tr } = state;
+
+        // Apply all updates to the transaction
+        updates.forEach(({ from, to, newMark }) => {
+          tr.removeMark(from, to, this.type);
+          tr.addMark(from, to, newMark);
+        });
+
+        // Dispatch the transaction if dispatch function is provided
+        if (dispatch) {
+          dispatch(tr);
+        }
+
+        return true;
       },
     };
   },

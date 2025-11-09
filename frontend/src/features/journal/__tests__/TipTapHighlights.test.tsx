@@ -249,8 +249,21 @@ describe('TipTap Highlight System', () => {
 
     // Verify it's gone
     json = editor.getJSON();
-    const foundAfter = false;
-    traverse(json);
+    let foundAfter = false;
+    const traverseAfter = (node: TipTapNode) => {
+      if (node.marks) {
+        const highlightMark = node.marks.find(
+          (m) => m.type === 'highlight' && m.attrs.id === 'remove-test'
+        );
+        if (highlightMark) {
+          foundAfter = true;
+        }
+      }
+      if (node.content) {
+        node.content.forEach(traverseAfter);
+      }
+    };
+    traverseAfter(json);
     expect(foundAfter).toBe(false);
   });
 
