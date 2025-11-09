@@ -160,7 +160,7 @@ class TestJournalTipTapValidation:
         with pytest.raises(ValidationError) as exc_info:
             JournalBase(**journal_data)
 
-        assert "must be a dictionary" in str(exc_info.value)
+        assert "Input should be a valid dictionary" in str(exc_info.value)
 
 
 class TestJournalEntryHelperMethods:
