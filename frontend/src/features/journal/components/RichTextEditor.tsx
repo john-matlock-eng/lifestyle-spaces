@@ -49,8 +49,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     editable: !disabled,
     onCreate: ({ editor }) => {
       // Initialize TipTap JSON on editor creation
+      console.log('[RichTextEditor] onCreate fired, onTipTapChange exists?', !!onTipTapChange)
       if (onTipTapChange) {
         const tiptapJSON = editor.getJSON()
+        console.log('[RichTextEditor] onCreate - setting initial TipTap JSON:', tiptapJSON)
         onTipTapChange(tiptapJSON)
       }
     },
@@ -61,8 +63,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       onChange(markdown)
 
       // Also provide TipTap JSON if callback is provided
+      console.log('[RichTextEditor] onUpdate fired, onTipTapChange exists?', !!onTipTapChange)
       if (onTipTapChange) {
         const tiptapJSON = editor.getJSON()
+        console.log('[RichTextEditor] onUpdate - setting TipTap JSON:', tiptapJSON)
         onTipTapChange(tiptapJSON)
       }
     },
@@ -72,6 +76,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       }
     }
   })
+
+  // Ensure contentTiptap is initialized when editor becomes available
+  useEffect(() => {
+    if (editor && onTipTapChange) {
+      const tiptapJSON = editor.getJSON()
+      console.log('[RichTextEditor] useEffect - initializing TipTap JSON:', tiptapJSON)
+      onTipTapChange(tiptapJSON)
+    }
+  }, [editor, onTipTapChange])
 
   // Update editor content when prop changes
   useEffect(() => {
