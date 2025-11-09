@@ -285,6 +285,14 @@ export const JournalCreatePage: React.FC = () => {
 
       const contentTiptapToSave = getAllSections()
       console.log('[DEBUG] contentTiptap sections:', contentTiptapToSave ? Object.keys(contentTiptapToSave) : 'none')
+      console.log('[DEBUG] contentTiptap structure:', contentTiptapToSave ? JSON.stringify(contentTiptapToSave).substring(0, 200) : 'null')
+
+      // WARNING: If contentTiptap is null, this means TipTap JSON wasn't captured!
+      if (!contentTiptapToSave) {
+        console.warn('[DEBUG] WARNING: contentTiptap is null! This will cause highlighting issues.')
+        console.warn('[DEBUG] Template:', selectedTemplate?.id)
+        console.warn('[DEBUG] Template sections:', selectedTemplate?.sections.map(s => s.id))
+      }
 
       const journal = await createJournal(spaceId, {
         title,

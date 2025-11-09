@@ -53,18 +53,22 @@ export const useSectionTipTap = (
 
   // Update a specific section's TipTap content
   const updateSection = useCallback((sectionId: string, content: Record<string, unknown>) => {
+    console.log('[useSectionTipTap] updateSection called:', { sectionId, hasContent: !!content.content })
     setSectionContents(prev => {
       // Only update if actually changed (avoid unnecessary re-renders)
       const prevContent = prev[sectionId]
       if (prevContent && JSON.stringify(prevContent) === JSON.stringify(content)) {
+        console.log('[useSectionTipTap] Content unchanged, skipping update')
         return prev
       }
 
       setHasChanges(true)
-      return {
+      const next = {
         ...prev,
         [sectionId]: content
       }
+      console.log('[useSectionTipTap] Updated section contents:', { sectionIds: Object.keys(next) })
+      return next
     })
   }, [])
 
@@ -91,18 +95,29 @@ export const useSectionTipTap = (
   // Get all sections for saving
   const getAllSections = useCallback((): SectionTipTapState | null => {
     const sectionCount = Object.keys(sectionContents).length
+    console.log('[useSectionTipTap] getAllSections called:', {
+      sectionCount,
+      sectionIds: Object.keys(sectionContents),
+      sectionContents: Object.keys(sectionContents).reduce((acc, key) => ({
+        ...acc,
+        [key]: { type: (sectionContents[key] as any)?.type, hasContent: !!(sectionContents[key] as any)?.content }
+      }), {})
+    })
 
     // Return null if empty
     if (sectionCount === 0) {
+      console.log('[useSectionTipTap] No sections, returning null')
       return null
     }
 
     // If single section with 'content' key, return just the document for backward compatibility
     if (sectionCount === 1 && 'content' in sectionContents) {
+      console.log('[useSectionTipTap] Single section mode, returning just the document')
       return sectionContents.content as unknown as SectionTipTapState
     }
 
     // Multi-section format
+    console.log('[useSectionTipTap] Multi-section mode, returning all sections')
     return sectionContents
   }, [sectionContents])
 

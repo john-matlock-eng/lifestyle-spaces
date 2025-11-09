@@ -77,6 +77,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   useEffect(() => {
     if (editor && onTipTapChange) {
       const tiptapJSON = editor.getJSON()
+      console.log('[RichTextEditor] Initializing TipTap JSON via useEffect:', { hasContent: !!tiptapJSON.content })
       onTipTapChange(tiptapJSON)
     }
   }, [editor, onTipTapChange])
