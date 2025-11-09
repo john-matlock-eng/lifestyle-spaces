@@ -1,16 +1,31 @@
 import React, { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { getEditorExtensions } from './extensions'
+import { HighlightToolbar } from './HighlightToolbar'
 import '../styles/journal.css'
+
+interface HighlightData {
+  id: string;
+  color: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  commentCount: number;
+  text: string;
+  range: { from: number; to: number };
+}
 
 interface RichTextEditorProps {
   content: string
   onChange: (content: string) => void
+  onTipTapChange?: (contentTiptap: Record<string, unknown>) => void
   placeholder?: string
   minHeight?: string
   showToolbar?: boolean
   disabled?: boolean
   onFocus?: () => void
+  enableHighlights?: boolean
+  onHighlightCreate?: (highlight: HighlightData) => void
 }
 
 /**
@@ -19,21 +34,37 @@ interface RichTextEditorProps {
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   content,
   onChange,
+  onTipTapChange,
   placeholder = 'Start writing...',
   minHeight = '300px',
   showToolbar = true,
   disabled = false,
-  onFocus
+  onFocus,
+  enableHighlights = true,
+  onHighlightCreate
 }) => {
   const editor = useEditor({
-    extensions: getEditorExtensions(placeholder),
+    extensions: getEditorExtensions(placeholder, enableHighlights),
     content,
     editable: !disabled,
+    onCreate: ({ editor }) => {
+      // Initialize TipTap JSON on editor creation
+      if (onTipTapChange) {
+        const tiptapJSON = editor.getJSON()
+        onTipTapChange(tiptapJSON)
+      }
+    },
     onUpdate: ({ editor }) => {
       // Get properly formatted markdown from storage
       // @ts-expect-error - markdown storage is added by tiptap-markdown extension
       const markdown = editor.storage.markdown.getMarkdown() as string
       onChange(markdown)
+
+      // Also provide TipTap JSON if callback is provided
+      if (onTipTapChange) {
+        const tiptapJSON = editor.getJSON()
+        onTipTapChange(tiptapJSON)
+      }
     },
     onFocus: () => {
       if (onFocus) {
@@ -41,6 +72,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       }
     }
   })
+
+  // Ensure contentTiptap is initialized when editor becomes available
+  useEffect(() => {
+    if (editor && onTipTapChange) {
+      const tiptapJSON = editor.getJSON()
+      console.log('[RichTextEditor] Initializing TipTap JSON via useEffect:', { hasContent: !!tiptapJSON.content })
+      onTipTapChange(tiptapJSON)
+    }
+  }, [editor, onTipTapChange])
 
   // Update editor content when prop changes
   useEffect(() => {
@@ -60,12 +100,36 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, [disabled, editor])
 
+  // Handle highlight click events
+  useEffect(() => {
+    if (!editor || !enableHighlights) return;
+
+    const handleHighlightClick = (event: CustomEvent) => {
+      console.log('[RichTextEditor] Highlight clicked:', event.detail);
+      // This can be handled by parent component if needed
+    };
+
+    document.addEventListener('highlight-clicked', handleHighlightClick as EventListener);
+    return () => {
+      document.removeEventListener('highlight-clicked', handleHighlightClick as EventListener);
+    };
+  }, [editor, enableHighlights]);
+
   if (!editor) {
     return null
   }
 
   return (
     <div className="rich-text-editor">
+      {/* Highlight toolbar (floating) */}
+      {enableHighlights && (
+        <HighlightToolbar
+          editor={editor}
+          onHighlightCreate={onHighlightCreate}
+          disabled={disabled}
+        />
+      )}
+
       {showToolbar && (
         <div className="editor-toolbar">
           <div className="toolbar-group">

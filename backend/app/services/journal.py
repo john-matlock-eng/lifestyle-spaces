@@ -173,6 +173,10 @@ class JournalService:
             'is_pinned': data.is_pinned
         }
 
+        # Add content_tiptap if provided (TipTap JSON format for native highlighting)
+        if data.content_tiptap is not None:
+            journal_item['content_tiptap'] = data.content_tiptap
+
         # Write to DynamoDB
         self.table.put_item(Item=journal_item)
 
@@ -198,7 +202,7 @@ class JournalService:
             # Don't fail the request if activity tracking fails
             logger.warning(f"Failed to record journal created activity: {e}")
 
-        return {
+        result = {
             'journal_id': journal_id,
             'space_id': space_id,
             'user_id': user_id,
@@ -213,6 +217,12 @@ class JournalService:
             'word_count': word_count,
             'is_pinned': data.is_pinned
         }
+
+        # Include content_tiptap if provided
+        if data.content_tiptap is not None:
+            result['content_tiptap'] = data.content_tiptap
+
+        return result
 
     def get_journal_entry(self, space_id: str, journal_id: str, user_id: str) -> Dict[str, Any]:
         """
@@ -337,6 +347,10 @@ class JournalService:
         if data.template_id is not None:
             update_expr += ", template_id = :template_id"
             expr_values[':template_id'] = data.template_id
+
+        if data.content_tiptap is not None:
+            update_expr += ", content_tiptap = :content_tiptap"
+            expr_values[':content_tiptap'] = data.content_tiptap
 
         # REMOVED: template_data update - data is embedded in content
 

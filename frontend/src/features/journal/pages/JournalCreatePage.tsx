@@ -11,6 +11,7 @@ import { ScaleSection } from '../components/sections/ScaleSection'
 import { TableSection } from '../components/sections/TableSection'
 import AIWritingPrompts from '../../../components/AIWritingPrompts'
 import { useJournal } from '../hooks/useJournal'
+import { useSectionTipTap } from '../hooks/useSectionTipTap'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { aiService } from '../../../services/ai'
@@ -43,6 +44,9 @@ export const JournalCreatePage: React.FC = () => {
   const [customSections, setCustomSections] = useState<CustomSection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
   const [currentSectionId, setCurrentSectionId] = useState<string | undefined>()
+
+  // Multi-section TipTap state management
+  const { updateSection, getAllSections } = useSectionTipTap()
 
   // Ellie customization
   const { customization } = useEllieCustomizationContext()
@@ -279,14 +283,28 @@ export const JournalCreatePage: React.FC = () => {
       console.log('[DEBUG] Emotions state before submission:', emotions)
       console.log('[DEBUG] Emotions length:', emotions.length)
 
+      const contentTiptapToSave = getAllSections()
+      console.log('[DEBUG] contentTiptap sections:', contentTiptapToSave ? Object.keys(contentTiptapToSave) : 'none')
+      console.log('[DEBUG] contentTiptap structure:', contentTiptapToSave ? JSON.stringify(contentTiptapToSave).substring(0, 200) : 'null')
+
+      // WARNING: If contentTiptap is null, this means TipTap JSON wasn't captured!
+      if (!contentTiptapToSave) {
+        console.warn('[DEBUG] WARNING: contentTiptap is null! This will cause highlighting issues.')
+        console.warn('[DEBUG] Template:', selectedTemplate?.id)
+        console.warn('[DEBUG] Template sections:', selectedTemplate?.sections.map(s => s.id))
+      }
+
       const journal = await createJournal(spaceId, {
         title,
         content: finalContent,
+        contentTiptap: contentTiptapToSave || undefined,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
         templateId: selectedTemplate?.id
         // NO templateData field!
       })
+
+      console.log('[DEBUG] Created journal response:', journal)
 
       // Notify Ellie of successful save
       onEllieSave()
@@ -558,6 +576,7 @@ export const JournalCreatePage: React.FC = () => {
                         typeof section.defaultValue === 'string' ? section.defaultValue :
                         ''}
                       onChange={(value) => handleTemplateDataChange(section.id, value)}
+                      onTipTapChange={(json) => updateSection(section.id, json)}
                       placeholder={section.placeholder}
                       minHeight="200px"
                       showToolbar={true}
@@ -584,6 +603,7 @@ export const JournalCreatePage: React.FC = () => {
                     setContent(newContent)
                     handleTyping()
                   }}
+                  onTipTapChange={(json) => updateSection('content', json)}
                   placeholder="Start writing your thoughts..."
                   minHeight="400px"
                   showToolbar={true}
@@ -645,6 +665,7 @@ export const JournalCreatePage: React.FC = () => {
                       handleUpdateCustomSection(section.id, { content })
                       handleTyping()
                     }}
+                    onTipTapChange={(json) => updateSection(section.id, json)}
                     placeholder="Write here..."
                     minHeight="200px"
                     showToolbar={true}

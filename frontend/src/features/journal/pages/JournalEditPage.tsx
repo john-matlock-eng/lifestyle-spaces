@@ -9,6 +9,7 @@ import { CheckboxSection } from '../components/sections/CheckboxSection'
 import { ScaleSection } from '../components/sections/ScaleSection'
 import { TableSection } from '../components/sections/TableSection'
 import { useJournal } from '../hooks/useJournal'
+import { useSectionTipTap } from '../hooks/useSectionTipTap'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
@@ -45,6 +46,9 @@ export const JournalEditPage: React.FC = () => {
   const [customSections, setCustomSections] = useState<CustomSection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
   const [currentSectionId, setCurrentSectionId] = useState<string | undefined>()
+
+  // Multi-section TipTap state management
+  const { updateSection, getAllSections } = useSectionTipTap()
 
   // Track if journal has been initialized to prevent duplicate template loads
   const initializedJournalId = useRef<string | null>(null)
@@ -123,9 +127,6 @@ export const JournalEditPage: React.FC = () => {
             // Parse the content to extract embedded template data
             const parsed = JournalContentManager.parse(journal.content)
 
-            console.log('[DEBUG EDIT LOAD] Parsed content:', parsed)
-            console.log('[DEBUG EDIT LOAD] Parsed sections:', Object.keys(parsed.sections))
-
             // Convert parsed sections back to TemplateData format for editing
             const parsedTemplateData: TemplateData = {}
             const parsedCustomSections: CustomSection[] = []
@@ -185,8 +186,6 @@ export const JournalEditPage: React.FC = () => {
 
             setTemplateData(parsedTemplateData)
             setCustomSections(parsedCustomSections)
-            console.log('[DEBUG EDIT LOAD] Template data extracted:', parsedTemplateData)
-            console.log('[DEBUG EDIT LOAD] Custom sections extracted:', parsedCustomSections)
 
             // Notify Ellie of template and start editing
             onEllieTemplateSelect()
@@ -431,16 +430,15 @@ export const JournalEditPage: React.FC = () => {
           },
           sections
         })
-
-        console.log('[DEBUG EDIT] Serialized content length:', finalContent.length)
-        console.log('[DEBUG EDIT] Template data sections:', Object.keys(templateData))
       }
 
-      console.log('[DEBUG EDIT] Updating journal with content only (no templateData field)')
+      const contentTiptapToSave = getAllSections()
+      console.log('[DEBUG EDIT] contentTiptap sections:', contentTiptapToSave ? Object.keys(contentTiptapToSave) : 'none')
 
       await updateJournal(spaceId, journalId, {
         title,
         content: finalContent,
+        contentTiptap: contentTiptapToSave || undefined,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
         templateId: template?.id
@@ -711,6 +709,7 @@ export const JournalEditPage: React.FC = () => {
                       typeof section.defaultValue === 'string' ? section.defaultValue :
                       ''}
                     onChange={(value) => handleTemplateDataChange(section.id, value)}
+                    onTipTapChange={(json) => updateSection(section.id, json)}
                     placeholder={section.placeholder}
                     minHeight="200px"
                     showToolbar={true}
@@ -730,6 +729,7 @@ export const JournalEditPage: React.FC = () => {
             <RichTextEditor
               content={content}
               onChange={setContent}
+              onTipTapChange={(json) => updateSection('content', json)}
               placeholder="Start writing your thoughts..."
               minHeight="400px"
               showToolbar={true}
@@ -788,6 +788,7 @@ export const JournalEditPage: React.FC = () => {
                 <RichTextEditor
                   content={typeof section.content === 'string' ? section.content : ''}
                   onChange={(content) => handleUpdateCustomSection(section.id, { content })}
+                  onTipTapChange={(json) => updateSection(section.id, json)}
                   placeholder="Write here..."
                   minHeight="200px"
                   showToolbar={true}

@@ -3,7 +3,7 @@
 ## Executive Summary
 
 Replace mechanical CSS keyframe animations with GSAP-powered, organic animation system that delivers:
-- Non-repetitive idle behaviors through randomization
+- Non-repetitive idle behaviors through randomization 
 - Smooth mood transitions without abrupt class swaps
 - Spontaneous micro-animations (ear twitches, blinks, breathes)
 - Professional 60fps performance maintained
