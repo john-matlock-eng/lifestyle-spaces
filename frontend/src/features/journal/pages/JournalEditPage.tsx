@@ -124,9 +124,6 @@ export const JournalEditPage: React.FC = () => {
             // Parse the content to extract embedded template data
             const parsed = JournalContentManager.parse(journal.content)
 
-            console.log('[DEBUG EDIT LOAD] Parsed content:', parsed)
-            console.log('[DEBUG EDIT LOAD] Parsed sections:', Object.keys(parsed.sections))
-
             // Convert parsed sections back to TemplateData format for editing
             const parsedTemplateData: TemplateData = {}
             const parsedCustomSections: CustomSection[] = []
@@ -186,8 +183,6 @@ export const JournalEditPage: React.FC = () => {
 
             setTemplateData(parsedTemplateData)
             setCustomSections(parsedCustomSections)
-            console.log('[DEBUG EDIT LOAD] Template data extracted:', parsedTemplateData)
-            console.log('[DEBUG EDIT LOAD] Custom sections extracted:', parsedCustomSections)
 
             // Notify Ellie of template and start editing
             onEllieTemplateSelect()
@@ -432,13 +427,7 @@ export const JournalEditPage: React.FC = () => {
           },
           sections
         })
-
-        console.log('[DEBUG EDIT] Serialized content length:', finalContent.length)
-        console.log('[DEBUG EDIT] Template data sections:', Object.keys(templateData))
       }
-
-      console.log('[DEBUG EDIT] Updating journal with content only (no templateData field)')
-      console.log('[DEBUG EDIT] contentTiptap:', contentTiptap)
 
       await updateJournal(spaceId, journalId, {
         title,
@@ -714,7 +703,6 @@ export const JournalEditPage: React.FC = () => {
                       typeof section.defaultValue === 'string' ? section.defaultValue :
                       ''}
                     onChange={(value) => handleTemplateDataChange(section.id, value)}
-                    onTipTapChange={setContentTiptap}
                     placeholder={section.placeholder}
                     minHeight="200px"
                     showToolbar={true}
