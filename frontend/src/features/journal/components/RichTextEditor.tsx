@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { getEditorExtensions } from './extensions'
+import { HighlightToolbar } from './HighlightToolbar'
 import '../styles/journal.css'
 
 interface RichTextEditorProps {
@@ -11,6 +12,8 @@ interface RichTextEditorProps {
   showToolbar?: boolean
   disabled?: boolean
   onFocus?: () => void
+  enableHighlights?: boolean
+  onHighlightCreate?: (highlight: any) => void
 }
 
 /**
@@ -23,10 +26,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   minHeight = '300px',
   showToolbar = true,
   disabled = false,
-  onFocus
+  onFocus,
+  enableHighlights = true,
+  onHighlightCreate
 }) => {
   const editor = useEditor({
-    extensions: getEditorExtensions(placeholder),
+    extensions: getEditorExtensions(placeholder, enableHighlights),
     content,
     editable: !disabled,
     onUpdate: ({ editor }) => {
@@ -60,12 +65,36 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, [disabled, editor])
 
+  // Handle highlight click events
+  useEffect(() => {
+    if (!editor || !enableHighlights) return;
+
+    const handleHighlightClick = (event: CustomEvent) => {
+      console.log('[RichTextEditor] Highlight clicked:', event.detail);
+      // This can be handled by parent component if needed
+    };
+
+    document.addEventListener('highlight-clicked', handleHighlightClick as EventListener);
+    return () => {
+      document.removeEventListener('highlight-clicked', handleHighlightClick as EventListener);
+    };
+  }, [editor, enableHighlights]);
+
   if (!editor) {
     return null
   }
 
   return (
     <div className="rich-text-editor">
+      {/* Highlight toolbar (floating) */}
+      {enableHighlights && (
+        <HighlightToolbar
+          editor={editor}
+          onHighlightCreate={onHighlightCreate}
+          disabled={disabled}
+        />
+      )}
+
       {showToolbar && (
         <div className="editor-toolbar">
           <div className="toolbar-group">

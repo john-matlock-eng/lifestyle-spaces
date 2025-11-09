@@ -1,5 +1,10 @@
 """
 Journal-related Pydantic models.
+
+TipTap Integration:
+- Journals can now store TipTap JSON format in content_tiptap field
+- This enables TipTap-native highlighting with perfect position accuracy
+- Markdown (content) is maintained for backward compatibility
 """
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -12,9 +17,14 @@ class JournalBase(BaseModel):
 
     NOTE: Template data is now embedded in the content field using HTML comments.
     The content field contains markdown with embedded template metadata via JournalParser.
+
+    TipTap Integration:
+    - content: Markdown format (for backward compatibility)
+    - content_tiptap: TipTap JSON format with embedded highlights (optional)
     """
     title: str = Field(..., min_length=1, max_length=200)
     content: str = Field(...)  # Contains markdown with embedded template metadata
+    content_tiptap: Optional[Dict[str, Any]] = Field(None, alias="contentTiptap")  # TipTap JSON format
     tags: List[str] = Field(default_factory=list)
     emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
     is_pinned: bool = Field(default=False, alias="isPinned")
@@ -76,9 +86,14 @@ class JournalUpdate(BaseModel):
     Journal update model.
 
     NOTE: content contains serialized template data via JournalContentManager.
+
+    TipTap Integration:
+    - content: Markdown format (for backward compatibility)
+    - content_tiptap: TipTap JSON format with embedded highlights (optional)
     """
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     content: Optional[str] = None  # Contains markdown with embedded template metadata
+    content_tiptap: Optional[Dict[str, Any]] = Field(None, alias="contentTiptap")  # TipTap JSON format
     tags: Optional[List[str]] = None
     emotions: Optional[List[str]] = None  # New field for multiple emotions
     is_pinned: Optional[bool] = Field(None, alias="isPinned")
@@ -119,12 +134,17 @@ class JournalEntry(BaseModel):
     Represents a journal entry for internal service use.
 
     NOTE: content contains markdown with embedded template metadata.
+
+    TipTap Integration:
+    - content: Markdown format (for backward compatibility)
+    - content_tiptap: TipTap JSON format with embedded highlights (optional)
     """
     journal_id: str
     space_id: str
     user_id: str
     title: str
     content: str  # Contains markdown with embedded template metadata
+    content_tiptap: Optional[Dict[str, Any]] = None  # TipTap JSON format
     template_id: Optional[str] = None  # For tracking which template was used
     # REMOVED: template_data field - data is embedded in content
     tags: List[str] = Field(default_factory=list)
@@ -142,12 +162,17 @@ class JournalResponse(BaseModel):
 
     NOTE: content contains markdown with embedded template metadata.
     Frontend should use JournalContentManager to parse the content.
+
+    TipTap Integration:
+    - content: Markdown format (for backward compatibility)
+    - content_tiptap: TipTap JSON format with embedded highlights (optional)
     """
     journal_id: str = Field(..., alias="journalId")
     space_id: str = Field(..., alias="spaceId")
     user_id: str = Field(..., alias="userId")
     title: str
     content: str  # Contains markdown with embedded template metadata
+    content_tiptap: Optional[Dict[str, Any]] = Field(None, alias="contentTiptap")  # TipTap JSON format
     template_id: Optional[str] = Field(None, alias="templateId")
     # REMOVED: template_data field - data is embedded in content
     tags: List[str] = Field(default_factory=list)
