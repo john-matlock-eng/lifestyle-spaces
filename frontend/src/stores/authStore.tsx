@@ -79,6 +79,9 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Export AuthContext for components that need to optionally use auth
+export { AuthContext };
+
 // Auth provider props
 interface AuthProviderProps {
   children: ReactNode;

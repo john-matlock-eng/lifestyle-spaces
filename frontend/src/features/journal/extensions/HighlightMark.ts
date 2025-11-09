@@ -9,6 +9,19 @@ export interface HighlightAttributes {
   commentCount: number;
 }
 
+// Helper function for color hex values (outside the extension)
+const getColorHex = (color: string): string => {
+  const colors: Record<string, string> = {
+    yellow: '#FEF08A',
+    green: '#86EFAC',
+    blue: '#93C5FD',
+    purple: '#C4B5FD',
+    pink: '#F9A8D4',
+    orange: '#FDBA74',
+  };
+  return colors[color] || colors.yellow;
+};
+
 export const HighlightMark = Mark.create<{
   HTMLAttributes: Record<string, unknown>;
 }>({
@@ -34,7 +47,7 @@ export const HighlightMark = Mark.create<{
         default: 'yellow',
         parseHTML: element => element.getAttribute('data-highlight-color') || 'yellow',
         renderHTML: attributes => {
-          const colorHex = this.getColorHex(attributes.color);
+          const colorHex = getColorHex(attributes.color);
           return {
             'data-highlight-color': attributes.color,
             style: `background-color: ${colorHex}; padding: 2px 0; border-radius: 2px; cursor: pointer;`,

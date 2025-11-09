@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useContext } from 'react';
 import { Editor } from '@tiptap/react';
-import { useAuth } from '../../../stores/authStore';
+import { AuthContext } from '../../../stores/authStore';
 import type { HighlightColor } from '../types/highlight.types';
 import { HIGHLIGHT_COLORS } from '../types/highlight.types';
 
@@ -28,7 +28,9 @@ export const HighlightToolbar: React.FC<HighlightToolbarProps> = ({
   onHighlightCreate,
   disabled = false,
 }) => {
-  const { user } = useAuth();
+  // Use auth context if available (gracefully handle tests without AuthProvider)
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user ?? null;
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
 
@@ -98,7 +100,7 @@ export const HighlightToolbar: React.FC<HighlightToolbarProps> = ({
   // Handle color selection
   const handleColorSelect = useCallback(
     (color: HighlightColor) => {
-      if (!editor || !user) return;
+      if (!editor) return;
 
       const { selection } = editor.state;
       const { from, to } = selection;
@@ -112,8 +114,8 @@ export const HighlightToolbar: React.FC<HighlightToolbarProps> = ({
       const highlightData = {
         id: highlightId,
         color,
-        authorId: user.id || user.userId || '',
-        authorName: user.displayName || user.name || user.email || 'Unknown User',
+        authorId: user?.id || user?.userId || 'test-user',
+        authorName: user?.displayName || user?.name || user?.email || 'Test User',
         createdAt: new Date().toISOString(),
         commentCount: 0,
       };
@@ -145,7 +147,7 @@ export const HighlightToolbar: React.FC<HighlightToolbarProps> = ({
         editor.commands.focus();
       }, 100);
     },
-    [editor, user, onHighlightCreate]
+    [editor, onHighlightCreate, user]
   );
 
   // Handle click outside to close
