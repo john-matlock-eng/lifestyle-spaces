@@ -557,6 +557,9 @@
   }
 
   .profile-dropdown {
+    /* Ensure dropdown doesn't overflow on smaller screens */
+    right: 20px;
+    left: auto;
     width: calc(100vw - 40px);
     max-width: 360px;
   }
@@ -589,6 +592,9 @@
   }
 
   .profile-dropdown {
+    /* Prevent overflow on narrow screens */
+    right: 16px;
+    left: auto;
     width: calc(100vw - 32px);
     max-width: none;
   }
