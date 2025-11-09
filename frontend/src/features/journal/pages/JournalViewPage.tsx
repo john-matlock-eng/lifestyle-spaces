@@ -123,7 +123,7 @@ export const JournalViewPage: React.FC = () => {
     try {
       setIsDeleting(true)
       await deleteJournal(spaceId, journalId)
-      navigate(`/spaces/${spaceId}`)
+      navigate(`/spaces/${spaceId}/journals`)
     } catch (err) {
       console.error('Failed to delete journal:', err)
     } finally {
@@ -133,7 +133,7 @@ export const JournalViewPage: React.FC = () => {
 
   const handleBack = () => {
     if (journal?.spaceId) {
-      navigate(`/spaces/${journal.spaceId}`)
+      navigate(`/spaces/${journal.spaceId}/journals`)
     } else {
       navigate('/dashboard')
     }
