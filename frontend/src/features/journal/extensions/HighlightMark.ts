@@ -10,7 +10,7 @@ export interface HighlightAttributes {
 }
 
 export const HighlightMark = Mark.create<{
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, unknown>;
 }>({
   name: 'highlight',
 
@@ -157,7 +157,7 @@ export const HighlightMark = Mark.create<{
 
   // Handle click events on highlights
   onCreate() {
-    this.editor.on('click', ({ editor, event }) => {
+    this.editor.on('click', ({ event }) => {
       const target = event.target as HTMLElement;
       const markElement = target.closest('mark[data-highlight-id]');
 

@@ -16,7 +16,7 @@ export interface TipTapSyncOptions {
   editor: Editor | null;
   journalId: string;
   spaceId: string;
-  onRemoteUpdate?: (content: any) => void;
+  onRemoteUpdate?: (content: Record<string, unknown>) => void;
   enabled?: boolean;
 }
 
@@ -68,7 +68,7 @@ export const useTipTapSync = ({
    * Handle incoming document updates from other users
    */
   const handleRemoteUpdate = useCallback(
-    (payload: any) => {
+    (payload: { content_tiptap?: Record<string, unknown> }) => {
       if (!editor || !enabled) return;
 
       // Ignore our own updates
@@ -96,7 +96,12 @@ export const useTipTapSync = ({
    * Handle highlight-specific updates
    */
   const handleHighlightUpdate = useCallback(
-    (payload: any) => {
+    (payload: {
+      type: string;
+      id?: string;
+      highlight_id?: string;
+      comment_count?: number;
+    }) => {
       if (!editor || !enabled) return;
 
       switch (payload.type) {
@@ -155,43 +160,30 @@ export const useTipTapSync = ({
 
   /**
    * Listen for WebSocket messages
+   * TODO: Implement actual WebSocket connection
    */
   useEffect(() => {
     if (!enabled) return;
 
-    // Set up WebSocket listeners
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data);
+    // Placeholder for future WebSocket implementation
+    // When implemented, this will:
+    // 1. Connect to WebSocket server
+    // 2. Listen for messages
+    // 3. Route to appropriate handlers based on message type
+    // 4. Clean up on unmount
 
-        switch (data.type) {
-          case 'JOURNAL_UPDATED':
-            handleRemoteUpdate(data.payload);
-            break;
-
-          case 'HIGHLIGHT_CREATED':
-          case 'HIGHLIGHT_DELETED':
-          case 'HIGHLIGHT_COMMENT_COUNT_UPDATED':
-            handleHighlightUpdate(data.payload);
-            break;
-
-          default:
-            // Ignore other message types
-            break;
-        }
-      } catch (error) {
-        console.error('[TipTapSync] Failed to parse WebSocket message:', error);
-      }
-    };
-
-    // TODO: Connect to actual WebSocket
+    // Example implementation (currently disabled):
     // const ws = getWebSocket(spaceId, journalId);
-    // ws.addEventListener('message', handleMessage);
+    // ws.addEventListener('message', (event: MessageEvent) => {
+    //   const data = JSON.parse(event.data);
+    //   if (data.type === 'JOURNAL_UPDATED') handleRemoteUpdate(data.payload);
+    //   if (data.type.includes('HIGHLIGHT')) handleHighlightUpdate(data.payload);
+    // });
+    // return () => ws.removeEventListener('message', handleMessage);
 
-    return () => {
-      // TODO: Clean up WebSocket listener
-      // ws.removeEventListener('message', handleMessage);
-    };
+    // Silence unused variable warnings until WebSocket is implemented
+    void handleRemoteUpdate;
+    void handleHighlightUpdate;
   }, [enabled, handleRemoteUpdate, handleHighlightUpdate, spaceId, journalId]);
 
   return {

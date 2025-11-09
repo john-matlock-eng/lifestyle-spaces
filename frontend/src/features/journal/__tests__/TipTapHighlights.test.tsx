@@ -14,6 +14,13 @@ import { renderHook, act } from '@testing-library/react';
 import { useEditor } from '@tiptap/react';
 import { getEditorExtensions } from '../components/extensions';
 
+interface TipTapNode {
+  type?: string;
+  marks?: Array<{ type: string; attrs: Record<string, unknown> }>;
+  content?: TipTapNode[];
+  text?: string;
+}
+
 describe('TipTap Highlight System', () => {
   let editor: ReturnType<typeof useEditor>;
 
@@ -48,9 +55,9 @@ describe('TipTap Highlight System', () => {
 
     // Find the highlight mark
     let foundHighlight = false;
-    const traverse = (node: any) => {
+    const traverse = (node: TipTapNode) => {
       if (node.marks) {
-        const highlightMark = node.marks.find((m: any) => m.type === 'highlight');
+        const highlightMark = node.marks.find((m) => m.type === 'highlight');
         if (highlightMark) {
           expect(highlightMark.attrs.id).toBe('test-highlight-1');
           expect(highlightMark.attrs.color).toBe('yellow');
@@ -99,9 +106,9 @@ describe('TipTap Highlight System', () => {
     const json2 = editor2.getJSON();
     let foundHighlight = false;
 
-    const traverse = (node: any) => {
+    const traverse = (node: TipTapNode) => {
       if (node.marks) {
-        const highlightMark = node.marks.find((m: any) => m.type === 'highlight');
+        const highlightMark = node.marks.find((m) => m.type === 'highlight');
         if (highlightMark && highlightMark.attrs.id === 'persist-test') {
           expect(highlightMark.attrs.color).toBe('blue');
           foundHighlight = true;
@@ -142,10 +149,10 @@ describe('TipTap Highlight System', () => {
 
     // Count highlights
     const highlightIds = new Set<string>();
-    const traverse = (node: any) => {
+    const traverse = (node: TipTapNode) => {
       if (node.marks) {
-        node.marks.forEach((mark: any) => {
-          if (mark.type === 'highlight') {
+        node.marks.forEach((mark) => {
+          if (mark.type === 'highlight' && typeof mark.attrs.id === 'string') {
             highlightIds.add(mark.attrs.id);
           }
         });
@@ -185,10 +192,10 @@ describe('TipTap Highlight System', () => {
     const json = editor.getJSON();
     let foundCount = false;
 
-    const traverse = (node: any) => {
+    const traverse = (node: TipTapNode) => {
       if (node.marks) {
         const highlightMark = node.marks.find(
-          (m: any) => m.type === 'highlight' && m.attrs.id === 'comment-test'
+          (m) => m.type === 'highlight' && m.attrs.id === 'comment-test'
         );
         if (highlightMark) {
           expect(highlightMark.attrs.commentCount).toBe(3);
@@ -219,10 +226,10 @@ describe('TipTap Highlight System', () => {
     // Verify it exists
     let json = editor.getJSON();
     let foundBefore = false;
-    const traverse = (node: any) => {
+    const traverse = (node: TipTapNode) => {
       if (node.marks) {
         const highlightMark = node.marks.find(
-          (m: any) => m.type === 'highlight' && m.attrs.id === 'remove-test'
+          (m) => m.type === 'highlight' && m.attrs.id === 'remove-test'
         );
         if (highlightMark) {
           foundBefore = true;
@@ -242,7 +249,7 @@ describe('TipTap Highlight System', () => {
 
     // Verify it's gone
     json = editor.getJSON();
-    let foundAfter = false;
+    const foundAfter = false;
     traverse(json);
     expect(foundAfter).toBe(false);
   });
@@ -299,10 +306,10 @@ describe('TipTap Highlight System', () => {
     const json = editor.getJSON();
     const foundColors = new Set<string>();
 
-    const traverse = (node: any) => {
+    const traverse = (node: TipTapNode) => {
       if (node.marks) {
-        node.marks.forEach((mark: any) => {
-          if (mark.type === 'highlight') {
+        node.marks.forEach((mark) => {
+          if (mark.type === 'highlight' && typeof mark.attrs.color === 'string') {
             foundColors.add(mark.attrs.color);
           }
         });
@@ -358,10 +365,10 @@ describe('TipTap Highlight Performance', () => {
     const json = editor.getJSON();
     const highlightIds = new Set<string>();
 
-    const traverse = (node: any) => {
+    const traverse = (node: TipTapNode) => {
       if (node.marks) {
-        node.marks.forEach((mark: any) => {
-          if (mark.type === 'highlight') {
+        node.marks.forEach((mark) => {
+          if (mark.type === 'highlight' && typeof mark.attrs.id === 'string') {
             highlightIds.add(mark.attrs.id);
           }
         });

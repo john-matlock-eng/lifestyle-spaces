@@ -4,9 +4,20 @@ import { useAuth } from '../../../stores/authStore';
 import type { HighlightColor } from '../types/highlight.types';
 import { HIGHLIGHT_COLORS } from '../types/highlight.types';
 
+interface HighlightData {
+  id: string;
+  color: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  commentCount: number;
+  text: string;
+  range: { from: number; to: number };
+}
+
 interface HighlightToolbarProps {
   editor: Editor | null;
-  onHighlightCreate?: (highlight: any) => void;
+  onHighlightCreate?: (highlight: HighlightData) => void;
   disabled?: boolean;
 }
 

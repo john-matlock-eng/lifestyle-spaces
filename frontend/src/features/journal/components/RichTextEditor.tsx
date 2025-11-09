@@ -4,6 +4,17 @@ import { getEditorExtensions } from './extensions'
 import { HighlightToolbar } from './HighlightToolbar'
 import '../styles/journal.css'
 
+interface HighlightData {
+  id: string;
+  color: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  commentCount: number;
+  text: string;
+  range: { from: number; to: number };
+}
+
 interface RichTextEditorProps {
   content: string
   onChange: (content: string) => void
@@ -13,7 +24,7 @@ interface RichTextEditorProps {
   disabled?: boolean
   onFocus?: () => void
   enableHighlights?: boolean
-  onHighlightCreate?: (highlight: any) => void
+  onHighlightCreate?: (highlight: HighlightData) => void
 }
 
 /**
