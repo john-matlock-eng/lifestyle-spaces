@@ -98,10 +98,16 @@ export const useSectionTipTap = (
     console.log('[useSectionTipTap] getAllSections called:', {
       sectionCount,
       sectionIds: Object.keys(sectionContents),
-      sectionContents: Object.keys(sectionContents).reduce((acc, key) => ({
-        ...acc,
-        [key]: { type: (sectionContents[key] as any)?.type, hasContent: !!(sectionContents[key] as any)?.content }
-      }), {})
+      sectionContents: Object.keys(sectionContents).reduce((acc, key) => {
+        const section = sectionContents[key]
+        return {
+          ...acc,
+          [key]: {
+            type: section && typeof section === 'object' && 'type' in section ? section.type : undefined,
+            hasContent: section && typeof section === 'object' && 'content' in section ? !!section.content : false
+          }
+        }
+      }, {})
     })
 
     // Return null if empty
