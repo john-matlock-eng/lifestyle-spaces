@@ -557,12 +557,26 @@
     display: none;
   }
 
+  .app-header-actions {
+    /* Push actions to the far right on mobile */
+    margin-left: auto;
+  }
+
+  .mobile-menu-toggle {
+    /* Ensure burger menu is at the far right */
+    order: 2;
+  }
+
+  .profile-menu-container {
+    /* Profile comes before burger menu */
+    order: 1;
+  }
+
   .profile-dropdown {
-    /* Ensure dropdown doesn't overflow on smaller screens */
-    right: 20px;
+    /* Align dropdown to the right edge */
+    right: 0;
     left: auto;
-    width: calc(100vw - 40px);
-    max-width: 360px;
+    max-width: min(280px, calc(100vw - 32px));
   }
 
   .app-content {
@@ -593,11 +607,10 @@
   }
 
   .profile-dropdown {
-    /* Prevent overflow on narrow screens */
-    right: 16px;
+    /* Align to right edge on narrow screens */
+    right: 0;
     left: auto;
-    width: calc(100vw - 32px);
-    max-width: none;
+    max-width: calc(100vw - 32px);
   }
 
   /* Make Ellie customization grids more mobile-friendly */
