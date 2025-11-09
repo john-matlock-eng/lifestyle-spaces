@@ -81,7 +81,7 @@ export const useTipTapSync = ({
 
       // Apply remote changes
       if (payload.content_tiptap) {
-        editor.commands.setContent(payload.content_tiptap, false);
+        editor.commands.setContent(payload.content_tiptap, { emitUpdate: false });
         lastSyncedContent.current = JSON.stringify(payload.content_tiptap);
 
         if (onRemoteUpdate) {

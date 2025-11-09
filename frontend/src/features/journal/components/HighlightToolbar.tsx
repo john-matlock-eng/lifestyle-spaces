@@ -114,8 +114,8 @@ export const HighlightToolbar: React.FC<HighlightToolbarProps> = ({
       const highlightData = {
         id: highlightId,
         color,
-        authorId: user?.id || user?.userId || 'test-user',
-        authorName: user?.displayName || user?.name || user?.email || 'Test User',
+        authorId: user?.userId || 'test-user',
+        authorName: user?.displayName || user?.username || user?.email || 'Test User',
         createdAt: new Date().toISOString(),
         commentCount: 0,
       };

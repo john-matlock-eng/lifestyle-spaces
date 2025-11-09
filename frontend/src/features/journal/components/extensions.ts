@@ -38,7 +38,6 @@ export const getEditorExtensions = (placeholder?: string, enableHighlights = tru
   }),
   ...(enableHighlights ? [
     HighlightMark.configure({
-      multicolor: true,
       HTMLAttributes: {
         class: 'journal-highlight',
       },

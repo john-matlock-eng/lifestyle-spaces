@@ -1,4 +1,5 @@
 import { Mark, mergeAttributes } from '@tiptap/core';
+import { Mark as ProseMirrorMark } from 'prosemirror-model';
 
 export interface HighlightAttributes {
   id: string;
@@ -30,7 +31,6 @@ export const HighlightMark = Mark.create<{
   addOptions() {
     return {
       HTMLAttributes: {},
-      multicolor: true,
     };
   },
 
@@ -164,7 +164,7 @@ export const HighlightMark = Mark.create<{
 
       updateHighlightCommentCount: (id: string, count: number) => ({ state, dispatch }) => {
         // Collect all ranges with the target highlight mark and their new marks
-        const updates: { from: number; to: number; newMark: Mark }[] = [];
+        const updates: { from: number; to: number; newMark: ProseMirrorMark }[] = [];
 
         state.doc.descendants((node, pos) => {
           if (!node.isText) return;
@@ -212,7 +212,8 @@ export const HighlightMark = Mark.create<{
 
   // Handle click events on highlights
   onCreate() {
-    this.editor.on('click', ({ event }) => {
+    // Add click listener to editor's DOM element
+    const handleClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       const markElement = target.closest('mark[data-highlight-id]');
 
@@ -233,20 +234,9 @@ export const HighlightMark = Mark.create<{
         });
         document.dispatchEvent(customEvent);
       }
-    });
-  },
-
-  // Helper method for color hex values
-  getColorHex(color: string): string {
-    const colors: Record<string, string> = {
-      yellow: '#FEF08A',
-      green: '#86EFAC',
-      blue: '#93C5FD',
-      purple: '#C4B5FD',
-      pink: '#F9A8D4',
-      orange: '#FDBA74',
     };
-    return colors[color] || colors.yellow;
+
+    this.editor.view.dom.addEventListener('click', handleClick);
   },
 });
 
