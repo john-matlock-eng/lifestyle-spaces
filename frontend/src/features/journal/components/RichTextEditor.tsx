@@ -18,6 +18,7 @@ interface HighlightData {
 interface RichTextEditorProps {
   content: string
   onChange: (content: string) => void
+  onTipTapChange?: (contentTiptap: Record<string, unknown>) => void
   placeholder?: string
   minHeight?: string
   showToolbar?: boolean
@@ -33,6 +34,7 @@ interface RichTextEditorProps {
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   content,
   onChange,
+  onTipTapChange,
   placeholder = 'Start writing...',
   minHeight = '300px',
   showToolbar = true,
@@ -50,6 +52,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       // @ts-expect-error - markdown storage is added by tiptap-markdown extension
       const markdown = editor.storage.markdown.getMarkdown() as string
       onChange(markdown)
+
+      // Also provide TipTap JSON if callback is provided
+      if (onTipTapChange) {
+        const tiptapJSON = editor.getJSON()
+        onTipTapChange(tiptapJSON)
+      }
     },
     onFocus: () => {
       if (onFocus) {

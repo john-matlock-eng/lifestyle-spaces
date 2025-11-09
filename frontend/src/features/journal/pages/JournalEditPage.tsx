@@ -37,6 +37,7 @@ export const JournalEditPage: React.FC = () => {
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [contentTiptap, setContentTiptap] = useState<Record<string, unknown> | null>(null)
   const [tags, setTags] = useState('')
   const [emotions, setEmotions] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -441,6 +442,7 @@ export const JournalEditPage: React.FC = () => {
       await updateJournal(spaceId, journalId, {
         title,
         content: finalContent,
+        contentTiptap: contentTiptap || undefined,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
         templateId: template?.id
@@ -730,6 +732,7 @@ export const JournalEditPage: React.FC = () => {
             <RichTextEditor
               content={content}
               onChange={setContent}
+              onTipTapChange={setContentTiptap}
               placeholder="Start writing your thoughts..."
               minHeight="400px"
               showToolbar={true}

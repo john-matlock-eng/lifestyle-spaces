@@ -37,6 +37,7 @@ export const JournalCreatePage: React.FC = () => {
   const [templateData, setTemplateData] = useState<TemplateData>({})
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [contentTiptap, setContentTiptap] = useState<Record<string, unknown> | null>(null)
   const [tags, setTags] = useState('')
   const [emotions, setEmotions] = useState<string[]>([])
   const [showTemplatePicker, setShowTemplatePicker] = useState(true)
@@ -282,6 +283,7 @@ export const JournalCreatePage: React.FC = () => {
       const journal = await createJournal(spaceId, {
         title,
         content: finalContent,
+        contentTiptap: contentTiptap || undefined,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
         templateId: selectedTemplate?.id
@@ -584,6 +586,7 @@ export const JournalCreatePage: React.FC = () => {
                     setContent(newContent)
                     handleTyping()
                   }}
+                  onTipTapChange={setContentTiptap}
                   placeholder="Start writing your thoughts..."
                   minHeight="400px"
                   showToolbar={true}
