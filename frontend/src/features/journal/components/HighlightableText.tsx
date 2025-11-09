@@ -124,7 +124,12 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         preSelectionRange.selectNodeContents(container);
         preSelectionRange.setEnd(range.startContainer, range.startOffset);
         const startOffset = preSelectionRange.toString().length;
-        const endOffset = startOffset + selectedText.length;
+
+        // Calculate end offset directly from the range, not from trimmed text
+        const endRange = document.createRange();
+        endRange.selectNodeContents(container);
+        endRange.setEnd(range.endContainer, range.endOffset);
+        const endOffset = endRange.toString().length;
 
         console.log('[HighlightableText] Calculated offsets:', { startOffset, endOffset });
 
