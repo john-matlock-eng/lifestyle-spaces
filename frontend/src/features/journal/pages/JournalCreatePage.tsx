@@ -302,7 +302,7 @@ export const JournalCreatePage: React.FC = () => {
   }
 
   const handleCancel = () => {
-    navigate(`/spaces/${spaceId}`)
+    navigate(`/spaces/${spaceId}/journals`)
   }
 
   const handleSelectPrompt = (prompt: string) => {
