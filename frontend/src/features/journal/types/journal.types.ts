@@ -18,6 +18,7 @@ export interface JournalEntry {
   userId: string
   title: string
   content: string  // Contains embedded template metadata via HTML comments
+  contentTiptap?: Record<string, unknown> | null  // TipTap JSON format for native highlighting
   templateId?: string  // For identifying which template was used
   tags: string[]
   emotions?: string[]  // New field for multiple emotion IDs
@@ -46,6 +47,7 @@ export interface JournalListResponse {
 export interface CreateJournalRequest {
   title: string
   content: string  // Serialized with JournalContentManager.serialize()
+  contentTiptap?: Record<string, unknown>  // TipTap JSON format for native highlighting
   tags?: string[]
   emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
@@ -59,6 +61,7 @@ export interface CreateJournalRequest {
 export interface UpdateJournalRequest {
   title?: string
   content?: string  // Serialized with JournalContentManager.serialize()
+  contentTiptap?: Record<string, unknown>  // TipTap JSON format for native highlighting
   tags?: string[]
   emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
