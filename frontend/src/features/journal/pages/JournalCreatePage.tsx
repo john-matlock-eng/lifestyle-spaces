@@ -568,6 +568,7 @@ export const JournalCreatePage: React.FC = () => {
                         typeof section.defaultValue === 'string' ? section.defaultValue :
                         ''}
                       onChange={(value) => handleTemplateDataChange(section.id, value)}
+                      onTipTapChange={(json) => updateSection(section.id, json)}
                       placeholder={section.placeholder}
                       minHeight="200px"
                       showToolbar={true}
@@ -656,6 +657,7 @@ export const JournalCreatePage: React.FC = () => {
                       handleUpdateCustomSection(section.id, { content })
                       handleTyping()
                     }}
+                    onTipTapChange={(json) => updateSection(section.id, json)}
                     placeholder="Write here..."
                     minHeight="200px"
                     showToolbar={true}

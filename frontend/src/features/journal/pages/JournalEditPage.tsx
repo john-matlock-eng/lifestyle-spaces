@@ -709,6 +709,7 @@ export const JournalEditPage: React.FC = () => {
                       typeof section.defaultValue === 'string' ? section.defaultValue :
                       ''}
                     onChange={(value) => handleTemplateDataChange(section.id, value)}
+                    onTipTapChange={(json) => updateSection(section.id, json)}
                     placeholder={section.placeholder}
                     minHeight="200px"
                     showToolbar={true}
@@ -787,6 +788,7 @@ export const JournalEditPage: React.FC = () => {
                 <RichTextEditor
                   content={typeof section.content === 'string' ? section.content : ''}
                   onChange={(content) => handleUpdateCustomSection(section.id, { content })}
+                  onTipTapChange={(json) => updateSection(section.id, json)}
                   placeholder="Write here..."
                   minHeight="200px"
                   showToolbar={true}
