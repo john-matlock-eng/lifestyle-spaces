@@ -18,6 +18,7 @@ import { JournalListPage } from './features/journal/pages/JournalListPage';
 import { JournalCreatePage } from './features/journal/pages/JournalCreatePage';
 import { JournalViewPage } from './features/journal/pages/JournalViewPage';
 import { JournalEditPage } from './features/journal/pages/JournalEditPage';
+import { PublicScheduleView } from './features/schedule/components/PublicScheduleView';
 import './App.css';
 import './styles/layout.css';
 
@@ -35,6 +36,7 @@ function App() {
                 <Route path="/" element={<Landing />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
+                <Route path="/shared/:shareToken" element={<PublicScheduleView />} />
 
                 {/* Protected routes with layout */}
                 <Route element={<AuthenticatedLayout />}>
