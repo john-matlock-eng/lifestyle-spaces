@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../stores/authStore'
-import { SmartEllie } from '../components/ellie'
+import { ElliePerch } from '../components/ellie'
 import { ThemeToggle } from '../components/theme'
 import { useEffect, useState } from 'react'
 import './Landing.css'
@@ -193,17 +193,15 @@ export function Landing() {
       </footer>
 
       {/* Ellie Companion */}
-      <SmartEllie
-        mood={mood}
+      <ElliePerch
         size="md"
         variant="default"
         showThoughtBubble={true}
         thoughtText="Welcome! Ready to start your wellness journey? 🎉"
         onClick={() => setMood(mood === 'happy' ? 'excited' : 'happy')}
         particleEffect={mood === 'celebrating' ? 'hearts' : null}
-        className="hidden lg:block"
-        enableSmartPositioning={true}
-        showControlPanel={true}
+        showPerchControl={true}
+        
       />
     </div>
   )

@@ -49,6 +49,7 @@ export interface BodyPartProps {
 }
 
 export interface FacialFeatureProps {
+  furColor?: string;
   mood: EllieMood;
   onClick?: () => void;
   className?: string;

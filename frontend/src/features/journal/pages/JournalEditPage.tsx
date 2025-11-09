@@ -14,7 +14,8 @@ import { getTemplate } from '../services/templateApi'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { aiService } from '../../../services/ai'
-import { SmartEllie } from '../../../components/ellie'
+import { ElliePerch } from '../../../components/ellie'
+import { useEllie } from '../../../contexts/EllieContext'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { useEllieJournalGuide } from '../hooks/useEllieJournalGuide'
 import type { Template, TemplateData, QAPair, ListItem, TableRow } from '../types/template.types'
@@ -51,9 +52,12 @@ export const JournalEditPage: React.FC = () => {
   // Ellie customization
   const { customization } = useEllieCustomizationContext()
 
+  // Ellie context for mood and typing state
+  const { setMood: setEllieContextMood } = useEllie()
+
   // Template-driven Ellie guidance
   const {
-    mood,
+    mood: guidanceMood,
     thoughtText,
     particleEffect,
     handleTemplateSelect: onEllieTemplateSelect,
@@ -62,8 +66,14 @@ export const JournalEditPage: React.FC = () => {
     updateSectionProgress,
     handleSectionComplete,
     handleSave: onEllieSave,
-    getHint
+    getHint,
+    handleTyping
   } = useEllieJournalGuide(template, currentSectionId)
+
+  // Sync guidance mood to context mood
+  React.useEffect(() => {
+    setEllieContextMood(guidanceMood)
+  }, [guidanceMood, setEllieContextMood])
 
   const handleAddCustomSection = (section: Omit<CustomSection, 'isEditing'>) => {
     setCustomSections([...customSections, { ...section, isEditing: false }])
@@ -78,6 +88,13 @@ export const JournalEditPage: React.FC = () => {
       s.id === id ? { ...s, ...updates } : s
     ))
   }
+
+  // Typing handler for mobile OSK awareness
+  const handleEditorFocus = React.useCallback(() => {
+    if (handleTyping) {
+      handleTyping()
+    }
+  }, [handleTyping])
 
   useEffect(() => {
     if (spaceId && journalId) {
@@ -698,6 +715,7 @@ export const JournalEditPage: React.FC = () => {
                     minHeight="200px"
                     showToolbar={true}
                     disabled={isSubmitting}
+                    onFocus={handleEditorFocus}
                   />
                 )}
               </div>
@@ -716,6 +734,7 @@ export const JournalEditPage: React.FC = () => {
               minHeight="400px"
               showToolbar={true}
               disabled={isSubmitting}
+              onFocus={handleEditorFocus}
             />
           </div>
         )}
@@ -773,6 +792,7 @@ export const JournalEditPage: React.FC = () => {
                   minHeight="200px"
                   showToolbar={true}
                   disabled={isSubmitting}
+                  onFocus={handleEditorFocus}
                 />
               )}
               {section.type === 'q_and_a' && (
@@ -945,14 +965,12 @@ export const JournalEditPage: React.FC = () => {
       )}
 
       {/* Ellie companion */}
-      <SmartEllie
-        mood={mood}
+      <ElliePerch
         showThoughtBubble={true}
         thoughtText={thoughtText || "Let's refine this masterpiece! ✨"}
         size="md"
         particleEffect={particleEffect}
         onClick={() => {
-          // Get a hint for the current section, or just be playful
           const hint = getHint()
           if (hint) {
             console.log('Ellie hint:', hint)
@@ -962,8 +980,8 @@ export const JournalEditPage: React.FC = () => {
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
-        enableSmartPositioning={true}
-        showControlPanel={true}
+        
+        showPerchControl={true}
       />
     </div>
   )

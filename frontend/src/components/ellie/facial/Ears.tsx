@@ -1,69 +1,38 @@
 import React from 'react';
-import type { BodyPartProps } from '../types/ellie.types';
-import { ELLIE_COORDINATES } from '../constants/coordinates';
+import type { FacialFeatureProps } from '../types/ellie.types';
+import { ELLIE_COORDINATES, EAR_ACCENT_COLOR } from '../constants';
 
-export const Ears: React.FC<BodyPartProps> = ({ furColor, mood, className = '' }) => {
+export const Ears: React.FC<FacialFeatureProps> = ({ furColor = '#F5E6D3', className = '' }) => {
   const { leftEar, rightEar } = ELLIE_COORDINATES.face;
-
-  // Ear rotation based on mood - subtle movements
-  const getEarRotation = () => {
-    switch(mood) {
-      case 'curious':
-        return { left: -5, right: 5 };    // Slightly perked up
-      case 'concerned':
-        return { left: -15, right: 15 };  // Slightly droopy
-      case 'excited':
-      case 'happy':
-        return { left: -3, right: 3 };    // Slightly alert
-      default:
-        return { left: -10, right: 10 };  // Normal (reduced from -20, 20)
-    }
-  };
-
-  const rotation = getEarRotation();
 
   return (
     <g className={`ellie-ears ${className}`}>
-      {/* Left ear */}
+      <defs>
+        {/* Subtle ear gradient - 2 stops only */}
+        <linearGradient id="earGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={furColor} stopOpacity="1" />
+          <stop offset="100%" stopColor={EAR_ACCENT_COLOR} stopOpacity="0.95" />
+        </linearGradient>
+      </defs>
+
+      {/* Left ear - hanging down */}
       <ellipse
         cx={leftEar.cx}
         cy={leftEar.cy}
         rx={leftEar.rx}
         ry={leftEar.ry}
-        fill={furColor}
-        transform={`rotate(${rotation.left} ${leftEar.cx} ${leftEar.cy})`}
-        className="ellie-ear-left"
-      />
-      {/* Left ear inner (darker) */}
-      <ellipse
-        cx={leftEar.cx + 2}
-        cy={leftEar.cy}
-        rx={leftEar.rx - 3}
-        ry={leftEar.ry - 4}
-        fill="#8B7355"
-        opacity="0.5"
-        transform={`rotate(${rotation.left} ${leftEar.cx} ${leftEar.cy})`}
+        fill="url(#earGradient)"
+        transform={`rotate(${leftEar.rotation} ${leftEar.cx} ${leftEar.cy})`}
       />
 
-      {/* Right ear */}
+      {/* Right ear - hanging down */}
       <ellipse
         cx={rightEar.cx}
         cy={rightEar.cy}
         rx={rightEar.rx}
         ry={rightEar.ry}
-        fill={furColor}
-        transform={`rotate(${rotation.right} ${rightEar.cx} ${rightEar.cy})`}
-        className="ellie-ear-right"
-      />
-      {/* Right ear inner (darker) */}
-      <ellipse
-        cx={rightEar.cx - 2}
-        cy={rightEar.cy}
-        rx={rightEar.rx - 3}
-        ry={rightEar.ry - 4}
-        fill="#8B7355"
-        opacity="0.5"
-        transform={`rotate(${rotation.right} ${rightEar.cx} ${rightEar.cy})`}
+        fill="url(#earGradient)"
+        transform={`rotate(${rightEar.rotation} ${rightEar.cx} ${rightEar.cy})`}
       />
     </g>
   );

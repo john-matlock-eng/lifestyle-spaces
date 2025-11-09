@@ -7,7 +7,7 @@ import { getEmotionById } from '../data/emotionData'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { DisplaySection } from '../../../lib/journal/types'
 import type { Template } from '../types/template.types'
-import { SmartEllie } from '../../../components/ellie'
+import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { HighlightableText } from '../components/HighlightableText'
@@ -537,8 +537,7 @@ ${content}
       )}
 
       {/* Ellie companion with smart positioning */}
-      <SmartEllie
-        mood={mood}
+      <ElliePerch
         showThoughtBubble={true}
         thoughtText={journal.wordCount > 500 ? "Great writing! 📝" : "Nice entry! 😊"}
         size="md"
@@ -547,8 +546,8 @@ ${content}
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
-        enableSmartPositioning={true}
-        showControlPanel={true}
+        showPerchControl={true}
+        
       />
     </div>
   )

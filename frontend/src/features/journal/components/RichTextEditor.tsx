@@ -10,6 +10,7 @@ interface RichTextEditorProps {
   minHeight?: string
   showToolbar?: boolean
   disabled?: boolean
+  onFocus?: () => void
 }
 
 /**
@@ -21,7 +22,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   placeholder = 'Start writing...',
   minHeight = '300px',
   showToolbar = true,
-  disabled = false
+  disabled = false,
+  onFocus
 }) => {
   const editor = useEditor({
     extensions: getEditorExtensions(placeholder),
@@ -32,6 +34,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       // @ts-expect-error - markdown storage is added by tiptap-markdown extension
       const markdown = editor.storage.markdown.getMarkdown() as string
       onChange(markdown)
+    },
+    onFocus: () => {
+      if (onFocus) {
+        onFocus()
+      }
     }
   })
 

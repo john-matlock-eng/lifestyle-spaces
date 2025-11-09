@@ -2,7 +2,14 @@ import type { EllieProps, EllieMood, EllieSize, CollarStyle } from '../types/ell
 
 export const DEFAULT_MOOD: EllieMood = 'idle';
 
-export const DEFAULT_FUR_COLOR = 'linear-gradient(135deg, #FDE2E4 0%, #E0B1CB 100%)';
+// Realistic Shih Tzu cream/tan palette based on reference photos
+export const DEFAULT_FUR_COLOR = '#F5E6D3'; // Cream base
+export const FUR_ACCENT_COLOR = '#E8D9C8'; // Lighter cream
+export const FUR_SHADOW_COLOR = '#D4C5B0'; // Tan shadow
+export const EAR_ACCENT_COLOR = '#C4B5A0'; // Darker ears/face
+export const NOSE_COLOR = '#5A3A1F'; // Darker brown nose
+export const EYE_COLOR = '#1A0F08'; // Very dark brown eyes
+export const TONGUE_COLOR = '#FFB5BA'; // Pink tongue
 
 export const DEFAULT_COLLAR_STYLE: CollarStyle = 'leather';
 

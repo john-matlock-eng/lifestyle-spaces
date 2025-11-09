@@ -5,6 +5,7 @@ import { Dashboard } from './Dashboard';
 import { useAuth } from '../stores/authStore';
 import { useSpace } from '../stores/spaceStore';
 import { ThemeProvider } from '../theme/ThemeProvider';
+import { EllieProvider } from '../contexts/EllieContext';
 import type { User, Space } from '../types';
 
 // Mock the stores
@@ -37,18 +38,31 @@ vi.mock('../hooks/useEllieCustomizationContext', () => ({
   }),
 }));
 
-vi.mock('../components/ellie', () => {
-  const EllieComponent = ({ mood, thoughtText, onClick }: { mood: string; thoughtText: string; onClick: () => void }) => (
-    <div data-testid="ellie-companion">
-      <div data-testid="ellie-mood">{mood}</div>
-      <div data-testid="ellie-thought">{thoughtText}</div>
-      <button data-testid="ellie-click" onClick={onClick}>Click Ellie</button>
-    </div>
-  );
+vi.mock('../components/ellie', async () => {
+  interface EllieComponentProps {
+    thoughtText?: string;
+    onClick?: () => void;
+    showThoughtBubble?: boolean;
+  }
+
+  const React = await import('react');
+  const { useEllie } = await import('../contexts/EllieContext');
+
+  const ElliePerchComponent = ({ thoughtText, onClick, showThoughtBubble }: EllieComponentProps) => {
+    // Use the actual EllieContext to get mood
+    const { mood } = useEllie();
+
+    return React.createElement('div', { 'data-testid': 'ellie-companion' },
+      React.createElement('div', { 'data-testid': 'ellie-mood' }, mood),
+      showThoughtBubble && React.createElement('div', { 'data-testid': 'ellie-thought' }, thoughtText),
+      onClick && React.createElement('button', { 'data-testid': 'ellie-click', onClick }, 'Click Ellie')
+    );
+  };
 
   return {
-    Ellie: EllieComponent,
-    SmartEllie: EllieComponent,
+    Ellie: ElliePerchComponent,
+    SmartEllie: ElliePerchComponent,
+    ElliePerch: ElliePerchComponent,
   };
 });
 
@@ -179,11 +193,13 @@ describe('Dashboard', () => {
 
   const renderDashboard = () => {
     return render(
-      <ThemeProvider>
-        <MemoryRouter>
-          <Dashboard />
-        </MemoryRouter>
-      </ThemeProvider>
+      <EllieProvider>
+        <ThemeProvider>
+          <MemoryRouter>
+            <Dashboard />
+          </MemoryRouter>
+        </ThemeProvider>
+      </EllieProvider>
     );
   };
 
