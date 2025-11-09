@@ -714,6 +714,7 @@ export const JournalEditPage: React.FC = () => {
                       typeof section.defaultValue === 'string' ? section.defaultValue :
                       ''}
                     onChange={(value) => handleTemplateDataChange(section.id, value)}
+                    onTipTapChange={setContentTiptap}
                     placeholder={section.placeholder}
                     minHeight="200px"
                     showToolbar={true}
