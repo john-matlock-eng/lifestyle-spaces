@@ -11,6 +11,7 @@ import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { HighlightableText } from '../components/HighlightableText'
+import { TipTapViewer } from '../components/TipTapViewer'
 import { CommentThread } from '../components/CommentThread'
 import { PresenceAvatars } from '../components/PresenceAvatars'
 import { ConnectionStatus } from '../components/ConnectionStatus'
@@ -33,7 +34,7 @@ import '../styles/journal-compact.css'
 export const JournalViewPage: React.FC = () => {
   const navigate = useNavigate()
   const { spaceId, journalId } = useParams<{ spaceId: string; journalId: string }>()
-  const { journal, loading, error, loadJournal, deleteJournal } = useJournal()
+  const { journal, loading, error, loadJournal, updateJournal, deleteJournal } = useJournal()
   const { user } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
   const [template, setTemplate] = useState<Template | null>(null)
@@ -372,7 +373,34 @@ ${content}
       </div>
 
       <div className="journal-view-content">
-        {template && displaySections.length > 0 ? (
+        {journal.contentTiptap ? (
+          // Render TipTap journal with native highlighting (zero offset drift)
+          <TipTapViewer
+            contentTiptap={journal.contentTiptap}
+            onHighlightCreate={async (highlight) => {
+              // When a new highlight is created in TipTap, the document is already updated
+              console.log('[JournalView] New TipTap highlight created:', highlight)
+            }}
+            onContentChange={async (updatedContent) => {
+              // When highlights change, save the updated contentTiptap to backend
+              if (!spaceId || !journalId) return
+
+              try {
+                console.log('[JournalView] Saving updated contentTiptap to backend...')
+                // Update journal with new contentTiptap (which includes the highlight)
+                await updateJournal(spaceId, journalId, {
+                  contentTiptap: updatedContent
+                })
+                console.log('[JournalView] ContentTiptap saved successfully')
+
+                // Reload journal to get updated data (including extracted highlights)
+                await loadJournal(spaceId, journalId)
+              } catch (error) {
+                console.error('[JournalView] Failed to save contentTiptap:', error)
+              }
+            }}
+          />
+        ) : template && displaySections.length > 0 ? (
           // Render template sections with highlighting
           <div className="template-content">
             {displaySections.map((section) => (

@@ -49,6 +49,7 @@ export const journalApi = {
     const response = await apiService.post(`/api/spaces/${spaceId}/journals`, {
       title: data.title.trim(),
       content: data.content,  // Contains serialized template data via JournalContentManager
+      contentTiptap: data.contentTiptap,  // TipTap JSON with embedded highlights
       tags: data.tags || [],
       emotions: data.emotions,
       isPinned: data.isPinned || false,
@@ -136,6 +137,7 @@ export const journalApi = {
     const updateData: Record<string, unknown> = {}
     if (data.title !== undefined) updateData.title = data.title.trim()
     if (data.content !== undefined) updateData.content = data.content  // Contains serialized template data
+    if (data.contentTiptap !== undefined) updateData.contentTiptap = data.contentTiptap  // TipTap JSON with embedded highlights
     if (data.tags !== undefined) updateData.tags = data.tags
     if (data.emotions !== undefined) updateData.emotions = data.emotions
     if (data.isPinned !== undefined) updateData.isPinned = data.isPinned
