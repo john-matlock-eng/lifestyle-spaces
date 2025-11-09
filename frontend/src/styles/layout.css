@@ -432,6 +432,116 @@
   color: var(--theme-primary-400);
 }
 
+/* Ellie Customization in Profile Dropdown */
+.ellie-customization-section {
+  padding: 8px 0;
+}
+
+.ellie-customization-label {
+  font-size: 12px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 6px;
+  color: var(--theme-text-primary);
+}
+
+.ellie-fur-color-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.ellie-collar-style-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.ellie-collar-color-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.ellie-color-button {
+  padding: 6px;
+  font-size: 11px;
+  border: 1px solid var(--theme-border-base);
+  border-radius: 6px;
+  background: var(--theme-bg-surface);
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ellie-color-button.active {
+  border-color: var(--theme-primary-500);
+  background: var(--theme-primary-50);
+  font-weight: 600;
+}
+
+.dark .ellie-color-button.active {
+  background: rgba(96, 165, 250, 0.15);
+}
+
+.ellie-style-button {
+  padding: 6px;
+  font-size: 11px;
+  border: 1px solid var(--theme-border-base);
+  border-radius: 6px;
+  background: var(--theme-bg-surface);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+}
+
+.ellie-style-button.active {
+  border-color: var(--theme-primary-500);
+  background: var(--theme-primary-50);
+}
+
+.dark .ellie-style-button.active {
+  background: rgba(96, 165, 250, 0.15);
+}
+
+.ellie-collar-color-swatch {
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ellie-collar-color-swatch.active {
+  border: 2px solid var(--theme-primary-500);
+  box-shadow: 0 0 0 2px var(--theme-bg-elevated), 0 0 0 4px var(--theme-primary-500);
+}
+
+.ellie-tag-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.ellie-tag-checkbox input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .desktop-only {
@@ -448,7 +558,7 @@
 
   .profile-dropdown {
     width: calc(100vw - 40px);
-    max-width: 320px;
+    max-width: 360px;
   }
 
   .app-content {
@@ -476,5 +586,49 @@
 
   .brand-name {
     display: none;
+  }
+
+  .profile-dropdown {
+    width: calc(100vw - 32px);
+    max-width: none;
+  }
+
+  /* Make Ellie customization grids more mobile-friendly */
+  .ellie-fur-color-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .ellie-collar-style-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ellie-collar-color-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .ellie-color-button,
+  .ellie-style-button {
+    font-size: 10px;
+    padding: 4px;
+  }
+}
+
+@media (max-width: 360px) {
+  /* Very small phones */
+  .ellie-fur-color-grid,
+  .ellie-collar-color-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .ellie-collar-style-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .ellie-color-button,
+  .ellie-style-button {
+    min-height: 40px;
+    font-size: 9px;
   }
 }
