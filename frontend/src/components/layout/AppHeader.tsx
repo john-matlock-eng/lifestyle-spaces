@@ -238,19 +238,17 @@ export const AppHeader: React.FC = () => {
                           </div>
 
                           {/* Fur Color */}
-                          <div style={{ padding: '8px 0' }}>
-                            <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '6px', color: 'var(--text-primary)' }}>
+                          <div className="ellie-customization-section">
+                            <label className="ellie-customization-label">
                               Fur Color
                             </label>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                            <div className="ellie-fur-color-grid">
                               {furColors.map((color) => (
                                 <button
                                   key={color.label}
-                                  className={`theme-option ${customization.furColor === color.value ? 'active' : ''}`}
+                                  className={`ellie-color-button ${customization.furColor === color.value ? 'active' : ''}`}
                                   onClick={() => updateCustomization({ furColor: color.value })}
                                   style={{
-                                    padding: '6px',
-                                    fontSize: '11px',
                                     background: color.value || 'linear-gradient(135deg, #FDE2E4 0%, #E0B1CB 100%)'
                                   }}
                                   title={color.label}
@@ -262,20 +260,19 @@ export const AppHeader: React.FC = () => {
                           </div>
 
                           {/* Collar Style */}
-                          <div style={{ padding: '8px 0' }}>
-                            <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '6px', color: 'var(--text-primary)' }}>
+                          <div className="ellie-customization-section">
+                            <label className="ellie-customization-label">
                               Collar Style
                             </label>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                            <div className="ellie-collar-style-grid">
                               {collarStyles.map((style) => (
                                 <button
                                   key={style.value}
-                                  className={`theme-option ${customization.collarStyle === style.value ? 'active' : ''}`}
+                                  className={`ellie-style-button ${customization.collarStyle === style.value ? 'active' : ''}`}
                                   onClick={() => updateCustomization({ collarStyle: style.value })}
-                                  style={{ padding: '6px', fontSize: '11px' }}
                                 >
                                   <span>{style.emoji}</span>
-                                  <span style={{ marginLeft: '4px', fontSize: '10px' }}>{style.label}</span>
+                                  <span style={{ fontSize: '10px' }}>{style.label}</span>
                                 </button>
                               ))}
                             </div>
@@ -283,20 +280,19 @@ export const AppHeader: React.FC = () => {
 
                           {/* Collar Color */}
                           {customization.collarStyle !== 'none' && (
-                            <div style={{ padding: '8px 0' }}>
-                              <label style={{ fontSize: '12px', fontWeight: 600, display: 'block', marginBottom: '6px', color: 'var(--text-primary)' }}>
+                            <div className="ellie-customization-section">
+                              <label className="ellie-customization-label">
                                 Collar Color
                               </label>
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                              <div className="ellie-collar-color-grid">
                                 {collarColors.map((color) => (
                                   <button
                                     key={color.value}
-                                    className={`theme-option ${customization.collarColor === color.value ? 'active' : ''}`}
+                                    className={`ellie-collar-color-swatch ${customization.collarColor === color.value ? 'active' : ''}`}
                                     onClick={() => updateCustomization({ collarColor: color.value })}
                                     style={{
-                                      padding: '8px',
                                       background: color.value,
-                                      border: customization.collarColor === color.value ? '2px solid #8B4513' : '1px solid #ddd'
+                                      border: customization.collarColor === color.value ? '2px solid var(--theme-primary-500)' : '1px solid var(--theme-border-base)'
                                     }}
                                     title={color.label}
                                   >
@@ -309,15 +305,14 @@ export const AppHeader: React.FC = () => {
 
                           {/* Collar Tag */}
                           {customization.collarStyle !== 'none' && customization.collarStyle !== 'bandana' && (
-                            <div style={{ padding: '8px 0' }}>
-                              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                            <div className="ellie-customization-section">
+                              <label className="ellie-tag-checkbox">
                                 <input
                                   type="checkbox"
                                   checked={customization.collarTag}
                                   onChange={(e) => updateCustomization({ collarTag: e.target.checked })}
-                                  style={{ width: '16px', height: '16px' }}
                                 />
-                                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                <span className="ellie-customization-label" style={{ marginBottom: 0 }}>
                                   Show Name Tag
                                 </span>
                               </label>
