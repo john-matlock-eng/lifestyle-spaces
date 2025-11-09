@@ -438,6 +438,7 @@ export const JournalEditPage: React.FC = () => {
       }
 
       console.log('[DEBUG EDIT] Updating journal with content only (no templateData field)')
+      console.log('[DEBUG EDIT] contentTiptap:', contentTiptap)
 
       await updateJournal(spaceId, journalId, {
         title,

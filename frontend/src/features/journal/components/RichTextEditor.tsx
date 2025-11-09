@@ -47,6 +47,13 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     extensions: getEditorExtensions(placeholder, enableHighlights),
     content,
     editable: !disabled,
+    onCreate: ({ editor }) => {
+      // Initialize TipTap JSON on editor creation
+      if (onTipTapChange) {
+        const tiptapJSON = editor.getJSON()
+        onTipTapChange(tiptapJSON)
+      }
+    },
     onUpdate: ({ editor }) => {
       // Get properly formatted markdown from storage
       // @ts-expect-error - markdown storage is added by tiptap-markdown extension

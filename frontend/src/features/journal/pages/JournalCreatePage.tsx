@@ -279,6 +279,7 @@ export const JournalCreatePage: React.FC = () => {
 
       console.log('[DEBUG] Emotions state before submission:', emotions)
       console.log('[DEBUG] Emotions length:', emotions.length)
+      console.log('[DEBUG] contentTiptap:', contentTiptap)
 
       const journal = await createJournal(spaceId, {
         title,
@@ -289,6 +290,8 @@ export const JournalCreatePage: React.FC = () => {
         templateId: selectedTemplate?.id
         // NO templateData field!
       })
+
+      console.log('[DEBUG] Created journal response:', journal)
 
       // Notify Ellie of successful save
       onEllieSave()
