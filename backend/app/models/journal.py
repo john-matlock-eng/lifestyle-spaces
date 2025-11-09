@@ -5,8 +5,14 @@ TipTap Integration:
 - Journals can now store TipTap JSON format in content_tiptap field
 - This enables TipTap-native highlighting with perfect position accuracy
 - Markdown (content) is maintained for backward compatibility
+
+Multi-Section TipTap Support:
+- content_tiptap can be either:
+  1. Single TipTap document: { "type": "doc", "content": [...] }
+  2. Multi-section mapping: { "sectionId": { "type": "doc", "content": [...] }, ... }
+- This supports both simple journals and complex multi-section template journals
 """
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator, ConfigDict, field_serializer
 
@@ -21,6 +27,7 @@ class JournalBase(BaseModel):
     TipTap Integration:
     - content: Markdown format (for backward compatibility)
     - content_tiptap: TipTap JSON format with embedded highlights (optional)
+      Can be either single document or section mapping
     """
     title: str = Field(..., min_length=1, max_length=200)
     content: str = Field(...)  # Contains markdown with embedded template metadata
@@ -30,6 +37,41 @@ class JournalBase(BaseModel):
     is_pinned: bool = Field(default=False, alias="isPinned")
 
     model_config = ConfigDict(populate_by_name=True)
+
+    @field_validator('content_tiptap')
+    @classmethod
+    def validate_content_tiptap(cls, v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        """
+        Validate TipTap content format.
+
+        Supports two formats:
+        1. Single document: { "type": "doc", "content": [...] }
+        2. Multi-section: { "sectionId": { "type": "doc", ... }, ... }
+        """
+        if v is None:
+            return v
+
+        if not isinstance(v, dict):
+            raise ValueError("contentTiptap must be a dictionary")
+
+        # Check if it's single TipTap document format
+        if v.get('type') == 'doc':
+            # Validate it has content field
+            if 'content' not in v:
+                raise ValueError("Single TipTap document must have 'content' field")
+            return v
+
+        # Otherwise, assume multi-section format
+        # Validate each section is a valid TipTap document
+        for section_id, doc in v.items():
+            if not isinstance(doc, dict):
+                raise ValueError(f"Section '{section_id}' must contain a TipTap document object")
+            if doc.get('type') != 'doc':
+                raise ValueError(f"Section '{section_id}' must be a valid TipTap document with type='doc'")
+            if 'content' not in doc:
+                raise ValueError(f"Section '{section_id}' TipTap document must have 'content' field")
+
+        return v
 
 
 class JournalCreateRequest(JournalBase):
@@ -138,6 +180,7 @@ class JournalEntry(BaseModel):
     TipTap Integration:
     - content: Markdown format (for backward compatibility)
     - content_tiptap: TipTap JSON format with embedded highlights (optional)
+      Supports both single document and multi-section formats
     """
     journal_id: str
     space_id: str
@@ -154,6 +197,58 @@ class JournalEntry(BaseModel):
     is_encrypted: bool = False
     word_count: int = 0
     is_pinned: bool = False
+
+    def is_multi_section_tiptap(self) -> bool:
+        """
+        Check if journal uses multi-section TipTap format.
+
+        Returns:
+            True if content_tiptap is multi-section format, False otherwise
+        """
+        if not self.content_tiptap:
+            return False
+        # Single format has 'type' field at root
+        return 'type' not in self.content_tiptap
+
+    def get_section_tiptap(self, section_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get TipTap JSON for a specific section, handling both formats.
+
+        Args:
+            section_id: The section identifier
+
+        Returns:
+            TipTap document for the section, or None if not found
+        """
+        if not self.content_tiptap:
+            return None
+
+        # Multi-section format
+        if self.is_multi_section_tiptap():
+            return self.content_tiptap.get(section_id)
+
+        # Single document format (legacy/blank template)
+        # Only return for 'content' section for backward compatibility
+        if section_id == 'content':
+            return self.content_tiptap
+
+        return None
+
+    def get_all_section_ids(self) -> List[str]:
+        """
+        Get all section IDs that have TipTap content.
+
+        Returns:
+            List of section IDs
+        """
+        if not self.content_tiptap:
+            return []
+
+        if self.is_multi_section_tiptap():
+            return list(self.content_tiptap.keys())
+        else:
+            # Single section, assume 'content'
+            return ['content']
 
 
 class JournalResponse(BaseModel):

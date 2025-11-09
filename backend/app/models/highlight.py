@@ -33,10 +33,18 @@ class TextRange(BaseModel):
 
 
 class HighlightModel(BaseModel):
-    """Journal entry highlight model."""
+    """
+    Journal entry highlight model.
+
+    Multi-Section Support:
+    - section_id: Optional section identifier for multi-section journals
+    - For single-section journals, section_id can be None or 'content'
+    - TipTap positions are relative to the section's document
+    """
     id: str
     journal_entry_id: str = Field(alias="journalEntryId")
     space_id: str = Field(alias="spaceId")
+    section_id: Optional[str] = Field(None, alias="sectionId")  # NEW: section context
     highlighted_text: str = Field(alias="highlightedText")
     text_range: TextRange = Field(alias="textRange")
     color: Optional[str] = "yellow"
@@ -71,7 +79,13 @@ class CommentModel(BaseModel):
 
 
 class CreateHighlightRequest(BaseModel):
-    """Request to create a new highlight."""
+    """
+    Request to create a new highlight.
+
+    Multi-Section Support:
+    - section_id: Optional section identifier for multi-section journals
+    """
+    section_id: Optional[str] = Field(None, alias="sectionId")  # NEW: section context
     highlighted_text: str = Field(alias="highlightedText")
     text_range: TextRange = Field(alias="textRange")
     color: Optional[str] = "yellow"
@@ -105,7 +119,7 @@ class CreateCommentRequest(BaseModel):
 # DynamoDB Item helpers
 def highlight_to_db_item(highlight: HighlightModel) -> dict:
     """Convert highlight model to DynamoDB item."""
-    return {
+    item = {
         "PK": f"SPACE#{highlight.space_id}",
         "SK": f"HIGHLIGHT#{highlight.id}",
         "GSI1PK": f"JOURNAL#{highlight.journal_entry_id}",
@@ -123,6 +137,10 @@ def highlight_to_db_item(highlight: HighlightModel) -> dict:
         "updatedAt": highlight.updated_at,
         "commentCount": highlight.comment_count,
     }
+    # Include sectionId if present
+    if highlight.section_id:
+        item["sectionId"] = highlight.section_id
+    return item
 
 
 def db_item_to_highlight(item: dict) -> HighlightModel:
@@ -131,6 +149,7 @@ def db_item_to_highlight(item: dict) -> HighlightModel:
         id=item["id"],
         journalEntryId=item["journalEntryId"],
         spaceId=item["spaceId"],
+        sectionId=item.get("sectionId"),  # NEW: section context
         highlightedText=item["highlightedText"],
         textRange=TextRange(**item["textRange"]),
         color=item.get("color", "yellow"),
@@ -183,25 +202,35 @@ def db_item_to_comment(item: dict) -> CommentModel:
 
 # TipTap-specific models
 class TipTapHighlight(BaseModel):
-    """Highlight embedded in TipTap document (extracted from mark)."""
+    """
+    Highlight embedded in TipTap document (extracted from mark).
+
+    Multi-Section Support:
+    - section_id: Identifies which section this highlight belongs to
+    """
     id: str
     color: str = "yellow"
     author_id: str = Field(alias="authorId")
     author_name: str = Field(alias="authorName")
     created_at: str = Field(alias="createdAt")
     comment_count: int = Field(default=0, alias="commentCount")
+    section_id: Optional[str] = Field(None, alias="sectionId")  # NEW: section context
 
     class Config:
         populate_by_name = True
         by_alias = True
 
 
-def extract_highlights_from_tiptap(content: Dict[str, Any]) -> List[TipTapHighlight]:
+def extract_highlights_from_tiptap(
+    content: Dict[str, Any],
+    section_id: Optional[str] = None
+) -> List[TipTapHighlight]:
     """
     Extract all highlights from TipTap document JSON.
 
     Args:
         content: TipTap document JSON (ProseMirror format)
+        section_id: Optional section identifier to tag extracted highlights
 
     Returns:
         List of TipTapHighlight objects
@@ -227,7 +256,8 @@ def extract_highlights_from_tiptap(content: Dict[str, Any]) -> List[TipTapHighli
                             authorId=attrs.get('authorId', ''),
                             authorName=attrs.get('authorName', ''),
                             createdAt=attrs.get('createdAt', ''),
-                            commentCount=attrs.get('commentCount', 0)
+                            commentCount=attrs.get('commentCount', 0),
+                            sectionId=attrs.get('sectionId') or section_id  # Use mark's sectionId or provided
                         ))
 
         # Recurse into child nodes
@@ -238,6 +268,34 @@ def extract_highlights_from_tiptap(content: Dict[str, Any]) -> List[TipTapHighli
     # Start traversal from root
     if content:
         traverse(content)
+
+    return highlights
+
+
+def extract_highlights_from_multi_section_tiptap(
+    content_tiptap: Dict[str, Any]
+) -> List[TipTapHighlight]:
+    """
+    Extract highlights from multi-section TipTap content.
+
+    Args:
+        content_tiptap: Either single TipTap doc or multi-section mapping
+
+    Returns:
+        List of all TipTapHighlight objects from all sections
+    """
+    highlights: List[TipTapHighlight] = []
+
+    # Check if single document format
+    if content_tiptap.get('type') == 'doc':
+        # Single section
+        return extract_highlights_from_tiptap(content_tiptap, section_id='content')
+
+    # Multi-section format
+    for section_id, section_doc in content_tiptap.items():
+        if isinstance(section_doc, dict) and section_doc.get('type') == 'doc':
+            section_highlights = extract_highlights_from_tiptap(section_doc, section_id=section_id)
+            highlights.extend(section_highlights)
 
     return highlights
 
