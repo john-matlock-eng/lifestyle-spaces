@@ -13,6 +13,7 @@ export interface Highlight {
   id: string;
   journalEntryId: string;
   spaceId: string;
+  sectionId?: string; // NEW: Section context for multi-section journals
   highlightedText: string;
   textRange: TextRange;
   color?: string;
@@ -58,6 +59,7 @@ export interface PresenceUser {
 
 // API Request/Response types
 export interface CreateHighlightRequest {
+  sectionId?: string; // NEW: Section context for multi-section journals
   highlightedText: string;
   textRange: TextRange;
   color?: string;

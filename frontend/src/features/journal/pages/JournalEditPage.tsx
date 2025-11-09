@@ -9,6 +9,7 @@ import { CheckboxSection } from '../components/sections/CheckboxSection'
 import { ScaleSection } from '../components/sections/ScaleSection'
 import { TableSection } from '../components/sections/TableSection'
 import { useJournal } from '../hooks/useJournal'
+import { useSectionTipTap } from '../hooks/useSectionTipTap'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
@@ -37,7 +38,6 @@ export const JournalEditPage: React.FC = () => {
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [contentTiptap, setContentTiptap] = useState<Record<string, unknown> | null>(null)
   const [tags, setTags] = useState('')
   const [emotions, setEmotions] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -46,6 +46,9 @@ export const JournalEditPage: React.FC = () => {
   const [customSections, setCustomSections] = useState<CustomSection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
   const [currentSectionId, setCurrentSectionId] = useState<string | undefined>()
+
+  // Multi-section TipTap state management
+  const { updateSection, getAllSections } = useSectionTipTap()
 
   // Track if journal has been initialized to prevent duplicate template loads
   const initializedJournalId = useRef<string | null>(null)
@@ -429,10 +432,13 @@ export const JournalEditPage: React.FC = () => {
         })
       }
 
+      const contentTiptapToSave = getAllSections()
+      console.log('[DEBUG EDIT] contentTiptap sections:', contentTiptapToSave ? Object.keys(contentTiptapToSave) : 'none')
+
       await updateJournal(spaceId, journalId, {
         title,
         content: finalContent,
-        contentTiptap: contentTiptap || undefined,
+        contentTiptap: contentTiptapToSave || undefined,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
         templateId: template?.id
@@ -722,7 +728,7 @@ export const JournalEditPage: React.FC = () => {
             <RichTextEditor
               content={content}
               onChange={setContent}
-              onTipTapChange={setContentTiptap}
+              onTipTapChange={(json) => updateSection('content', json)}
               placeholder="Start writing your thoughts..."
               minHeight="400px"
               showToolbar={true}

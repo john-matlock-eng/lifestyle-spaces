@@ -11,6 +11,7 @@ import { ScaleSection } from '../components/sections/ScaleSection'
 import { TableSection } from '../components/sections/TableSection'
 import AIWritingPrompts from '../../../components/AIWritingPrompts'
 import { useJournal } from '../hooks/useJournal'
+import { useSectionTipTap } from '../hooks/useSectionTipTap'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { aiService } from '../../../services/ai'
@@ -37,13 +38,15 @@ export const JournalCreatePage: React.FC = () => {
   const [templateData, setTemplateData] = useState<TemplateData>({})
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [contentTiptap, setContentTiptap] = useState<Record<string, unknown> | null>(null)
   const [tags, setTags] = useState('')
   const [emotions, setEmotions] = useState<string[]>([])
   const [showTemplatePicker, setShowTemplatePicker] = useState(true)
   const [customSections, setCustomSections] = useState<CustomSection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
   const [currentSectionId, setCurrentSectionId] = useState<string | undefined>()
+
+  // Multi-section TipTap state management
+  const { updateSection, getAllSections } = useSectionTipTap()
 
   // Ellie customization
   const { customization } = useEllieCustomizationContext()
@@ -279,12 +282,14 @@ export const JournalCreatePage: React.FC = () => {
 
       console.log('[DEBUG] Emotions state before submission:', emotions)
       console.log('[DEBUG] Emotions length:', emotions.length)
-      console.log('[DEBUG] contentTiptap:', contentTiptap)
+
+      const contentTiptapToSave = getAllSections()
+      console.log('[DEBUG] contentTiptap sections:', contentTiptapToSave ? Object.keys(contentTiptapToSave) : 'none')
 
       const journal = await createJournal(spaceId, {
         title,
         content: finalContent,
-        contentTiptap: contentTiptap || undefined,
+        contentTiptap: contentTiptapToSave || undefined,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
         templateId: selectedTemplate?.id
@@ -589,7 +594,7 @@ export const JournalCreatePage: React.FC = () => {
                     setContent(newContent)
                     handleTyping()
                   }}
-                  onTipTapChange={setContentTiptap}
+                  onTipTapChange={(json) => updateSection('content', json)}
                   placeholder="Start writing your thoughts..."
                   minHeight="400px"
                   showToolbar={true}
