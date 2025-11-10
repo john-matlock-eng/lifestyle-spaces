@@ -13,6 +13,7 @@ import type {
   TimeBlock as TimeBlockType,
   DayOfWeek,
   CreateScheduleData,
+  UpdateScheduleData,
   Schedule,
 } from '../types/schedule.types';
 import { useSchedule } from '../hooks/useSchedule';
