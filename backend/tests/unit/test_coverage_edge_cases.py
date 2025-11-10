@@ -4,13 +4,19 @@ Edge case tests to achieve 100% code coverage.
 import pytest
 from moto import mock_dynamodb
 import boto3
+import os
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
+
+# Set AWS credentials for moto at module level
+os.environ['AWS_ACCESS_KEY_ID'] = 'testing'
+os.environ['AWS_SECRET_ACCESS_KEY'] = 'testing'
+os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
 
 
 class TestEdgeCases:
     """Test edge cases for full coverage."""
-    
+
     def test_get_current_user_with_credentials_object(self):
         """Test get_current_user with HTTPAuthorizationCredentials object."""
         from app.core.cognito_auth import get_current_user_cognito
