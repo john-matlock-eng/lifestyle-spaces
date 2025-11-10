@@ -101,7 +101,7 @@ app.include_router(health.router)
 from app.api.routes import (
     auth, users, spaces, invitations, user_profile, journals, templates,
     llm, highlights, websocket_highlights, activities, schedules, tiptap_journals
-)
+), schedules
 
 # Include API routers
 app.include_router(auth.router)
@@ -117,3 +117,4 @@ app.include_router(websocket_highlights.router)
 app.include_router(activities.router)
 app.include_router(schedules.router)
 app.include_router(tiptap_journals.router)
+app.include_router(schedules.router)
