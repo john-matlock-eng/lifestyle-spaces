@@ -2,6 +2,9 @@
  * Schedule feature exports
  */
 
+// Pages
+export { SchedulePage } from './pages/SchedulePage';
+
 // Components
 export { ScheduleTemplate } from './components/ScheduleTemplate';
 export { WeekView } from './components/WeekView';
