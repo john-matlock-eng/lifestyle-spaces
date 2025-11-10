@@ -116,7 +116,9 @@ describe('ShareModal', () => {
       );
     });
 
-    expect(screen.getByText('Copied!')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Copied!')).toBeInTheDocument();
+    });
   });
 
   it('should display existing share link if provided', () => {
