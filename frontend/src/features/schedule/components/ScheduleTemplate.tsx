@@ -175,8 +175,8 @@ export const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({
   /**
    * Handle version restore
    */
-  const handleVersionRestore = async (versionData: { scheduleData: ScheduleData; notes?: string }) => {
-    if (!currentScheduleId) return;
+  const handleVersionRestore = async (versionData: UpdateScheduleData) => {
+    if (!currentScheduleId || !versionData.scheduleData) return;
 
     try {
       await updateSchedule(currentScheduleId, versionData);

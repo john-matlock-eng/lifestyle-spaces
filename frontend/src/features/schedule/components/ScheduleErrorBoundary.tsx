@@ -2,7 +2,8 @@
  * ScheduleErrorBoundary component for graceful error handling
  */
 
-import React, { Component, ReactNode } from 'react';
+import React, { Component } from 'react';
+import type { ReactNode } from 'react';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 
 interface Props {

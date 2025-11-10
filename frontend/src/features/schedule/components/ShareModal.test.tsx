@@ -13,7 +13,7 @@ vi.mock('lucide-react', () => ({
   Check: () => <div data-testid="check-icon">Check</div>,
   ExternalLink: () => <div data-testid="external-link-icon">External</div>,
   Link2: () => <div data-testid="link-icon">Link</div>,
-  LinkOff: () => <div data-testid="link-off-icon">LinkOff</div>,
+  Link2Off: () => <div data-testid="link-off-icon">Link2Off</div>,
   X: () => <div data-testid="x-icon">X</div>,
 }));
 

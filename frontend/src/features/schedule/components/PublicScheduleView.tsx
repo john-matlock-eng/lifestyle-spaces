@@ -154,8 +154,6 @@ export const PublicScheduleView: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm p-6">
           <WeekView
             scheduleData={schedule.scheduleData}
-            onUpdateBlock={() => {}}
-            onDeleteBlock={() => {}}
             readOnly={true}
           />
         </div>

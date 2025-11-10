@@ -3,7 +3,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, ExternalLink, Link2, LinkOff, X } from 'lucide-react';
+import { Copy, Check, ExternalLink, Link2, Link2Off, X } from 'lucide-react';
 import type { ScheduleShare } from '../types/schedule.types';
 import * as scheduleApi from '../services/scheduleApi';
 
@@ -179,7 +179,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   disabled={loading}
                   className="flex-1 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                 >
-                  <LinkOff className="w-4 h-4" />
+                  <Link2Off className="w-4 h-4" />
                   Stop Sharing
                 </button>
               </div>
