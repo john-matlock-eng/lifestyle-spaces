@@ -122,7 +122,7 @@ describe('scheduleApi', () => {
       const result = await scheduleApi.getSchedulesByWeek('2024-01-01', 'space-1');
 
       expect(apiService.get).toHaveBeenCalledWith(
-        '/api/schedules/week/2024-01-01?spaceId=space-1'
+        '/api/schedules/week/2024-01-01?space_id=space-1'
       );
       expect(result).toEqual(mockResponse);
     });

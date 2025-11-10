@@ -35,8 +35,8 @@ export async function getSchedules(
   weekStarting: string
 ): Promise<ScheduleListResponse> {
   const params = new URLSearchParams({
-    spaceId,
-    weekStarting,
+    space_id: spaceId,
+    week_starting: weekStarting,
   });
 
   return apiService.get<ScheduleListResponse>(`/api/schedules?${params.toString()}`);
@@ -64,8 +64,8 @@ export async function deleteSchedule(scheduleId: string): Promise<void> {
  */
 export async function getScheduleTemplates(spaceId: string): Promise<ScheduleListResponse> {
   const params = new URLSearchParams({
-    spaceId,
-    isTemplate: 'true',
+    space_id: spaceId,
+    is_template: 'true',
   });
 
   return apiService.get<ScheduleListResponse>(`/api/schedules?${params.toString()}`);
@@ -78,7 +78,7 @@ export async function getSchedulesByWeek(
   weekStarting: string,
   spaceId: string
 ): Promise<ScheduleListResponse> {
-  const params = new URLSearchParams({ spaceId });
+  const params = new URLSearchParams({ space_id: spaceId });
   return apiService.get<ScheduleListResponse>(
     `/api/schedules/week/${weekStarting}?${params.toString()}`
   );
