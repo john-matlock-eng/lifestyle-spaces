@@ -154,7 +154,7 @@ export const PublicScheduleView: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm p-6">
           <WeekView
             scheduleData={schedule.scheduleData}
-            weekStart={schedule.weekStarting}
+            weekStart={new Date(schedule.weekStarting)}
             readOnly={true}
           />
         </div>
