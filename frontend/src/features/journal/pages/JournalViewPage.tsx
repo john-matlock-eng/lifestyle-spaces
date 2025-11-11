@@ -381,6 +381,16 @@ ${content}
               // When a new highlight is created in TipTap, the document is already updated
               console.log('[JournalView] New TipTap highlight created:', highlight)
             }}
+            onHighlightClick={(highlightId) => {
+              // Find the full highlight object from the highlights array
+              const highlight = highlights.find(h => h.id === highlightId)
+              if (highlight) {
+                console.log('[JournalView] TipTap highlight clicked, opening comments:', highlight)
+                handleHighlightClick(highlight)
+              } else {
+                console.warn('[JournalView] Highlight not found in highlights array:', highlightId)
+              }
+            }}
             onContentChange={async (updatedContent) => {
               // When highlights change, save the updated contentTiptap to backend
               if (!spaceId || !journalId) return
