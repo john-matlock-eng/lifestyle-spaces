@@ -775,7 +775,6 @@ async def get_schedules_by_week(
         )
 
 
-
 @router.post("/import/validate", response_model=ScheduleImportValidationResponse)
 async def validate_schedule_import(
     request: ScheduleImportRequest,
@@ -783,20 +782,20 @@ async def validate_schedule_import(
 ):
     """
     Validate a schedule import JSON without creating it.
-    
+
     Args:
         request: JSON string and optional space ID
         current_user: Authenticated user
-        
+
     Returns:
         Validation result with parsed schedule or errors
     """
     try:
         import_service = ScheduleImportService()
-        
+
         # Parse and validate the JSON
         parsed_schedule, errors = import_service.parse_import_json(request.json_data)
-        
+
         if errors:
             # Return validation errors
             return ScheduleImportValidationResponse(
@@ -810,7 +809,7 @@ async def validate_schedule_import(
                     for err in errors
                 ]
             )
-        
+
         # Extract conflicts from parsed schedule
         conflicts = []
         if parsed_schedule and 'conflicts' in parsed_schedule:
@@ -818,19 +817,19 @@ async def validate_schedule_import(
                 ImportConflict(**conflict)
                 for conflict in parsed_schedule['conflicts']
             ]
-        
+
         # Build warnings
         warnings = []
         if conflicts:
             warnings.append(f"Found {len(conflicts)} time block conflicts")
-        
+
         return ScheduleImportValidationResponse(
             valid=True,
             schedule=parsed_schedule,
             warnings=warnings,
             conflicts=conflicts
         )
-        
+
     except Exception as e:
         logger.error(f"[API_VALIDATE_IMPORT] Error: {str(e)}")
         raise HTTPException(
@@ -846,14 +845,14 @@ async def import_schedule(
 ):
     """
     Import and create a schedule from JSON.
-    
+
     Args:
         request: JSON string and optional space ID
         current_user: Authenticated user
-        
+
     Returns:
         Created schedule with warnings and conflicts
-        
+
     Raises:
         422: Validation error in JSON
         500: Server error
@@ -861,17 +860,17 @@ async def import_schedule(
     try:
         import_service = ScheduleImportService()
         schedule_service = ScheduleService()
-        
+
         # Validate space_id is provided
         if not request.space_id:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="space_id is required for import"
             )
-        
+
         # Parse and validate the JSON
         parsed_schedule, errors = import_service.parse_import_json(request.json_data)
-        
+
         if errors:
             # Return validation errors as 422
             error_messages = [f"{err.field}: {err.message}" for err in errors]
@@ -882,20 +881,20 @@ async def import_schedule(
                     "errors": error_messages
                 }
             )
-        
+
         # Extract conflicts and metadata
         conflicts = []
         warnings = []
         schedule_data = parsed_schedule['scheduleData']
         metadata = parsed_schedule.get('metadata', {})
-        
+
         if 'conflicts' in parsed_schedule:
             conflicts = [
                 ImportConflict(**conflict)
                 for conflict in parsed_schedule['conflicts']
             ]
             warnings.append(f"Found {len(conflicts)} time block conflicts")
-        
+
         # Get the week starting date (use next Monday if not in metadata)
         from datetime import datetime, timedelta
         today = datetime.now().date()
@@ -903,7 +902,7 @@ async def import_schedule(
         if days_ahead == 0:
             days_ahead = 7  # If today is Monday, get next Monday
         week_starting = today + timedelta(days=days_ahead)
-        
+
         # Create the schedule using the schedule service
         schedule_create = ScheduleCreate(
             space_id=request.space_id,
@@ -912,23 +911,23 @@ async def import_schedule(
             notes=metadata.get('description', ''),
             is_template=False
         )
-        
+
         created_schedule = await schedule_service.create_schedule(
             schedule_create,
             current_user.get('sub')
         )
-        
+
         logger.info(
             f"[API_IMPORT_SCHEDULE] user={current_user.get('sub')}, "
             f"schedule_id={created_schedule.schedule_id}"
         )
-        
+
         return ScheduleImportResponse(
             schedule=created_schedule,
             warnings=warnings,
             conflicts=conflicts
         )
-        
+
     except HTTPException:
         raise
     except ValidationError as e:
@@ -942,4 +941,3 @@ async def import_schedule(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to import schedule"
         )
-

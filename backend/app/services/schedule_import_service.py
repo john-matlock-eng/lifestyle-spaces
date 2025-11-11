@@ -7,8 +7,7 @@ Handles importing schedules from JSON format with intelligent parsing and valida
 import json
 import re
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
-from pydantic import ValidationError as PydanticValidationError
+from typing import List, Optional, Tuple
 
 
 class ValidationError:
@@ -168,9 +167,16 @@ class ScheduleImportService:
                 ))
 
         if "activity" not in block:
-            errors.append(ValidationError(f"{prefix}.activity", "Missing 'activity' field"))
+            errors.append(
+                ValidationError(f"{prefix}.activity", "Missing 'activity' field")
+            )
         elif not isinstance(block["activity"], str) or not block["activity"].strip():
-            errors.append(ValidationError(f"{prefix}.activity", "Activity must be a non-empty string"))
+            errors.append(
+                ValidationError(
+                    f"{prefix}.activity",
+                    "Activity must be a non-empty string"
+                )
+            )
 
         return errors
 
@@ -373,7 +379,11 @@ class ScheduleImportService:
 
             # Check if block1 overlaps with block2
             if end1 > start2:
-                message = f"Overlapping blocks: {start1}-{end1} conflicts with {start2}-{block2.get('endTime', '')}"
+                end2 = block2.get('endTime', '')
+                message = (
+                    f"Overlapping blocks: {start1}-{end1} "
+                    f"conflicts with {start2}-{end2}"
+                )
                 conflicts.append(Conflict(day, block1, block2, message))
 
         return conflicts
