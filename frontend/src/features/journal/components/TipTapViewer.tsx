@@ -19,7 +19,7 @@ interface HighlightData {
 interface TipTapViewerProps {
   contentTiptap: Record<string, unknown>
   onHighlightCreate?: (highlight: HighlightData) => void
-  onHighlightClick?: (highlightId: string) => void
+  onHighlightClick?: (highlightId: string, position: { x: number; y: number }) => void
   onContentChange?: (contentTiptap: Record<string, unknown>) => void
   // Function to create backend highlight and return it (with its ID)
   onCreateBackendHighlight?: (selection: HighlightSelection, color: string) => Promise<Highlight>
@@ -77,9 +77,9 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
 
     const handleHighlightClick = (event: CustomEvent) => {
       console.log('[TipTapViewer] Highlight clicked:', event.detail);
-      // Call parent's onHighlightClick callback with the highlight ID
-      if (onHighlightClick && event.detail?.id) {
-        onHighlightClick(event.detail.id);
+      // Call parent's onHighlightClick callback with the highlight ID and position
+      if (onHighlightClick && event.detail?.id && event.detail?.position) {
+        onHighlightClick(event.detail.id, event.detail.position);
       }
     };
 

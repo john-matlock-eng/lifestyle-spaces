@@ -223,13 +223,20 @@ export const HighlightMark = Mark.create<{
         const commentCount = parseInt(markElement.getAttribute('data-comment-count') || '0');
         const color = markElement.getAttribute('data-highlight-color');
 
-        // Dispatch custom event for highlight click
+        // Get position from the click event
+        const rect = markElement.getBoundingClientRect();
+
+        // Dispatch custom event for highlight click with position
         const customEvent = new CustomEvent('highlight-clicked', {
           detail: {
             id: highlightId,
             authorName,
             commentCount,
             color,
+            position: {
+              x: rect.left + (rect.width / 2),
+              y: rect.bottom + 8,
+            },
           },
         });
         document.dispatchEvent(customEvent);
