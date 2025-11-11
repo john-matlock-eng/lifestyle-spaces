@@ -26,7 +26,9 @@ export const getEditorExtensions = (placeholder?: string, enableHighlights = tru
   Placeholder.configure({
     placeholder: placeholder || 'Start writing...'
   }),
-  Link.configure({
+  Link.extend({
+    inclusive: false,
+  }).configure({
     openOnClick: false,
     HTMLAttributes: {
       class: 'journal-link'

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { getEditorExtensions } from './extensions'
 import { HighlightToolbar } from './HighlightToolbar'
+import type { Highlight, HighlightSelection } from '../types/highlight.types'
 import '../styles/journal.css'
 
 interface HighlightData {
@@ -20,6 +21,8 @@ interface TipTapViewerProps {
   onHighlightCreate?: (highlight: HighlightData) => void
   onHighlightClick?: (highlightId: string) => void
   onContentChange?: (contentTiptap: Record<string, unknown>) => void
+  // Function to create backend highlight and return it (with its ID)
+  onCreateBackendHighlight?: (selection: HighlightSelection, color: string) => Promise<Highlight>
   minHeight?: string
 }
 
@@ -31,6 +34,7 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
   onHighlightCreate,
   onHighlightClick,
   onContentChange,
+  onCreateBackendHighlight,
   minHeight = '300px',
 }) => {
   const editor = useEditor({
@@ -95,6 +99,7 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
       <HighlightToolbar
         editor={editor}
         onHighlightCreate={handleHighlightCreate}
+        onCreateBackendHighlight={onCreateBackendHighlight}
         disabled={false}
       />
 

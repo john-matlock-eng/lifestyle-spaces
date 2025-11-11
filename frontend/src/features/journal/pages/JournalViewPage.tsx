@@ -378,18 +378,34 @@ ${content}
           <TipTapViewer
             contentTiptap={journal.contentTiptap}
             onHighlightCreate={async (highlight) => {
-              // When a new highlight is created in TipTap, the document is already updated
-              console.log('[JournalView] New TipTap highlight created:', highlight)
+              // Backend highlight has already been created via onCreateBackendHighlight
+              // TipTap mark now uses the backend ID
+              console.log('[JournalView] TipTap highlight applied with backend ID:', highlight.id)
             }}
-            onHighlightClick={(highlightId) => {
-              // Find the full highlight object from the highlights array
-              const highlight = highlights.find(h => h.id === highlightId)
-              if (highlight) {
-                console.log('[JournalView] TipTap highlight clicked, opening comments:', highlight)
-                handleHighlightClick(highlight)
-              } else {
-                console.warn('[JournalView] Highlight not found in highlights array:', highlightId)
+            onCreateBackendHighlight={async (selection, color) => {
+              // Create backend highlight and return it (with its ID)
+              console.log('[JournalView] Creating backend highlight for TipTap...')
+              const highlight = await createHighlight(selection, color)
+
+              if (!highlight) {
+                throw new Error('Failed to create backend highlight')
               }
+
+              console.log('[JournalView] Backend highlight created:', highlight.id)
+              return highlight
+            }}
+            onHighlightClick={async (highlightId) => {
+              // Find the highlight in the backend system
+              const highlight = highlights.find(h => h.id === highlightId)
+
+              if (!highlight) {
+                console.error('[JournalView] Highlight not found in backend system:', highlightId)
+                alert('Highlight not found. Please refresh the page and try again.')
+                return
+              }
+
+              console.log('[JournalView] Opening comments for highlight:', highlight)
+              handleHighlightClick(highlight)
             }}
             onContentChange={async (updatedContent) => {
               // When highlights change, save the updated contentTiptap to backend
