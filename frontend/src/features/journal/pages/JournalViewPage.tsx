@@ -44,6 +44,7 @@ export const JournalViewPage: React.FC = () => {
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
   const [clickedTipTapHighlight, setClickedTipTapHighlight] = useState<Highlight | null>(null)
   const [highlightMenuPosition, setHighlightMenuPosition] = useState<{ x: number; y: number } | null>(null)
+  const [highlightIdToDelete, setHighlightIdToDelete] = useState<string | null>(null)
 
   // Highlights and comments real-time feature
   const {
@@ -432,6 +433,7 @@ ${content}
               setClickedTipTapHighlight(highlight)
               setHighlightMenuPosition(position)
             }}
+            highlightIdToDelete={highlightIdToDelete}
             onContentChange={async (updatedContent) => {
               // When highlights change, save the updated contentTiptap to backend
               if (!spaceId || !journalId) return
@@ -666,9 +668,20 @@ ${content}
           <button
             onClick={async () => {
               if (window.confirm('Delete this highlight? This cannot be undone.')) {
-                await deleteHighlight(clickedTipTapHighlight.id)
+                const highlightId = clickedTipTapHighlight.id
+
+                // Delete from backend
+                await deleteHighlight(highlightId)
+
+                // Close menu
                 setClickedTipTapHighlight(null)
                 setHighlightMenuPosition(null)
+
+                // Trigger mark removal in TipTap editor
+                setHighlightIdToDelete(highlightId)
+
+                // Clear the delete trigger after a moment
+                setTimeout(() => setHighlightIdToDelete(null), 100)
               }
             }}
             style={{

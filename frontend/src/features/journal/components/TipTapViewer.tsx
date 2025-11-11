@@ -23,6 +23,8 @@ interface TipTapViewerProps {
   onContentChange?: (contentTiptap: Record<string, unknown>) => void
   // Function to create backend highlight and return it (with its ID)
   onCreateBackendHighlight?: (selection: HighlightSelection, color: string) => Promise<Highlight>
+  // Highlight ID to delete (when this changes, the highlight is removed from the document)
+  highlightIdToDelete?: string | null
   minHeight?: string
 }
 
@@ -35,6 +37,7 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
   onHighlightClick,
   onContentChange,
   onCreateBackendHighlight,
+  highlightIdToDelete,
   minHeight = '300px',
 }) => {
   const editor = useEditor({
@@ -70,6 +73,22 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
       onContentChange(updatedContent)
     }
   }
+
+  // Watch for highlight deletion requests
+  useEffect(() => {
+    if (!editor || !highlightIdToDelete) return
+
+    console.log('[TipTapViewer] Removing highlight mark:', highlightIdToDelete)
+
+    // Remove the highlight mark from the editor
+    editor.commands.unsetHighlight(highlightIdToDelete)
+
+    // Notify parent of content change (with highlight removed)
+    if (onContentChange) {
+      const updatedContent = editor.getJSON()
+      onContentChange(updatedContent)
+    }
+  }, [highlightIdToDelete, editor, onContentChange])
 
   // Handle highlight click events
   useEffect(() => {
