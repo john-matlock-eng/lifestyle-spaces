@@ -271,6 +271,7 @@ class JournalService:
             'user_id': journal['user_id'],
             'title': journal['title'],
             'content': journal['content'],
+            'content_tiptap': journal.get('content_tiptap'),  # TipTap JSON format
             'template_id': journal.get('template_id'),
             # REMOVED: template_data - data is embedded in content
             'tags': journal.get('tags', []),
@@ -395,6 +396,7 @@ class JournalService:
             'user_id': updated_journal['user_id'],
             'title': updated_journal['title'],
             'content': updated_journal['content'],
+            'content_tiptap': updated_journal.get('content_tiptap'),  # TipTap JSON format
             'template_id': updated_journal.get('template_id'),
             # REMOVED: template_data - data is embedded in content
             'tags': updated_journal.get('tags', []),
@@ -544,6 +546,7 @@ class JournalService:
                 'user_id': journal['user_id'],
                 'title': journal['title'],
                 'content': journal['content'],
+                'content_tiptap': journal.get('content_tiptap'),  # TipTap JSON format
                 'template_id': journal.get('template_id'),
                 # REMOVED: template_data - data is embedded in content
                 'tags': journal.get('tags', []),
@@ -611,6 +614,7 @@ class JournalService:
                 'user_id': journal['user_id'],
                 'title': journal['title'],
                 'content': journal['content'],
+                'content_tiptap': journal.get('content_tiptap'),  # TipTap JSON format
                 'template_id': journal.get('template_id'),
                 # REMOVED: template_data - data is embedded in content
                 'tags': journal.get('tags', []),

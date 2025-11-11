@@ -237,3 +237,42 @@ class ScheduleListResponse(BaseModel):
         populate_by_name=True,
         by_alias=True
     )
+
+
+class ScheduleImportRequest(BaseModel):
+    """Request model for schedule import."""
+    json_data: str = Field(..., alias="json")
+    space_id: Optional[str] = Field(None, alias="spaceId")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ImportValidationError(BaseModel):
+    """Validation error from import."""
+    field: str
+    message: str
+    line: Optional[int] = None
+
+
+class ImportConflict(BaseModel):
+    """Time block conflict."""
+    day: str
+    block1: Dict[str, Any]
+    block2: Dict[str, Any]
+    message: str
+
+
+class ScheduleImportValidationResponse(BaseModel):
+    """Response model for import validation."""
+    valid: bool
+    schedule: Optional[Dict[str, Any]] = None
+    errors: List[ImportValidationError] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    conflicts: List[ImportConflict] = Field(default_factory=list)
+
+
+class ScheduleImportResponse(BaseModel):
+    """Response model for successful import."""
+    schedule: ScheduleResponse
+    warnings: List[str] = Field(default_factory=list)
+    conflicts: List[ImportConflict] = Field(default_factory=list)
