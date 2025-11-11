@@ -114,7 +114,14 @@ export const HighlightToolbar: React.FC<HighlightToolbarProps> = ({
       const selectedText = editor.state.doc.textBetween(from, to, ' ');
 
       let highlightId: string;
-      let highlightData: any;
+      let highlightData: {
+        id: string;
+        color: string;
+        authorId: string;
+        authorName: string;
+        createdAt: string;
+        commentCount: number;
+      };
 
       // If we have a backend highlight creator, use it to get a backend ID
       if (onCreateBackendHighlight) {
