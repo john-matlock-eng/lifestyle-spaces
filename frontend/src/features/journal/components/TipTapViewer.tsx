@@ -18,6 +18,7 @@ interface HighlightData {
 interface TipTapViewerProps {
   contentTiptap: Record<string, unknown>
   onHighlightCreate?: (highlight: HighlightData) => void
+  onHighlightClick?: (highlightId: string) => void
   onContentChange?: (contentTiptap: Record<string, unknown>) => void
   minHeight?: string
 }
@@ -28,6 +29,7 @@ interface TipTapViewerProps {
 export const TipTapViewer: React.FC<TipTapViewerProps> = ({
   contentTiptap,
   onHighlightCreate,
+  onHighlightClick,
   onContentChange,
   minHeight = '300px',
 }) => {
@@ -71,15 +73,17 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
 
     const handleHighlightClick = (event: CustomEvent) => {
       console.log('[TipTapViewer] Highlight clicked:', event.detail);
-      // Parent component can listen to this event
-      // and show comment thread, etc.
+      // Call parent's onHighlightClick callback with the highlight ID
+      if (onHighlightClick && event.detail?.id) {
+        onHighlightClick(event.detail.id);
+      }
     };
 
     document.addEventListener('highlight-clicked', handleHighlightClick as EventListener);
     return () => {
       document.removeEventListener('highlight-clicked', handleHighlightClick as EventListener);
     };
-  }, [editor]);
+  }, [editor, onHighlightClick]);
 
   if (!editor) {
     return null
