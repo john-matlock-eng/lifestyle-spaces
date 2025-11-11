@@ -4,6 +4,8 @@ import { AuthContext } from '../../../stores/authStore';
 import type { HighlightColor } from '../types/highlight.types';
 import { HIGHLIGHT_COLORS } from '../types/highlight.types';
 
+import type { Highlight, HighlightSelection } from '../types/highlight.types';
+
 interface HighlightData {
   id: string;
   color: string;
@@ -18,6 +20,8 @@ interface HighlightData {
 interface HighlightToolbarProps {
   editor: Editor | null;
   onHighlightCreate?: (highlight: HighlightData) => void;
+  // Function to create backend highlight and return it (with its ID)
+  onCreateBackendHighlight?: (selection: HighlightSelection, color: string) => Promise<Highlight>;
   disabled?: boolean;
 }
 
@@ -26,6 +30,7 @@ const TOOLBAR_OFFSET_Y = -60; // Position above selection
 export const HighlightToolbar: React.FC<HighlightToolbarProps> = ({
   editor,
   onHighlightCreate,
+  onCreateBackendHighlight,
   disabled = false,
 }) => {
   // Use auth context if available (gracefully handle tests without AuthProvider)
@@ -99,7 +104,7 @@ export const HighlightToolbar: React.FC<HighlightToolbarProps> = ({
 
   // Handle color selection
   const handleColorSelect = useCallback(
-    (color: HighlightColor) => {
+    async (color: HighlightColor) => {
       if (!editor) return;
 
       const { selection } = editor.state;
@@ -108,19 +113,71 @@ export const HighlightToolbar: React.FC<HighlightToolbarProps> = ({
       // Get selected text
       const selectedText = editor.state.doc.textBetween(from, to, ' ');
 
-      // Generate unique ID
-      const highlightId = `highlight-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-      const highlightData = {
-        id: highlightId,
-        color,
-        authorId: user?.userId || 'test-user',
-        authorName: user?.displayName || user?.username || user?.email || 'Test User',
-        createdAt: new Date().toISOString(),
-        commentCount: 0,
+      let highlightId: string;
+      let highlightData: {
+        id: string;
+        color: string;
+        authorId: string;
+        authorName: string;
+        createdAt: string;
+        commentCount: number;
       };
 
-      // Apply highlight mark
+      // If we have a backend highlight creator, use it to get a backend ID
+      if (onCreateBackendHighlight) {
+        try {
+          // Create backend highlight first
+          console.log('[HighlightToolbar] Creating backend highlight first...');
+          const backendHighlight = await onCreateBackendHighlight(
+            {
+              text: selectedText,
+              range: {
+                startOffset: from,
+                endOffset: to,
+              },
+            } as HighlightSelection,
+            color
+          );
+
+          // Use the backend-generated ID
+          highlightId = backendHighlight.id;
+          console.log('[HighlightToolbar] Backend highlight created with ID:', highlightId);
+
+          highlightData = {
+            id: highlightId,
+            color,
+            authorId: backendHighlight.createdBy,
+            authorName: backendHighlight.createdByName,
+            createdAt: backendHighlight.createdAt,
+            commentCount: 0,
+          };
+        } catch (error) {
+          console.error('[HighlightToolbar] Failed to create backend highlight:', error);
+          // Fallback to local ID
+          highlightId = `highlight-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          highlightData = {
+            id: highlightId,
+            color,
+            authorId: user?.userId || 'test-user',
+            authorName: user?.displayName || user?.username || user?.email || 'Test User',
+            createdAt: new Date().toISOString(),
+            commentCount: 0,
+          };
+        }
+      } else {
+        // No backend integration - generate local ID
+        highlightId = `highlight-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        highlightData = {
+          id: highlightId,
+          color,
+          authorId: user?.userId || 'test-user',
+          authorName: user?.displayName || user?.username || user?.email || 'Test User',
+          createdAt: new Date().toISOString(),
+          commentCount: 0,
+        };
+      }
+
+      // Apply highlight mark with the ID (either from backend or local)
       editor
         .chain()
         .focus()
@@ -147,7 +204,7 @@ export const HighlightToolbar: React.FC<HighlightToolbarProps> = ({
         editor.commands.focus();
       }, 100);
     },
-    [editor, onHighlightCreate, user]
+    [editor, onHighlightCreate, onCreateBackendHighlight, user]
   );
 
   // Handle click outside to close

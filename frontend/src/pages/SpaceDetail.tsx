@@ -31,7 +31,7 @@ export const SpaceDetail: React.FC = () => {
     fetchSpaceInvitations
   } = useInvitations();
 
-  const [activeTab, setActiveTab] = useState<'content' | 'journals' | 'members' | 'settings'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'journals' | 'schedule' | 'members' | 'settings'>('content');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
@@ -86,12 +86,17 @@ export const SpaceDetail: React.FC = () => {
     apiIsOwner: currentSpace?.isOwner
   });
 
-  const handleTabClick = (tab: 'content' | 'journals' | 'members' | 'settings') => {
+  const handleTabClick = (tab: 'content' | 'journals' | 'schedule' | 'members' | 'settings') => {
+    // Navigate to schedule page instead of showing inline
+    if (tab === 'schedule' && spaceId) {
+      navigate(`/spaces/${spaceId}/schedule`);
+      return;
+    }
     setActiveTab(tab);
   };
 
-  const handleTabKeyDown = (e: React.KeyboardEvent, tab: 'content' | 'journals' | 'members' | 'settings') => {
-    const tabs = ['content', 'journals', 'members', 'settings'];
+  const handleTabKeyDown = (e: React.KeyboardEvent, tab: 'content' | 'journals' | 'schedule' | 'members' | 'settings') => {
+    const tabs = ['content', 'journals', 'schedule', 'members', 'settings'];
     const currentIndex = tabs.indexOf(activeTab);
     
     switch (e.key) {
@@ -414,6 +419,18 @@ export const SpaceDetail: React.FC = () => {
             className={`tab ${activeTab === 'journals' ? 'tab--active' : ''}`}
           >
             Journals
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'schedule'}
+            aria-controls="schedule-panel"
+            id="schedule-tab"
+            onClick={() => handleTabClick('schedule')}
+            onKeyDown={(e) => handleTabKeyDown(e, 'schedule')}
+            className={`tab ${activeTab === 'schedule' ? 'tab--active' : ''}`}
+          >
+            Schedule
           </button>
           <button
             type="button"

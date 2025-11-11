@@ -18,6 +18,8 @@ import { JournalListPage } from './features/journal/pages/JournalListPage';
 import { JournalCreatePage } from './features/journal/pages/JournalCreatePage';
 import { JournalViewPage } from './features/journal/pages/JournalViewPage';
 import { JournalEditPage } from './features/journal/pages/JournalEditPage';
+import { SchedulePage } from './features/schedule/pages/SchedulePage';
+import { PublicScheduleView } from './features/schedule/components/PublicScheduleView';
 import './App.css';
 import './styles/layout.css';
 
@@ -35,6 +37,7 @@ function App() {
                 <Route path="/" element={<Landing />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
+                <Route path="/shared/:shareToken" element={<PublicScheduleView />} />
 
                 {/* Protected routes with layout */}
                 <Route element={<AuthenticatedLayout />}>
@@ -49,6 +52,9 @@ function App() {
                   <Route path="/spaces/:spaceId/journals/new" element={<JournalCreatePage />} />
                   <Route path="/spaces/:spaceId/journals/:journalId" element={<JournalViewPage />} />
                   <Route path="/spaces/:spaceId/journals/:journalId/edit" element={<JournalEditPage />} />
+
+                  {/* Schedule routes */}
+                  <Route path="/spaces/:spaceId/schedule" element={<SchedulePage />} />
                 </Route>
 
                 {/* Catch all - redirect to landing */}

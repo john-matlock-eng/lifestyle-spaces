@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { getEditorExtensions } from './extensions'
 import { HighlightToolbar } from './HighlightToolbar'
+import type { Highlight, HighlightSelection } from '../types/highlight.types'
 import '../styles/journal.css'
 
 interface HighlightData {
@@ -18,7 +19,12 @@ interface HighlightData {
 interface TipTapViewerProps {
   contentTiptap: Record<string, unknown>
   onHighlightCreate?: (highlight: HighlightData) => void
+  onHighlightClick?: (highlightId: string, position: { x: number; y: number }) => void
   onContentChange?: (contentTiptap: Record<string, unknown>) => void
+  // Function to create backend highlight and return it (with its ID)
+  onCreateBackendHighlight?: (selection: HighlightSelection, color: string) => Promise<Highlight>
+  // Highlight ID to delete (when this changes, the highlight is removed from the document)
+  highlightIdToDelete?: string | null
   minHeight?: string
 }
 
@@ -28,7 +34,10 @@ interface TipTapViewerProps {
 export const TipTapViewer: React.FC<TipTapViewerProps> = ({
   contentTiptap,
   onHighlightCreate,
+  onHighlightClick,
   onContentChange,
+  onCreateBackendHighlight,
+  highlightIdToDelete,
   minHeight = '300px',
 }) => {
   const editor = useEditor({
@@ -65,21 +74,39 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
     }
   }
 
+  // Watch for highlight deletion requests
+  useEffect(() => {
+    if (!editor || !highlightIdToDelete) return
+
+    console.log('[TipTapViewer] Removing highlight mark:', highlightIdToDelete)
+
+    // Remove the highlight mark from the editor
+    editor.commands.unsetHighlight(highlightIdToDelete)
+
+    // Notify parent of content change (with highlight removed)
+    if (onContentChange) {
+      const updatedContent = editor.getJSON()
+      onContentChange(updatedContent)
+    }
+  }, [highlightIdToDelete, editor, onContentChange])
+
   // Handle highlight click events
   useEffect(() => {
     if (!editor) return;
 
     const handleHighlightClick = (event: CustomEvent) => {
       console.log('[TipTapViewer] Highlight clicked:', event.detail);
-      // Parent component can listen to this event
-      // and show comment thread, etc.
+      // Call parent's onHighlightClick callback with the highlight ID and position
+      if (onHighlightClick && event.detail?.id && event.detail?.position) {
+        onHighlightClick(event.detail.id, event.detail.position);
+      }
     };
 
     document.addEventListener('highlight-clicked', handleHighlightClick as EventListener);
     return () => {
       document.removeEventListener('highlight-clicked', handleHighlightClick as EventListener);
     };
-  }, [editor]);
+  }, [editor, onHighlightClick]);
 
   if (!editor) {
     return null
@@ -91,6 +118,7 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
       <HighlightToolbar
         editor={editor}
         onHighlightCreate={handleHighlightCreate}
+        onCreateBackendHighlight={onCreateBackendHighlight}
         disabled={false}
       />
 

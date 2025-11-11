@@ -16,6 +16,11 @@ from app.main import app
 from app.core.dependencies import get_current_user
 from app.models.invitation import InvitationCreate
 
+# Set AWS credentials for moto at module level
+os.environ['AWS_ACCESS_KEY_ID'] = 'testing'
+os.environ['AWS_SECRET_ACCESS_KEY'] = 'testing'
+os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+
 
 @pytest.fixture
 def setup_dynamodb():

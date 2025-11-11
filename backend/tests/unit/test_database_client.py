@@ -4,11 +4,17 @@ Unit tests for DynamoDB client.
 import pytest
 from moto import mock_dynamodb
 import boto3
+import os
+
+# Set AWS credentials for moto at module level
+os.environ['AWS_ACCESS_KEY_ID'] = 'testing'
+os.environ['AWS_SECRET_ACCESS_KEY'] = 'testing'
+os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
 
 
 class TestDynamoDBClient:
     """Test cases for DynamoDB client operations."""
-    
+
     @mock_dynamodb
     def test_db_client_operations(self):
         """Test DynamoDB client CRUD operations."""

@@ -42,6 +42,9 @@ export const JournalViewPage: React.FC = () => {
   const [showAIDock, setShowAIDock] = useState(false)
   const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
+  const [clickedTipTapHighlight, setClickedTipTapHighlight] = useState<Highlight | null>(null)
+  const [highlightMenuPosition, setHighlightMenuPosition] = useState<{ x: number; y: number } | null>(null)
+  const [highlightIdToDelete, setHighlightIdToDelete] = useState<string | null>(null)
 
   // Highlights and comments real-time feature
   const {
@@ -78,6 +81,27 @@ export const JournalViewPage: React.FC = () => {
       loadJournal(spaceId, journalId)
     }
   }, [spaceId, journalId, loadJournal])
+
+  // Handle clicking outside the highlight menu to close it
+  useEffect(() => {
+    if (!clickedTipTapHighlight) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest('.highlight-menu')) {
+        setClickedTipTapHighlight(null)
+        setHighlightMenuPosition(null)
+      }
+    }
+
+    setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside)
+    }, 100)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [clickedTipTapHighlight])
 
   useEffect(() => {
     // Load template and parse content if journal has one
@@ -378,9 +402,38 @@ ${content}
           <TipTapViewer
             contentTiptap={journal.contentTiptap}
             onHighlightCreate={async (highlight) => {
-              // When a new highlight is created in TipTap, the document is already updated
-              console.log('[JournalView] New TipTap highlight created:', highlight)
+              // Backend highlight has already been created via onCreateBackendHighlight
+              // TipTap mark now uses the backend ID
+              console.log('[JournalView] TipTap highlight applied with backend ID:', highlight.id)
             }}
+            onCreateBackendHighlight={async (selection, color) => {
+              // Create backend highlight and return it (with its ID)
+              console.log('[JournalView] Creating backend highlight for TipTap...')
+              const highlight = await createHighlight(selection, color)
+
+              if (!highlight) {
+                throw new Error('Failed to create backend highlight')
+              }
+
+              console.log('[JournalView] Backend highlight created:', highlight.id)
+              return highlight
+            }}
+            onHighlightClick={async (highlightId, position) => {
+              // Find the highlight in the backend system
+              const highlight = highlights.find(h => h.id === highlightId)
+
+              if (!highlight) {
+                console.error('[JournalView] Highlight not found in backend system:', highlightId)
+                alert('Highlight not found. Please refresh the page and try again.')
+                return
+              }
+
+              // Show the highlight menu instead of directly opening comments
+              console.log('[JournalView] Showing highlight menu at position:', position)
+              setClickedTipTapHighlight(highlight)
+              setHighlightMenuPosition(position)
+            }}
+            highlightIdToDelete={highlightIdToDelete}
             onContentChange={async (updatedContent) => {
               // When highlights change, save the updated contentTiptap to backend
               if (!spaceId || !journalId) return
@@ -549,6 +602,114 @@ ${content}
           emotions={journal.emotions?.map(id => getEmotionById(id)?.label).filter((label): label is string => !!label)}
           onClose={() => setShowAIDock(false)}
         />
+      )}
+
+      {/* TipTap Highlight Menu */}
+      {clickedTipTapHighlight && highlightMenuPosition && (
+        <div
+          className="highlight-menu"
+          style={{
+            position: 'fixed',
+            left: `${highlightMenuPosition.x}px`,
+            top: `${highlightMenuPosition.y}px`,
+            transform: 'translateX(-50%)',
+            zIndex: 99999,
+            background: 'white',
+            borderRadius: '10px',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+            border: '1px solid rgba(0, 0, 0, 0.1)',
+            overflow: 'hidden',
+            minWidth: '200px',
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+        >
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+              to { opacity: 1; transform: translateX(-50%) translateY(0); }
+            }
+          `}</style>
+
+          {/* View Comments Button */}
+          <button
+            onClick={() => {
+              handleHighlightClick(clickedTipTapHighlight)
+              setClickedTipTapHighlight(null)
+              setHighlightMenuPosition(null)
+            }}
+            style={{
+              width: '100%',
+              padding: '14px 18px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: 'var(--theme-primary-700)',
+              background: 'none',
+              border: 'none',
+              borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              transition: 'background-color 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(20, 184, 166, 0.08)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>💬</span>
+            <span>View Comments ({clickedTipTapHighlight.commentCount || 0})</span>
+          </button>
+
+          {/* Delete Highlight Button */}
+          <button
+            onClick={async () => {
+              if (window.confirm('Delete this highlight? This cannot be undone.')) {
+                const highlightId = clickedTipTapHighlight.id
+
+                // Delete from backend
+                await deleteHighlight(highlightId)
+
+                // Close menu
+                setClickedTipTapHighlight(null)
+                setHighlightMenuPosition(null)
+
+                // Trigger mark removal in TipTap editor
+                setHighlightIdToDelete(highlightId)
+
+                // Clear the delete trigger after a moment
+                setTimeout(() => setHighlightIdToDelete(null), 100)
+              }
+            }}
+            style={{
+              width: '100%',
+              padding: '14px 18px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: 'var(--theme-error-700)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              transition: 'background-color 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>🗑️</span>
+            <span>Delete Highlight</span>
+          </button>
+        </div>
       )}
 
       {/* Comment Thread - Renders as sliding panel with its own backdrop */}
