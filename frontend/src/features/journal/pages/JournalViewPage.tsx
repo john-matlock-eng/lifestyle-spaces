@@ -373,8 +373,10 @@ ${content}
       </div>
 
       <div className="journal-view-content">
-        {journal.contentTiptap ? (
-          // Render TipTap journal with native highlighting (zero offset drift)
+        {journal.contentTiptap && typeof journal.contentTiptap === 'object' && 'type' in journal.contentTiptap && journal.contentTiptap.type === 'doc' ? (
+          // Render single-document TipTap journal with native highlighting (zero offset drift)
+          // Note: Template-based journals use multi-section format (e.g., { raw_thoughts: {...}, action_plan: {...} })
+          // and fall through to template rendering below
           <TipTapViewer
             contentTiptap={journal.contentTiptap}
             onHighlightCreate={async (highlight) => {
