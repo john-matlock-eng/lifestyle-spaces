@@ -375,8 +375,6 @@ ${content}
       <div className="journal-view-content">
         {journal.contentTiptap && typeof journal.contentTiptap === 'object' && 'type' in journal.contentTiptap && journal.contentTiptap.type === 'doc' ? (
           // Render single-document TipTap journal with native highlighting (zero offset drift)
-          // Note: Template-based journals use multi-section format (e.g., { raw_thoughts: {...}, action_plan: {...} })
-          // and fall through to template rendering below
           <TipTapViewer
             contentTiptap={journal.contentTiptap}
             onHighlightCreate={async (highlight) => {
@@ -405,11 +403,46 @@ ${content}
         ) : template && displaySections.length > 0 ? (
           // Render template sections with highlighting
           <div className="template-content">
-            {displaySections.map((section) => (
-              <div key={section.id} className="template-section template-section-compact">
-                <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
-                <div className="template-section-content">
-                  {section.type === 'q_and_a' ? (
+            {displaySections.map((section) => {
+              // Check if this section has TipTap content in multi-section format
+              const sectionTiptapContent = journal.contentTiptap &&
+                typeof journal.contentTiptap === 'object' &&
+                section.id in journal.contentTiptap
+                ? (journal.contentTiptap as Record<string, unknown>)[section.id]
+                : null
+
+              const hasTiptapContent = sectionTiptapContent &&
+                typeof sectionTiptapContent === 'object' &&
+                'type' in sectionTiptapContent &&
+                sectionTiptapContent.type === 'doc'
+
+              return (
+                <div key={section.id} className="template-section template-section-compact">
+                  <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
+                  <div className="template-section-content">
+                    {hasTiptapContent && section.type === 'paragraph' ? (
+                      // Render paragraph sections with TipTap content using TipTapViewer (preserves highlight positions)
+                      <TipTapViewer
+                        contentTiptap={sectionTiptapContent as Record<string, unknown>}
+                        onContentChange={async (updatedContent) => {
+                          if (!spaceId || !journalId || !journal.contentTiptap) return
+
+                          try {
+                            // Update the specific section in the multi-section TipTap content
+                            const updatedMultiSection = {
+                              ...(journal.contentTiptap as Record<string, unknown>),
+                              [section.id]: updatedContent
+                            }
+                            await updateJournal(spaceId, journalId, {
+                              contentTiptap: updatedMultiSection
+                            })
+                            await loadJournal(spaceId, journalId)
+                          } catch (error) {
+                            console.error('[JournalView] Failed to save section TipTap content:', error)
+                          }
+                        }}
+                      />
+                    ) : section.type === 'q_and_a' ? (
                     // Render Q&A section with highlighting support
                     <QASectionDisplay
                       value={section.content}
@@ -478,10 +511,11 @@ ${content}
                       onHighlightUpdate={updateHighlight}
                       onHighlightDelete={deleteHighlight}
                     />
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           // Render regular content with highlighting
