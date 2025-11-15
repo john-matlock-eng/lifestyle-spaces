@@ -9,7 +9,6 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import { getEditorExtensions } from '../extensions'
 import { QAPairNode } from '../../extensions/QAPairNode'
 import { HighlightToolbar } from '../HighlightToolbar'
-import '../../styles/tiptap-viewer.css'
 import '../../styles/journal.css'
 
 interface HighlightData {
