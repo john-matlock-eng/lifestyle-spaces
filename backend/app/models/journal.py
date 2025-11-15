@@ -21,17 +21,14 @@ class JournalBase(BaseModel):
     """
     Base journal model.
 
-    NOTE: Template data is now embedded in the content field using HTML comments.
-    The content field contains markdown with embedded template metadata via JournalParser.
-
-    TipTap Integration:
-    - content: Markdown format (for backward compatibility)
-    - content_tiptap: TipTap JSON format with embedded highlights (optional)
-      Can be either single document or section mapping
+    TIPTAP-FIRST STORAGE (Migration):
+    - contentTiptap is now the primary source of truth
+    - content is auto-generated from contentTiptap for compatibility
+    - All new journals MUST provide contentTiptap
     """
     title: str = Field(..., min_length=1, max_length=200)
-    content: str = Field(...)  # Contains markdown with embedded template metadata
-    content_tiptap: Optional[Dict[str, Any]] = Field(None, alias="contentTiptap")  # TipTap JSON format
+    content: Optional[str] = Field(default="")  # Auto-generated from contentTiptap
+    content_tiptap: Optional[Dict[str, Any]] = Field(None, alias="contentTiptap")  # Primary storage
     tags: List[str] = Field(default_factory=list)
     emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
     is_pinned: bool = Field(default=False, alias="isPinned")
