@@ -909,3 +909,106 @@ class TestJournalService:
         result = journal_service.update_journal_entry('space-123', 'journal-123', 'user-123', update_data)
 
         assert result['is_private'] is True
+
+    @patch('app.services.journal.JournalService._is_space_member')
+    @patch('app.services.journal.JournalService._get_author_info')
+    def test_non_author_can_update_content_tiptap(self, mock_author, mock_is_member, journal_service, mock_table):
+        """Test that non-authors who are space members can update contentTiptap (for highlights)."""
+        # Mock existing journal owned by user-123
+        mock_table.get_item.return_value = {
+            'Item': {
+                'PK': 'SPACE#space-123',
+                'SK': 'JOURNAL#journal-123',
+                'journal_id': 'journal-123',
+                'space_id': 'space-123',
+                'user_id': 'user-123',  # Original author
+                'title': 'Test Journal',
+                'content': 'Content',
+                'created_at': '2024-01-01T00:00:00Z',
+                'updated_at': '2024-01-01T00:00:00Z',
+                'word_count': 1
+            }
+        }
+
+        # Mock that user-456 is a space member (but not the author)
+        mock_is_member.return_value = True
+
+        mock_table.update_item.return_value = {
+            'Attributes': {
+                'journal_id': 'journal-123',
+                'space_id': 'space-123',
+                'user_id': 'user-123',
+                'title': 'Test Journal',
+                'content': 'Content',
+                'content_tiptap': {'type': 'doc', 'content': [{'type': 'paragraph', 'content': [{'type': 'text', 'text': 'highlighted', 'marks': [{'type': 'highlight'}]}]}]},
+                'created_at': '2024-01-01T00:00:00Z',
+                'updated_at': '2024-01-02T00:00:00Z',
+                'word_count': 1,
+                'is_pinned': False,
+                'is_private': False
+            }
+        }
+
+        mock_author.return_value = {'user_id': 'user-123', 'username': 'testuser', 'display_name': 'Test User'}
+
+        # User-456 (non-author, but space member) updates contentTiptap
+        update_data = JournalUpdate(content_tiptap={'type': 'doc', 'content': [{'type': 'paragraph', 'content': [{'type': 'text', 'text': 'highlighted', 'marks': [{'type': 'highlight'}]}]}]})
+        result = journal_service.update_journal_entry('space-123', 'journal-123', 'user-456', update_data)
+
+        # Update should succeed
+        assert result['content_tiptap'] is not None
+        mock_is_member.assert_called_once_with('space-123', 'user-456')
+
+    @patch('app.services.journal.JournalService._is_space_member')
+    def test_non_author_cannot_update_other_fields(self, mock_is_member, journal_service, mock_table):
+        """Test that non-authors cannot update fields other than contentTiptap."""
+        # Mock existing journal owned by user-123
+        mock_table.get_item.return_value = {
+            'Item': {
+                'PK': 'SPACE#space-123',
+                'SK': 'JOURNAL#journal-123',
+                'journal_id': 'journal-123',
+                'space_id': 'space-123',
+                'user_id': 'user-123',  # Original author
+                'title': 'Test Journal',
+                'content': 'Content',
+                'created_at': '2024-01-01T00:00:00Z',
+                'updated_at': '2024-01-01T00:00:00Z',
+                'word_count': 1
+            }
+        }
+
+        # Mock that user-456 is a space member
+        mock_is_member.return_value = True
+
+        # User-456 tries to update title (should fail)
+        update_data = JournalUpdate(title='New Title')
+        with pytest.raises(UnauthorizedError, match="Only the author can update journal content"):
+            journal_service.update_journal_entry('space-123', 'journal-123', 'user-456', update_data)
+
+    @patch('app.services.journal.JournalService._is_space_member')
+    def test_non_member_cannot_update_content_tiptap(self, mock_is_member, journal_service, mock_table):
+        """Test that non-members cannot update contentTiptap."""
+        # Mock existing journal owned by user-123
+        mock_table.get_item.return_value = {
+            'Item': {
+                'PK': 'SPACE#space-123',
+                'SK': 'JOURNAL#journal-123',
+                'journal_id': 'journal-123',
+                'space_id': 'space-123',
+                'user_id': 'user-123',
+                'title': 'Test Journal',
+                'content': 'Content',
+                'created_at': '2024-01-01T00:00:00Z',
+                'updated_at': '2024-01-01T00:00:00Z',
+                'word_count': 1
+            }
+        }
+
+        # Mock that user-456 is NOT a space member
+        mock_is_member.return_value = False
+
+        # User-456 tries to update contentTiptap (should fail)
+        update_data = JournalUpdate(content_tiptap={'type': 'doc', 'content': []})
+        with pytest.raises(UnauthorizedError, match="You must be a space member"):
+            journal_service.update_journal_entry('space-123', 'journal-123', 'user-456', update_data)

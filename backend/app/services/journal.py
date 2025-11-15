@@ -295,6 +295,11 @@ class JournalService:
         """
         Update a journal entry.
 
+        Permission model:
+        - Authors can update all fields
+        - Space members can update contentTiptap only (for collaborative highlighting/comments)
+        - Non-members cannot update
+
         Args:
             space_id: Space ID where the journal exists
             journal_id: Journal ID to update
@@ -306,7 +311,7 @@ class JournalService:
 
         Raises:
             JournalNotFoundError: If journal doesn't exist
-            UnauthorizedError: If user is not the author
+            UnauthorizedError: If user lacks permission
         """
         logger.info(f"[UPDATE_JOURNAL] Updating journal={journal_id} in space={space_id} by user={user_id}")
 
@@ -322,10 +327,26 @@ class JournalService:
             raise JournalNotFoundError(f"Journal {journal_id} not found")
 
         journal = response['Item']
+        is_author = journal['user_id'] == user_id
 
-        # Verify user is the author
-        if journal['user_id'] != user_id:
-            raise UnauthorizedError("Only the author can update this journal")
+        # Check permissions
+        if not is_author:
+            # Non-authors can only update contentTiptap (for highlights/comments)
+            # They must be space members
+            if not self._is_space_member(space_id, user_id):
+                raise UnauthorizedError("You must be a space member to update this journal")
+
+            # Check if trying to update fields other than contentTiptap
+            if any([
+                data.title is not None,
+                data.content is not None,
+                data.tags is not None,
+                data.emotions is not None,
+                data.is_pinned is not None,
+                data.is_private is not None,
+                data.template_id is not None
+            ]):
+                raise UnauthorizedError("Only the author can update journal content. Space members can only add highlights.")
 
         # Build update expression
         update_expr = "SET updated_at = :updated_at"
