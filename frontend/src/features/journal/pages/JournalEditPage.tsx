@@ -40,6 +40,7 @@ export const JournalEditPage: React.FC = () => {
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
   const [emotions, setEmotions] = useState<string[]>([])
+  const [isPrivate, setIsPrivate] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [template, setTemplate] = useState<Template | null>(null)
   const [templateData, setTemplateData] = useState<TemplateData>({})
@@ -114,6 +115,7 @@ export const JournalEditPage: React.FC = () => {
       setTitle(journal.title)
       setTags(journal.tags.join(', '))
       setEmotions(journal.emotions || [])
+      setIsPrivate(journal.isPrivate || false)
 
       // Parse content to extract template data if it exists
       // Skip loading for "blank" template (non-templated journals)
@@ -441,6 +443,7 @@ export const JournalEditPage: React.FC = () => {
         contentTiptap: contentTiptapToSave || undefined,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
+        isPrivate,
         templateId: template?.id
         // NO templateData field!
       })
@@ -875,6 +878,18 @@ export const JournalEditPage: React.FC = () => {
             onEmotionsChange={setEmotions}
             disabled={isSubmitting}
           />
+        </div>
+
+        <div className="journal-form-group">
+          <label className="journal-form-checkbox-label">
+            <input
+              type="checkbox"
+              checked={isPrivate}
+              onChange={(e) => setIsPrivate(e.target.checked)}
+              disabled={isSubmitting}
+            />
+            <span>Private journal (only visible to you)</span>
+          </label>
         </div>
 
         {error && <div className="journal-form-error">{error}</div>}

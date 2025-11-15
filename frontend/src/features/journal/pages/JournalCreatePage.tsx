@@ -40,6 +40,7 @@ export const JournalCreatePage: React.FC = () => {
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
   const [emotions, setEmotions] = useState<string[]>([])
+  const [isPrivate, setIsPrivate] = useState(false)
   const [showTemplatePicker, setShowTemplatePicker] = useState(true)
   const [customSections, setCustomSections] = useState<CustomSection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
@@ -300,6 +301,7 @@ export const JournalCreatePage: React.FC = () => {
         contentTiptap: contentTiptapToSave || undefined,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
+        isPrivate,
         templateId: selectedTemplate?.id
         // NO templateData field!
       })
@@ -774,6 +776,18 @@ export const JournalCreatePage: React.FC = () => {
             }}
             disabled={loading}
           />
+        </div>
+
+        <div className="journal-form-group">
+          <label className="journal-form-checkbox-label">
+            <input
+              type="checkbox"
+              checked={isPrivate}
+              onChange={(e) => setIsPrivate(e.target.checked)}
+              disabled={loading}
+            />
+            <span>Private journal (only visible to you)</span>
+          </label>
         </div>
 
         {error && <div className="journal-form-error">{error}</div>}

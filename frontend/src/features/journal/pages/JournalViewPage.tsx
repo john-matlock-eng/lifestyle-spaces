@@ -239,6 +239,7 @@ ${content}
             <h1 className="journal-title-compact">
               {journal.title}
               {journal.isPinned && <span style={{ marginLeft: '8px' }}>📌</span>}
+              {journal.isPrivate && <span style={{ marginLeft: '8px' }} title="Private journal">🔒</span>}
             </h1>
             {template && (
               <div className="journal-template-badge-compact">

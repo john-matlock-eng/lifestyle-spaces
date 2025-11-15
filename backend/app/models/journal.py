@@ -35,6 +35,7 @@ class JournalBase(BaseModel):
     tags: List[str] = Field(default_factory=list)
     emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
     is_pinned: bool = Field(default=False, alias="isPinned")
+    is_private: bool = Field(default=False, alias="isPrivate")  # Privacy setting
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -139,6 +140,7 @@ class JournalUpdate(BaseModel):
     tags: Optional[List[str]] = None
     emotions: Optional[List[str]] = None  # New field for multiple emotions
     is_pinned: Optional[bool] = Field(None, alias="isPinned")
+    is_private: Optional[bool] = Field(None, alias="isPrivate")  # Privacy setting
     template_id: Optional[str] = Field(None, alias="templateId")
     # REMOVED: template_data field - data is embedded in content
 
@@ -197,6 +199,7 @@ class JournalEntry(BaseModel):
     is_encrypted: bool = False
     word_count: int = 0
     is_pinned: bool = False
+    is_private: bool = False  # Privacy setting
 
     def is_multi_section_tiptap(self) -> bool:
         """
@@ -276,6 +279,7 @@ class JournalResponse(BaseModel):
     updated_at: datetime = Field(..., alias="updatedAt")
     word_count: int = Field(..., alias="wordCount")
     is_pinned: bool = Field(False, alias="isPinned")
+    is_private: bool = Field(False, alias="isPrivate")  # Privacy setting
     author: Optional[Dict[str, Any]] = None
 
     @field_serializer('created_at', 'updated_at')
@@ -300,6 +304,7 @@ class JournalResponse(BaseModel):
                 "updatedAt": "2024-01-01T00:00:00Z",
                 "wordCount": 25,
                 "isPinned": False,
+                "isPrivate": False,
                 "author": {
                     "userId": "user-123",
                     "username": "johndoe",

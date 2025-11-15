@@ -170,7 +170,8 @@ class JournalService:
             'updated_at': now,
             'is_encrypted': False,
             'word_count': word_count,
-            'is_pinned': data.is_pinned
+            'is_pinned': data.is_pinned,
+            'is_private': data.is_private
         }
 
         # Add content_tiptap if provided (TipTap JSON format for native highlighting)
@@ -215,7 +216,8 @@ class JournalService:
             'created_at': now,
             'updated_at': now,
             'word_count': word_count,
-            'is_pinned': data.is_pinned
+            'is_pinned': data.is_pinned,
+            'is_private': data.is_private
         }
 
         # Include content_tiptap if provided
@@ -265,7 +267,7 @@ class JournalService:
         # Get author info
         author_info = self._get_author_info(journal['user_id'])
 
-        return {
+        result = {
             'journal_id': journal['journal_id'],
             'space_id': journal['space_id'],
             'user_id': journal['user_id'],
@@ -279,8 +281,15 @@ class JournalService:
             'updated_at': journal['updated_at'],
             'word_count': journal.get('word_count', 0),
             'is_pinned': journal.get('is_pinned', False),
+            'is_private': journal.get('is_private', False),
             'author': author_info
         }
+
+        # Include content_tiptap if present
+        if 'content_tiptap' in journal:
+            result['content_tiptap'] = journal['content_tiptap']
+
+        return result
 
     def update_journal_entry(self, space_id: str, journal_id: str, user_id: str, data: JournalUpdate) -> Dict[str, Any]:
         """
@@ -344,6 +353,10 @@ class JournalService:
             update_expr += ", is_pinned = :is_pinned"
             expr_values[':is_pinned'] = data.is_pinned
 
+        if data.is_private is not None:
+            update_expr += ", is_private = :is_private"
+            expr_values[':is_private'] = data.is_private
+
         if data.template_id is not None:
             update_expr += ", template_id = :template_id"
             expr_values[':template_id'] = data.template_id
@@ -403,6 +416,7 @@ class JournalService:
             'updated_at': updated_journal['updated_at'],
             'word_count': updated_journal.get('word_count', 0),
             'is_pinned': updated_journal.get('is_pinned', False),
+            'is_private': updated_journal.get('is_private', False),
             'author': author_info
         }
 
@@ -518,6 +532,12 @@ class JournalService:
 
         journals = response.get('Items', [])
 
+        # Filter out private journals that don't belong to the current user
+        journals = [
+            j for j in journals
+            if not j.get('is_private', False) or j.get('user_id') == user_id
+        ]
+
         # Apply filters
         if tags:
             journals = [j for j in journals if any(tag in j.get('tags', []) for tag in tags)]
@@ -552,6 +572,7 @@ class JournalService:
                 'updated_at': journal['updated_at'],
                 'word_count': journal.get('word_count', 0),
                 'is_pinned': journal.get('is_pinned', False),
+                'is_private': journal.get('is_private', False),
                 'author': author_info
             })
 
@@ -619,6 +640,7 @@ class JournalService:
                 'updated_at': journal['updated_at'],
                 'word_count': journal.get('word_count', 0),
                 'is_pinned': journal.get('is_pinned', False),
+                'is_private': journal.get('is_private', False),
                 'author': author_info
             })
 

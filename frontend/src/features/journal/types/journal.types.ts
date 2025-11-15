@@ -26,6 +26,7 @@ export interface JournalEntry {
   updatedAt: string
   wordCount: number
   isPinned: boolean
+  isPrivate: boolean  // Privacy setting
   author?: JournalAuthor
 }
 
@@ -51,6 +52,7 @@ export interface CreateJournalRequest {
   tags?: string[]
   emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
+  isPrivate?: boolean  // Privacy setting
   templateId?: string  // For identifying which template was used
 }
 
@@ -65,6 +67,7 @@ export interface UpdateJournalRequest {
   tags?: string[]
   emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
+  isPrivate?: boolean  // Privacy setting
   templateId?: string  // For identifying which template was used
 }
 
