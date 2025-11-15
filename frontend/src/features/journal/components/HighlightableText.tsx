@@ -120,13 +120,44 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
       }
 
       try {
-        const preSelectionRange = document.createRange();
-        preSelectionRange.selectNodeContents(container);
-        preSelectionRange.setEnd(range.startContainer, range.startOffset);
-        const startOffset = preSelectionRange.toString().length;
-        const endOffset = startOffset + selectedText.length;
+        // Create a tree walker to traverse text nodes in the same order as rendering
+        const walker = document.createTreeWalker(
+          container,
+          NodeFilter.SHOW_TEXT,
+          null
+        );
+
+        let currentOffset = 0;
+        let startOffset = -1;
+        let endOffset = -1;
+
+        // Traverse all text nodes to find selection positions
+        let node: Node | null;
+        while ((node = walker.nextNode())) {
+          const textNode = node as Text;
+          const nodeText = textNode.textContent || '';
+
+          // Check if selection starts in this node
+          if (range.startContainer === textNode) {
+            startOffset = currentOffset + range.startOffset;
+          }
+
+          // Check if selection ends in this node
+          if (range.endContainer === textNode) {
+            endOffset = currentOffset + range.endOffset;
+          }
+
+          currentOffset += nodeText.length;
+        }
+
+        if (startOffset === -1 || endOffset === -1) {
+          console.error('[HighlightableText] Could not find selection in container');
+          return;
+        }
 
         console.log('[HighlightableText] Calculated offsets:', { startOffset, endOffset });
+        console.log('[HighlightableText] Total text length:', currentOffset);
+        console.log('[HighlightableText] Selected text:', selectedText);
 
         setSelection({
           text: selectedText,
