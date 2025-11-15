@@ -11,7 +11,7 @@ import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { HighlightableText } from '../components/HighlightableText'
-import { TipTapViewer } from '../components/TipTapViewer'
+import { EnhancedTipTapViewer } from '../components/tiptap/EnhancedTipTapViewer'
 import { CommentThread } from '../components/CommentThread'
 import { PresenceAvatars } from '../components/PresenceAvatars'
 import { ConnectionStatus } from '../components/ConnectionStatus'
@@ -376,7 +376,7 @@ ${content}
       <div className="journal-view-content">
         {journal.contentTiptap && typeof journal.contentTiptap === 'object' && 'type' in journal.contentTiptap && journal.contentTiptap.type === 'doc' ? (
           // Render single-document TipTap journal with native highlighting (zero offset drift)
-          <TipTapViewer
+          <EnhancedTipTapViewer
             contentTiptap={journal.contentTiptap}
             onHighlightCreate={async (highlight) => {
               // When a new highlight is created in TipTap, the document is already updated
@@ -422,8 +422,8 @@ ${content}
                   <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
                   <div className="template-section-content">
                     {hasTiptapContent && section.type === 'paragraph' ? (
-                      // Render paragraph sections with TipTap content using TipTapViewer (preserves highlight positions)
-                      <TipTapViewer
+                      // Render paragraph sections with TipTap content using EnhancedTipTapViewer (preserves highlight positions)
+                      <EnhancedTipTapViewer
                         contentTiptap={sectionTiptapContent as Record<string, unknown>}
                         onContentChange={async (updatedContent) => {
                           if (!spaceId || !journalId || !journal.contentTiptap) return
@@ -443,8 +443,30 @@ ${content}
                           }
                         }}
                       />
+                    ) : hasTiptapContent && section.type === 'q_and_a' ? (
+                      // Render Q&A sections with TipTap content using EnhancedTipTapViewer (with qaPair nodes)
+                      <EnhancedTipTapViewer
+                        contentTiptap={sectionTiptapContent as Record<string, unknown>}
+                        onContentChange={async (updatedContent) => {
+                          if (!spaceId || !journalId || !journal.contentTiptap) return
+
+                          try {
+                            // Update the specific section in the multi-section TipTap content
+                            const updatedMultiSection = {
+                              ...(journal.contentTiptap as Record<string, unknown>),
+                              [section.id]: updatedContent
+                            }
+                            await updateJournal(spaceId, journalId, {
+                              contentTiptap: updatedMultiSection
+                            })
+                            await loadJournal(spaceId, journalId)
+                          } catch (error) {
+                            console.error('[JournalView] Failed to save Q&A section TipTap content:', error)
+                          }
+                        }}
+                      />
                     ) : section.type === 'q_and_a' ? (
-                    // Render Q&A section with highlighting support
+                    // Fallback: Render Q&A section with highlighting support (legacy)
                     <QASectionDisplay
                       value={section.content}
                       sectionId={section.id}

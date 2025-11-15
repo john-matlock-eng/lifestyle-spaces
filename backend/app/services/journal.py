@@ -264,6 +264,22 @@ class JournalService:
         journal = response['Item']
         logger.info(f"[GET_JOURNAL] Journal found via direct key lookup")
 
+        # Auto-migrate old journals to TipTap format
+        from app.utils.tiptap_converter import TipTapConverter
+        journal = TipTapConverter.auto_migrate_journal(journal)
+
+        # If journal was migrated, update it in the database
+        if 'content_tiptap' in journal and not response['Item'].get('content_tiptap'):
+            try:
+                self.table.update_item(
+                    Key={'PK': journal['PK'], 'SK': journal['SK']},
+                    UpdateExpression='SET content_tiptap = :ct',
+                    ExpressionAttributeValues={':ct': journal['content_tiptap']}
+                )
+                logger.info(f"[GET_JOURNAL] Saved migrated TipTap content for journal {journal_id}")
+            except Exception as e:
+                logger.warning(f"[GET_JOURNAL] Failed to save migrated content: {e}")
+
         # Get author info
         author_info = self._get_author_info(journal['user_id'])
 
@@ -558,6 +574,10 @@ class JournalService:
         )
 
         journals = response.get('Items', [])
+
+        # Auto-migrate old journals to TipTap format (for display only, don't persist here)
+        from app.utils.tiptap_converter import TipTapConverter
+        journals = [TipTapConverter.auto_migrate_journal(j) for j in journals]
 
         # Filter out private journals that don't belong to the current user
         journals = [
