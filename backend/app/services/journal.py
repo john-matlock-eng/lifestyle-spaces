@@ -402,7 +402,7 @@ class JournalService:
         # Get author info
         author_info = self._get_author_info(updated_journal['user_id'])
 
-        return {
+        result = {
             'journal_id': updated_journal['journal_id'],
             'space_id': updated_journal['space_id'],
             'user_id': updated_journal['user_id'],
@@ -419,6 +419,12 @@ class JournalService:
             'is_private': updated_journal.get('is_private', False),
             'author': author_info
         }
+
+        # Include content_tiptap if present
+        if 'content_tiptap' in updated_journal:
+            result['content_tiptap'] = updated_journal['content_tiptap']
+
+        return result
 
     def delete_journal_entry(self, space_id: str, journal_id: str, user_id: str) -> bool:
         """
