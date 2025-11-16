@@ -20,18 +20,6 @@ const validateTitle = (title: string): void => {
 }
 
 /**
- * Validate journal content
- */
-const validateContent = (content: string): void => {
-  if (!content || content.trim() === '') {
-    throw new Error('Journal content is required')
-  }
-  if (content.length > 50000) {
-    throw new Error('Journal content must be 50,000 characters or less')
-  }
-}
-
-/**
  * Journal API service
  */
 export const journalApi = {
