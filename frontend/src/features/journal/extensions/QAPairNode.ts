@@ -18,6 +18,22 @@ export interface QAPairAttributes {
   isCollapsed: boolean
 }
 
+// Extend TipTap's RawCommands to include our custom commands
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    qaPair: {
+      /**
+       * Insert a Q&A pair node
+       */
+      insertQAPair: (attributes: QAPairAttributes) => ReturnType
+      /**
+       * Update a Q&A pair node by ID
+       */
+      updateQAPair: (id: string, updates: Partial<QAPairAttributes>) => ReturnType
+    }
+  }
+}
+
 export const QAPairNode = Node.create({
   name: 'qaPair',
 
