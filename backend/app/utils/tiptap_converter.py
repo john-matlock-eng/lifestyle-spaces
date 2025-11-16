@@ -168,14 +168,61 @@ class TipTapConverter:
                 try:
                     qa_pairs = json.loads(section_content)
                     sections[section_id] = TipTapConverter._qa_to_tiptap(qa_pairs)
-                except json.JSONDecodeError:
-                    logger.error(f"Failed to parse Q&A section {section_id}")
-                    sections[section_id] = TipTapConverter.markdown_to_tiptap(section_content)
+                except json.JSONDecodeError as e:
+                    # Try to fix common JSON issues
+                    logger.warning(f"Initial JSON parse failed for {section_id}: {str(e)}")
+                    try:
+                        # Attempt to sanitize: replace curly quotes with straight quotes
+                        # and try to fix unescaped quotes in string values
+                        sanitized = TipTapConverter._sanitize_json(section_content)
+                        qa_pairs = json.loads(sanitized)
+                        sections[section_id] = TipTapConverter._qa_to_tiptap(qa_pairs)
+                        logger.info(f"Successfully parsed Q&A section {section_id} after sanitization")
+                    except json.JSONDecodeError as e2:
+                        logger.error(f"Failed to parse Q&A section {section_id} even after sanitization: {str(e2)}")
+                        logger.error(f"Section content preview: {section_content[:200]}...")
+                        # Fall back to markdown rendering
+                        sections[section_id] = TipTapConverter.markdown_to_tiptap(section_content)
             else:
                 # Other types - convert as paragraph for now
                 sections[section_id] = TipTapConverter.markdown_to_tiptap(section_content)
 
         return sections if sections else None
+
+    @staticmethod
+    def _sanitize_json(json_str: str) -> str:
+        """
+        Attempt to fix common JSON formatting issues.
+
+        Handles:
+        - Curly/smart/typographic quotes → straight quotes
+        - Unescaped quotes in string values (uses Python's json decoder leniency)
+
+        Args:
+            json_str: Potentially malformed JSON string
+
+        Returns:
+            Sanitized JSON string
+        """
+        # Replace all varieties of Unicode quote characters with ASCII equivalents
+        # Left/right double quotes (curly quotes)
+        sanitized = json_str.replace('\u201c', '\\"').replace('\u201d', '\\"')
+        # Left/right single quotes (curly apostrophes)
+        sanitized = sanitized.replace('\u2018', "'").replace('\u2019', "'")
+        # Double low-9/high-reversed-9 quotation marks
+        sanitized = sanitized.replace('\u201e', '\\"').replace('\u201f', '\\"')
+        # Single low-9/high-reversed-9 quotation marks
+        sanitized = sanitized.replace('\u201a', "'").replace('\u201b', "'")
+        # Guillemets (European quotes)
+        sanitized = sanitized.replace('\u00ab', '\\"').replace('\u00bb', '\\"')
+        # Prime marks often confused with quotes
+        sanitized = sanitized.replace('\u2032', "'").replace('\u2033', '\\"')
+        # Horizontal ellipsis (often causes encoding issues)
+        sanitized = sanitized.replace('\u2026', '...')
+        # Em dash and en dash
+        sanitized = sanitized.replace('\u2014', '--').replace('\u2013', '-')
+
+        return sanitized
 
     @staticmethod
     def _qa_to_tiptap(qa_pairs: List[Dict[str, str]]) -> Dict[str, Any]:
