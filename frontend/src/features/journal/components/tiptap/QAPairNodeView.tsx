@@ -17,7 +17,9 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
 
   const isReadOnly = !editor.isEditable
 
-  const handleToggleCollapse = () => {
+  const handleToggleCollapse = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     const newCollapsed = !localCollapsed
     setLocalCollapsed(newCollapsed)
     updateAttributes({ isCollapsed: newCollapsed })
@@ -131,53 +133,95 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
 
       <style>{`
         .qa-pair-tiptap {
-          margin: 12px 0;
+          margin: 16px 0;
         }
 
         .qa-pair-display {
-          border: 1px solid var(--color-border, #e5e7eb);
+          background: var(--theme-bg-surface);
+          border: 1px solid var(--theme-border-base);
           border-radius: 8px;
-          padding: 12px;
-          background: var(--color-background, white);
+          overflow: hidden;
+          transition: all 0.2s ease;
+        }
+
+        .qa-pair-display:hover {
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .qa-pair-display:hover {
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .qa-pair-header-display {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 12px;
+          padding: 12px;
+          background: var(--theme-bg-elevated);
+          border-bottom: 1px solid var(--theme-border-base);
         }
 
         .qa-collapse-btn {
-          background: none;
-          border: none;
-          padding: 4px;
-          cursor: pointer;
-          color: var(--color-text-secondary, #6b7280);
           display: flex;
           align-items: center;
-          transition: color 0.2s;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          border: none;
+          background: transparent;
+          color: var(--theme-text-secondary);
+          cursor: pointer;
+          transition: all 0.2s;
         }
 
         .qa-collapse-btn:hover {
-          color: var(--color-text-primary, #111827);
+          color: var(--theme-primary-600);
         }
 
         .qa-number {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 32px;
+          height: 32px;
+          padding: 0 8px;
+          background: var(--theme-primary-600);
+          color: white;
           font-weight: 600;
-          color: var(--color-primary, #14b8a6);
-          min-width: 20px;
+          font-size: 12px;
+          border-radius: 16px;
         }
 
         .qa-question-display {
           flex: 1;
+          color: var(--theme-text-primary);
+        }
+
+        .qa-question-display strong {
+          font-weight: 500;
+          color: var(--theme-text-primary);
         }
 
         .qa-question-input {
-          width: 100%;
-          padding: 4px 8px;
-          border: 1px solid var(--color-border, #e5e7eb);
+          flex: 1;
+          padding: 8px 12px;
+          border: 1px solid var(--theme-border-base);
           border-radius: 4px;
           font-size: 14px;
+          font-weight: 500;
+          background: var(--theme-bg-base);
+          color: var(--theme-text-primary);
+          transition: all 0.2s;
+        }
+
+        .qa-question-input:focus {
+          outline: none;
+          border-color: var(--theme-primary-600);
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .dark .qa-question-input:focus {
+          box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
         }
 
         .qa-actions {
@@ -186,48 +230,76 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
         }
 
         .qa-action-btn {
-          background: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
           border: none;
-          padding: 4px 8px;
+          background: transparent;
+          color: var(--theme-text-secondary);
           cursor: pointer;
-          color: var(--color-text-secondary, #6b7280);
-          border-radius: 4px;
           transition: all 0.2s;
+          border-radius: 4px;
           font-size: 14px;
         }
 
         .qa-action-btn:hover {
-          background: var(--color-background-hover, #f3f4f6);
-          color: var(--color-text-primary, #111827);
+          background: var(--theme-bg-surface);
+          color: var(--theme-text-primary);
         }
 
         .qa-save-btn {
-          color: var(--color-success, #10b981);
+          color: #10b981;
+        }
+
+        .qa-save-btn:hover {
+          background: rgba(16, 185, 129, 0.1);
+        }
+
+        .qa-cancel-btn:hover {
+          background: rgba(239, 68, 68, 0.1);
         }
 
         .qa-delete-btn:hover {
-          color: var(--color-danger, #ef4444);
+          color: #ef4444;
+          background: rgba(239, 68, 68, 0.1);
         }
 
         .qa-answer-display {
-          margin-top: 8px;
-          padding-left: 44px;
+          padding: 16px;
         }
 
         .qa-answer-text {
-          color: var(--color-text-primary, #111827);
+          color: var(--theme-text-primary);
+          font-size: 14px;
           line-height: 1.6;
           white-space: pre-wrap;
         }
 
         .qa-answer-input {
           width: 100%;
-          padding: 8px;
-          border: 1px solid var(--color-border, #e5e7eb);
+          padding: 12px;
+          border: 1px solid var(--theme-border-base);
           border-radius: 4px;
           font-size: 14px;
-          font-family: inherit;
+          line-height: 1.6;
           resize: vertical;
+          min-height: 100px;
+          background: var(--theme-bg-base);
+          color: var(--theme-text-primary);
+          transition: all 0.2s;
+          font-family: inherit;
+        }
+
+        .qa-answer-input:focus {
+          outline: none;
+          border-color: var(--theme-primary-600);
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .dark .qa-answer-input:focus {
+          box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
         }
       `}</style>
     </NodeViewWrapper>
