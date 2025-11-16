@@ -44,17 +44,17 @@ export const journalApi = {
     }
 
     validateTitle(data.title)
-    validateContent(data.content)
+    if (!data.contentTiptap) {
+      throw new Error('contentTiptap is required')
+    }
 
     const response = await apiService.post(`/api/spaces/${spaceId}/journals`, {
       title: data.title.trim(),
-      content: data.content,  // Contains serialized template data via JournalContentManager
-      contentTiptap: data.contentTiptap,  // TipTap JSON with embedded highlights
+      contentTiptap: data.contentTiptap,  // TipTap JSON (required)
       tags: data.tags || [],
       emotions: data.emotions,
       isPinned: data.isPinned || false,
       templateId: data.templateId
-      // NO templateData field - it's embedded in content!
     })
 
     if (!response || typeof response !== 'object' || !('journalId' in response)) {

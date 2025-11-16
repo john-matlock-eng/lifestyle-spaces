@@ -23,7 +23,10 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(python debug_regex.py:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(dir /s /b *tiptap*.ts* 2)",
+      "Bash(nul)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

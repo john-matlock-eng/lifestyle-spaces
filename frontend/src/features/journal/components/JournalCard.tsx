@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../stores/authStore'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
+import { extractTextFromTipTap } from '../../../lib/journal/tiptapUtils'
 import type { JournalEntry } from '../types/journal.types'
 import '../styles/journal.css'
 
@@ -191,7 +192,9 @@ export const JournalCard: React.FC<JournalCardProps> = ({ journal, onDelete }) =
         )}
       </div>
 
-      <p className="journal-card-excerpt">{getJournalPreview(journal.content)}</p>
+      <p className="journal-card-excerpt">
+        {journal.contentTiptap ? getJournalPreview(extractTextFromTipTap(journal.contentTiptap)) : 'No preview available'}
+      </p>
 
       <div className="journal-card-meta">
         {journal.author && (
