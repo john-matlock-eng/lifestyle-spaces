@@ -171,6 +171,29 @@ export const JournalCreatePage: React.FC = () => {
       if (value.length > 0 && (!Array.isArray(previousValue) || previousValue.length === 0)) {
         handleSectionComplete(sectionId)
       }
+
+      // Convert Q&A pairs to TipTap format with qaPair nodes
+      const section = selectedTemplate?.sections.find(s => s.id === sectionId) ||
+                      customSections.find(s => s.id === sectionId)
+
+      if (section?.type === 'q_and_a') {
+        const qaPairs = value as QAPair[]
+        const tiptapContent = {
+          type: 'doc',
+          content: qaPairs.map(pair => ({
+            type: 'qaPair',
+            attrs: {
+              id: pair.id,
+              question: pair.question,
+              answer: pair.answer,
+              isCollapsed: pair.isCollapsed || false
+            }
+          }))
+        }
+
+        // Save to TipTap format
+        updateSection(sectionId, tiptapContent)
+      }
     }
   }
 
