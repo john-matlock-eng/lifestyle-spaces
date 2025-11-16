@@ -754,7 +754,7 @@ export const JournalEditPage: React.FC = () => {
                 ]
                   .filter(text => text.trim())
                   .join('\n\n---\n\n')
-              : content
+              : ''
           }
           journalTitle={title}
           journalId={journalId}
