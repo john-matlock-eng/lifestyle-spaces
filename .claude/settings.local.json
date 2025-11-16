@@ -17,7 +17,13 @@
       "Bash(python -m pytest tests/ -k \"invite\" -v --tb=short)",
       "Bash(python -m pytest tests/integration/test_invite_code_visibility.py tests/test_spaces.py -v --tb=short)",
       "Bash(python -m pytest tests/ -k \"not invitation_service\" --tb=short -q)",
-      "Bash(python -m pytest tests/ -k \"invite_code or InviteCode\" -v)"
+      "Bash(python -m pytest tests/ -k \"invite_code or InviteCode\" -v)",
+      "Bash(npm run type-check:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(python debug_regex.py:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []
