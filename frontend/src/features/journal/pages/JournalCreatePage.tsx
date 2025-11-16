@@ -113,6 +113,12 @@ export const JournalCreatePage: React.FC = () => {
         } else {
           initialData[section.id] = ''
         }
+
+        // Initialize TipTap state for all sections (ensures they're saved even if empty)
+        updateSection(section.id, {
+          type: 'doc',
+          content: [{ type: 'paragraph' }]
+        })
       })
       setTemplateData(initialData)
       setShowTemplatePicker(false)
