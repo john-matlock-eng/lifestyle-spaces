@@ -46,7 +46,6 @@ export const JournalViewPage: React.FC = () => {
     error: highlightError,
     createComment,
     deleteComment,
-    fetchComments,
     reconnect
   } = useHighlightsRealtime(spaceId || '', journalId || '')
 
