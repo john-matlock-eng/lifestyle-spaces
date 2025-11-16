@@ -109,9 +109,18 @@ class JournalCreate(JournalBase):
 
     @field_validator('content')
     @classmethod
-    def validate_content(cls, v: str) -> str:
-        if not v or not v.strip():
-            raise ValueError('Journal content is required')
+    def validate_content(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Validate content field.
+
+        Content can be empty if contentTiptap is provided (TipTap-first approach).
+        This validator only checks the content field itself; the requirement that
+        at least one of content or contentTiptap must be provided is checked in
+        the service layer.
+        """
+        # Allow empty content - contentTiptap may be the primary source
+        if v is None:
+            return ""
         return v
 
     @field_validator('tags')
