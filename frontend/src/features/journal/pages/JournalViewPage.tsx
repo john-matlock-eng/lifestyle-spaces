@@ -4,24 +4,17 @@ import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
 import { getEmotionById } from '../data/emotionData'
-import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
-import type { DisplaySection } from '../../../lib/journal/types'
+import { extractTextFromTipTap, extractSectionsFromTipTap, type TipTapSection } from '../../../lib/journal/tiptapUtils'
 import type { Template } from '../types/template.types'
 import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { AIAssistantDock } from '../components/AIAssistantDock'
-import { HighlightableText } from '../components/HighlightableText'
 import { EnhancedTipTapViewer } from '../components/tiptap/EnhancedTipTapViewer'
 import { CommentThread } from '../components/CommentThread'
 import { PresenceAvatars } from '../components/PresenceAvatars'
 import { ConnectionStatus } from '../components/ConnectionStatus'
 import { useHighlightsRealtime } from '../hooks/useHighlightsRealtime'
 import type { Highlight } from '../types/highlight.types'
-import { ListSectionDisplay } from '../components/sections/ListSectionDisplay'
-import { QASectionDisplay } from '../components/sections/QASectionDisplay'
-import { CheckboxSectionDisplay } from '../components/sections/CheckboxSectionDisplay'
-import { ScaleSectionDisplay } from '../components/sections/ScaleSectionDisplay'
-import { TableSectionDisplay } from '../components/sections/TableSectionDisplay'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -38,7 +31,7 @@ export const JournalViewPage: React.FC = () => {
   const { user } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
   const [template, setTemplate] = useState<Template | null>(null)
-  const [displaySections, setDisplaySections] = useState<DisplaySection[]>([])
+  const [displaySections, setDisplaySections] = useState<TipTapSection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
   const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
@@ -80,24 +73,24 @@ export const JournalViewPage: React.FC = () => {
   }, [spaceId, journalId, loadJournal])
 
   useEffect(() => {
-    // Load template and parse content if journal has one
+    // Load template and extract sections from contentTiptap if journal has one
     if (journal?.templateId) {
-      const loadTemplateAndParse = async () => {
+      const loadTemplateAndExtractSections = async () => {
         try {
           const templateData = await getTemplate(journal.templateId!)
           setTemplate(templateData)
 
-          // Parse the content to extract template sections
-          const sections = JournalContentManager.extractDisplaySections(journal.content)
+          // Extract sections from TipTap content
+          const sections = extractSectionsFromTipTap(journal.contentTiptap, templateData)
           setDisplaySections(sections)
 
-          console.log('[DEBUG VIEW] Parsed sections:', sections)
+          console.log('[DEBUG VIEW] Extracted TipTap sections:', sections)
         } catch (err) {
-          console.error('Failed to load template or parse content:', err)
+          console.error('Failed to load template or extract sections:', err)
           setDisplaySections([])
         }
       }
-      loadTemplateAndParse()
+      loadTemplateAndExtractSections()
     } else {
       setTemplate(null)
       setDisplaySections([])
@@ -157,10 +150,10 @@ export const JournalViewPage: React.FC = () => {
     const dateStr = new Date(journal.createdAt).toISOString().split('T')[0]
     const filename = `${safeTitle}_${dateStr}.md`
 
-    // Get the markdown content
-    const content = template
-      ? JournalContentManager.extractCleanMarkdown(journal.content)
-      : journal.content
+    // Extract text from TipTap content
+    const content = journal.contentTiptap
+      ? extractTextFromTipTap(journal.contentTiptap)
+      : 'No content available'
 
     // Create markdown file with metadata
     const markdown = `# ${journal.title}
@@ -421,7 +414,7 @@ ${content}
                 <div key={section.id} className="template-section template-section-compact">
                   <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
                   <div className="template-section-content">
-                    {hasTiptapContent && section.type === 'paragraph' ? (
+                    {hasTiptapContent && (section.type === 'paragraph' || section.type === 'prose') ? (
                       // Render paragraph sections with TipTap content using EnhancedTipTapViewer (preserves highlight positions)
                       <EnhancedTipTapViewer
                         contentTiptap={sectionTiptapContent as Record<string, unknown>}
@@ -465,95 +458,28 @@ ${content}
                           }
                         }}
                       />
-                    ) : section.type === 'q_and_a' ? (
-                    // Fallback: Render Q&A section with highlighting support (legacy)
-                    <QASectionDisplay
-                      value={section.content}
-                      sectionId={section.id}
-                      journalEntryId={journalId || ''}
-                      spaceId={spaceId || ''}
-                      highlights={highlights}
-                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-                      onHighlightClick={handleHighlightClick}
-                      onHighlightUpdate={updateHighlight}
-                      onHighlightDelete={deleteHighlight}
-                      className="qa-view-section-compact"
-                    />
-                  ) : section.type === 'list' ? (
-                    // Render List section with highlighting support
-                    <ListSectionDisplay
-                      value={section.content}
-                      sectionId={section.id}
-                      journalEntryId={journalId || ''}
-                      spaceId={spaceId || ''}
-                      highlights={highlights}
-                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-                      onHighlightClick={handleHighlightClick}
-                      onHighlightUpdate={updateHighlight}
-                      onHighlightDelete={deleteHighlight}
-                      className="list-view-section-compact"
-                    />
-                  ) : section.type === 'checkbox' ? (
-                    // Render Checkbox section with highlighting support
-                    <CheckboxSectionDisplay
-                      value={section.content}
-                      sectionId={section.id}
-                      journalEntryId={journalId || ''}
-                      spaceId={spaceId || ''}
-                      highlights={highlights}
-                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-                      onHighlightClick={handleHighlightClick}
-                      onHighlightUpdate={updateHighlight}
-                      onHighlightDelete={deleteHighlight}
-                      className="checkbox-view-section-compact"
-                    />
-                  ) : section.type === 'table' ? (
-                    // Render Table section (no highlighting for tables)
-                    <TableSectionDisplay
-                      value={section.content}
-                      config={template?.sections.find(s => s.id === section.id)?.config}
-                      className="table-view-section"
-                    />
-                  ) : section.type === 'scale' ? (
-                    // Render Scale section (no highlighting for numeric values)
-                    <ScaleSectionDisplay
-                      value={section.content}
-                      config={template?.sections.find(s => s.id === section.id)?.config}
-                      className="scale-view-section"
-                    />
-                  ) : (
-                    // Render other section types with highlighting
-                    <HighlightableText
-                      content={section.content}
-                      highlights={highlights}
-                      sectionId={section.id}
-                      journalEntryId={journalId || ''}
-                      spaceId={spaceId || ''}
-                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-                      onHighlightClick={handleHighlightClick}
-                      onHighlightUpdate={updateHighlight}
-                      onHighlightDelete={deleteHighlight}
-                    />
+                    ) : (
+                    // All sections should have TipTap content after migration
+                    <div className="section-migration-notice">
+                      <p>This section needs to be re-saved to enable full TipTap support.</p>
+                      <p>Section type: {section.type}</p>
+                    </div>
                     )}
                   </div>
                 </div>
               )
             })}
           </div>
+        ) : journal.contentTiptap ? (
+          // Render single-doc TipTap content (already handled above)
+          <div className="migration-notice">
+            <p>Content rendering error. Please try refreshing the page.</p>
+          </div>
         ) : (
-          // Render regular content with highlighting
-          <HighlightableText
-            content={template
-              ? JournalContentManager.extractCleanMarkdown(journal.content)
-              : journal.content}
-            highlights={highlights}
-            journalEntryId={journalId || ''}
-            spaceId={spaceId || ''}
-            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-            onHighlightClick={handleHighlightClick}
-            onHighlightUpdate={updateHighlight}
-            onHighlightDelete={deleteHighlight}
-          />
+          // No content available
+          <div className="no-content-notice">
+            <p>No content available for this journal.</p>
+          </div>
         )}
       </div>
 
@@ -600,9 +526,9 @@ ${content}
       </div>
 
       {/* AI Assistant Dock */}
-      {showAIDock && (
+      {showAIDock && journal.contentTiptap && (
         <AIAssistantDock
-          journalContent={journal.content}
+          journalContent={extractTextFromTipTap(journal.contentTiptap)}
           journalTitle={journal.title}
           journalId={journalId}
           emotions={journal.emotions?.map(id => getEmotionById(id)?.label).filter((label): label is string => !!label)}

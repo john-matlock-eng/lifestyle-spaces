@@ -12,7 +12,7 @@ import { useJournal } from '../hooks/useJournal'
 import { useSectionTipTap } from '../hooks/useSectionTipTap'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
-import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
+import { extractTemplateDataFromTipTap, extractTextFromTipTap } from '../../../lib/journal/tiptapUtils'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { aiService } from '../../../services/ai'
 import { ElliePerch } from '../../../components/ellie'
@@ -37,7 +37,6 @@ export const JournalEditPage: React.FC = () => {
   const { user } = useAuth()
 
   const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
   const [emotions, setEmotions] = useState<string[]>([])
   const [isPrivate, setIsPrivate] = useState(false)
@@ -126,63 +125,22 @@ export const JournalEditPage: React.FC = () => {
             const loadedTemplate = await getTemplate(journal.templateId!)
             setTemplate(loadedTemplate)
 
-            // Parse the content to extract embedded template data
-            const parsed = JournalContentManager.parse(journal.content)
+            // Extract template data from TipTap content
+            const parsedTemplateData = extractTemplateDataFromTipTap(journal.contentTiptap)
 
-            // Convert parsed sections back to TemplateData format for editing
-            const parsedTemplateData: TemplateData = {}
+            // Extract custom sections (sections with IDs starting with 'custom_')
             const parsedCustomSections: CustomSection[] = []
-
-            Object.entries(parsed.sections).forEach(([sectionId, section]) => {
-              // Check if this is a custom section (starts with 'custom_')
-              const isCustomSection = sectionId.startsWith('custom_')
-
-              // Parse content based on section type
-              let parsedContent: string | QAPair[] | ListItem[] | TableRow[] | number
-              if (section.type === 'q_and_a') {
-                try {
-                  // Parse JSON string back to QAPair array
-                  parsedContent = JSON.parse(section.content) as QAPair[]
-                } catch {
-                  // If parsing fails, default to empty array
-                  parsedContent = []
-                }
-              } else if (section.type === 'list' || section.type === 'checkbox') {
-                try {
-                  // Parse JSON string back to ListItem array
-                  parsedContent = JSON.parse(section.content) as ListItem[]
-                } catch {
-                  // If parsing fails, default to empty array
-                  parsedContent = []
-                }
-              } else if (section.type === 'table') {
-                try {
-                  // Parse JSON string back to TableRow array
-                  parsedContent = JSON.parse(section.content) as TableRow[]
-                } catch {
-                  // If parsing fails, default to empty array
-                  parsedContent = []
-                }
-              } else if (section.type === 'scale') {
-                // Parse number for scale type
-                parsedContent = typeof section.content === 'number' ? section.content : parseInt(section.content) || 5
-              } else {
-                // Other sections are plain strings
-                parsedContent = section.content
-              }
-
-              if (isCustomSection) {
-                // Add to custom sections
+            Object.entries(parsedTemplateData).forEach(([sectionId, content]) => {
+              if (sectionId.startsWith('custom_')) {
+                // Find section type from contentTiptap structure
+                const sectionType = 'paragraph' // Default type
                 parsedCustomSections.push({
                   id: sectionId,
-                  title: section.title || 'Untitled Section',
-                  type: section.type || 'paragraph',
-                  content: parsedContent,
+                  title: sectionId.replace('custom_', '').replace(/_/g, ' '),
+                  type: sectionType,
+                  content: content,
                   isEditing: false
                 })
-              } else {
-                // Add to template data
-                parsedTemplateData[sectionId] = parsedContent
               }
             })
 
@@ -193,81 +151,12 @@ export const JournalEditPage: React.FC = () => {
             onEllieTemplateSelect()
             handleJournalStart()
           } catch (err) {
-            console.error('Failed to load template or parse content:', err)
-            // If template fails to load, fall back to content-only editing
-            setContent(journal.content)
+            console.error('Failed to load template or extract data from contentTiptap:', err)
           }
         }
         loadTemplateAndParse()
-      } else {
-        // Non-templated journal (or 'blank' template)
-        // Check if content has embedded sections (custom sections without template)
-        const parsed = JournalContentManager.parse(journal.content)
-
-        if (Object.keys(parsed.sections).length > 0) {
-          // Has sections - need to determine if it's custom sections or just free-form content
-          const parsedCustomSections: CustomSection[] = []
-          let mainContent = ''
-
-          Object.entries(parsed.sections).forEach(([sectionId, section]) => {
-            // If the only section is "content" with type "paragraph", treat it as free-form content
-            if (sectionId === 'content' && section.type === 'paragraph' && Object.keys(parsed.sections).length === 1) {
-              mainContent = section.content
-            } else if (sectionId.startsWith('custom_')) {
-              // This is a custom section
-              let parsedContent: string | QAPair[] | ListItem[] | TableRow[] | number
-
-              if (section.type === 'q_and_a') {
-                try {
-                  parsedContent = JSON.parse(section.content) as QAPair[]
-                } catch {
-                  parsedContent = []
-                }
-              } else if (section.type === 'list' || section.type === 'checkbox') {
-                try {
-                  parsedContent = JSON.parse(section.content) as ListItem[]
-                } catch {
-                  parsedContent = []
-                }
-              } else if (section.type === 'table') {
-                try {
-                  parsedContent = JSON.parse(section.content) as TableRow[]
-                } catch {
-                  parsedContent = []
-                }
-              } else if (section.type === 'scale') {
-                parsedContent = typeof section.content === 'number' ? section.content : parseInt(section.content) || 5
-              } else {
-                parsedContent = section.content
-              }
-
-              parsedCustomSections.push({
-                id: sectionId,
-                title: section.title || 'Untitled Section',
-                type: section.type || 'paragraph',
-                content: parsedContent,
-                isEditing: false
-              })
-            }
-          })
-
-          if (mainContent) {
-            // Had a single 'content' section - use as free-form content
-            setContent(mainContent)
-          } else if (parsedCustomSections.length > 0) {
-            // Has actual custom sections
-            setCustomSections(parsedCustomSections)
-          } else {
-            // Fallback to clean markdown extraction
-            const cleanContent = JournalContentManager.extractCleanMarkdown(journal.content)
-            setContent(cleanContent)
-          }
-        } else {
-          // Pure free-form content - extract clean markdown
-          const cleanContent = JournalContentManager.extractCleanMarkdown(journal.content)
-          setContent(cleanContent)
-        }
       }
+      // Note: Non-templated journals (blank template) are handled via TipTap editor
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [journal])
@@ -328,124 +217,18 @@ export const JournalEditPage: React.FC = () => {
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0)
 
-      // Use JournalContentManager to serialize template data into content field
-      let finalContent = content
-      if (template || customSections.length > 0) {
-        // Convert templateData to the format expected by JournalContentManager
-        const sections: Record<string, { content: string; title: string; type: string }> = {}
-
-        // Add template sections
-        if (template) {
-          template.sections.forEach((section) => {
-            const sectionContent = templateData[section.id]
-
-            // Handle different section types
-            if (section.type === 'q_and_a') {
-              // Q&A sections store arrays of QAPair objects
-              if (Array.isArray(sectionContent) && sectionContent.length > 0) {
-                sections[section.id] = {
-                  content: JSON.stringify(sectionContent),
-                  title: section.title,
-                  type: section.type
-                }
-              }
-            } else if (section.type === 'list' || section.type === 'checkbox') {
-              // List sections store arrays of ListItem objects
-              if (Array.isArray(sectionContent) && sectionContent.length > 0) {
-                sections[section.id] = {
-                  content: JSON.stringify(sectionContent),
-                  title: section.title,
-                  type: section.type
-                }
-              }
-            } else if (section.type === 'table') {
-              // Table sections store arrays of TableRow objects
-              if (Array.isArray(sectionContent) && sectionContent.length > 0) {
-                sections[section.id] = {
-                  content: JSON.stringify(sectionContent),
-                  title: section.title,
-                  type: section.type
-                }
-              }
-            } else if (section.type === 'scale') {
-              // Scale sections store numbers
-              if (typeof sectionContent === 'number') {
-                sections[section.id] = {
-                  content: String(sectionContent),
-                  title: section.title,
-                  type: section.type
-                }
-              }
-            } else {
-              // Other sections store strings
-              if (sectionContent && typeof sectionContent === 'string' && sectionContent.trim()) {
-                sections[section.id] = {
-                  content: sectionContent,
-                  title: section.title,
-                  type: section.type
-                }
-              }
-            }
-          })
-        }
-
-        // Add custom sections
-        customSections.forEach(section => {
-          if (section.type === 'q_and_a' || section.type === 'list' || section.type === 'checkbox' || section.type === 'table') {
-            // Q&A, List, Checkbox, and Table sections store arrays
-            if (Array.isArray(section.content) && section.content.length > 0) {
-              sections[section.id] = {
-                content: JSON.stringify(section.content),
-                title: section.title,
-                type: section.type
-              }
-            }
-          } else if (section.type === 'scale') {
-            // Scale sections store numbers
-            if (typeof section.content === 'number') {
-              sections[section.id] = {
-                content: String(section.content),
-                title: section.title,
-                type: section.type
-              }
-            }
-          } else {
-            // Other section types store strings
-            if (section.content && typeof section.content === 'string' && section.content.trim()) {
-              sections[section.id] = {
-                content: section.content,
-                title: section.title,
-                type: section.type
-              }
-            }
-          }
-        })
-
-        // Serialize everything into content with embedded metadata
-        // Only include template info if we have a real template (not 'blank')
-        finalContent = JournalContentManager.serialize({
-          template: template?.id || undefined,
-          templateVersion: template ? String(template.version) : undefined,
-          metadata: {
-            title,
-            emotions: emotions.length > 0 ? emotions : undefined
-          },
-          sections
-        })
-      }
-
+      // Get TipTap content from all sections
       const contentTiptapToSave = getAllSections()
       console.log('[DEBUG EDIT] contentTiptap sections:', contentTiptapToSave ? Object.keys(contentTiptapToSave) : 'none')
 
+      // TipTap-only: Send only contentTiptap, no markdown content field
       await updateJournal(spaceId, journalId, {
         title,
-        content: finalContent,
         contentTiptap: contentTiptapToSave || undefined,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
         isPrivate,
         templateId: template?.id
-        // NO templateData field!
       })
 
       // Notify Ellie of successful save

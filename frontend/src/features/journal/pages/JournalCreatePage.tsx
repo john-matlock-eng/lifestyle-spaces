@@ -12,7 +12,6 @@ import { TableSection } from '../components/sections/TableSection'
 import AIWritingPrompts from '../../../components/AIWritingPrompts'
 import { useJournal } from '../hooks/useJournal'
 import { useSectionTipTap } from '../hooks/useSectionTipTap'
-import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { aiService } from '../../../services/ai'
 import { ElliePerch } from '../../../components/ellie'
@@ -297,8 +296,7 @@ export const JournalCreatePage: React.FC = () => {
 
       const journal = await createJournal(spaceId, {
         title,
-        content: finalContent,
-        contentTiptap: contentTiptapToSave || undefined,
+        contentTiptap: contentTiptapToSave || { type: 'doc', content: [] },
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
         isPrivate,
