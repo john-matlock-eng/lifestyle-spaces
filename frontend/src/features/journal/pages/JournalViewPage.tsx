@@ -387,12 +387,8 @@ ${content}
           // Render template sections with highlighting
           <div className="template-content">
             {displaySections.map((section) => {
-              // Check if this section has TipTap content in multi-section format
-              const sectionTiptapContent = journal.contentTiptap &&
-                typeof journal.contentTiptap === 'object' &&
-                section.id in journal.contentTiptap
-                ? (journal.contentTiptap as Record<string, unknown>)[section.id]
-                : null
+              // Use section.content which already includes empty docs for missing sections
+              const sectionTiptapContent = section.content
 
               const hasTiptapContent = sectionTiptapContent &&
                 typeof sectionTiptapContent === 'object' &&
