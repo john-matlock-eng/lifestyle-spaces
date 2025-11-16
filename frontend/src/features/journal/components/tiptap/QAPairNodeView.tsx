@@ -5,7 +5,7 @@
  * Works in both edit and read-only modes.
  */
 import React, { useState } from 'react'
-import { NodeViewWrapper, NodeViewProps } from '@tiptap/react'
+import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
 import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 
 export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes, deleteNode, editor }) => {

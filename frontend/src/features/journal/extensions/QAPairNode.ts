@@ -5,6 +5,9 @@
  * Eliminates need for markdown parsing and separate storage.
  */
 import { Node, mergeAttributes } from '@tiptap/core'
+import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
+import type { Transaction, EditorState } from '@tiptap/pm/state'
+import type { Command } from '@tiptap/core'
 import { ReactNodeViewRenderer } from '@tiptap/react'
 import { QAPairNodeView } from '../components/tiptap/QAPairNodeView'
 
@@ -75,26 +78,30 @@ export const QAPairNode = Node.create({
 
   addCommands() {
     return {
-      insertQAPair: (attributes: QAPairAttributes) => ({ commands }) => {
-        return commands.insertContent({
-          type: this.name,
-          attrs: attributes,
-        })
-      },
-      updateQAPair: (id: string, updates: Partial<QAPairAttributes>) => ({ tr, state }) => {
-        const { doc } = state
-        let updated = false
+      insertQAPair:
+        (attributes: QAPairAttributes): Command =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: this.name,
+            attrs: attributes,
+          })
+        },
+      updateQAPair:
+        (id: string, updates: Partial<QAPairAttributes>): Command =>
+        ({ tr, state }: { tr: Transaction; state: EditorState }) => {
+          const { doc } = state
+          let updated = false
 
-        doc.descendants((node, pos) => {
-          if (node.type.name === this.name && node.attrs.id === id) {
-            tr.setNodeMarkup(pos, undefined, { ...node.attrs, ...updates })
-            updated = true
-            return false // Stop searching
-          }
-        })
+          doc.descendants((node: ProseMirrorNode, pos: number) => {
+            if (node.type.name === this.name && node.attrs.id === id) {
+              tr.setNodeMarkup(pos, undefined, { ...node.attrs, ...updates })
+              updated = true
+              return false // Stop searching
+            }
+          })
 
-        return updated
-      },
+          return updated
+        },
     }
   },
 })
