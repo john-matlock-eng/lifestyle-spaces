@@ -37,6 +37,7 @@ export const JournalEditPage: React.FC = () => {
   const { user } = useAuth()
 
   const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')  // For free-form editor initialization only
   const [tags, setTags] = useState('')
   const [emotions, setEmotions] = useState<string[]>([])
   const [isPrivate, setIsPrivate] = useState(false)
@@ -252,14 +253,14 @@ export const JournalEditPage: React.FC = () => {
   }
 
   const handleGenerateQuestions = async (type: 'reflection' | 'emotional' | 'growth' | 'patterns') => {
-    if (!content.trim() && !title.trim()) {
+    if (!title.trim()) {
       alert('Please write some content first so the AI can generate relevant questions')
       return
     }
 
     try {
-      // Get the journal content (either from template sections or free-form content)
-      let journalText = content
+      // Get the journal content from template sections
+      let journalText = ''
       if (template) {
         // Combine all template section content
         journalText = Object.values(templateData)
@@ -423,7 +424,7 @@ export const JournalEditPage: React.FC = () => {
                     showGenerateButton={true}
                     onGenerateQuestions={async (type) => {
                       // Get all journal content for context
-                      let journalText = content
+                      let journalText = ''
                       if (template || customSections.length > 0) {
                         journalText = [
                           ...Object.values(templateData).map(val => {
@@ -591,7 +592,7 @@ export const JournalEditPage: React.FC = () => {
                   showGenerateButton={true}
                   onGenerateQuestions={async (type) => {
                     // Get all journal content for context
-                    let journalText = content
+                    let journalText = ''
                     if (template || customSections.length > 0) {
                       journalText = [
                         ...Object.values(templateData).map(val => {

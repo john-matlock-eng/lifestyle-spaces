@@ -123,7 +123,8 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       const titleMatch = journal.title?.toLowerCase().includes(query) || false
-      const contentMatch = journal.content?.toLowerCase().includes(query) || false
+      const contentText = journal.contentTiptap ? extractTextFromTipTap(journal.contentTiptap) : ''
+      const contentMatch = contentText.toLowerCase().includes(query)
       const tagsMatch = journal.tags?.some((tag) => tag.toLowerCase().includes(query)) || false
       const authorMatch = journal.author?.displayName?.toLowerCase().includes(query) || false
 

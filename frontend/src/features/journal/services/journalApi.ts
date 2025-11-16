@@ -130,19 +130,14 @@ export const journalApi = {
       validateTitle(data.title)
     }
 
-    if (data.content !== undefined) {
-      validateContent(data.content)
-    }
-
     const updateData: Record<string, unknown> = {}
     if (data.title !== undefined) updateData.title = data.title.trim()
-    if (data.content !== undefined) updateData.content = data.content  // Contains serialized template data
-    if (data.contentTiptap !== undefined) updateData.contentTiptap = data.contentTiptap  // TipTap JSON with embedded highlights
+    if (data.contentTiptap !== undefined) updateData.contentTiptap = data.contentTiptap  // TipTap JSON
     if (data.tags !== undefined) updateData.tags = data.tags
     if (data.emotions !== undefined) updateData.emotions = data.emotions
     if (data.isPinned !== undefined) updateData.isPinned = data.isPinned
+    if (data.isPrivate !== undefined) updateData.isPrivate = data.isPrivate
     if (data.templateId !== undefined) updateData.templateId = data.templateId
-    // NO templateData field - it's embedded in content!
 
     const response = await apiService.put(`/api/spaces/${spaceId}/journals/${journalId}`, updateData)
 
