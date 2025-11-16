@@ -44,9 +44,6 @@ export const JournalViewPage: React.FC = () => {
     isConnected,
     isConnecting,
     error: highlightError,
-    createHighlight,
-    updateHighlight,
-    deleteHighlight,
     createComment,
     deleteComment,
     fetchComments,
@@ -58,13 +55,6 @@ export const JournalViewPage: React.FC = () => {
 
   // Ellie customization
   const { customization } = useEllieCustomizationContext()
-
-  // Handler to open highlight and load its comments
-  const handleHighlightClick = (highlight: Highlight) => {
-    setSelectedHighlight(highlight)
-    // Fetch comments for this highlight
-    fetchComments(highlight.id)
-  }
 
   useEffect(() => {
     if (spaceId && journalId) {
