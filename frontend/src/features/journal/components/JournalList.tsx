@@ -11,6 +11,46 @@ interface JournalListProps {
 }
 
 /**
+ * Extract plain text from TipTap JSON content for searching
+ */
+const extractTextFromTipTap = (content: any): string => {
+  if (!content) return ''
+
+  // Handle multi-section format (object with section IDs as keys)
+  if (typeof content === 'object' && !content.type) {
+    return Object.values(content)
+      .map((section: any) => extractTextFromTipTap(section))
+      .join(' ')
+  }
+
+  // Handle single document format
+  if (!content.content || !Array.isArray(content.content)) return ''
+
+  const extractFromNode = (node: any): string => {
+    if (!node) return ''
+
+    // Text node
+    if (node.type === 'text') {
+      return node.text || ''
+    }
+
+    // Q&A pair node - extract question and answer
+    if (node.type === 'qaPair' && node.attrs) {
+      return `${node.attrs.question || ''} ${node.attrs.answer || ''}`
+    }
+
+    // Node with nested content
+    if (node.content && Array.isArray(node.content)) {
+      return node.content.map(extractFromNode).join(' ')
+    }
+
+    return ''
+  }
+
+  return content.content.map(extractFromNode).join(' ')
+}
+
+/**
  * Component for displaying a paginated list of journals
  */
 export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
