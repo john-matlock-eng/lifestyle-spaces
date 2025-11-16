@@ -13,41 +13,44 @@ interface JournalListProps {
 /**
  * Extract plain text from TipTap JSON content for searching
  */
-const extractTextFromTipTap = (content: any): string => {
+const extractTextFromTipTap = (content: Record<string, unknown> | null | undefined): string => {
   if (!content) return ''
 
   // Handle multi-section format (object with section IDs as keys)
-  if (typeof content === 'object' && !content.type) {
+  if (typeof content === 'object' && !('type' in content)) {
     return Object.values(content)
-      .map((section: any) => extractTextFromTipTap(section))
+      .map((section) => extractTextFromTipTap(section as Record<string, unknown>))
       .join(' ')
   }
 
   // Handle single document format
-  if (!content.content || !Array.isArray(content.content)) return ''
+  if (!('content' in content) || !Array.isArray(content.content)) return ''
 
-  const extractFromNode = (node: any): string => {
+  const extractFromNode = (node: Record<string, unknown>): string => {
     if (!node) return ''
 
     // Text node
-    if (node.type === 'text') {
-      return node.text || ''
+    if (node.type === 'text' && typeof node.text === 'string') {
+      return node.text
     }
 
     // Q&A pair node - extract question and answer
-    if (node.type === 'qaPair' && node.attrs) {
-      return `${node.attrs.question || ''} ${node.attrs.answer || ''}`
+    if (node.type === 'qaPair' && node.attrs && typeof node.attrs === 'object') {
+      const attrs = node.attrs as Record<string, unknown>
+      const question = typeof attrs.question === 'string' ? attrs.question : ''
+      const answer = typeof attrs.answer === 'string' ? attrs.answer : ''
+      return `${question} ${answer}`
     }
 
     // Node with nested content
-    if (node.content && Array.isArray(node.content)) {
-      return node.content.map(extractFromNode).join(' ')
+    if ('content' in node && Array.isArray(node.content)) {
+      return node.content.map((n) => extractFromNode(n as Record<string, unknown>)).join(' ')
     }
 
     return ''
   }
 
-  return content.content.map(extractFromNode).join(' ')
+  return content.content.map((n) => extractFromNode(n as Record<string, unknown>)).join(' ')
 }
 
 /**
