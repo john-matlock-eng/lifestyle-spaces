@@ -77,6 +77,25 @@ export function extractSectionsFromTipTap(
 
   // Check if it's multi-section format (no 'type' field at root)
   if (!('type' in contentTiptap)) {
+    // If we have a template, ensure all template sections are included
+    if (template?.sections) {
+      return template.sections.map(templateSection => {
+        // Check if this section exists in the stored data
+        const sectionContent = contentTiptap[templateSection.id] as Record<string, unknown> | undefined
+
+        return {
+          id: templateSection.id,
+          title: templateSection.title,
+          type: templateSection.type,
+          content: sectionContent || {
+            type: 'doc',
+            content: [{ type: 'paragraph' }]
+          }
+        }
+      })
+    }
+
+    // No template - just extract what's in the data
     return Object.entries(contentTiptap).map(([sectionId, sectionContent]) => {
       // Get title from template if available
       const templateSection = template?.sections.find(s => s.id === sectionId)
