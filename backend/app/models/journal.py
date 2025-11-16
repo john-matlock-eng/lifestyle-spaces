@@ -255,21 +255,19 @@ class JournalResponse(BaseModel):
     """
     Journal response model for API responses.
 
-    NOTE: content contains markdown with embedded template metadata.
-    Frontend should use JournalContentManager to parse the content.
+    TipTap-Only Format:
+    - content_tiptap: TipTap JSON format (primary and only content format)
+    - Supports both single-doc and multi-section formats
 
-    TipTap Integration:
-    - content: Markdown format (for backward compatibility)
-    - content_tiptap: TipTap JSON format with embedded highlights (optional)
+    Note: Markdown content field has been removed. Use TipTap → Markdown conversion
+    for exports or AI assistant integration.
     """
     journal_id: str = Field(..., alias="journalId")
     space_id: str = Field(..., alias="spaceId")
     user_id: str = Field(..., alias="userId")
     title: str
-    content: str  # Contains markdown with embedded template metadata
     content_tiptap: Optional[Dict[str, Any]] = Field(None, alias="contentTiptap")  # TipTap JSON format
     template_id: Optional[str] = Field(None, alias="templateId")
-    # REMOVED: template_data field - data is embedded in content
     tags: List[str] = Field(default_factory=list)
     emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
     created_at: datetime = Field(..., alias="createdAt")

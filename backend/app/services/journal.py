@@ -195,7 +195,6 @@ class JournalService:
                 metadata={
                     'journal_id': journal_id,
                     'journal_title': data.title.strip(),
-                    'content_preview': data.content[:100] if len(data.content) > 100 else data.content,
                     'template_id': data.template_id
                 }
             )
@@ -288,9 +287,7 @@ class JournalService:
             'space_id': journal['space_id'],
             'user_id': journal['user_id'],
             'title': journal['title'],
-            'content': journal['content'],
             'template_id': journal.get('template_id'),
-            # REMOVED: template_data - data is embedded in content
             'tags': journal.get('tags', []),
             'emotions': journal.get('emotions', []),
             'created_at': journal['created_at'],
@@ -428,8 +425,7 @@ class JournalService:
                 user_name=activity_service._get_user_display_name(user_id),
                 metadata={
                     'journal_id': journal_id,
-                    'journal_title': updated_journal['title'],
-                    'content_preview': updated_journal['content'][:100] if len(updated_journal['content']) > 100 else updated_journal['content']
+                    'journal_title': updated_journal['title']
                 }
             )
         except Exception as e:
@@ -444,9 +440,7 @@ class JournalService:
             'space_id': updated_journal['space_id'],
             'user_id': updated_journal['user_id'],
             'title': updated_journal['title'],
-            'content': updated_journal['content'],
             'template_id': updated_journal.get('template_id'),
-            # REMOVED: template_data - data is embedded in content
             'tags': updated_journal.get('tags', []),
             'emotions': updated_journal.get('emotions', []),
             'created_at': updated_journal['created_at'],
@@ -610,9 +604,7 @@ class JournalService:
                 'space_id': journal['space_id'],
                 'user_id': journal['user_id'],
                 'title': journal['title'],
-                'content': journal['content'],
                 'template_id': journal.get('template_id'),
-                # REMOVED: template_data - data is embedded in content
                 'tags': journal.get('tags', []),
                 'emotions': journal.get('emotions', []),
                 'created_at': journal['created_at'],
@@ -678,9 +670,7 @@ class JournalService:
                 'space_id': journal['space_id'],
                 'user_id': journal['user_id'],
                 'title': journal['title'],
-                'content': journal['content'],
                 'template_id': journal.get('template_id'),
-                # REMOVED: template_data - data is embedded in content
                 'tags': journal.get('tags', []),
                 'emotions': journal.get('emotions', []),
                 'created_at': journal['created_at'],
