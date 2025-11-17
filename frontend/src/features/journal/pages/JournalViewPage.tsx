@@ -38,6 +38,10 @@ export const JournalViewPage: React.FC = () => {
   const [showActionsMenu, setShowActionsMenu] = useState(false)
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [showCommentThread, setShowCommentThread] = useState(false)
+  const [editingHighlightId, setEditingHighlightId] = useState<string | null>(null)
+  const [editSelection, setEditSelection] = useState<{ text: string; from: number; to: number } | null>(null)
+  const [showEditButtons, setShowEditButtons] = useState(false)
+  const [editButtonPosition, setEditButtonPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
 
   // Highlights and comments real-time feature
@@ -50,6 +54,9 @@ export const JournalViewPage: React.FC = () => {
     error: highlightError,
     createComment,
     deleteComment,
+    deleteHighlight,
+    updateHighlight,
+    fetchComments,
     reconnect
   } = useHighlightsRealtime(spaceId || '', journalId || '')
 
@@ -95,11 +102,13 @@ export const JournalViewPage: React.FC = () => {
     const handleHighlightClick = (event: Event) => {
       const customEvent = event as CustomEvent
       const { id, authorName, commentCount, color } = customEvent.detail
-      const mouseEvent = (event as any).sourceEvent as MouseEvent
+      const mouseEvent = (event as CustomEvent & { sourceEvent?: MouseEvent }).sourceEvent
 
-      // Create highlight object from event data
-      // TipTap embeds all highlight info in the mark
-      const highlight: Highlight = {
+      // Try to find the full highlight from the list
+      const fullHighlight = highlights.find(h => h.id === id)
+
+      // Use full highlight if found, otherwise create minimal object
+      const highlight: Highlight = fullHighlight || {
         id,
         text: '', // Not needed for panel
         color,
@@ -110,6 +119,7 @@ export const JournalViewPage: React.FC = () => {
         range: { from: 0, to: 0 } // Not needed for panel
       }
 
+      console.log('[JournalView] Highlight clicked:', { id, highlight })
       setSelectedHighlight(highlight)
 
       // Show actions menu at click position
@@ -124,7 +134,90 @@ export const JournalViewPage: React.FC = () => {
     return () => {
       document.removeEventListener('highlight-clicked', handleHighlightClick)
     }
-  }, [user])
+  }, [user, highlights])
+
+  // Listen for text selection events when in edit mode
+  useEffect(() => {
+    if (!editingHighlightId) return
+
+    const handleTextSelected = (event: Event) => {
+      const customEvent = event as CustomEvent<{ text: string; from: number; to: number; x: number; y: number }>
+      const { text, from, to, x, y } = customEvent.detail
+
+      if (!text || text.trim() === '') {
+        setEditSelection(null)
+        setShowEditButtons(false)
+        return
+      }
+
+      console.log('[JournalView] Text selected for edit:', { text, from, to })
+      setEditSelection({ text, from, to })
+      setEditButtonPosition({ x, y })
+      setShowEditButtons(true)
+    }
+
+    document.addEventListener('text-selected', handleTextSelected)
+    return () => {
+      document.removeEventListener('text-selected', handleTextSelected)
+    }
+  }, [editingHighlightId])
+
+  // Broadcast edit mode status to TipTap viewers
+  useEffect(() => {
+    if (editingHighlightId) {
+      const event = new CustomEvent('highlight-edit-mode', {
+        detail: { highlightId: editingHighlightId, enabled: true }
+      })
+      document.dispatchEvent(event)
+    } else {
+      const event = new CustomEvent('highlight-edit-mode', {
+        detail: { highlightId: null, enabled: false }
+      })
+      document.dispatchEvent(event)
+    }
+  }, [editingHighlightId])
+
+  const handleSaveEdit = async () => {
+    if (!editingHighlightId || !editSelection || !spaceId || !journalId) return
+
+    try {
+      // Update via backend API
+      await updateHighlight(editingHighlightId, {
+        text: editSelection.text,
+        range: {
+          startOffset: editSelection.from,
+          endOffset: editSelection.to,
+        },
+      })
+
+      // Dispatch event to TipTap to update the mark
+      const event = new CustomEvent('update-highlight-mark', {
+        detail: {
+          highlightId: editingHighlightId,
+          from: editSelection.from,
+          to: editSelection.to,
+        }
+      })
+      document.dispatchEvent(event)
+
+      // Clear edit state
+      setEditingHighlightId(null)
+      setEditSelection(null)
+      setShowEditButtons(false)
+
+      // Reload journal to get fresh content
+      await loadJournal(spaceId, journalId)
+    } catch (error) {
+      console.error('[JournalView] Failed to save highlight edit:', error)
+      alert('Failed to save changes. Please try again.')
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingHighlightId(null)
+    setEditSelection(null)
+    setShowEditButtons(false)
+  }
 
   const handleEdit = () => {
     if (spaceId && journalId) {
@@ -566,20 +659,46 @@ ${content}
         <HighlightActionsMenu
           highlightId={selectedHighlight.id}
           position={menuPosition}
-          onViewComments={() => {
+          commentCount={selectedHighlight.commentCount}
+          onViewComments={async () => {
+            if (!selectedHighlight) return
+
             setShowActionsMenu(false)
+
+            // Fetch comments for this highlight
+            try {
+              await fetchComments(selectedHighlight.id)
+            } catch (error) {
+              console.error('[JournalView] Failed to fetch comments:', error)
+            }
+
             setShowCommentThread(true)
           }}
           onEditSelection={() => {
-            // TODO: Implement edit selection
+            if (!selectedHighlight) return
+
+            // Enter edit mode
+            setEditingHighlightId(selectedHighlight.id)
             setShowActionsMenu(false)
-            alert('Edit selection not yet implemented')
+
+            console.log('[JournalView] Entering edit mode for highlight:', selectedHighlight.id)
           }}
           onDelete={async () => {
-            // TODO: Implement delete highlight
-            setShowActionsMenu(false)
-            setSelectedHighlight(null)
-            alert('Delete highlight not yet implemented')
+            if (!selectedHighlight) return
+
+            try {
+              await deleteHighlight(selectedHighlight.id)
+              setShowActionsMenu(false)
+              setSelectedHighlight(null)
+
+              // Reload journal to refresh TipTap content without the deleted highlight
+              if (spaceId && journalId) {
+                await loadJournal(spaceId, journalId)
+              }
+            } catch (error) {
+              console.error('[JournalView] Failed to delete highlight:', error)
+              alert('Failed to delete highlight. Please try again.')
+            }
           }}
           onClose={() => {
             setShowActionsMenu(false)
@@ -602,6 +721,75 @@ ${content}
             setSelectedHighlight(null)
           }}
         />
+      )}
+
+      {/* Edit Selection Buttons - Show Save/Cancel when editing highlight */}
+      {showEditButtons && editingHighlightId && (
+        <div
+          style={{
+            position: 'fixed',
+            left: `${editButtonPosition.x}px`,
+            top: `${editButtonPosition.y}px`,
+            transform: 'translate(-50%, 0%)',
+            zIndex: 99999,
+            animation: 'fadeIn 0.2s ease-out',
+            display: 'flex',
+            gap: '8px',
+          }}
+        >
+          <button
+            onClick={handleSaveEdit}
+            style={{
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: 'white',
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)'
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.4)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)'
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)'
+            }}
+          >
+            ✓ Save
+          </button>
+          <button
+            onClick={handleCancelEdit}
+            style={{
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#374151',
+              background: 'white',
+              border: '1px solid rgba(0, 0, 0, 0.2)',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)'
+              e.currentTarget.style.background = '#f9fafb'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)'
+              e.currentTarget.style.background = 'white'
+            }}
+          >
+            ✕ Cancel
+          </button>
+        </div>
       )}
 
       {/* Ellie companion with smart positioning */}

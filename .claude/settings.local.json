@@ -28,7 +28,8 @@
       "Bash(nul)",
       "Bash(findstr:*)",
       "Bash(npm run lint:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

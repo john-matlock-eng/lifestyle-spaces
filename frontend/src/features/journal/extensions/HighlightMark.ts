@@ -223,7 +223,7 @@ export const HighlightMark = Mark.create<{
         const commentCount = parseInt(markElement.getAttribute('data-comment-count') || '0');
         const color = markElement.getAttribute('data-highlight-color');
 
-        // Dispatch custom event for highlight click
+        // Dispatch custom event for highlight click with mouse position
         const customEvent = new CustomEvent('highlight-clicked', {
           detail: {
             id: highlightId,
@@ -232,6 +232,8 @@ export const HighlightMark = Mark.create<{
             color,
           },
         });
+        // Store the original mouse event for position data
+        (customEvent as CustomEvent & { sourceEvent?: MouseEvent }).sourceEvent = event;
         document.dispatchEvent(customEvent);
       }
     };
