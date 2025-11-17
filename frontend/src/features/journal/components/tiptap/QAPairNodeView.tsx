@@ -20,9 +20,9 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
   const handleToggleCollapse = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    const newCollapsed = !localCollapsed
-    setLocalCollapsed(newCollapsed)
-    updateAttributes({ isCollapsed: newCollapsed })
+    setLocalCollapsed(!localCollapsed)
+    // Don't update attributes to avoid triggering editor re-render
+    // Collapse state is local UI state only
   }
 
   const handleSaveEdit = () => {
