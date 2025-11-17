@@ -107,16 +107,19 @@ export const JournalViewPage: React.FC = () => {
       // Try to find the full highlight from the list
       const fullHighlight = highlights.find(h => h.id === id)
 
-      // Use full highlight if found, otherwise create minimal object
+      // Use full highlight if found, otherwise create minimal object matching Highlight interface
       const highlight: Highlight = fullHighlight || {
         id,
-        text: '', // Not needed for panel
+        journalEntryId: journalId || '',
+        spaceId: spaceId || '',
+        highlightedText: '',
+        textRange: { startOffset: 0, endOffset: 0 },
         color,
-        authorId: user?.userId || '',
-        authorName: authorName || user?.displayName || 'Unknown',
+        createdBy: user?.userId || '',
+        createdByName: authorName || user?.displayName || 'Unknown',
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         commentCount: commentCount || 0,
-        range: { from: 0, to: 0 } // Not needed for panel
       }
 
       console.log('[JournalView] Highlight clicked:', { id, highlight })
@@ -182,12 +185,15 @@ export const JournalViewPage: React.FC = () => {
 
     try {
       // Update via backend API
+      // Create a minimal DOMRect for the HighlightSelection interface
+      const dummyRect = new DOMRect(0, 0, 0, 0)
       await updateHighlight(editingHighlightId, {
         text: editSelection.text,
         range: {
           startOffset: editSelection.from,
           endOffset: editSelection.to,
         },
+        boundingRect: dummyRect,
       })
 
       // Dispatch event to TipTap to update the mark
