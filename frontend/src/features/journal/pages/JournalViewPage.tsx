@@ -86,6 +86,25 @@ export const JournalViewPage: React.FC = () => {
     }
   }, [journal])
 
+  // Listen for highlight click events from TipTap viewer
+  useEffect(() => {
+    const handleHighlightClick = (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { id } = customEvent.detail
+
+      // Find the highlight in our list
+      const highlight = highlights.find(h => h.id === id)
+      if (highlight) {
+        setSelectedHighlight(highlight)
+      }
+    }
+
+    document.addEventListener('highlight-clicked', handleHighlightClick)
+    return () => {
+      document.removeEventListener('highlight-clicked', handleHighlightClick)
+    }
+  }, [highlights])
+
   const handleEdit = () => {
     if (spaceId && journalId) {
       navigate(`/spaces/${spaceId}/journals/${journalId}/edit`)
