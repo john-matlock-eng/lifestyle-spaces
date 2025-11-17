@@ -44,12 +44,6 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
 
           <span className="qa-number">Q</span>
 
-          <NodeViewContent
-            as="div"
-            className="qa-question-content"
-            data-type="question"
-          />
-
           {!isReadOnly && (
             <div className="qa-actions">
               <button
@@ -64,13 +58,9 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
           )}
         </div>
 
-        {!localCollapsed && (
-          <NodeViewContent
-            as="div"
-            className="qa-answer-content"
-            data-type="answer"
-          />
-        )}
+        <NodeViewContent
+          className={`qa-content-wrapper ${localCollapsed ? 'collapsed' : 'expanded'}`}
+        />
       </div>
 
       <style>{`
@@ -100,7 +90,6 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
           gap: 12px;
           padding: 12px;
           background: var(--theme-bg-elevated);
-          border-bottom: 1px solid var(--theme-border-base);
         }
 
         .qa-collapse-btn {
@@ -136,23 +125,6 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
           flex-shrink: 0;
         }
 
-        .qa-question-content {
-          flex: 1;
-          color: var(--theme-text-primary);
-          font-weight: 500;
-          min-width: 0;
-        }
-
-        .qa-question-content [data-qa-question] {
-          outline: none;
-        }
-
-        .qa-question-content [data-qa-question]:focus {
-          outline: 2px solid var(--theme-primary-600);
-          outline-offset: 2px;
-          border-radius: 4px;
-        }
-
         .qa-actions {
           display: flex;
           gap: 4px;
@@ -183,26 +155,52 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
           background: rgba(239, 68, 68, 0.1);
         }
 
-        .qa-answer-content {
+        /* Content wrapper */
+        .qa-content-wrapper {
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Question styling - appears in header */
+        .qa-content-wrapper > [data-qa-question] {
+          flex: 1;
+          color: var(--theme-text-primary);
+          font-weight: 500;
+          padding: 0 12px;
+          min-width: 0;
+          outline: none;
+          margin-top: -44px; /* Move up to align with header */
+          padding-top: 12px;
+          padding-bottom: 12px;
+        }
+
+        .qa-content-wrapper > [data-qa-question]:focus {
+          outline: 2px solid var(--theme-primary-600);
+          outline-offset: 2px;
+          border-radius: 4px;
+        }
+
+        /* Answer styling - appears below when expanded */
+        .qa-content-wrapper > [data-qa-answer] {
           padding: 16px;
           color: var(--theme-text-primary);
           font-size: 14px;
           line-height: 1.6;
-        }
-
-        .qa-answer-content [data-qa-answer] {
           outline: none;
         }
 
-        .qa-answer-content [data-qa-answer]:focus {
+        .qa-content-wrapper.collapsed > [data-qa-answer] {
+          display: none;
+        }
+
+        .qa-content-wrapper > [data-qa-answer]:focus {
           outline: 2px solid var(--theme-primary-600);
           outline-offset: 2px;
           border-radius: 4px;
         }
 
         /* Support for highlights within Q&A */
-        .qa-question-content mark[data-highlight-id],
-        .qa-answer-content mark[data-highlight-id] {
+        .qa-content-wrapper mark[data-highlight-id] {
           cursor: pointer;
         }
       `}</style>

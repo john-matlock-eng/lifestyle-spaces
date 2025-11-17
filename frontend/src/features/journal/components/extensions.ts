@@ -37,18 +37,19 @@ export const getEditorExtensions = (placeholder?: string, enableHighlights = tru
       },
     })
   ] : []),
-  Markdown.configure({
-    html: false,              // Output markdown, not HTML
-    tightLists: true,         // Use tight list spacing
-    bulletListMarker: '-',    // Use - for bullet lists
-    linkify: false,           // Disable linkify to avoid conflict with Link extension
-    breaks: false,            // No hard breaks
-    transformPastedText: true // Convert pasted content to markdown
-  }),
   Link.configure({
     openOnClick: false,
     HTMLAttributes: {
       class: 'journal-link'
     }
+  }),
+  Markdown.configure({
+    html: false,              // Output markdown, not HTML
+    tightLists: true,         // Use tight list spacing
+    bulletListMarker: '-',    // Use - for bullet lists
+    linkify: false,           // Disable linkify
+    breaks: false,            // No hard breaks
+    transformPastedText: true, // Convert pasted content to markdown
+    transformCopiedText: false // Don't transform on copy to avoid conflicts
   })
 ]
