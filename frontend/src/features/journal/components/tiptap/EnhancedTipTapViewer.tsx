@@ -7,7 +7,7 @@
 import React, { useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { getEditorExtensions } from '../extensions'
-import { QAPairNode } from '../../extensions/QAPairNode'
+import { QAPairNode, QAPairQuestion, QAPairAnswer } from '../../extensions/QAPairNode'
 import { HighlightToolbar } from '../HighlightToolbar'
 import '../../styles/journal.css'
 
@@ -42,7 +42,9 @@ export const EnhancedTipTapViewer: React.FC<EnhancedTipTapViewerProps> = ({
   const editor = useEditor({
     extensions: [
       ...getEditorExtensions('Start writing...', true), // Use standard extensions
-      QAPairNode, // Add custom Q&A node
+      QAPairQuestion, // Q&A child node for question
+      QAPairAnswer, // Q&A child node for answer
+      QAPairNode, // Add custom Q&A node (must be after child nodes)
     ],
     content: contentTiptap,
     editable: isEditable,

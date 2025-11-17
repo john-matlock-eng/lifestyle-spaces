@@ -2,7 +2,7 @@
  * Custom TipTap Node for Q&A Pairs
  *
  * Stores question/answer data directly in TipTap document structure.
- * Eliminates need for markdown parsing and separate storage.
+ * Questions and answers support rich text with marks (highlights, etc.)
  */
 import { Node, mergeAttributes } from '@tiptap/core'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
@@ -13,19 +13,48 @@ import { QAPairNodeView } from '../components/tiptap/QAPairNodeView'
 
 export interface QAPairAttributes {
   id: string
-  question: string
-  answer: string
   isCollapsed: boolean
 }
+
+// Child nodes for Q&A content
+export const QAPairQuestion = Node.create({
+  name: 'qaPairQuestion',
+  content: 'inline*',
+  group: 'block',
+  defining: true,
+
+  parseHTML() {
+    return [{ tag: 'div[data-qa-question]' }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['div', mergeAttributes(HTMLAttributes, { 'data-qa-question': '' }), 0]
+  },
+})
+
+export const QAPairAnswer = Node.create({
+  name: 'qaPairAnswer',
+  content: 'inline*',
+  group: 'block',
+  defining: true,
+
+  parseHTML() {
+    return [{ tag: 'div[data-qa-answer]' }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['div', mergeAttributes(HTMLAttributes, { 'data-qa-answer': '' }), 0]
+  },
+})
 
 // Extend TipTap's RawCommands to include our custom commands
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     qaPair: {
       /**
-       * Insert a Q&A pair node
+       * Insert a Q&A pair node with question and answer content
        */
-      insertQAPair: (attributes: QAPairAttributes) => ReturnType
+      insertQAPair: (id: string, question: string, answer: string) => ReturnType
       /**
        * Update a Q&A pair node by ID
        */
@@ -39,9 +68,9 @@ export const QAPairNode = Node.create({
 
   group: 'block',
 
-  content: '', // Q&A pairs don't have editable content inside
+  content: 'qaPairQuestion qaPairAnswer', // Required structure: question then answer
 
-  atom: true, // Treat as atomic unit
+  isolating: true, // Prevent content from outside affecting this node
 
   addAttributes() {
     return {
@@ -50,20 +79,6 @@ export const QAPairNode = Node.create({
         parseHTML: element => element.getAttribute('data-id'),
         renderHTML: attributes => ({
           'data-id': attributes.id,
-        }),
-      },
-      question: {
-        default: '',
-        parseHTML: element => element.getAttribute('data-question'),
-        renderHTML: attributes => ({
-          'data-question': attributes.question,
-        }),
-      },
-      answer: {
-        default: '',
-        parseHTML: element => element.getAttribute('data-answer'),
-        renderHTML: attributes => ({
-          'data-answer': attributes.answer,
         }),
       },
       isCollapsed: {
@@ -95,11 +110,21 @@ export const QAPairNode = Node.create({
   addCommands() {
     return {
       insertQAPair:
-        (attributes: QAPairAttributes): Command =>
+        (id: string, question: string, answer: string): Command =>
         ({ commands }) => {
           return commands.insertContent({
             type: this.name,
-            attrs: attributes,
+            attrs: { id, isCollapsed: false },
+            content: [
+              {
+                type: 'qaPairQuestion',
+                content: question ? [{ type: 'text', text: question }] : [],
+              },
+              {
+                type: 'qaPairAnswer',
+                content: answer ? [{ type: 'text', text: answer }] : [],
+              },
+            ],
           })
         },
       updateQAPair:

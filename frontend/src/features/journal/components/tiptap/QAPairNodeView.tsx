@@ -2,18 +2,15 @@
  * React Node View for Q&A Pair
  *
  * Renders Q&A pairs with collapse/expand functionality.
- * Works in both edit and read-only modes.
+ * Questions and answers support rich text with highlights.
  */
 import React, { useState } from 'react'
-import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
+import { NodeViewWrapper, NodeViewContent, type NodeViewProps } from '@tiptap/react'
 import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 
 export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes, deleteNode, editor }) => {
-  const { id, question, answer, isCollapsed } = node.attrs
+  const { id, isCollapsed } = node.attrs
   const [localCollapsed, setLocalCollapsed] = useState(isCollapsed)
-  const [isEditing, setIsEditing] = useState(false)
-  const [editQuestion, setEditQuestion] = useState(question)
-  const [editAnswer, setEditAnswer] = useState(answer)
 
   const isReadOnly = !editor.isEditable
 
@@ -25,18 +22,10 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
     // Collapse state is local UI state only
   }
 
-  const handleSaveEdit = () => {
-    updateAttributes({
-      question: editQuestion,
-      answer: editAnswer,
-    })
-    setIsEditing(false)
-  }
-
-  const handleCancelEdit = () => {
-    setEditQuestion(question)
-    setEditAnswer(answer)
-    setIsEditing(false)
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    deleteNode()
   }
 
   return (
@@ -55,79 +44,32 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
 
           <span className="qa-number">Q</span>
 
-          <div className="qa-question-display">
-            {isEditing ? (
-              <input
-                type="text"
-                value={editQuestion}
-                onChange={(e) => setEditQuestion(e.target.value)}
-                className="qa-question-input"
-                placeholder="Question"
-              />
-            ) : (
-              <strong>{question}</strong>
-            )}
-          </div>
+          <NodeViewContent
+            as="div"
+            className="qa-question-content"
+            data-type="question"
+          />
 
           {!isReadOnly && (
             <div className="qa-actions">
-              {isEditing ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleSaveEdit}
-                    className="qa-action-btn qa-save-btn"
-                    title="Save"
-                  >
-                    ✓
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    className="qa-action-btn qa-cancel-btn"
-                    title="Cancel"
-                  >
-                    ✕
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(true)}
-                    className="qa-action-btn"
-                    title="Edit"
-                  >
-                    ✎
-                  </button>
-                  <button
-                    type="button"
-                    onClick={deleteNode}
-                    className="qa-action-btn qa-delete-btn"
-                    title="Delete"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </>
-              )}
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="qa-action-btn qa-delete-btn"
+                title="Delete"
+              >
+                <Trash2 size={14} />
+              </button>
             </div>
           )}
         </div>
 
         {!localCollapsed && (
-          <div className="qa-answer-display">
-            {isEditing ? (
-              <textarea
-                value={editAnswer}
-                onChange={(e) => setEditAnswer(e.target.value)}
-                className="qa-answer-input"
-                placeholder="Answer"
-                rows={4}
-              />
-            ) : (
-              <div className="qa-answer-text">{answer}</div>
-            )}
-          </div>
+          <NodeViewContent
+            as="div"
+            className="qa-answer-content"
+            data-type="answer"
+          />
         )}
       </div>
 
@@ -172,6 +114,7 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
           color: var(--theme-text-secondary);
           cursor: pointer;
           transition: all 0.2s;
+          flex-shrink: 0;
         }
 
         .qa-collapse-btn:hover {
@@ -190,43 +133,30 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
           font-weight: 600;
           font-size: 12px;
           border-radius: 16px;
+          flex-shrink: 0;
         }
 
-        .qa-question-display {
+        .qa-question-content {
           flex: 1;
           color: var(--theme-text-primary);
-        }
-
-        .qa-question-display strong {
           font-weight: 500;
-          color: var(--theme-text-primary);
+          min-width: 0;
         }
 
-        .qa-question-input {
-          flex: 1;
-          padding: 8px 12px;
-          border: 1px solid var(--theme-border-base);
-          border-radius: 4px;
-          font-size: 14px;
-          font-weight: 500;
-          background: var(--theme-bg-base);
-          color: var(--theme-text-primary);
-          transition: all 0.2s;
-        }
-
-        .qa-question-input:focus {
+        .qa-question-content [data-qa-question] {
           outline: none;
-          border-color: var(--theme-primary-600);
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
         }
 
-        .dark .qa-question-input:focus {
-          box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+        .qa-question-content [data-qa-question]:focus {
+          outline: 2px solid var(--theme-primary-600);
+          outline-offset: 2px;
+          border-radius: 4px;
         }
 
         .qa-actions {
           display: flex;
           gap: 4px;
+          flex-shrink: 0;
         }
 
         .qa-action-btn {
@@ -241,7 +171,6 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
           cursor: pointer;
           transition: all 0.2s;
           border-radius: 4px;
-          font-size: 14px;
         }
 
         .qa-action-btn:hover {
@@ -249,57 +178,32 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
           color: var(--theme-text-primary);
         }
 
-        .qa-save-btn {
-          color: #10b981;
-        }
-
-        .qa-save-btn:hover {
-          background: rgba(16, 185, 129, 0.1);
-        }
-
-        .qa-cancel-btn:hover {
-          background: rgba(239, 68, 68, 0.1);
-        }
-
         .qa-delete-btn:hover {
           color: #ef4444;
           background: rgba(239, 68, 68, 0.1);
         }
 
-        .qa-answer-display {
+        .qa-answer-content {
           padding: 16px;
-        }
-
-        .qa-answer-text {
           color: var(--theme-text-primary);
           font-size: 14px;
           line-height: 1.6;
-          white-space: pre-wrap;
         }
 
-        .qa-answer-input {
-          width: 100%;
-          padding: 12px;
-          border: 1px solid var(--theme-border-base);
-          border-radius: 4px;
-          font-size: 14px;
-          line-height: 1.6;
-          resize: vertical;
-          min-height: 100px;
-          background: var(--theme-bg-base);
-          color: var(--theme-text-primary);
-          transition: all 0.2s;
-          font-family: inherit;
-        }
-
-        .qa-answer-input:focus {
+        .qa-answer-content [data-qa-answer] {
           outline: none;
-          border-color: var(--theme-primary-600);
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
         }
 
-        .dark .qa-answer-input:focus {
-          box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+        .qa-answer-content [data-qa-answer]:focus {
+          outline: 2px solid var(--theme-primary-600);
+          outline-offset: 2px;
+          border-radius: 4px;
+        }
+
+        /* Support for highlights within Q&A */
+        .qa-question-content mark[data-highlight-id],
+        .qa-answer-content mark[data-highlight-id] {
+          cursor: pointer;
         }
       `}</style>
     </NodeViewWrapper>

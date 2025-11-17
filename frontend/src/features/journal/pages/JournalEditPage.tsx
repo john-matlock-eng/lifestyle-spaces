@@ -213,10 +213,18 @@ export const JournalEditPage: React.FC = () => {
             type: 'qaPair',
             attrs: {
               id: pair.id,
-              question: pair.question,
-              answer: pair.answer,
               isCollapsed: pair.isCollapsed || false
-            }
+            },
+            content: [
+              {
+                type: 'qaPairQuestion',
+                content: pair.question ? [{ type: 'text', text: pair.question }] : []
+              },
+              {
+                type: 'qaPairAnswer',
+                content: pair.answer ? [{ type: 'text', text: pair.answer }] : []
+              }
+            ]
           }))
         }
 
