@@ -90,20 +90,29 @@ export const JournalViewPage: React.FC = () => {
   useEffect(() => {
     const handleHighlightClick = (event: Event) => {
       const customEvent = event as CustomEvent
-      const { id } = customEvent.detail
+      const { id, authorName, commentCount, color } = customEvent.detail
 
-      // Find the highlight in our list
-      const highlight = highlights.find(h => h.id === id)
-      if (highlight) {
-        setSelectedHighlight(highlight)
+      // Create highlight object from event data
+      // TipTap embeds all highlight info in the mark
+      const highlight: Highlight = {
+        id,
+        text: '', // Not needed for panel
+        color,
+        authorId: user?.userId || '',
+        authorName: authorName || user?.displayName || 'Unknown',
+        createdAt: new Date().toISOString(),
+        commentCount: commentCount || 0,
+        range: { from: 0, to: 0 } // Not needed for panel
       }
+
+      setSelectedHighlight(highlight)
     }
 
     document.addEventListener('highlight-clicked', handleHighlightClick)
     return () => {
       document.removeEventListener('highlight-clicked', handleHighlightClick)
     }
-  }, [highlights])
+  }, [user])
 
   const handleEdit = () => {
     if (spaceId && journalId) {
@@ -395,8 +404,8 @@ ${content}
                 })
                 console.log('[JournalView] ContentTiptap saved successfully')
 
-                // Reload journal to get updated data (including extracted highlights)
-                await loadJournal(spaceId, journalId)
+                // Don't reload - TipTap already has the updated content
+                // Reloading causes unnecessary flashing
               } catch (error) {
                 console.error('[JournalView] Failed to save contentTiptap:', error)
               }
