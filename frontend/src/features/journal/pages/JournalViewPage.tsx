@@ -11,6 +11,7 @@ import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizati
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { EnhancedTipTapViewer } from '../components/tiptap/EnhancedTipTapViewer'
 import { CommentThread } from '../components/CommentThread'
+import { HighlightActionsMenu } from '../components/HighlightActionsMenu'
 import { PresenceAvatars } from '../components/PresenceAvatars'
 import { ConnectionStatus } from '../components/ConnectionStatus'
 import { useHighlightsRealtime } from '../hooks/useHighlightsRealtime'
@@ -34,6 +35,9 @@ export const JournalViewPage: React.FC = () => {
   const [displaySections, setDisplaySections] = useState<TipTapSection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
   const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
+  const [showActionsMenu, setShowActionsMenu] = useState(false)
+  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+  const [showCommentThread, setShowCommentThread] = useState(false)
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
 
   // Highlights and comments real-time feature
@@ -91,6 +95,7 @@ export const JournalViewPage: React.FC = () => {
     const handleHighlightClick = (event: Event) => {
       const customEvent = event as CustomEvent
       const { id, authorName, commentCount, color } = customEvent.detail
+      const mouseEvent = (event as any).sourceEvent as MouseEvent
 
       // Create highlight object from event data
       // TipTap embeds all highlight info in the mark
@@ -106,6 +111,13 @@ export const JournalViewPage: React.FC = () => {
       }
 
       setSelectedHighlight(highlight)
+
+      // Show actions menu at click position
+      const clickX = mouseEvent?.clientX || window.innerWidth / 2
+      const clickY = mouseEvent?.clientY || window.innerHeight / 2
+      setMenuPosition({ x: clickX, y: clickY })
+      setShowActionsMenu(true)
+      setShowCommentThread(false)
     }
 
     document.addEventListener('highlight-clicked', handleHighlightClick)
@@ -549,8 +561,35 @@ ${content}
         />
       )}
 
+      {/* Highlight Actions Menu - Floating menu with options */}
+      {showActionsMenu && selectedHighlight && (
+        <HighlightActionsMenu
+          highlightId={selectedHighlight.id}
+          position={menuPosition}
+          onViewComments={() => {
+            setShowActionsMenu(false)
+            setShowCommentThread(true)
+          }}
+          onEditSelection={() => {
+            // TODO: Implement edit selection
+            setShowActionsMenu(false)
+            alert('Edit selection not yet implemented')
+          }}
+          onDelete={async () => {
+            // TODO: Implement delete highlight
+            setShowActionsMenu(false)
+            setSelectedHighlight(null)
+            alert('Delete highlight not yet implemented')
+          }}
+          onClose={() => {
+            setShowActionsMenu(false)
+            setSelectedHighlight(null)
+          }}
+        />
+      )}
+
       {/* Comment Thread - Renders as sliding panel with its own backdrop */}
-      {selectedHighlight && (
+      {showCommentThread && selectedHighlight && (
         <CommentThread
           highlight={selectedHighlight}
           comments={comments[selectedHighlight.id] || []}
@@ -558,7 +597,10 @@ ${content}
           currentUserId={user?.userId || ''}
           onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
           onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
-          onClose={() => setSelectedHighlight(null)}
+          onClose={() => {
+            setShowCommentThread(false)
+            setSelectedHighlight(null)
+          }}
         />
       )}
 
