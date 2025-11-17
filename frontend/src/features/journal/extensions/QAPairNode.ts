@@ -16,19 +16,21 @@ export interface QAPairAttributes {
   isCollapsed: boolean
 }
 
-// Child nodes for Q&A content
+// Child nodes for Q&A content - these render as simple divs
+// The parent QAPair node handles the display logic
 export const QAPairQuestion = Node.create({
   name: 'qaPairQuestion',
   content: 'inline*',
   group: 'block',
   defining: true,
+  inline: false,
 
   parseHTML() {
     return [{ tag: 'div[data-qa-question]' }]
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['div', mergeAttributes(HTMLAttributes, { 'data-qa-question': '' }), 0]
+    return ['div', mergeAttributes(HTMLAttributes, { 'data-qa-question': '', class: 'qa-question-content' }), 0]
   },
 })
 
@@ -37,13 +39,14 @@ export const QAPairAnswer = Node.create({
   content: 'inline*',
   group: 'block',
   defining: true,
+  inline: false,
 
   parseHTML() {
     return [{ tag: 'div[data-qa-answer]' }]
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['div', mergeAttributes(HTMLAttributes, { 'data-qa-answer': '' }), 0]
+    return ['div', mergeAttributes(HTMLAttributes, { 'data-qa-answer': '', class: 'qa-answer-content' }), 0]
   },
 })
 

@@ -2,10 +2,10 @@
  * React Node View for Q&A Pair
  *
  * Renders Q&A pairs with collapse/expand functionality.
- * Questions and answers support rich text with highlights.
+ * Note: Highlighting is not supported in Q&A - they render as plain text for read-only view.
  */
-import React, { useState } from 'react'
-import { NodeViewWrapper, NodeViewContent, type NodeViewProps } from '@tiptap/react'
+import React, { useState, useMemo } from 'react'
+import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
 import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 
 export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes, deleteNode, editor }) => {
@@ -14,12 +14,23 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
 
   const isReadOnly = !editor.isEditable
 
+  // Extract question and answer text from child nodes
+  const questionText = useMemo(() => {
+    if (node.content.childCount < 1) return ''
+    const questionNode = node.content.child(0)
+    return questionNode.textContent
+  }, [node.content])
+
+  const answerText = useMemo(() => {
+    if (node.content.childCount < 2) return ''
+    const answerNode = node.content.child(1)
+    return answerNode.textContent
+  }, [node.content])
+
   const handleToggleCollapse = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setLocalCollapsed(!localCollapsed)
-    // Don't update attributes to avoid triggering editor re-render
-    // Collapse state is local UI state only
   }
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -44,6 +55,10 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
 
           <span className="qa-number">Q</span>
 
+          <div className="qa-question-text">
+            {questionText}
+          </div>
+
           {!isReadOnly && (
             <div className="qa-actions">
               <button
@@ -58,9 +73,11 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
           )}
         </div>
 
-        <NodeViewContent
-          className={`qa-content-wrapper ${localCollapsed ? 'collapsed' : 'expanded'}`}
-        />
+        {!localCollapsed && (
+          <div className="qa-answer-display">
+            <div className="qa-answer-text">{answerText}</div>
+          </div>
+        )}
       </div>
 
       <style>{`
@@ -90,6 +107,7 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
           gap: 12px;
           padding: 12px;
           background: var(--theme-bg-elevated);
+          border-bottom: 1px solid var(--theme-border-base);
         }
 
         .qa-collapse-btn {
@@ -125,6 +143,13 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
           flex-shrink: 0;
         }
 
+        .qa-question-text {
+          flex: 1;
+          color: var(--theme-text-primary);
+          font-weight: 500;
+          min-width: 0;
+        }
+
         .qa-actions {
           display: flex;
           gap: 4px;
@@ -155,53 +180,15 @@ export const QAPairNodeView: React.FC<NodeViewProps> = ({ node, updateAttributes
           background: rgba(239, 68, 68, 0.1);
         }
 
-        /* Content wrapper */
-        .qa-content-wrapper {
-          display: flex;
-          flex-direction: column;
-        }
-
-        /* Question styling - appears in header */
-        .qa-content-wrapper > [data-qa-question] {
-          flex: 1;
-          color: var(--theme-text-primary);
-          font-weight: 500;
-          padding: 0 12px;
-          min-width: 0;
-          outline: none;
-          margin-top: -44px; /* Move up to align with header */
-          padding-top: 12px;
-          padding-bottom: 12px;
-        }
-
-        .qa-content-wrapper > [data-qa-question]:focus {
-          outline: 2px solid var(--theme-primary-600);
-          outline-offset: 2px;
-          border-radius: 4px;
-        }
-
-        /* Answer styling - appears below when expanded */
-        .qa-content-wrapper > [data-qa-answer] {
+        .qa-answer-display {
           padding: 16px;
+        }
+
+        .qa-answer-text {
           color: var(--theme-text-primary);
           font-size: 14px;
           line-height: 1.6;
-          outline: none;
-        }
-
-        .qa-content-wrapper.collapsed > [data-qa-answer] {
-          display: none;
-        }
-
-        .qa-content-wrapper > [data-qa-answer]:focus {
-          outline: 2px solid var(--theme-primary-600);
-          outline-offset: 2px;
-          border-radius: 4px;
-        }
-
-        /* Support for highlights within Q&A */
-        .qa-content-wrapper mark[data-highlight-id] {
-          cursor: pointer;
+          white-space: pre-wrap;
         }
       `}</style>
     </NodeViewWrapper>
