@@ -117,4 +117,18 @@ def pytest_runtest_teardown(item):
         # If moto isn't available or backend can't be reset, that's fine
         pass
 
+    # Clear database caches to prevent test pollution
+    try:
+        from app.core.database import get_dynamodb_resource
+        import app.core.database as db_module
+
+        # Clear the lru_cache on get_dynamodb_resource
+        get_dynamodb_resource.cache_clear()
+
+        # Clear the global singleton
+        db_module._db_client = None
+    except Exception:
+        # If module not imported yet, that's fine
+        pass
+
 
