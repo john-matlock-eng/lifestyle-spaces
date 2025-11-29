@@ -157,10 +157,7 @@ export const useSectionTipTap = (
     setHasChanges(false)
   }, [initialContent])
 
-  setHasChanges(false)
-}, [initialContent])
-
-// Set all sections at once (useful for initialization after load)
+  // Set all sections at once (useful for initialization after load)
 const setAllSections = useCallback((sections: SectionTipTapState) => {
   setSectionContents(sections)
   setHasChanges(false)
