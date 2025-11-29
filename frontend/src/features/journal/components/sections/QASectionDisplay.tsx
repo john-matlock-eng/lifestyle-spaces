@@ -71,8 +71,7 @@ export const QASectionDisplay: React.FC<QASectionDisplayProps> = ({
         const pairId = pair.id || `pair-${index}`;
         const isCollapsed = collapsedPairs.has(pairId);
 
-        // Create compound section IDs for question and answer
-        const questionSectionId = `${sectionId}-q-${pairId}`;
+        // Create compound section ID for answer
         const answerSectionId = `${sectionId}-a-${pairId}`;
 
         return (
@@ -91,20 +90,7 @@ export const QASectionDisplay: React.FC<QASectionDisplayProps> = ({
               <span className="qa-number">Q{index + 1}</span>
 
               <div className="qa-question-display">
-                <HighlightableText
-                  content={`**${pair.question}**`}
-                  highlights={highlights.filter(h =>
-                    h.textRange.startContainerId === questionSectionId
-                  )}
-                  journalEntryId={journalEntryId}
-                  spaceId={spaceId}
-                  sectionId={questionSectionId}
-                  onHighlightCreate={onHighlightCreate}
-                  onHighlightClick={onHighlightClick}
-                  onHighlightUpdate={onHighlightUpdate}
-                  onHighlightDelete={onHighlightDelete}
-                  isReadOnly={isReadOnly}
-                />
+                <div className="font-semibold">{pair.question}</div>
               </div>
             </div>
 
@@ -123,6 +109,7 @@ export const QASectionDisplay: React.FC<QASectionDisplayProps> = ({
                   onHighlightUpdate={onHighlightUpdate}
                   onHighlightDelete={onHighlightDelete}
                   isReadOnly={isReadOnly}
+                  useMarkdown={false}
                 />
               </div>
             )}
