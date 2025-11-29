@@ -280,6 +280,8 @@ describe('getValidatedAmplifyConfig', () => {
 
   it('should throw error when validation fails', () => {
     vi.stubEnv('VITE_COGNITO_USER_POOL_ID', 'us-east-1_ABC123DEF')
+    vi.stubEnv('VITE_COGNITO_USER_POOL_CLIENT_ID', '1234567890abcdefghijk')
+    vi.stubEnv('VITE_AWS_REGION', 'us-east-1')
     vi.stubEnv('VITE_API_URL', 'not-a-valid-url')
 
     expect(() => getValidatedAmplifyConfig()).toThrow('Invalid Amplify configuration. Please check your environment variables: VITE_COGNITO_USER_POOL_ID, VITE_COGNITO_USER_POOL_CLIENT_ID, VITE_AWS_REGION, VITE_API_URL')
