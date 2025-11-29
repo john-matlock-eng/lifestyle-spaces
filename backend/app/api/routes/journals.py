@@ -130,6 +130,7 @@ async def list_space_journals(
                 user_id=journal["user_id"],
                 title=journal["title"],
                 content=journal["content"],
+                content_tiptap=journal.get("content_tiptap"),
                 template_id=journal.get("template_id"),
                 # REMOVED: template_data - data is embedded in content
                 tags=journal.get("tags", []),
@@ -189,6 +190,7 @@ async def get_journal(
             user_id=result["user_id"],
             title=result["title"],
             content=result["content"],
+            content_tiptap=result.get("content_tiptap"),
             template_id=result.get("template_id"),
             # REMOVED: template_data - data is embedded in content
             tags=result.get("tags", []),
@@ -242,6 +244,7 @@ async def update_journal(
             user_id=result["user_id"],
             title=result["title"],
             content=result["content"],
+            content_tiptap=result.get("content_tiptap"),
             template_id=result.get("template_id"),
             # REMOVED: template_data - data is embedded in content
             tags=result.get("tags", []),
@@ -339,6 +342,7 @@ async def list_user_journals(
                 user_id=journal["user_id"],
                 title=journal["title"],
                 content=journal["content"],
+                content_tiptap=journal.get("content_tiptap"),
                 template_id=journal.get("template_id"),
                 # REMOVED: template_data - data is embedded in content
                 tags=journal.get("tags", []),

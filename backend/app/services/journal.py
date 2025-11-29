@@ -545,6 +545,7 @@ class JournalService:
                 'user_id': journal['user_id'],
                 'title': journal['title'],
                 'content': journal['content'],
+                'content_tiptap': journal.get('content_tiptap'),
                 'template_id': journal.get('template_id'),
                 # REMOVED: template_data - data is embedded in content
                 'tags': journal.get('tags', []),
@@ -612,6 +613,7 @@ class JournalService:
                 'user_id': journal['user_id'],
                 'title': journal['title'],
                 'content': journal['content'],
+                'content_tiptap': journal.get('content_tiptap'),
                 'template_id': journal.get('template_id'),
                 # REMOVED: template_data - data is embedded in content
                 'tags': journal.get('tags', []),
