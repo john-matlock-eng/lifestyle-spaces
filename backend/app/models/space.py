@@ -28,7 +28,7 @@ class SpaceCreate(SpaceBase):
     """Space creation model."""
     type: str = Field(default="workspace")
     metadata: Optional[Dict[str, Any]] = None
-    
+
     @field_validator('name')
     @classmethod
     def validate_name(cls, v: str) -> str:
@@ -36,13 +36,57 @@ class SpaceCreate(SpaceBase):
         if not v:
             raise ValueError('Space name is required')
         return v
-    
+
     @field_validator('description')
     @classmethod
     def validate_description(cls, v: Optional[str]) -> Optional[str]:
         if v:
             return v.strip()
         return v
+
+    @field_validator('calendar_url')
+    @classmethod
+    def validate_calendar_url(cls, v: Optional[str]) -> Optional[str]:
+        """Validate calendar URL for security (production-ready)."""
+        if v is None or v.strip() == '':
+            return None
+
+        v = v.strip()
+
+        # Validate URL format
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(v)
+
+            # Must be HTTPS for security (no HTTP allowed in production)
+            if parsed.scheme != 'https':
+                raise ValueError('Calendar URL must use HTTPS protocol for security')
+
+            # Must have a valid domain
+            if not parsed.netloc:
+                raise ValueError('Calendar URL must have a valid domain')
+
+            # Only allow Google Calendar domains for security
+            allowed_domains = [
+                'calendar.google.com',
+                'www.google.com'
+            ]
+
+            # Check if domain matches allowed domains
+            domain = parsed.netloc.lower()
+            if not any(domain == allowed or domain.endswith(f'.{allowed}')
+                      for allowed in allowed_domains):
+                raise ValueError(
+                    f'Calendar URL must be from an allowed domain: {", ".join(allowed_domains)}'
+                )
+
+            return v
+
+        except ValueError as e:
+            # Re-raise validation errors
+            raise e
+        except Exception:
+            raise ValueError('Invalid calendar URL format')
 
 
 class SpaceUpdate(BaseModel):
@@ -52,9 +96,9 @@ class SpaceUpdate(BaseModel):
     calendar_url: Optional[str] = Field(None, alias="calendarUrl")
     is_public: Optional[bool] = Field(None, alias="isPublic")
     metadata: Optional[Dict[str, Any]] = None
-    
+
     model_config = ConfigDict(populate_by_name=True)
-    
+
     @field_validator('name')
     @classmethod
     def validate_name(cls, v: Optional[str]) -> Optional[str]:
@@ -63,13 +107,57 @@ class SpaceUpdate(BaseModel):
             if not v:
                 raise ValueError('Space name cannot be empty')
         return v
-    
+
     @field_validator('description')
     @classmethod
     def validate_description(cls, v: Optional[str]) -> Optional[str]:
         if v:
             return v.strip()
         return v
+
+    @field_validator('calendar_url')
+    @classmethod
+    def validate_calendar_url(cls, v: Optional[str]) -> Optional[str]:
+        """Validate calendar URL for security (production-ready)."""
+        if v is None or v.strip() == '':
+            return None
+
+        v = v.strip()
+
+        # Validate URL format
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(v)
+
+            # Must be HTTPS for security (no HTTP allowed in production)
+            if parsed.scheme != 'https':
+                raise ValueError('Calendar URL must use HTTPS protocol for security')
+
+            # Must have a valid domain
+            if not parsed.netloc:
+                raise ValueError('Calendar URL must have a valid domain')
+
+            # Only allow Google Calendar domains for security
+            allowed_domains = [
+                'calendar.google.com',
+                'www.google.com'
+            ]
+
+            # Check if domain matches allowed domains
+            domain = parsed.netloc.lower()
+            if not any(domain == allowed or domain.endswith(f'.{allowed}')
+                      for allowed in allowed_domains):
+                raise ValueError(
+                    f'Calendar URL must be from an allowed domain: {", ".join(allowed_domains)}'
+                )
+
+            return v
+
+        except ValueError as e:
+            # Re-raise validation errors
+            raise e
+        except Exception:
+            raise ValueError('Invalid calendar URL format')
 
 
 class SpaceResponse(BaseModel):

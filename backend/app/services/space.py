@@ -114,6 +114,7 @@ class SpaceService:
             'id': space_id,
             'name': space.name.strip(),
             'description': space.description.strip() if space.description else None,
+            'calendar_url': space.calendar_url,
             'type': space.type,
             'is_public': space.is_public,
             'owner_id': owner_id,
@@ -155,6 +156,7 @@ class SpaceService:
             'id': space_id,
             'name': space.name.strip(),
             'description': space.description.strip() if space.description else None,
+            'calendar_url': space.calendar_url,
             'type': space.type,
             'is_public': space.is_public,
             'owner_id': owner_id,
@@ -203,6 +205,7 @@ class SpaceService:
             'id': space['id'],
             'name': space['name'],
             'description': space.get('description'),
+            'calendar_url': space.get('calendar_url'),
             'type': space.get('type', 'workspace'),
             'is_public': space.get('is_public', False),
             'owner_id': space['owner_id'],
@@ -259,7 +262,11 @@ class SpaceService:
         if update.is_public is not None:
             update_expr += ", is_public = :is_public"
             expr_values[':is_public'] = update.is_public
-        
+
+        if update.calendar_url is not None:
+            update_expr += ", calendar_url = :calendar_url"
+            expr_values[':calendar_url'] = update.calendar_url
+
         if update.metadata is not None:
             update_expr += ", metadata = :metadata"
             expr_values[':metadata'] = update.metadata

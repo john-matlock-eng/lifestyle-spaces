@@ -314,6 +314,74 @@ class TestSpaceModels:
         assert len(list_response.spaces) == 3
         assert list_response.total == 3
 
+    def test_calendar_url_validation_https_required(self):
+        """Test that calendar URL must use HTTPS."""
+        from app.models.space import SpaceCreate
+
+        # HTTP URL should fail
+        with pytest.raises(ValidationError) as exc_info:
+            SpaceCreate(
+                name="Test Space",
+                calendar_url="http://calendar.google.com/calendar/embed?src=test"
+            )
+        assert "must use HTTPS protocol" in str(exc_info.value)
+
+    def test_calendar_url_validation_allowed_domains(self):
+        """Test that only allowed domains are accepted."""
+        from app.models.space import SpaceCreate
+
+        # Valid Google Calendar domain should pass
+        space = SpaceCreate(
+            name="Test Space",
+            calendar_url="https://calendar.google.com/calendar/embed?src=test"
+        )
+        assert space.calendar_url == "https://calendar.google.com/calendar/embed?src=test"
+
+        # Invalid domain should fail
+        with pytest.raises(ValidationError) as exc_info:
+            SpaceCreate(
+                name="Test Space",
+                calendar_url="https://evil.com/calendar"
+            )
+        assert "must be from an allowed domain" in str(exc_info.value)
+
+    def test_calendar_url_validation_invalid_format(self):
+        """Test that invalid URL format is rejected."""
+        from app.models.space import SpaceUpdate
+
+        # Invalid URL without scheme gets caught by HTTPS check
+        with pytest.raises(ValidationError) as exc_info:
+            SpaceUpdate(
+                calendar_url="not-a-valid-url"
+            )
+        assert "must use HTTPS protocol" in str(exc_info.value)
+
+    def test_calendar_url_validation_none_allowed(self):
+        """Test that None/empty calendar URL is allowed."""
+        from app.models.space import SpaceCreate, SpaceUpdate
+
+        # None should be allowed
+        space = SpaceCreate(name="Test Space", calendar_url=None)
+        assert space.calendar_url is None
+
+        # Empty string should be converted to None
+        space = SpaceCreate(name="Test Space", calendar_url="")
+        assert space.calendar_url is None
+
+        # SpaceUpdate should also allow None
+        update = SpaceUpdate(calendar_url=None)
+        assert update.calendar_url is None
+
+    def test_calendar_url_validation_whitespace_trimmed(self):
+        """Test that calendar URL whitespace is trimmed."""
+        from app.models.space import SpaceCreate
+
+        space = SpaceCreate(
+            name="Test Space",
+            calendar_url="  https://calendar.google.com/calendar/embed?src=test  "
+        )
+        assert space.calendar_url == "https://calendar.google.com/calendar/embed?src=test"
+
 
 class TestInvitationModels:
     """Test Invitation-related Pydantic models."""
