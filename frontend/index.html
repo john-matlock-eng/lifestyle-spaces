@@ -8,14 +8,14 @@
     <!-- Content Security Policy for production security -->
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'self';
-                   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cognito-idp.*.amazonaws.com;
+                   script-src 'self' 'unsafe-inline' 'unsafe-eval';
                    style-src 'self' 'unsafe-inline';
                    frame-src https://calendar.google.com https://*.google.com;
                    img-src 'self' data: https: blob:;
                    font-src 'self' data:;
                    connect-src 'self'
                                https://*.execute-api.us-east-1.amazonaws.com
-                               https://cognito-idp.*.amazonaws.com
+                               https://cognito-idp.us-east-1.amazonaws.com
                                wss://*.execute-api.us-east-1.amazonaws.com
                                http://localhost:8000
                                ws://localhost:8000;">
