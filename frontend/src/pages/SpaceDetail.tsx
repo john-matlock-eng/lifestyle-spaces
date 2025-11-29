@@ -14,6 +14,10 @@ import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationCont
 import type { SpaceMemberRole, SpaceMember } from '../types';
 import './SpaceDetail.css';
 
+// Valid tab names - defined outside component to avoid recreating on every render
+const VALID_TABS = ['content', 'journals', 'members', 'settings', 'schedules'] as const;
+type TabName = typeof VALID_TABS[number];
+
 export const SpaceDetail: React.FC = () => {
   const { spaceId, tab } = useParams<{ spaceId: string; tab?: string }>();
   const navigate = useNavigate();
@@ -34,9 +38,11 @@ export const SpaceDetail: React.FC = () => {
   } = useInvitations();
 
   // Initialize activeTab from URL or default to 'content'
-  const validTabs = ['content', 'journals', 'members', 'settings', 'schedules'] as const;
-  const initialTab = tab && validTabs.includes(tab as any) ? tab as typeof validTabs[number] : 'content';
-  const [activeTab, setActiveTab] = useState<'content' | 'journals' | 'members' | 'settings' | 'schedules'>(initialTab);
+  const isValidTab = (t: string | undefined): t is TabName => {
+    return t !== undefined && VALID_TABS.includes(t as TabName);
+  };
+  const initialTab = isValidTab(tab) ? tab : 'content';
+  const [activeTab, setActiveTab] = useState<TabName>(initialTab);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
@@ -62,8 +68,8 @@ export const SpaceDetail: React.FC = () => {
 
   // Sync activeTab with URL parameter
   useEffect(() => {
-    if (tab && validTabs.includes(tab as any)) {
-      setActiveTab(tab as typeof activeTab);
+    if (isValidTab(tab)) {
+      setActiveTab(tab);
     }
   }, [tab]);
 
@@ -100,21 +106,20 @@ export const SpaceDetail: React.FC = () => {
     apiIsOwner: currentSpace?.isOwner
   });
 
-  const handleTabClick = (newTab: 'content' | 'journals' | 'members' | 'settings' | 'schedules') => {
+  const handleTabClick = (newTab: TabName) => {
     setActiveTab(newTab);
     // Update URL to include tab
     navigate(`/space/${spaceId}/${newTab}`, { replace: true });
   };
 
-  const handleTabKeyDown = (e: React.KeyboardEvent, tab: 'content' | 'journals' | 'members' | 'settings' | 'schedules') => {
-    const tabs = ['content', 'journals', 'members', 'settings', 'schedules'];
-    const currentIndex = tabs.indexOf(activeTab);
+  const handleTabKeyDown = (e: React.KeyboardEvent, tab: TabName) => {
+    const currentIndex = VALID_TABS.indexOf(activeTab);
 
     switch (e.key) {
       case 'ArrowRight': {
         e.preventDefault();
-        const nextIndex = (currentIndex + 1) % tabs.length;
-        setActiveTab(tabs[nextIndex] as typeof activeTab);
+        const nextIndex = (currentIndex + 1) % VALID_TABS.length;
+        setActiveTab(VALID_TABS[nextIndex]);
         const nextElement = (e.target as HTMLElement).nextElementSibling;
         if (nextElement && 'focus' in nextElement && typeof nextElement.focus === 'function') {
           (nextElement as HTMLElement).focus();
@@ -123,8 +128,8 @@ export const SpaceDetail: React.FC = () => {
       }
       case 'ArrowLeft': {
         e.preventDefault();
-        const prevIndex = currentIndex - 1 < 0 ? tabs.length - 1 : currentIndex - 1;
-        setActiveTab(tabs[prevIndex] as typeof activeTab);
+        const prevIndex = currentIndex - 1 < 0 ? VALID_TABS.length - 1 : currentIndex - 1;
+        setActiveTab(VALID_TABS[prevIndex]);
         const prevElement = (e.target as HTMLElement).previousElementSibling;
         if (prevElement && 'focus' in prevElement && typeof prevElement.focus === 'function') {
           (prevElement as HTMLElement).focus();

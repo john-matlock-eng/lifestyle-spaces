@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { SpaceDetail } from './SpaceDetail';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { ThemeProvider } from '../theme/ThemeProvider';
 
 // Mock Ellie components and hooks
 vi.mock('../components/ellie', () => ({
@@ -220,14 +221,17 @@ import * as spacesService from '../services/spaces';
 // Test wrapper component
 const TestWrapper: React.FC<{ children: React.ReactNode; initialPath?: string }> = ({
   children,
-  initialPath = '/spaces/space-1'
+  initialPath = '/space/space-1'
 }) => (
-  <MemoryRouter initialEntries={[initialPath]}>
-    <Routes>
-      <Route path="/spaces/:spaceId" element={children} />
-      <Route path="/dashboard" element={<div>Dashboard</div>} />
-    </Routes>
-  </MemoryRouter>
+  <ThemeProvider>
+    <MemoryRouter initialEntries={[initialPath]}>
+      <Routes>
+        <Route path="/space/:spaceId" element={children} />
+        <Route path="/space/:spaceId/:tab" element={children} />
+        <Route path="/dashboard" element={<div>Dashboard</div>} />
+      </Routes>
+    </MemoryRouter>
+  </ThemeProvider>
 );
 
 describe('SpaceDetail', () => {
