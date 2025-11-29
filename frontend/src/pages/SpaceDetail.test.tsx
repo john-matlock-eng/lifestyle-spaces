@@ -647,115 +647,114 @@ describe('Invite Code Features', () => {
     // Dialog should disappear
     expect(screen.queryByText('Regenerate Invite Code?')).not.toBeInTheDocument();
   });
-});
 
-it('shows error message when regenerate fails', async () => {
-  vi.mocked(spacesService.regenerateInviteCode).mockRejectedValue(new Error('Failed to regenerate'));
+  it('shows error message when regenerate fails', async () => {
+    vi.mocked(spacesService.regenerateInviteCode).mockRejectedValue(new Error('Failed to regenerate'));
 
-  render(
-    <TestWrapper>
-      <SpaceDetail />
-    </TestWrapper>
-  );
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
 
-  // Switch to members tab
-  const membersTab = screen.getByRole('tab', { name: 'Members' });
-  fireEvent.click(membersTab);
+    // Switch to members tab
+    const membersTab = screen.getByRole('tab', { name: 'Members' });
+    fireEvent.click(membersTab);
 
-  // Click regenerate button
-  const regenerateButton = screen.getByTitle('Regenerate invite code');
-  fireEvent.click(regenerateButton);
+    // Click regenerate button
+    const regenerateButton = screen.getByTitle('Regenerate invite code');
+    fireEvent.click(regenerateButton);
 
-  // Wait for dialog to appear
-  await waitFor(() => {
-    expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
+    // Wait for dialog to appear
+    await waitFor(() => {
+      expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
+    });
+
+    // Click continue
+    const continueButton = screen.getByText('Continue');
+    fireEvent.click(continueButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to regenerate invite code')).toBeInTheDocument();
+    });
   });
 
-  // Click continue
-  const continueButton = screen.getByText('Continue');
-  fireEvent.click(continueButton);
+  it('disables buttons during regeneration', async () => {
+    // Make the mock slow to complete
+    vi.mocked(spacesService.regenerateInviteCode).mockImplementation(() =>
+      new Promise(resolve => setTimeout(() => resolve({ inviteCode: 'NEW12345' }), 100))
+    );
 
-  await waitFor(() => {
-    expect(screen.getByText('Failed to regenerate invite code')).toBeInTheDocument();
-  });
-});
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
 
-it('disables buttons during regeneration', async () => {
-  // Make the mock slow to complete
-  vi.mocked(spacesService.regenerateInviteCode).mockImplementation(() =>
-    new Promise(resolve => setTimeout(() => resolve({ inviteCode: 'NEW12345' }), 100))
-  );
+    // Switch to members tab
+    const membersTab = screen.getByRole('tab', { name: 'Members' });
+    fireEvent.click(membersTab);
 
-  render(
-    <TestWrapper>
-      <SpaceDetail />
-    </TestWrapper>
-  );
+    // Click regenerate button
+    const regenerateButton = screen.getByTitle('Regenerate invite code');
+    fireEvent.click(regenerateButton);
 
-  // Switch to members tab
-  const membersTab = screen.getByRole('tab', { name: 'Members' });
-  fireEvent.click(membersTab);
+    // Wait for dialog to appear
+    await waitFor(() => {
+      expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
+    });
 
-  // Click regenerate button
-  const regenerateButton = screen.getByTitle('Regenerate invite code');
-  fireEvent.click(regenerateButton);
+    // Click continue
+    const continueButton = screen.getByText('Continue');
+    fireEvent.click(continueButton);
 
-  // Wait for dialog to appear
-  await waitFor(() => {
-    expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
-  });
-
-  // Click continue
-  const continueButton = screen.getByText('Continue');
-  fireEvent.click(continueButton);
-
-  // Buttons should be disabled during operation
-  await waitFor(() => {
-    expect(screen.getByText('Regenerating...')).toBeInTheDocument();
-  });
-});
-
-it('does not show invite code section for non-admin members', () => {
-  // Set user as a regular member
-  setMockAuthState({
-    user: {
-      userId: 'user-3',
-      email: 'member@example.com',
-      displayName: 'Regular Member',
-    },
+    // Buttons should be disabled during operation
+    await waitFor(() => {
+      expect(screen.getByText('Regenerating...')).toBeInTheDocument();
+    });
   });
 
-  setMockSpaceState({
-    currentSpace: {
-      ...mockSpaceState.currentSpace,
-      isOwner: false,
-    },
-    members: [
-      ...mockSpaceState.members,
-      {
+  it('does not show invite code section for non-admin members', () => {
+    // Set user as a regular member
+    setMockAuthState({
+      user: {
         userId: 'user-3',
         email: 'member@example.com',
-        username: 'member',
         displayName: 'Regular Member',
-        role: 'member',
-        joinedAt: '2023-01-03T00:00:00Z',
       },
-    ],
+    });
+
+    setMockSpaceState({
+      currentSpace: {
+        ...mockSpaceState.currentSpace,
+        isOwner: false,
+      },
+      members: [
+        ...mockSpaceState.members,
+        {
+          userId: 'user-3',
+          email: 'member@example.com',
+          username: 'member',
+          displayName: 'Regular Member',
+          role: 'member',
+          joinedAt: '2023-01-03T00:00:00Z',
+        },
+      ],
+    });
+
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    // Switch to members tab
+    const membersTab = screen.getByRole('tab', { name: 'Members' });
+    fireEvent.click(membersTab);
+
+    // Invite code section should not be visible
+    expect(screen.queryByLabelText('Invite Code')).not.toBeInTheDocument();
   });
-
-  render(
-    <TestWrapper>
-      <SpaceDetail />
-    </TestWrapper>
-  );
-
-  // Switch to members tab
-  const membersTab = screen.getByRole('tab', { name: 'Members' });
-  fireEvent.click(membersTab);
-
-  // Invite code section should not be visible
-  expect(screen.queryByLabelText('Invite Code')).not.toBeInTheDocument();
-});
 });
 
 describe('Calendar Feature', () => {
@@ -780,7 +779,9 @@ describe('Calendar Feature', () => {
     fireEvent.click(schedulesTab);
 
     expect(screen.getByText('No calendar has been added to this space yet.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add Calendar' })).toBeInTheDocument();
+    // There are two "Add Calendar" buttons (one in header, one in empty state)
+    const addCalendarButtons = screen.getAllByRole('button', { name: 'Add Calendar' });
+    expect(addCalendarButtons.length).toBeGreaterThan(0);
   });
 
   it('allows admin to add calendar URL', async () => {
@@ -807,8 +808,9 @@ describe('Calendar Feature', () => {
     const schedulesTab = screen.getByRole('tab', { name: 'Schedules' });
     fireEvent.click(schedulesTab);
 
-    const addCalendarButton = screen.getByRole('button', { name: 'Add Calendar' });
-    fireEvent.click(addCalendarButton);
+    // Get all "Add Calendar" buttons and click the first one (from the header)
+    const addCalendarButtons = screen.getAllByRole('button', { name: 'Add Calendar' });
+    fireEvent.click(addCalendarButtons[0]);
 
     const input = screen.getByPlaceholderText(/https:\/\/calendar.google.com\/calendar\/embed/);
     fireEvent.change(input, { target: { value: 'https://calendar.google.com/embed' } });
@@ -907,4 +909,4 @@ describe('Calendar Feature', () => {
     expect(screen.queryByRole('button', { name: 'Edit Calendar' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Add Calendar' })).not.toBeInTheDocument();
   });
-});
+});});
