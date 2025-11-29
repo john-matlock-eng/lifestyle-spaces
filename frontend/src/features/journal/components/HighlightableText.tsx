@@ -95,10 +95,11 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         return;
       }
 
-      const selectedText = windowSelection.toString().trim();
+      const range = windowSelection.getRangeAt(0);
+      const selectedText = range.toString();
       console.log('[HighlightableText] Selected text:', selectedText);
 
-      if (!selectedText) {
+      if (!selectedText || selectedText.trim().length === 0) {
         console.log('[HighlightableText] Empty selection');
         setSelection(null);
         setShowCreateButton(false);
@@ -106,7 +107,6 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         return;
       }
 
-      const range = windowSelection.getRangeAt(0);
       const boundingRect = range.getBoundingClientRect();
       console.log('[HighlightableText] boundingRect:', boundingRect);
 
