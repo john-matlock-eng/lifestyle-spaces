@@ -25,6 +25,7 @@ interface UseSectionTipTapReturn {
   hasChanges: boolean
   reset: () => void
   isSingleSection: boolean
+  setAllSections: (sections: SectionTipTapState) => void
 }
 
 export const useSectionTipTap = (
@@ -156,16 +157,26 @@ export const useSectionTipTap = (
     setHasChanges(false)
   }, [initialContent])
 
-  return {
-    sectionContents,
-    updateSection,
-    removeSection,
-    getSectionContent,
-    getAllSections,
-    hasSection,
-    getSectionIds,
-    hasChanges,
-    reset,
-    isSingleSection
-  }
+  setHasChanges(false)
+}, [initialContent])
+
+// Set all sections at once (useful for initialization after load)
+const setAllSections = useCallback((sections: SectionTipTapState) => {
+  setSectionContents(sections)
+  setHasChanges(false)
+}, [])
+
+return {
+  sectionContents,
+  updateSection,
+  removeSection,
+  getSectionContent,
+  getAllSections,
+  hasSection,
+  getSectionIds,
+  hasChanges,
+  reset,
+  isSingleSection,
+  setAllSections
+}
 }
