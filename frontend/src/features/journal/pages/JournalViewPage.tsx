@@ -418,6 +418,8 @@ ${content}
                             highlights={highlights}
                             onHighlightCreate={(selection, color) => createHighlight(selection, color)}
                             onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
+                            onHighlightDelete={deleteHighlight}
                           />
                         ) : section.type === 'list' ? (
                           <ListSectionDisplay
@@ -428,6 +430,8 @@ ${content}
                             highlights={highlights}
                             onHighlightCreate={(selection, color) => createHighlight(selection, color)}
                             onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
+                            onHighlightDelete={deleteHighlight}
                           />
                         ) : section.type === 'checkbox' ? (
                           <CheckboxSectionDisplay
@@ -438,6 +442,8 @@ ${content}
                             highlights={highlights}
                             onHighlightCreate={(selection, color) => createHighlight(selection, color)}
                             onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
+                            onHighlightDelete={deleteHighlight}
                           />
                         ) : section.type === 'scale' ? (
                           <ScaleSectionDisplay
@@ -459,6 +465,8 @@ ${content}
                             highlights={highlights}
                             onHighlightCreate={(selection, color) => createHighlight(selection, color)}
                             onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
+                            onHighlightDelete={deleteHighlight}
                           />
                         )}
                       </div>
