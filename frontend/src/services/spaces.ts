@@ -1,11 +1,11 @@
 import { apiService } from './api';
-import type { 
-  CreateSpaceData, 
-  InvitationData, 
-  Space, 
-  Invitation, 
-  SpaceListResponse, 
-  SpaceFilters, 
+import type {
+  CreateSpaceData,
+  InvitationData,
+  Space,
+  Invitation,
+  SpaceListResponse,
+  SpaceFilters,
   PaginationParams,
   SpaceMemberRole,
   MembersListResponse
@@ -86,7 +86,7 @@ export const createSpace = async (spaceData: CreateSpaceData): Promise<Space> =>
  * List spaces for the current user
  */
 export const listSpaces = async (
-  filters: SpaceFilters = {}, 
+  filters: SpaceFilters = {},
   pagination: PaginationParams = {}
 ): Promise<SpaceListResponse> => {
   const params = {
@@ -95,7 +95,7 @@ export const listSpaces = async (
   };
 
   // Build query string for GET request
-  const queryString = Object.keys(params).length > 0 
+  const queryString = Object.keys(params).length > 0
     ? '?' + new URLSearchParams(params as Record<string, string>).toString()
     : '';
   const response = await apiService.get(`/api/users/spaces${queryString}`);
@@ -283,6 +283,23 @@ export const regenerateInviteCode = async (spaceId: string): Promise<{ inviteCod
   }
 
   return inviteResponse;
+};
+
+/**
+ * Update a space
+ */
+export const updateSpace = async (spaceId: string, data: Partial<Space>): Promise<Space> => {
+  if (!spaceId) {
+    throw new Error('Space ID is required');
+  }
+
+  const response = await apiService.put(`/api/spaces/${spaceId}`, data);
+
+  if (!response || typeof response !== 'object' || !('spaceId' in response)) {
+    throw new Error('Invalid space data received from API');
+  }
+
+  return response as Space;
 };
 
 /**

@@ -10,6 +10,7 @@ class SpaceBase(BaseModel):
     """Base space model."""
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
+    calendar_url: Optional[str] = Field(None, alias="calendarUrl")
     is_public: bool = Field(False, alias="isPublic")
     
     model_config = ConfigDict(populate_by_name=True)
@@ -48,6 +49,7 @@ class SpaceUpdate(BaseModel):
     """Space update model."""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
+    calendar_url: Optional[str] = Field(None, alias="calendarUrl")
     is_public: Optional[bool] = Field(None, alias="isPublic")
     metadata: Optional[Dict[str, Any]] = None
     
@@ -75,6 +77,7 @@ class SpaceResponse(BaseModel):
     id: str = Field(..., alias="spaceId")
     name: str
     description: Optional[str] = None
+    calendar_url: Optional[str] = Field(None, alias="calendarUrl")
     type: Optional[str] = "workspace"
     owner_id: str = Field(..., alias="ownerId")
     created_at: datetime = Field(..., alias="createdAt")

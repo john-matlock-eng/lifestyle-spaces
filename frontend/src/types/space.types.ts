@@ -5,6 +5,7 @@ export interface Space {
   spaceId: string;
   name: string;
   description: string;
+  calendarUrl?: string;
   type?: string;
   ownerId: string;
   createdAt: string;
@@ -27,6 +28,7 @@ export interface SpaceMember {
 export interface CreateSpaceData {
   name: string;
   description: string;
+  calendarUrl?: string;
   isPublic?: boolean;
 }
 

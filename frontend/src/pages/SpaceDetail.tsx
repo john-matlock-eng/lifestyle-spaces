@@ -7,7 +7,7 @@ import { MembersList } from '../components/spaces/MembersList';
 import { InviteMemberModal } from '../components/spaces/InviteMemberModal';
 import { JournalList } from '../features/journal/components/JournalList';
 import { ActivityFeed } from '../components/ActivityFeed';
-import { regenerateInviteCode } from '../services/spaces';
+import { regenerateInviteCode, updateSpace } from '../services/spaces';
 import { ElliePerch } from '../components/ellie';
 import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationContext';
 import type { SpaceMemberRole, SpaceMember } from '../types';
@@ -31,12 +31,14 @@ export const SpaceDetail: React.FC = () => {
     fetchSpaceInvitations
   } = useInvitations();
 
-  const [activeTab, setActiveTab] = useState<'content' | 'journals' | 'members' | 'settings'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'journals' | 'members' | 'settings' | 'schedules'>('content');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isEditingCalendar, setIsEditingCalendar] = useState(false);
+  const [calendarUrlInput, setCalendarUrlInput] = useState('');
 
   // Ellie companion state
   const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('happy');
@@ -86,14 +88,14 @@ export const SpaceDetail: React.FC = () => {
     apiIsOwner: currentSpace?.isOwner
   });
 
-  const handleTabClick = (tab: 'content' | 'journals' | 'members' | 'settings') => {
+  const handleTabClick = (tab: 'content' | 'journals' | 'members' | 'settings' | 'schedules') => {
     setActiveTab(tab);
   };
 
-  const handleTabKeyDown = (e: React.KeyboardEvent, tab: 'content' | 'journals' | 'members' | 'settings') => {
-    const tabs = ['content', 'journals', 'members', 'settings'];
+  const handleTabKeyDown = (e: React.KeyboardEvent, tab: 'content' | 'journals' | 'members' | 'settings' | 'schedules') => {
+    const tabs = ['content', 'journals', 'members', 'settings', 'schedules'];
     const currentIndex = tabs.indexOf(activeTab);
-    
+
     switch (e.key) {
       case 'ArrowRight': {
         e.preventDefault();
@@ -215,6 +217,27 @@ export const SpaceDetail: React.FC = () => {
     console.log('Cancel invitation:', invitationId);
   };
 
+  const handleSaveCalendarUrl = async () => {
+    if (!spaceId) return;
+    try {
+      // Extract src from iframe if user pasted full embed code
+      let urlToSave = calendarUrlInput;
+      if (calendarUrlInput.includes('<iframe')) {
+        const srcMatch = calendarUrlInput.match(/src="([^"]+)"/);
+        if (srcMatch && srcMatch[1]) {
+          urlToSave = srcMatch[1];
+        }
+      }
+
+      await updateSpace(spaceId, { calendarUrl: urlToSave });
+      setIsEditingCalendar(false);
+      selectSpace(spaceId); // Reload space to get updated data
+    } catch (error) {
+      console.error('Failed to update calendar URL:', error);
+      // Handle error (could add error state for this specific action)
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-detail__loading" role="status" aria-live="polite">
@@ -291,10 +314,9 @@ export const SpaceDetail: React.FC = () => {
               {currentSpace.name}
             </h1>
             <div className="space-detail__badges">
-              <span 
-                className={`space-detail__visibility-badge space-detail__visibility-badge--${
-                  currentSpace.isPublic ? 'public' : 'private'
-                }`}
+              <span
+                className={`space-detail__visibility-badge space-detail__visibility-badge--${currentSpace.isPublic ? 'public' : 'private'
+                  }`}
               >
                 {currentSpace.isPublic ? 'Public' : 'Private'}
               </span>
@@ -325,7 +347,7 @@ export const SpaceDetail: React.FC = () => {
               >
                 Actions
               </button>
-              
+
               {isActionsMenuOpen && (
                 <div className="space-detail__actions-dropdown">
                   <button
@@ -345,7 +367,7 @@ export const SpaceDetail: React.FC = () => {
                   {isOwner && (
                     <button
                       type="button"
-                      onClick={() => {/* Navigate to settings */}}
+                      onClick={() => {/* Navigate to settings */ }}
                       className="space-detail__action-item"
                     >
                       Space Settings
@@ -427,6 +449,18 @@ export const SpaceDetail: React.FC = () => {
           >
             Members
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'schedules'}
+            aria-controls="schedules-panel"
+            id="schedules-tab"
+            onClick={() => handleTabClick('schedules')}
+            onKeyDown={(e) => handleTabKeyDown(e, 'schedules')}
+            className={`tab ${activeTab === 'schedules' ? 'tab--active' : ''}`}
+          >
+            Schedules
+          </button>
           {isOwner && (
             <button
               type="button"
@@ -445,7 +479,7 @@ export const SpaceDetail: React.FC = () => {
       </div>
 
       {/* Tab Content */}
-      <main 
+      <main
         className="space-detail__main"
         role="main"
         aria-labelledby="space-title"
@@ -563,6 +597,84 @@ export const SpaceDetail: React.FC = () => {
           </div>
         )}
 
+        {activeTab === 'schedules' && (
+          <div
+            role="tabpanel"
+            id="schedules-panel"
+            aria-labelledby="schedules-tab"
+            className="tab-panel"
+          >
+            <div className="space-detail__schedules">
+              <div className="space-detail__schedules-header">
+                <h3>Space Schedule</h3>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingCalendar(!isEditingCalendar);
+                      setCalendarUrlInput(currentSpace?.calendarUrl || '');
+                    }}
+                    className="btn btn-secondary"
+                  >
+                    {isEditingCalendar ? 'Cancel Edit' : (currentSpace?.calendarUrl ? 'Edit Calendar' : 'Add Calendar')}
+                  </button>
+                )}
+              </div>
+
+              {isEditingCalendar && (
+                <div className="space-detail__calendar-edit">
+                  <p>Paste the Google Calendar embed URL or the full iframe code here:</p>
+                  <div className="space-detail__calendar-input-group">
+                    <input
+                      type="text"
+                      value={calendarUrlInput}
+                      onChange={(e) => setCalendarUrlInput(e.target.value)}
+                      placeholder="https://calendar.google.com/calendar/embed?..."
+                      className="space-detail__calendar-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveCalendarUrl}
+                      className="btn btn-primary"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {currentSpace?.calendarUrl ? (
+                <div className="space-detail__calendar-container">
+                  <iframe
+                    src={currentSpace.calendarUrl}
+                    style={{ border: 0 }}
+                    width="100%"
+                    height="600"
+                    frameBorder="0"
+                    scrolling="no"
+                    title="Space Calendar"
+                  />
+                </div>
+              ) : (
+                !isEditingCalendar && (
+                  <div className="space-detail__empty-state">
+                    <p>No calendar has been added to this space yet.</p>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingCalendar(true)}
+                        className="btn btn-primary"
+                      >
+                        Add Calendar
+                      </button>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === 'settings' && isOwner && (
           <div
             role="tabpanel"
@@ -621,7 +733,7 @@ export const SpaceDetail: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-detail__settings-section space-detail__settings-section--danger">
                 <h4>Danger Zone</h4>
                 <div className="space-detail__setting-item">
@@ -677,7 +789,6 @@ export const SpaceDetail: React.FC = () => {
                 type="button"
                 onClick={handleRegenerateCode}
                 className="btn btn-primary"
-                disabled={isRegenerating}
               >
                 {isRegenerating ? 'Regenerating...' : 'Continue'}
               </button>
@@ -701,8 +812,8 @@ export const SpaceDetail: React.FC = () => {
           activeTab === 'journals'
             ? "Check out your journals! 📖"
             : activeTab === 'members'
-            ? `${members.length} ${members.length === 1 ? 'member' : 'members'} in this space! 👥`
-            : `Welcome to ${currentSpace.name}! 🏠`
+              ? `${members.length} ${members.length === 1 ? 'member' : 'members'} in this space! 👥`
+              : `Welcome to ${currentSpace.name}! 🏠`
         }
         size="md"
         onClick={() => setMood(mood === 'playful' ? 'happy' : 'playful')}
@@ -711,7 +822,7 @@ export const SpaceDetail: React.FC = () => {
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
         showPerchControl={true}
-        
+
       />
     </div>
   );

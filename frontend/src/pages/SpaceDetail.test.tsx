@@ -211,6 +211,7 @@ vi.mock('../stores/authStore', () => ({
 // Mock spaces service - declare the mock function before using it in the factory
 vi.mock('../services/spaces', () => ({
   regenerateInviteCode: vi.fn(),
+  updateSpace: vi.fn(),
 }));
 
 // Import the mocked service to get access to the mock function
@@ -273,6 +274,200 @@ describe('SpaceDetail', () => {
       </TestWrapper>
     );
 
+    expect(screen.getByText(/Loading space/i)).toBeInTheDocument();
+  });
+
+  it('shows error state', () => {
+    setMockSpaceState({
+      error: 'Failed to load space',
+      currentSpace: null
+    });
+
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    expect(screen.getByText('Failed to load space')).toBeInTheDocument();
+  });
+
+  it('shows space not found state', () => {
+    setMockSpaceState({
+      currentSpace: null,
+      isLoading: false,
+      error: null
+    });
+
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    expect(screen.getByText(/space not found/i)).toBeInTheDocument();
+  });
+
+  it('shows dashboard navigation link', () => {
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    const dashboardLink = screen.getByRole('button', { name: 'Dashboard' });
+    expect(dashboardLink).toBeInTheDocument();
+  });
+
+  it('renders members list when members tab is selected', () => {
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    const membersTab = screen.getByText('Members');
+    fireEvent.click(membersTab);
+
+    expect(screen.getByTestId('members-list')).toBeInTheDocument();
+    expect(screen.getByText('Members: 2')).toBeInTheDocument();
+  });
+
+  it('opens invite modal when invite button is clicked', () => {
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    const membersTab = screen.getByText('Members');
+    fireEvent.click(membersTab);
+
+    // Use the main invite button from the header, not the one from the mocked members list
+    const inviteButton = screen.getAllByRole('button', { name: 'Invite Members' })[0];
+    fireEvent.click(inviteButton);
+
+    expect(screen.getByTestId('invite-modal')).toBeInTheDocument();
+  });
+
+  it('closes invite modal', () => {
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    const membersTab = screen.getByText('Members');
+    fireEvent.click(membersTab);
+
+    // Use the main invite button from the header, not the one from the mocked members list
+    const inviteButton = screen.getAllByRole('button', { name: 'Invite Members' })[0];
+    fireEvent.click(inviteButton);
+
+    const closeButton = screen.getByText('Close Modal');
+    fireEvent.click(closeButton);
+
+    expect(screen.queryByTestId('invite-modal')).not.toBeInTheDocument();
+  });
+
+  it('shows space settings button for owners', () => {
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    // The settings should be available since the user is the owner
+    expect(screen.getByText('Settings')).toBeInTheDocument();
+  });
+
+  it('handles invite sent successfully', async () => {
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    const membersTab = screen.getByText('Members');
+    fireEvent.click(membersTab);
+
+    // Use the main invite button from the header, not the one from the mocked members list
+    const inviteButton = screen.getAllByRole('button', { name: 'Invite Members' })[0];
+    fireEvent.click(inviteButton);
+
+    const sendInviteButton = screen.getByTestId('send-invite-btn');
+    fireEvent.click(sendInviteButton);
+
+    // Modal should close after successful invite
+    await waitFor(() => {
+      expect(screen.queryByTestId('invite-modal')).not.toBeInTheDocument();
+    });
+  });
+
+  it('handles cancel invitation function existence', () => {
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    const membersTab = screen.getByText('Members');
+    fireEvent.click(membersTab);
+
+    // The cancel invitation button should be available
+    expect(screen.getByTestId('cancel-invitation-btn')).toBeInTheDocument();
+  });
+
+  it('does not show space settings button for non-owners', () => {
+    setMockAuthState({
+      user: {
+        userId: 'user-2',
+        email: 'member@example.com',
+        displayName: 'Regular Member',
+      },
+      isAuthenticated: true,
+    });
+
+    // Set space to indicate user is not owner
+    setMockSpaceState({
+      currentSpace: {
+        ...mockSpaceState.currentSpace,
+        isOwner: false,
+      },
+    });
+
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    // Settings tab should not be visible for non-owners
+    expect(screen.queryByText('Settings')).not.toBeInTheDocument();
+  });
+
+  it('shows space visibility correctly', () => {
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    expect(screen.getByText(/private/i)).toBeInTheDocument();
+  });
+
+  it('shows public space visibility correctly', () => {
+    setMockSpaceState({
+      currentSpace: {
+        ...mockSpaceState.currentSpace,
+        isPublic: true,
+      },
+    });
+
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
     expect(screen.getByText(/Loading space/i)).toBeInTheDocument();
   });
 
@@ -654,150 +849,266 @@ describe('SpaceDetail', () => {
       fireEvent.click(cancelButton);
 
       // Dialog should disappear
-      await waitFor(() => {
-        expect(screen.queryByText('Regenerate Invite Code?')).not.toBeInTheDocument();
-      });
+      expect(screen.queryByText('Regenerate Invite Code?')).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows error message when regenerate fails', async () => {
+    vi.mocked(spacesService.regenerateInviteCode).mockRejectedValue(new Error('Failed to regenerate'));
+
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    // Switch to members tab
+    const membersTab = screen.getByRole('tab', { name: 'Members' });
+    fireEvent.click(membersTab);
+
+    // Click regenerate button
+    const regenerateButton = screen.getByTitle('Regenerate invite code');
+    fireEvent.click(regenerateButton);
+
+    // Wait for dialog to appear
+    await waitFor(() => {
+      expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
     });
 
-    it('regenerates invite code when Continue is clicked', async () => {
-      vi.mocked(spacesService.regenerateInviteCode).mockResolvedValue({ inviteCode: 'NEW12345' });
+    // Click continue
+    const continueButton = screen.getByText('Continue');
+    fireEvent.click(continueButton);
 
-      render(
-        <TestWrapper>
-          <SpaceDetail />
-        </TestWrapper>
-      );
+    await waitFor(() => {
+      expect(screen.getByText('Failed to regenerate invite code')).toBeInTheDocument();
+    });
+  });
 
-      // Switch to members tab
-      const membersTab = screen.getByRole('tab', { name: 'Members' });
-      fireEvent.click(membersTab);
+  it('disables buttons during regeneration', async () => {
+    // Make the mock slow to complete
+    vi.mocked(spacesService.regenerateInviteCode).mockImplementation(() =>
+      new Promise(resolve => setTimeout(() => resolve({ inviteCode: 'NEW12345' }), 100))
+    );
 
-      // Click regenerate button
-      const regenerateButton = screen.getByTitle('Regenerate invite code');
-      fireEvent.click(regenerateButton);
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
 
-      // Wait for dialog to appear
-      await waitFor(() => {
-        expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
-      });
+    // Switch to members tab
+    const membersTab = screen.getByRole('tab', { name: 'Members' });
+    fireEvent.click(membersTab);
 
-      // Click continue
-      const continueButton = screen.getByText('Continue');
-      fireEvent.click(continueButton);
+    // Click regenerate button
+    const regenerateButton = screen.getByTitle('Regenerate invite code');
+    fireEvent.click(regenerateButton);
 
-      await waitFor(() => {
-        expect(spacesService.regenerateInviteCode).toHaveBeenCalledWith('space-1');
-        expect(mockSelectSpace).toHaveBeenCalledWith('space-1'); // Reload space
-        expect(screen.getByText('Invite code regenerated successfully!')).toBeInTheDocument();
-      });
+    // Wait for dialog to appear
+    await waitFor(() => {
+      expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
     });
 
-    it('shows error message when regenerate fails', async () => {
-      vi.mocked(spacesService.regenerateInviteCode).mockRejectedValue(new Error('Failed to regenerate'));
+    // Click continue
+    const continueButton = screen.getByText('Continue');
+    fireEvent.click(continueButton);
 
-      render(
-        <TestWrapper>
-          <SpaceDetail />
-        </TestWrapper>
-      );
+    // Buttons should be disabled during operation
+    await waitFor(() => {
+      expect(screen.getByText('Regenerating...')).toBeInTheDocument();
+    });
+  });
 
-      // Switch to members tab
-      const membersTab = screen.getByRole('tab', { name: 'Members' });
-      fireEvent.click(membersTab);
-
-      // Click regenerate button
-      const regenerateButton = screen.getByTitle('Regenerate invite code');
-      fireEvent.click(regenerateButton);
-
-      // Wait for dialog to appear
-      await waitFor(() => {
-        expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
-      });
-
-      // Click continue
-      const continueButton = screen.getByText('Continue');
-      fireEvent.click(continueButton);
-
-      await waitFor(() => {
-        expect(screen.getByText('Failed to regenerate invite code')).toBeInTheDocument();
-      });
+  it('does not show invite code section for non-admin members', () => {
+    // Set user as a regular member
+    setMockAuthState({
+      user: {
+        userId: 'user-3',
+        email: 'member@example.com',
+        displayName: 'Regular Member',
+      },
     });
 
-    it('disables buttons during regeneration', async () => {
-      // Make the mock slow to complete
-      vi.mocked(spacesService.regenerateInviteCode).mockImplementation(() =>
-        new Promise(resolve => setTimeout(() => resolve({ inviteCode: 'NEW12345' }), 100))
-      );
-
-      render(
-        <TestWrapper>
-          <SpaceDetail />
-        </TestWrapper>
-      );
-
-      // Switch to members tab
-      const membersTab = screen.getByRole('tab', { name: 'Members' });
-      fireEvent.click(membersTab);
-
-      // Click regenerate button
-      const regenerateButton = screen.getByTitle('Regenerate invite code');
-      fireEvent.click(regenerateButton);
-
-      // Wait for dialog to appear
-      await waitFor(() => {
-        expect(screen.getByText('Regenerate Invite Code?')).toBeInTheDocument();
-      });
-
-      // Click continue
-      const continueButton = screen.getByText('Continue');
-      fireEvent.click(continueButton);
-
-      // Buttons should be disabled during operation
-      await waitFor(() => {
-        expect(screen.getByText('Regenerating...')).toBeInTheDocument();
-      });
-    });
-
-    it('does not show invite code section for non-admin members', () => {
-      // Set user as a regular member
-      setMockAuthState({
-        user: {
+    setMockSpaceState({
+      currentSpace: {
+        ...mockSpaceState.currentSpace,
+        isOwner: false,
+      },
+      members: [
+        ...mockSpaceState.members,
+        {
           userId: 'user-3',
           email: 'member@example.com',
+          username: 'member',
           displayName: 'Regular Member',
+          role: 'member',
+          joinedAt: '2023-01-03T00:00:00Z',
         },
-      });
-
-      setMockSpaceState({
-        currentSpace: {
-          ...mockSpaceState.currentSpace,
-          isOwner: false,
-        },
-        members: [
-          ...mockSpaceState.members,
-          {
-            userId: 'user-3',
-            email: 'member@example.com',
-            username: 'member',
-            displayName: 'Regular Member',
-            role: 'member',
-            joinedAt: '2023-01-03T00:00:00Z',
-          },
-        ],
-      });
-
-      render(
-        <TestWrapper>
-          <SpaceDetail />
-        </TestWrapper>
-      );
-
-      // Switch to members tab
-      const membersTab = screen.getByRole('tab', { name: 'Members' });
-      fireEvent.click(membersTab);
-
-      // Invite code section should not be visible
-      expect(screen.queryByLabelText('Invite Code')).not.toBeInTheDocument();
+      ],
     });
+
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    // Switch to members tab
+    const membersTab = screen.getByRole('tab', { name: 'Members' });
+    fireEvent.click(membersTab);
+
+    // Invite code section should not be visible
+    expect(screen.queryByLabelText('Invite Code')).not.toBeInTheDocument();
+  });
+});
+
+describe('Calendar Feature', () => {
+  it('renders Schedules tab', () => {
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    expect(screen.getByRole('tab', { name: 'Schedules' })).toBeInTheDocument();
+  });
+
+  it('shows empty state when no calendar URL is set', () => {
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    const schedulesTab = screen.getByRole('tab', { name: 'Schedules' });
+    fireEvent.click(schedulesTab);
+
+    expect(screen.getByText('No calendar has been added to this space yet.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add Calendar' })).toBeInTheDocument();
+  });
+
+  it('allows admin to add calendar URL', async () => {
+    // Ensure user is owner/admin
+    setMockSpaceState({
+      currentSpace: {
+        ...mockSpaceState.currentSpace,
+        isOwner: true,
+        calendarUrl: null // Ensure no calendar initially
+      }
+    });
+
+    vi.mocked(spacesService.updateSpace).mockResolvedValue({
+      ...mockSpaceState.currentSpace,
+      calendarUrl: 'https://calendar.google.com/embed'
+    });
+
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    const schedulesTab = screen.getByRole('tab', { name: 'Schedules' });
+    fireEvent.click(schedulesTab);
+
+    const addCalendarButton = screen.getByRole('button', { name: 'Add Calendar' });
+    fireEvent.click(addCalendarButton);
+
+    const input = screen.getByPlaceholderText(/https:\/\/calendar.google.com\/calendar\/embed/);
+    fireEvent.change(input, { target: { value: 'https://calendar.google.com/embed' } });
+
+    const saveButton = screen.getByRole('button', { name: 'Save' });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(spacesService.updateSpace).toHaveBeenCalledWith('space-1', { calendarUrl: 'https://calendar.google.com/embed' });
+    });
+  });
+
+  it('displays calendar iframe when URL is present', () => {
+    setMockSpaceState({
+      currentSpace: {
+        ...mockSpaceState.currentSpace,
+        calendarUrl: 'https://calendar.google.com/embed'
+      }
+    });
+
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    const schedulesTab = screen.getByRole('tab', { name: 'Schedules' });
+    fireEvent.click(schedulesTab);
+
+    const iframe = screen.getByTitle('Space Calendar');
+    expect(iframe).toBeInTheDocument();
+    expect(iframe).toHaveAttribute('src', 'https://calendar.google.com/embed');
+  });
+
+  it('allows admin to edit existing calendar', async () => {
+    setMockSpaceState({
+      currentSpace: {
+        ...mockSpaceState.currentSpace,
+        calendarUrl: 'https://calendar.google.com/embed'
+      }
+    });
+
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    const schedulesTab = screen.getByRole('tab', { name: 'Schedules' });
+    fireEvent.click(schedulesTab);
+
+    const editButton = screen.getByRole('button', { name: 'Edit Calendar' });
+    fireEvent.click(editButton);
+
+    const input = screen.getByPlaceholderText(/https:\/\/calendar.google.com\/calendar\/embed/);
+    expect(input).toHaveValue('https://calendar.google.com/embed');
+  });
+
+  it('hides edit controls for non-admins', () => {
+    setMockAuthState({
+      user: {
+        userId: 'user-3',
+        email: 'member@example.com',
+        displayName: 'Regular Member',
+      },
+    });
+
+    setMockSpaceState({
+      currentSpace: {
+        ...mockSpaceState.currentSpace,
+        isOwner: false,
+        calendarUrl: 'https://calendar.google.com/embed'
+      },
+      members: [
+        ...mockSpaceState.members,
+        {
+          userId: 'user-3',
+          email: 'member@example.com',
+          username: 'member',
+          displayName: 'Regular Member',
+          role: 'member',
+          joinedAt: '2023-01-03T00:00:00Z',
+        },
+      ],
+    });
+
+    render(
+      <TestWrapper>
+        <SpaceDetail />
+      </TestWrapper>
+    );
+
+    const schedulesTab = screen.getByRole('tab', { name: 'Schedules' });
+    fireEvent.click(schedulesTab);
+
+    expect(screen.queryByRole('button', { name: 'Edit Calendar' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add Calendar' })).not.toBeInTheDocument();
   });
 });
