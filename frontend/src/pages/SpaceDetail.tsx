@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSpace } from '../stores/spaceStore';
 import { useAuth } from '../stores/authStore';
 import { useInvitations } from '../hooks/useInvitations';
+import { useTheme } from '../theme/useTheme';
 import { MembersList } from '../components/spaces/MembersList';
 import { InviteMemberModal } from '../components/spaces/InviteMemberModal';
 import { JournalList } from '../features/journal/components/JournalList';
@@ -14,9 +15,10 @@ import type { SpaceMemberRole, SpaceMember } from '../types';
 import './SpaceDetail.css';
 
 export const SpaceDetail: React.FC = () => {
-  const { spaceId } = useParams<{ spaceId: string }>();
+  const { spaceId, tab } = useParams<{ spaceId: string; tab?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const {
     currentSpace,
     members,
@@ -31,7 +33,10 @@ export const SpaceDetail: React.FC = () => {
     fetchSpaceInvitations
   } = useInvitations();
 
-  const [activeTab, setActiveTab] = useState<'content' | 'journals' | 'members' | 'settings' | 'schedules'>('content');
+  // Initialize activeTab from URL or default to 'content'
+  const validTabs = ['content', 'journals', 'members', 'settings', 'schedules'] as const;
+  const initialTab = tab && validTabs.includes(tab as any) ? tab as typeof validTabs[number] : 'content';
+  const [activeTab, setActiveTab] = useState<'content' | 'journals' | 'members' | 'settings' | 'schedules'>(initialTab);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
@@ -54,6 +59,13 @@ export const SpaceDetail: React.FC = () => {
       fetchSpaceInvitations(spaceId);
     }
   }, [spaceId, selectSpace, fetchSpaceInvitations, clearError]);
+
+  // Sync activeTab with URL parameter
+  useEffect(() => {
+    if (tab && validTabs.includes(tab as any)) {
+      setActiveTab(tab as typeof activeTab);
+    }
+  }, [tab]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -88,8 +100,10 @@ export const SpaceDetail: React.FC = () => {
     apiIsOwner: currentSpace?.isOwner
   });
 
-  const handleTabClick = (tab: 'content' | 'journals' | 'members' | 'settings' | 'schedules') => {
-    setActiveTab(tab);
+  const handleTabClick = (newTab: 'content' | 'journals' | 'members' | 'settings' | 'schedules') => {
+    setActiveTab(newTab);
+    // Update URL to include tab
+    navigate(`/space/${spaceId}/${newTab}`, { replace: true });
   };
 
   const handleTabKeyDown = (e: React.KeyboardEvent, tab: 'content' | 'journals' | 'members' | 'settings' | 'schedules') => {
@@ -235,6 +249,31 @@ export const SpaceDetail: React.FC = () => {
     } catch (error) {
       console.error('Failed to update calendar URL:', error);
       // Handle error (could add error state for this specific action)
+    }
+  };
+
+  // Create theme-aware calendar URL
+  const getThemedCalendarUrl = (baseUrl: string): string => {
+    if (!baseUrl) return baseUrl;
+
+    try {
+      const url = new URL(baseUrl);
+
+      if (isDark) {
+        // Add dark theme parameters for Google Calendar
+        url.searchParams.set('bgcolor', '%23202124'); // Dark gray background (#202124)
+        // You can customize text color too
+        // Note: Google Calendar embed has limited dark mode support
+        // We'll also use CSS filter as backup
+      } else {
+        // Remove dark theme parameters in light mode
+        url.searchParams.delete('bgcolor');
+      }
+
+      return url.toString();
+    } catch (error) {
+      console.error('Error parsing calendar URL:', error);
+      return baseUrl;
     }
   };
 
@@ -646,13 +685,14 @@ export const SpaceDetail: React.FC = () => {
               {currentSpace?.calendarUrl ? (
                 <div className="space-detail__calendar-container">
                   <iframe
-                    src={currentSpace.calendarUrl}
+                    src={getThemedCalendarUrl(currentSpace.calendarUrl)}
                     style={{ border: 0 }}
                     width="100%"
                     height="600"
                     frameBorder="0"
                     scrolling="no"
                     title="Space Calendar"
+                    className={isDark ? 'calendar-iframe--dark' : ''}
                   />
                 </div>
               ) : (

@@ -777,3 +777,23 @@
     font-size: 0.75rem;
   }
 }
+
+/* Calendar Dark Mode Support */
+.calendar-iframe--dark {
+  /* Apply CSS filter to enhance dark mode appearance */
+  /* This provides additional dark mode support beyond URL parameters */
+  filter: invert(0.9) hue-rotate(180deg);
+  border-radius: 8px;
+}
+
+/* Revert the inversion for images within the iframe (if visible) */
+.calendar-iframe--dark img {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.space-detail__calendar-container {
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--theme-bg-primary);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
