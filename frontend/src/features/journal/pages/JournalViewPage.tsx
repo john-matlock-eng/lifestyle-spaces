@@ -12,6 +12,7 @@ import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizati
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { HighlightableText } from '../components/HighlightableText'
 import { TipTapViewer } from '../components/TipTapViewer'
+import { MultiSectionTipTapViewer } from '../components/MultiSectionTipTapViewer'
 import { CommentThread } from '../components/CommentThread'
 import { PresenceAvatars } from '../components/PresenceAvatars'
 import { ConnectionStatus } from '../components/ConnectionStatus'
@@ -374,32 +375,54 @@ ${content}
 
       <div className="journal-view-content">
         {journal.contentTiptap ? (
-          // Render TipTap journal with native highlighting (zero offset drift)
-          <TipTapViewer
-            contentTiptap={journal.contentTiptap}
-            onHighlightCreate={async (highlight) => {
-              // When a new highlight is created in TipTap, the document is already updated
-              console.log('[JournalView] New TipTap highlight created:', highlight)
-            }}
-            onContentChange={async (updatedContent) => {
-              // When highlights change, save the updated contentTiptap to backend
-              if (!spaceId || !journalId) return
+          // Check if contentTiptap is multi-section (object with multiple TipTap docs) or single doc
+          (() => {
+            const isMultiSection = journal.contentTiptap &&
+              typeof journal.contentTiptap === 'object' &&
+              !journal.contentTiptap.type && // Single TipTap doc has a 'type' field
+              Object.values(journal.contentTiptap).some(
+                (val) => typeof val === 'object' && val !== null && 'type' in val
+              )
 
-              try {
-                console.log('[JournalView] Saving updated contentTiptap to backend...')
-                // Update journal with new contentTiptap (which includes the highlight)
-                await updateJournal(spaceId, journalId, {
-                  contentTiptap: updatedContent
-                })
-                console.log('[JournalView] ContentTiptap saved successfully')
-
-                // Reload journal to get updated data (including extracted highlights)
-                await loadJournal(spaceId, journalId)
-              } catch (error) {
-                console.error('[JournalView] Failed to save contentTiptap:', error)
-              }
-            }}
-          />
+            return isMultiSection ? (
+              // Multi-section TipTap content (e.g., {raw_thoughts: {...}, action_plan: {...}})
+              <MultiSectionTipTapViewer
+                contentTiptap={journal.contentTiptap}
+                onContentChange={async (updatedContent) => {
+                  if (!spaceId || !journalId) return
+                  try {
+                    console.log('[JournalView] Saving updated multi-section contentTiptap to backend...')
+                    await updateJournal(spaceId, journalId, {
+                      contentTiptap: updatedContent
+                    })
+                    await loadJournal(spaceId, journalId)
+                  } catch (error) {
+                    console.error('[JournalView] Failed to save contentTiptap:', error)
+                  }
+                }}
+              />
+            ) : (
+              // Single TipTap document
+              <TipTapViewer
+                contentTiptap={journal.contentTiptap}
+                onHighlightCreate={async (highlight) => {
+                  console.log('[JournalView] New TipTap highlight created:', highlight)
+                }}
+                onContentChange={async (updatedContent) => {
+                  if (!spaceId || !journalId) return
+                  try {
+                    console.log('[JournalView] Saving updated contentTiptap to backend...')
+                    await updateJournal(spaceId, journalId, {
+                      contentTiptap: updatedContent
+                    })
+                    await loadJournal(spaceId, journalId)
+                  } catch (error) {
+                    console.error('[JournalView] Failed to save contentTiptap:', error)
+                  }
+                }}
+              />
+            )
+          })()
         ) : template && displaySections.length > 0 ? (
           // Render template sections with highlighting
           <div className="template-content">
