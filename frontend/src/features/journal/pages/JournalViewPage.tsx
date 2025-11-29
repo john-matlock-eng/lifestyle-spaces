@@ -374,24 +374,116 @@ ${content}
       </div>
 
       <div className="journal-view-content">
-        {journal.contentTiptap ? (
-          // Check if contentTiptap is multi-section (object with multiple TipTap docs) or single doc
+        {journal.contentTiptap && template && displaySections.length > 0 ? (
+          // Hybrid: TipTap sections + Markdown fallback for missing sections
+          (() => {
+            const tiptapSections = new Set(Object.keys(journal.contentTiptap))
+
+            return (
+              <div className="template-content">
+                {displaySections.map((section) => {
+                  const hasTiptap = tiptapSections.has(section.id)
+
+                  return (
+                    <div key={section.id} className="template-section template-section-compact">
+                      <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
+                      <div className="template-section-content">
+                        {hasTiptap && journal.contentTiptap ? (
+                          // Render TipTap version if available
+                          <TipTapViewer
+                            contentTiptap={journal.contentTiptap[section.id] as Record<string, unknown>}
+                            onContentChange={async (updated) => {
+                              if (!spaceId || !journalId || !journal.contentTiptap) return
+                              try {
+                                await updateJournal(spaceId, journalId, {
+                                  contentTiptap: {
+                                    ...journal.contentTiptap,
+                                    [section.id]: updated
+                                  }
+                                })
+                                await loadJournal(spaceId, journalId)
+                              } catch (error) {
+                                console.error('[JournalView] Failed to save contentTiptap:', error)
+                              }
+                            }}
+                            minHeight="150px"
+                          />
+                        ) : section.type === 'q_and_a' ? (
+                          // Fallback to markdown Q&A rendering
+                          <QASectionDisplay
+                            value={section.content}
+                            sectionId={section.id}
+                            journalEntryId={journalId || ''}
+                            spaceId={spaceId || ''}
+                            highlights={highlights}
+                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                            onHighlightClick={handleHighlightClick}
+                          />
+                        ) : section.type === 'list' ? (
+                          <ListSectionDisplay
+                            value={section.content}
+                            sectionId={section.id}
+                            journalEntryId={journalId || ''}
+                            spaceId={spaceId || ''}
+                            highlights={highlights}
+                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                            onHighlightClick={handleHighlightClick}
+                          />
+                        ) : section.type === 'checkbox' ? (
+                          <CheckboxSectionDisplay
+                            value={section.content}
+                            sectionId={section.id}
+                            journalEntryId={journalId || ''}
+                            spaceId={spaceId || ''}
+                            highlights={highlights}
+                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                            onHighlightClick={handleHighlightClick}
+                          />
+                        ) : section.type === 'scale' ? (
+                          <ScaleSectionDisplay
+                            value={section.content}
+                            config={template?.sections.find(s => s.id === section.id)?.config}
+                          />
+                        ) : section.type === 'table' ? (
+                          <TableSectionDisplay
+                            value={section.content}
+                            config={template?.sections.find(s => s.id === section.id)?.config}
+                          />
+                        ) : (
+                          // Fallback to markdown paragraph rendering
+                          <HighlightableText
+                            content={section.content}
+                            sectionId={section.id}
+                            journalEntryId={journalId || ''}
+                            spaceId={spaceId || ''}
+                            highlights={highlights}
+                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                            onHighlightClick={handleHighlightClick}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()
+        ) : journal.contentTiptap ? (
+          // Pure TipTap (no template)
           (() => {
             const isMultiSection = journal.contentTiptap &&
               typeof journal.contentTiptap === 'object' &&
-              !journal.contentTiptap.type && // Single TipTap doc has a 'type' field
+              !journal.contentTiptap.type &&
               Object.values(journal.contentTiptap).some(
                 (val) => typeof val === 'object' && val !== null && 'type' in val
               )
 
             return isMultiSection ? (
-              // Multi-section TipTap content (e.g., {raw_thoughts: {...}, action_plan: {...}})
               <MultiSectionTipTapViewer
                 contentTiptap={journal.contentTiptap}
                 onContentChange={async (updatedContent) => {
                   if (!spaceId || !journalId) return
                   try {
-                    console.log('[JournalView] Saving updated multi-section contentTiptap to backend...')
                     await updateJournal(spaceId, journalId, {
                       contentTiptap: updatedContent
                     })
@@ -402,16 +494,11 @@ ${content}
                 }}
               />
             ) : (
-              // Single TipTap document
               <TipTapViewer
                 contentTiptap={journal.contentTiptap}
-                onHighlightCreate={async (highlight) => {
-                  console.log('[JournalView] New TipTap highlight created:', highlight)
-                }}
                 onContentChange={async (updatedContent) => {
                   if (!spaceId || !journalId) return
                   try {
-                    console.log('[JournalView] Saving updated contentTiptap to backend...')
                     await updateJournal(spaceId, journalId, {
                       contentTiptap: updatedContent
                     })
