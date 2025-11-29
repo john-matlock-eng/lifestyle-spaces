@@ -126,8 +126,8 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         const preSelectionRange = document.createRange();
         preSelectionRange.selectNodeContents(container);
         preSelectionRange.setEnd(range.startContainer, range.startOffset);
-        let startOffset = preSelectionRange.toString().length;
-        let endOffset = startOffset + selectedText.length;
+        const startOffset = preSelectionRange.toString().length;
+        const endOffset = startOffset + selectedText.length;
 
         // For Q&A content (useMarkdown=false), offsets are already based on stripped text
         // since the DOM contains the stripped text rendered with HTML formatting
@@ -161,7 +161,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         console.error('[HighlightableText] Error calculating selection:', error);
       }
     }, delay);
-  }, [isReadOnly, sectionId, editingHighlightId]);
+  }, [isReadOnly, sectionId, editingHighlightId, useMarkdown]);
 
   // Handle text selection on desktop (mouse events)
   const handleMouseUp = useCallback(() => {
