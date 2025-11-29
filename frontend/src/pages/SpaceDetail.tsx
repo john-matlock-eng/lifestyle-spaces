@@ -3,20 +3,26 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSpace } from '../stores/spaceStore';
 import { useAuth } from '../stores/authStore';
 import { useInvitations } from '../hooks/useInvitations';
+import { useTheme } from '../theme/useTheme';
 import { MembersList } from '../components/spaces/MembersList';
 import { InviteMemberModal } from '../components/spaces/InviteMemberModal';
 import { JournalList } from '../features/journal/components/JournalList';
 import { ActivityFeed } from '../components/ActivityFeed';
-import { regenerateInviteCode } from '../services/spaces';
+import { regenerateInviteCode, updateSpace } from '../services/spaces';
 import { ElliePerch } from '../components/ellie';
 import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationContext';
 import type { SpaceMemberRole, SpaceMember } from '../types';
 import './SpaceDetail.css';
 
+// Valid tab names - defined outside component to avoid recreating on every render
+const VALID_TABS = ['content', 'journals', 'members', 'settings', 'schedules'] as const;
+type TabName = typeof VALID_TABS[number];
+
 export const SpaceDetail: React.FC = () => {
-  const { spaceId } = useParams<{ spaceId: string }>();
+  const { spaceId, tab } = useParams<{ spaceId: string; tab?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const {
     currentSpace,
     members,
@@ -31,12 +37,19 @@ export const SpaceDetail: React.FC = () => {
     fetchSpaceInvitations
   } = useInvitations();
 
-  const [activeTab, setActiveTab] = useState<'content' | 'journals' | 'members' | 'settings'>('content');
+  // Initialize activeTab from URL or default to 'content'
+  const isValidTab = (t: string | undefined): t is TabName => {
+    return t !== undefined && VALID_TABS.includes(t as TabName);
+  };
+  const initialTab = isValidTab(tab) ? tab : 'content';
+  const [activeTab, setActiveTab] = useState<TabName>(initialTab);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isEditingCalendar, setIsEditingCalendar] = useState(false);
+  const [calendarUrlInput, setCalendarUrlInput] = useState('');
 
   // Ellie companion state
   const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('happy');
@@ -52,6 +65,13 @@ export const SpaceDetail: React.FC = () => {
       fetchSpaceInvitations(spaceId);
     }
   }, [spaceId, selectSpace, fetchSpaceInvitations, clearError]);
+
+  // Sync activeTab with URL parameter
+  useEffect(() => {
+    if (isValidTab(tab)) {
+      setActiveTab(tab);
+    }
+  }, [tab]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -86,19 +106,20 @@ export const SpaceDetail: React.FC = () => {
     apiIsOwner: currentSpace?.isOwner
   });
 
-  const handleTabClick = (tab: 'content' | 'journals' | 'members' | 'settings') => {
-    setActiveTab(tab);
+  const handleTabClick = (newTab: TabName) => {
+    setActiveTab(newTab);
+    // Update URL to include tab
+    navigate(`/space/${spaceId}/${newTab}`, { replace: true });
   };
 
-  const handleTabKeyDown = (e: React.KeyboardEvent, tab: 'content' | 'journals' | 'members' | 'settings') => {
-    const tabs = ['content', 'journals', 'members', 'settings'];
-    const currentIndex = tabs.indexOf(activeTab);
-    
+  const handleTabKeyDown = (e: React.KeyboardEvent, tab: TabName) => {
+    const currentIndex = VALID_TABS.indexOf(activeTab);
+
     switch (e.key) {
       case 'ArrowRight': {
         e.preventDefault();
-        const nextIndex = (currentIndex + 1) % tabs.length;
-        setActiveTab(tabs[nextIndex] as typeof activeTab);
+        const nextIndex = (currentIndex + 1) % VALID_TABS.length;
+        setActiveTab(VALID_TABS[nextIndex]);
         const nextElement = (e.target as HTMLElement).nextElementSibling;
         if (nextElement && 'focus' in nextElement && typeof nextElement.focus === 'function') {
           (nextElement as HTMLElement).focus();
@@ -107,8 +128,8 @@ export const SpaceDetail: React.FC = () => {
       }
       case 'ArrowLeft': {
         e.preventDefault();
-        const prevIndex = currentIndex - 1 < 0 ? tabs.length - 1 : currentIndex - 1;
-        setActiveTab(tabs[prevIndex] as typeof activeTab);
+        const prevIndex = currentIndex - 1 < 0 ? VALID_TABS.length - 1 : currentIndex - 1;
+        setActiveTab(VALID_TABS[prevIndex]);
         const prevElement = (e.target as HTMLElement).previousElementSibling;
         if (prevElement && 'focus' in prevElement && typeof prevElement.focus === 'function') {
           (prevElement as HTMLElement).focus();
@@ -215,6 +236,52 @@ export const SpaceDetail: React.FC = () => {
     console.log('Cancel invitation:', invitationId);
   };
 
+  const handleSaveCalendarUrl = async () => {
+    if (!spaceId) return;
+    try {
+      // Extract src from iframe if user pasted full embed code
+      let urlToSave = calendarUrlInput;
+      if (calendarUrlInput.includes('<iframe')) {
+        const srcMatch = calendarUrlInput.match(/src="([^"]+)"/);
+        if (srcMatch && srcMatch[1]) {
+          urlToSave = srcMatch[1];
+        }
+      }
+
+      await updateSpace(spaceId, { calendarUrl: urlToSave });
+      setIsEditingCalendar(false);
+      selectSpace(spaceId); // Reload space to get updated data
+    } catch (error) {
+      console.error('Failed to update calendar URL:', error);
+      // Handle error (could add error state for this specific action)
+    }
+  };
+
+  // Create theme-aware calendar URL
+  const getThemedCalendarUrl = (baseUrl: string): string => {
+    if (!baseUrl) return baseUrl;
+
+    try {
+      const url = new URL(baseUrl);
+
+      if (isDark) {
+        // Add dark theme parameters for Google Calendar
+        url.searchParams.set('bgcolor', '%23202124'); // Dark gray background (#202124)
+        // You can customize text color too
+        // Note: Google Calendar embed has limited dark mode support
+        // We'll also use CSS filter as backup
+      } else {
+        // Remove dark theme parameters in light mode
+        url.searchParams.delete('bgcolor');
+      }
+
+      return url.toString();
+    } catch (error) {
+      console.error('Error parsing calendar URL:', error);
+      return baseUrl;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-detail__loading" role="status" aria-live="polite">
@@ -291,10 +358,9 @@ export const SpaceDetail: React.FC = () => {
               {currentSpace.name}
             </h1>
             <div className="space-detail__badges">
-              <span 
-                className={`space-detail__visibility-badge space-detail__visibility-badge--${
-                  currentSpace.isPublic ? 'public' : 'private'
-                }`}
+              <span
+                className={`space-detail__visibility-badge space-detail__visibility-badge--${currentSpace.isPublic ? 'public' : 'private'
+                  }`}
               >
                 {currentSpace.isPublic ? 'Public' : 'Private'}
               </span>
@@ -325,7 +391,7 @@ export const SpaceDetail: React.FC = () => {
               >
                 Actions
               </button>
-              
+
               {isActionsMenuOpen && (
                 <div className="space-detail__actions-dropdown">
                   <button
@@ -345,7 +411,7 @@ export const SpaceDetail: React.FC = () => {
                   {isOwner && (
                     <button
                       type="button"
-                      onClick={() => {/* Navigate to settings */}}
+                      onClick={() => {/* Navigate to settings */ }}
                       className="space-detail__action-item"
                     >
                       Space Settings
@@ -427,6 +493,18 @@ export const SpaceDetail: React.FC = () => {
           >
             Members
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'schedules'}
+            aria-controls="schedules-panel"
+            id="schedules-tab"
+            onClick={() => handleTabClick('schedules')}
+            onKeyDown={(e) => handleTabKeyDown(e, 'schedules')}
+            className={`tab ${activeTab === 'schedules' ? 'tab--active' : ''}`}
+          >
+            Schedules
+          </button>
           {isOwner && (
             <button
               type="button"
@@ -445,7 +523,7 @@ export const SpaceDetail: React.FC = () => {
       </div>
 
       {/* Tab Content */}
-      <main 
+      <main
         className="space-detail__main"
         role="main"
         aria-labelledby="space-title"
@@ -563,6 +641,85 @@ export const SpaceDetail: React.FC = () => {
           </div>
         )}
 
+        {activeTab === 'schedules' && (
+          <div
+            role="tabpanel"
+            id="schedules-panel"
+            aria-labelledby="schedules-tab"
+            className="tab-panel"
+          >
+            <div className="space-detail__schedules">
+              <div className="space-detail__schedules-header">
+                <h3>Space Schedule</h3>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingCalendar(!isEditingCalendar);
+                      setCalendarUrlInput(currentSpace?.calendarUrl || '');
+                    }}
+                    className="btn btn-secondary"
+                  >
+                    {isEditingCalendar ? 'Cancel Edit' : (currentSpace?.calendarUrl ? 'Edit Calendar' : 'Add Calendar')}
+                  </button>
+                )}
+              </div>
+
+              {isEditingCalendar && (
+                <div className="space-detail__calendar-edit">
+                  <p>Paste the Google Calendar embed URL or the full iframe code here:</p>
+                  <div className="space-detail__calendar-input-group">
+                    <input
+                      type="text"
+                      value={calendarUrlInput}
+                      onChange={(e) => setCalendarUrlInput(e.target.value)}
+                      placeholder="https://calendar.google.com/calendar/embed?..."
+                      className="space-detail__calendar-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveCalendarUrl}
+                      className="btn btn-primary"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {currentSpace?.calendarUrl ? (
+                <div className="space-detail__calendar-container">
+                  <iframe
+                    src={getThemedCalendarUrl(currentSpace.calendarUrl)}
+                    style={{ border: 0 }}
+                    width="100%"
+                    height="600"
+                    frameBorder="0"
+                    scrolling="no"
+                    title="Space Calendar"
+                    className={isDark ? 'calendar-iframe--dark' : ''}
+                  />
+                </div>
+              ) : (
+                !isEditingCalendar && (
+                  <div className="space-detail__empty-state">
+                    <p>No calendar has been added to this space yet.</p>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingCalendar(true)}
+                        className="btn btn-primary"
+                      >
+                        Add Calendar
+                      </button>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === 'settings' && isOwner && (
           <div
             role="tabpanel"
@@ -621,7 +778,7 @@ export const SpaceDetail: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-detail__settings-section space-detail__settings-section--danger">
                 <h4>Danger Zone</h4>
                 <div className="space-detail__setting-item">
@@ -677,7 +834,6 @@ export const SpaceDetail: React.FC = () => {
                 type="button"
                 onClick={handleRegenerateCode}
                 className="btn btn-primary"
-                disabled={isRegenerating}
               >
                 {isRegenerating ? 'Regenerating...' : 'Continue'}
               </button>
@@ -701,8 +857,8 @@ export const SpaceDetail: React.FC = () => {
           activeTab === 'journals'
             ? "Check out your journals! 📖"
             : activeTab === 'members'
-            ? `${members.length} ${members.length === 1 ? 'member' : 'members'} in this space! 👥`
-            : `Welcome to ${currentSpace.name}! 🏠`
+              ? `${members.length} ${members.length === 1 ? 'member' : 'members'} in this space! 👥`
+              : `Welcome to ${currentSpace.name}! 🏠`
         }
         size="md"
         onClick={() => setMood(mood === 'playful' ? 'happy' : 'playful')}
@@ -711,7 +867,7 @@ export const SpaceDetail: React.FC = () => {
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
         showPerchControl={true}
-        
+
       />
     </div>
   );

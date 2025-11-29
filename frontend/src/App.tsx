@@ -42,6 +42,7 @@ function App() {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/space/:spaceId" element={<SpaceDetail />} />
+                  <Route path="/space/:spaceId/:tab" element={<SpaceDetail />} />
                   <Route path="/join/:inviteCode" element={<JoinSpace />} />
 
                   {/* Journal routes */}
