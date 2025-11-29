@@ -1,10 +1,9 @@
 import React from 'react'
 import { TipTapViewer } from './TipTapViewer'
-import type { JSONContent } from '@tiptap/core'
 
 interface MultiSectionTipTapViewerProps {
-  contentTiptap: Record<string, JSONContent>
-  onContentChange?: (contentTiptap: Record<string, JSONContent>) => void
+  contentTiptap: Record<string, unknown>
+  onContentChange?: (contentTiptap: Record<string, unknown>) => void
   minHeight?: string
 }
 
@@ -20,7 +19,7 @@ export const MultiSectionTipTapViewer: React.FC<MultiSectionTipTapViewerProps> =
     if (onContentChange) {
       onContentChange({
         ...contentTiptap,
-        [sectionId]: updatedContent as JSONContent,
+        [sectionId]: updatedContent,
       })
     }
   }
