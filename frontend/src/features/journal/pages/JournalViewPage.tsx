@@ -4,24 +4,18 @@ import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
 import { getEmotionById } from '../data/emotionData'
-import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
-import type { DisplaySection } from '../../../lib/journal/types'
+import { extractTextFromTipTap, extractSectionsFromTipTap, type TipTapSection } from '../../../lib/journal/tiptapUtils'
 import type { Template } from '../types/template.types'
 import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { AIAssistantDock } from '../components/AIAssistantDock'
-import { HighlightableText } from '../components/HighlightableText'
-import { TipTapViewer } from '../components/TipTapViewer'
+import { EnhancedTipTapViewer } from '../components/tiptap/EnhancedTipTapViewer'
 import { CommentThread } from '../components/CommentThread'
+import { HighlightActionsMenu } from '../components/HighlightActionsMenu'
 import { PresenceAvatars } from '../components/PresenceAvatars'
 import { ConnectionStatus } from '../components/ConnectionStatus'
 import { useHighlightsRealtime } from '../hooks/useHighlightsRealtime'
 import type { Highlight } from '../types/highlight.types'
-import { ListSectionDisplay } from '../components/sections/ListSectionDisplay'
-import { QASectionDisplay } from '../components/sections/QASectionDisplay'
-import { CheckboxSectionDisplay } from '../components/sections/CheckboxSectionDisplay'
-import { ScaleSectionDisplay } from '../components/sections/ScaleSectionDisplay'
-import { TableSectionDisplay } from '../components/sections/TableSectionDisplay'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -38,9 +32,16 @@ export const JournalViewPage: React.FC = () => {
   const { user } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
   const [template, setTemplate] = useState<Template | null>(null)
-  const [displaySections, setDisplaySections] = useState<DisplaySection[]>([])
+  const [displaySections, setDisplaySections] = useState<TipTapSection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
   const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
+  const [showActionsMenu, setShowActionsMenu] = useState(false)
+  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+  const [showCommentThread, setShowCommentThread] = useState(false)
+  const [editingHighlightId, setEditingHighlightId] = useState<string | null>(null)
+  const [editSelection, setEditSelection] = useState<{ text: string; from: number; to: number } | null>(null)
+  const [showEditButtons, setShowEditButtons] = useState(false)
+  const [editButtonPosition, setEditButtonPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
 
   // Highlights and comments real-time feature
@@ -51,11 +52,10 @@ export const JournalViewPage: React.FC = () => {
     isConnected,
     isConnecting,
     error: highlightError,
-    createHighlight,
-    updateHighlight,
-    deleteHighlight,
     createComment,
     deleteComment,
+    deleteHighlight,
+    updateHighlight,
     fetchComments,
     reconnect
   } = useHighlightsRealtime(spaceId || '', journalId || '')
@@ -66,13 +66,6 @@ export const JournalViewPage: React.FC = () => {
   // Ellie customization
   const { customization } = useEllieCustomizationContext()
 
-  // Handler to open highlight and load its comments
-  const handleHighlightClick = (highlight: Highlight) => {
-    setSelectedHighlight(highlight)
-    // Fetch comments for this highlight
-    fetchComments(highlight.id)
-  }
-
   useEffect(() => {
     if (spaceId && journalId) {
       loadJournal(spaceId, journalId)
@@ -80,29 +73,157 @@ export const JournalViewPage: React.FC = () => {
   }, [spaceId, journalId, loadJournal])
 
   useEffect(() => {
-    // Load template and parse content if journal has one
+    // Load template and extract sections from contentTiptap if journal has one
     if (journal?.templateId) {
-      const loadTemplateAndParse = async () => {
+      const loadTemplateAndExtractSections = async () => {
         try {
           const templateData = await getTemplate(journal.templateId!)
           setTemplate(templateData)
 
-          // Parse the content to extract template sections
-          const sections = JournalContentManager.extractDisplaySections(journal.content)
+          // Extract sections from TipTap content
+          const sections = extractSectionsFromTipTap(journal.contentTiptap, templateData)
           setDisplaySections(sections)
 
-          console.log('[DEBUG VIEW] Parsed sections:', sections)
+          console.log('[DEBUG VIEW] Extracted TipTap sections:', sections)
         } catch (err) {
-          console.error('Failed to load template or parse content:', err)
+          console.error('Failed to load template or extract sections:', err)
           setDisplaySections([])
         }
       }
-      loadTemplateAndParse()
+      loadTemplateAndExtractSections()
     } else {
       setTemplate(null)
       setDisplaySections([])
     }
   }, [journal])
+
+  // Listen for highlight click events from TipTap viewer
+  useEffect(() => {
+    const handleHighlightClick = (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { id, authorName, commentCount, color } = customEvent.detail
+      const mouseEvent = (event as CustomEvent & { sourceEvent?: MouseEvent }).sourceEvent
+
+      // Try to find the full highlight from the list
+      const fullHighlight = highlights.find(h => h.id === id)
+
+      // Use full highlight if found, otherwise create minimal object matching Highlight interface
+      const highlight: Highlight = fullHighlight || {
+        id,
+        journalEntryId: journalId || '',
+        spaceId: spaceId || '',
+        highlightedText: '',
+        textRange: { startOffset: 0, endOffset: 0 },
+        color,
+        createdBy: user?.userId || '',
+        createdByName: authorName || user?.displayName || 'Unknown',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        commentCount: commentCount || 0,
+      }
+
+      console.log('[JournalView] Highlight clicked:', { id, highlight })
+      setSelectedHighlight(highlight)
+
+      // Show actions menu at click position
+      const clickX = mouseEvent?.clientX || window.innerWidth / 2
+      const clickY = mouseEvent?.clientY || window.innerHeight / 2
+      setMenuPosition({ x: clickX, y: clickY })
+      setShowActionsMenu(true)
+      setShowCommentThread(false)
+    }
+
+    document.addEventListener('highlight-clicked', handleHighlightClick)
+    return () => {
+      document.removeEventListener('highlight-clicked', handleHighlightClick)
+    }
+  }, [user, highlights])
+
+  // Listen for text selection events when in edit mode
+  useEffect(() => {
+    if (!editingHighlightId) return
+
+    const handleTextSelected = (event: Event) => {
+      const customEvent = event as CustomEvent<{ text: string; from: number; to: number; x: number; y: number }>
+      const { text, from, to, x, y } = customEvent.detail
+
+      if (!text || text.trim() === '') {
+        setEditSelection(null)
+        setShowEditButtons(false)
+        return
+      }
+
+      console.log('[JournalView] Text selected for edit:', { text, from, to })
+      setEditSelection({ text, from, to })
+      setEditButtonPosition({ x, y })
+      setShowEditButtons(true)
+    }
+
+    document.addEventListener('text-selected', handleTextSelected)
+    return () => {
+      document.removeEventListener('text-selected', handleTextSelected)
+    }
+  }, [editingHighlightId])
+
+  // Broadcast edit mode status to TipTap viewers
+  useEffect(() => {
+    if (editingHighlightId) {
+      const event = new CustomEvent('highlight-edit-mode', {
+        detail: { highlightId: editingHighlightId, enabled: true }
+      })
+      document.dispatchEvent(event)
+    } else {
+      const event = new CustomEvent('highlight-edit-mode', {
+        detail: { highlightId: null, enabled: false }
+      })
+      document.dispatchEvent(event)
+    }
+  }, [editingHighlightId])
+
+  const handleSaveEdit = async () => {
+    if (!editingHighlightId || !editSelection || !spaceId || !journalId) return
+
+    try {
+      // Update via backend API
+      // Create a minimal DOMRect for the HighlightSelection interface
+      const dummyRect = new DOMRect(0, 0, 0, 0)
+      await updateHighlight(editingHighlightId, {
+        text: editSelection.text,
+        range: {
+          startOffset: editSelection.from,
+          endOffset: editSelection.to,
+        },
+        boundingRect: dummyRect,
+      })
+
+      // Dispatch event to TipTap to update the mark
+      const event = new CustomEvent('update-highlight-mark', {
+        detail: {
+          highlightId: editingHighlightId,
+          from: editSelection.from,
+          to: editSelection.to,
+        }
+      })
+      document.dispatchEvent(event)
+
+      // Clear edit state
+      setEditingHighlightId(null)
+      setEditSelection(null)
+      setShowEditButtons(false)
+
+      // Reload journal to get fresh content
+      await loadJournal(spaceId, journalId)
+    } catch (error) {
+      console.error('[JournalView] Failed to save highlight edit:', error)
+      alert('Failed to save changes. Please try again.')
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingHighlightId(null)
+    setEditSelection(null)
+    setShowEditButtons(false)
+  }
 
   const handleEdit = () => {
     if (spaceId && journalId) {
@@ -157,10 +278,10 @@ export const JournalViewPage: React.FC = () => {
     const dateStr = new Date(journal.createdAt).toISOString().split('T')[0]
     const filename = `${safeTitle}_${dateStr}.md`
 
-    // Get the markdown content
-    const content = template
-      ? JournalContentManager.extractCleanMarkdown(journal.content)
-      : journal.content
+    // Extract text from TipTap content
+    const content = journal.contentTiptap
+      ? extractTextFromTipTap(journal.contentTiptap)
+      : 'No content available'
 
     // Create markdown file with metadata
     const markdown = `# ${journal.title}
@@ -239,6 +360,7 @@ ${content}
             <h1 className="journal-title-compact">
               {journal.title}
               {journal.isPinned && <span style={{ marginLeft: '8px' }}>📌</span>}
+              {journal.isPrivate && <span style={{ marginLeft: '8px' }} title="Private journal">🔒</span>}
             </h1>
             {template && (
               <div className="journal-template-badge-compact">
@@ -373,9 +495,9 @@ ${content}
       </div>
 
       <div className="journal-view-content">
-        {journal.contentTiptap ? (
-          // Render TipTap journal with native highlighting (zero offset drift)
-          <TipTapViewer
+        {journal.contentTiptap && typeof journal.contentTiptap === 'object' && 'type' in journal.contentTiptap && journal.contentTiptap.type === 'doc' ? (
+          // Render single-document TipTap journal with native highlighting (zero offset drift)
+          <EnhancedTipTapViewer
             contentTiptap={journal.contentTiptap}
             onHighlightCreate={async (highlight) => {
               // When a new highlight is created in TipTap, the document is already updated
@@ -393,8 +515,8 @@ ${content}
                 })
                 console.log('[JournalView] ContentTiptap saved successfully')
 
-                // Reload journal to get updated data (including extracted highlights)
-                await loadJournal(spaceId, journalId)
+                // Don't reload - TipTap already has the updated content
+                // Reloading causes unnecessary flashing
               } catch (error) {
                 console.error('[JournalView] Failed to save contentTiptap:', error)
               }
@@ -403,98 +525,85 @@ ${content}
         ) : template && displaySections.length > 0 ? (
           // Render template sections with highlighting
           <div className="template-content">
-            {displaySections.map((section) => (
-              <div key={section.id} className="template-section template-section-compact">
-                <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
-                <div className="template-section-content">
-                  {section.type === 'q_and_a' ? (
-                    // Render Q&A section with highlighting support
-                    <QASectionDisplay
-                      value={section.content}
-                      sectionId={section.id}
-                      journalEntryId={journalId || ''}
-                      spaceId={spaceId || ''}
-                      highlights={highlights}
-                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-                      onHighlightClick={handleHighlightClick}
-                      onHighlightUpdate={updateHighlight}
-                      onHighlightDelete={deleteHighlight}
-                      className="qa-view-section-compact"
-                    />
-                  ) : section.type === 'list' ? (
-                    // Render List section with highlighting support
-                    <ListSectionDisplay
-                      value={section.content}
-                      sectionId={section.id}
-                      journalEntryId={journalId || ''}
-                      spaceId={spaceId || ''}
-                      highlights={highlights}
-                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-                      onHighlightClick={handleHighlightClick}
-                      onHighlightUpdate={updateHighlight}
-                      onHighlightDelete={deleteHighlight}
-                      className="list-view-section-compact"
-                    />
-                  ) : section.type === 'checkbox' ? (
-                    // Render Checkbox section with highlighting support
-                    <CheckboxSectionDisplay
-                      value={section.content}
-                      sectionId={section.id}
-                      journalEntryId={journalId || ''}
-                      spaceId={spaceId || ''}
-                      highlights={highlights}
-                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-                      onHighlightClick={handleHighlightClick}
-                      onHighlightUpdate={updateHighlight}
-                      onHighlightDelete={deleteHighlight}
-                      className="checkbox-view-section-compact"
-                    />
-                  ) : section.type === 'table' ? (
-                    // Render Table section (no highlighting for tables)
-                    <TableSectionDisplay
-                      value={section.content}
-                      config={template?.sections.find(s => s.id === section.id)?.config}
-                      className="table-view-section"
-                    />
-                  ) : section.type === 'scale' ? (
-                    // Render Scale section (no highlighting for numeric values)
-                    <ScaleSectionDisplay
-                      value={section.content}
-                      config={template?.sections.find(s => s.id === section.id)?.config}
-                      className="scale-view-section"
-                    />
-                  ) : (
-                    // Render other section types with highlighting
-                    <HighlightableText
-                      content={section.content}
-                      highlights={highlights}
-                      sectionId={section.id}
-                      journalEntryId={journalId || ''}
-                      spaceId={spaceId || ''}
-                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-                      onHighlightClick={handleHighlightClick}
-                      onHighlightUpdate={updateHighlight}
-                      onHighlightDelete={deleteHighlight}
-                    />
-                  )}
+            {displaySections.map((section) => {
+              // Use section.content which already includes empty docs for missing sections
+              const sectionTiptapContent = section.content
+
+              const hasTiptapContent = sectionTiptapContent &&
+                typeof sectionTiptapContent === 'object' &&
+                'type' in sectionTiptapContent &&
+                sectionTiptapContent.type === 'doc'
+
+              return (
+                <div key={section.id} className="template-section template-section-compact">
+                  <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
+                  <div className="template-section-content">
+                    {hasTiptapContent && (section.type === 'paragraph' || section.type === 'prose') ? (
+                      // Render paragraph sections with TipTap content using EnhancedTipTapViewer (preserves highlight positions)
+                      <EnhancedTipTapViewer
+                        contentTiptap={sectionTiptapContent as Record<string, unknown>}
+                        onContentChange={async (updatedContent) => {
+                          if (!spaceId || !journalId || !journal.contentTiptap) return
+
+                          try {
+                            // Update the specific section in the multi-section TipTap content
+                            const updatedMultiSection = {
+                              ...(journal.contentTiptap as Record<string, unknown>),
+                              [section.id]: updatedContent
+                            }
+                            await updateJournal(spaceId, journalId, {
+                              contentTiptap: updatedMultiSection
+                            })
+                            await loadJournal(spaceId, journalId)
+                          } catch (error) {
+                            console.error('[JournalView] Failed to save section TipTap content:', error)
+                          }
+                        }}
+                      />
+                    ) : hasTiptapContent && section.type === 'q_and_a' ? (
+                      // Render Q&A sections with TipTap content using EnhancedTipTapViewer (with qaPair nodes)
+                      <EnhancedTipTapViewer
+                        contentTiptap={sectionTiptapContent as Record<string, unknown>}
+                        onContentChange={async (updatedContent) => {
+                          if (!spaceId || !journalId || !journal.contentTiptap) return
+
+                          try {
+                            // Update the specific section in the multi-section TipTap content
+                            const updatedMultiSection = {
+                              ...(journal.contentTiptap as Record<string, unknown>),
+                              [section.id]: updatedContent
+                            }
+                            await updateJournal(spaceId, journalId, {
+                              contentTiptap: updatedMultiSection
+                            })
+                            await loadJournal(spaceId, journalId)
+                          } catch (error) {
+                            console.error('[JournalView] Failed to save Q&A section TipTap content:', error)
+                          }
+                        }}
+                      />
+                    ) : (
+                    // All sections should have TipTap content after migration
+                    <div className="section-migration-notice">
+                      <p>This section needs to be re-saved to enable full TipTap support.</p>
+                      <p>Section type: {section.type}</p>
+                    </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
+          </div>
+        ) : journal.contentTiptap ? (
+          // Render single-doc TipTap content (already handled above)
+          <div className="migration-notice">
+            <p>Content rendering error. Please try refreshing the page.</p>
           </div>
         ) : (
-          // Render regular content with highlighting
-          <HighlightableText
-            content={template
-              ? JournalContentManager.extractCleanMarkdown(journal.content)
-              : journal.content}
-            highlights={highlights}
-            journalEntryId={journalId || ''}
-            spaceId={spaceId || ''}
-            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
-            onHighlightClick={handleHighlightClick}
-            onHighlightUpdate={updateHighlight}
-            onHighlightDelete={deleteHighlight}
-          />
+          // No content available
+          <div className="no-content-notice">
+            <p>No content available for this journal.</p>
+          </div>
         )}
       </div>
 
@@ -541,9 +650,9 @@ ${content}
       </div>
 
       {/* AI Assistant Dock */}
-      {showAIDock && (
+      {showAIDock && journal.contentTiptap && (
         <AIAssistantDock
-          journalContent={journal.content}
+          journalContent={extractTextFromTipTap(journal.contentTiptap)}
           journalTitle={journal.title}
           journalId={journalId}
           emotions={journal.emotions?.map(id => getEmotionById(id)?.label).filter((label): label is string => !!label)}
@@ -551,8 +660,61 @@ ${content}
         />
       )}
 
+      {/* Highlight Actions Menu - Floating menu with options */}
+      {showActionsMenu && selectedHighlight && (
+        <HighlightActionsMenu
+          highlightId={selectedHighlight.id}
+          position={menuPosition}
+          commentCount={selectedHighlight.commentCount}
+          onViewComments={async () => {
+            if (!selectedHighlight) return
+
+            setShowActionsMenu(false)
+
+            // Fetch comments for this highlight
+            try {
+              await fetchComments(selectedHighlight.id)
+            } catch (error) {
+              console.error('[JournalView] Failed to fetch comments:', error)
+            }
+
+            setShowCommentThread(true)
+          }}
+          onEditSelection={() => {
+            if (!selectedHighlight) return
+
+            // Enter edit mode
+            setEditingHighlightId(selectedHighlight.id)
+            setShowActionsMenu(false)
+
+            console.log('[JournalView] Entering edit mode for highlight:', selectedHighlight.id)
+          }}
+          onDelete={async () => {
+            if (!selectedHighlight) return
+
+            try {
+              await deleteHighlight(selectedHighlight.id)
+              setShowActionsMenu(false)
+              setSelectedHighlight(null)
+
+              // Reload journal to refresh TipTap content without the deleted highlight
+              if (spaceId && journalId) {
+                await loadJournal(spaceId, journalId)
+              }
+            } catch (error) {
+              console.error('[JournalView] Failed to delete highlight:', error)
+              alert('Failed to delete highlight. Please try again.')
+            }
+          }}
+          onClose={() => {
+            setShowActionsMenu(false)
+            setSelectedHighlight(null)
+          }}
+        />
+      )}
+
       {/* Comment Thread - Renders as sliding panel with its own backdrop */}
-      {selectedHighlight && (
+      {showCommentThread && selectedHighlight && (
         <CommentThread
           highlight={selectedHighlight}
           comments={comments[selectedHighlight.id] || []}
@@ -560,8 +722,80 @@ ${content}
           currentUserId={user?.userId || ''}
           onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
           onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
-          onClose={() => setSelectedHighlight(null)}
+          onClose={() => {
+            setShowCommentThread(false)
+            setSelectedHighlight(null)
+          }}
         />
+      )}
+
+      {/* Edit Selection Buttons - Show Save/Cancel when editing highlight */}
+      {showEditButtons && editingHighlightId && (
+        <div
+          style={{
+            position: 'fixed',
+            left: `${editButtonPosition.x}px`,
+            top: `${editButtonPosition.y}px`,
+            transform: 'translate(-50%, 0%)',
+            zIndex: 99999,
+            animation: 'fadeIn 0.2s ease-out',
+            display: 'flex',
+            gap: '8px',
+          }}
+        >
+          <button
+            onClick={handleSaveEdit}
+            style={{
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: 'white',
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)'
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.4)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)'
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)'
+            }}
+          >
+            ✓ Save
+          </button>
+          <button
+            onClick={handleCancelEdit}
+            style={{
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#374151',
+              background: 'white',
+              border: '1px solid rgba(0, 0, 0, 0.2)',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)'
+              e.currentTarget.style.background = '#f9fafb'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)'
+              e.currentTarget.style.background = 'white'
+            }}
+          >
+            ✕ Cancel
+          </button>
+        </div>
       )}
 
       {/* Ellie companion with smart positioning */}

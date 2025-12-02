@@ -170,7 +170,8 @@ class JournalService:
             'updated_at': now,
             'is_encrypted': False,
             'word_count': word_count,
-            'is_pinned': data.is_pinned
+            'is_pinned': data.is_pinned,
+            'is_private': data.is_private
         }
 
         # Add content_tiptap if provided (TipTap JSON format for native highlighting)
@@ -194,7 +195,6 @@ class JournalService:
                 metadata={
                     'journal_id': journal_id,
                     'journal_title': data.title.strip(),
-                    'content_preview': data.content[:100] if len(data.content) > 100 else data.content,
                     'template_id': data.template_id
                 }
             )
@@ -215,7 +215,8 @@ class JournalService:
             'created_at': now,
             'updated_at': now,
             'word_count': word_count,
-            'is_pinned': data.is_pinned
+            'is_pinned': data.is_pinned,
+            'is_private': data.is_private
         }
 
         # Include content_tiptap if provided
@@ -262,29 +263,55 @@ class JournalService:
         journal = response['Item']
         logger.info(f"[GET_JOURNAL] Journal found via direct key lookup")
 
+        # Auto-migrate old journals to TipTap format
+        from app.utils.tiptap_converter import TipTapConverter
+        journal = TipTapConverter.auto_migrate_journal(journal)
+
+        # If journal was migrated, update it in the database
+        if 'content_tiptap' in journal and not response['Item'].get('content_tiptap'):
+            try:
+                self.table.update_item(
+                    Key={'PK': journal['PK'], 'SK': journal['SK']},
+                    UpdateExpression='SET content_tiptap = :ct',
+                    ExpressionAttributeValues={':ct': journal['content_tiptap']}
+                )
+                logger.info(f"[GET_JOURNAL] Saved migrated TipTap content for journal {journal_id}")
+            except Exception as e:
+                logger.warning(f"[GET_JOURNAL] Failed to save migrated content: {e}")
+
         # Get author info
         author_info = self._get_author_info(journal['user_id'])
 
-        return {
+        result = {
             'journal_id': journal['journal_id'],
             'space_id': journal['space_id'],
             'user_id': journal['user_id'],
             'title': journal['title'],
-            'content': journal['content'],
             'template_id': journal.get('template_id'),
-            # REMOVED: template_data - data is embedded in content
             'tags': journal.get('tags', []),
             'emotions': journal.get('emotions', []),
             'created_at': journal['created_at'],
             'updated_at': journal['updated_at'],
             'word_count': journal.get('word_count', 0),
             'is_pinned': journal.get('is_pinned', False),
+            'is_private': journal.get('is_private', False),
             'author': author_info
         }
+
+        # Include content_tiptap if present
+        if 'content_tiptap' in journal:
+            result['content_tiptap'] = journal['content_tiptap']
+
+        return result
 
     def update_journal_entry(self, space_id: str, journal_id: str, user_id: str, data: JournalUpdate) -> Dict[str, Any]:
         """
         Update a journal entry.
+
+        Permission model:
+        - Authors can update all fields
+        - Space members can update contentTiptap only (for collaborative highlighting/comments)
+        - Non-members cannot update
 
         Args:
             space_id: Space ID where the journal exists
@@ -297,7 +324,7 @@ class JournalService:
 
         Raises:
             JournalNotFoundError: If journal doesn't exist
-            UnauthorizedError: If user is not the author
+            UnauthorizedError: If user lacks permission
         """
         logger.info(f"[UPDATE_JOURNAL] Updating journal={journal_id} in space={space_id} by user={user_id}")
 
@@ -313,10 +340,26 @@ class JournalService:
             raise JournalNotFoundError(f"Journal {journal_id} not found")
 
         journal = response['Item']
+        is_author = journal['user_id'] == user_id
 
-        # Verify user is the author
-        if journal['user_id'] != user_id:
-            raise UnauthorizedError("Only the author can update this journal")
+        # Check permissions
+        if not is_author:
+            # Non-authors can only update contentTiptap (for highlights/comments)
+            # They must be space members
+            if not self._is_space_member(space_id, user_id):
+                raise UnauthorizedError("You must be a space member to update this journal")
+
+            # Check if trying to update fields other than contentTiptap
+            if any([
+                data.title is not None,
+                data.content is not None,
+                data.tags is not None,
+                data.emotions is not None,
+                data.is_pinned is not None,
+                data.is_private is not None,
+                data.template_id is not None
+            ]):
+                raise UnauthorizedError("Only the author can update journal content. Space members can only add highlights.")
 
         # Build update expression
         update_expr = "SET updated_at = :updated_at"
@@ -343,6 +386,10 @@ class JournalService:
         if data.is_pinned is not None:
             update_expr += ", is_pinned = :is_pinned"
             expr_values[':is_pinned'] = data.is_pinned
+
+        if data.is_private is not None:
+            update_expr += ", is_private = :is_private"
+            expr_values[':is_private'] = data.is_private
 
         if data.template_id is not None:
             update_expr += ", template_id = :template_id"
@@ -378,8 +425,7 @@ class JournalService:
                 user_name=activity_service._get_user_display_name(user_id),
                 metadata={
                     'journal_id': journal_id,
-                    'journal_title': updated_journal['title'],
-                    'content_preview': updated_journal['content'][:100] if len(updated_journal['content']) > 100 else updated_journal['content']
+                    'journal_title': updated_journal['title']
                 }
             )
         except Exception as e:
@@ -389,22 +435,27 @@ class JournalService:
         # Get author info
         author_info = self._get_author_info(updated_journal['user_id'])
 
-        return {
+        result = {
             'journal_id': updated_journal['journal_id'],
             'space_id': updated_journal['space_id'],
             'user_id': updated_journal['user_id'],
             'title': updated_journal['title'],
-            'content': updated_journal['content'],
             'template_id': updated_journal.get('template_id'),
-            # REMOVED: template_data - data is embedded in content
             'tags': updated_journal.get('tags', []),
             'emotions': updated_journal.get('emotions', []),
             'created_at': updated_journal['created_at'],
             'updated_at': updated_journal['updated_at'],
             'word_count': updated_journal.get('word_count', 0),
             'is_pinned': updated_journal.get('is_pinned', False),
+            'is_private': updated_journal.get('is_private', False),
             'author': author_info
         }
+
+        # Include content_tiptap if present
+        if 'content_tiptap' in updated_journal:
+            result['content_tiptap'] = updated_journal['content_tiptap']
+
+        return result
 
     def delete_journal_entry(self, space_id: str, journal_id: str, user_id: str) -> bool:
         """
@@ -518,6 +569,16 @@ class JournalService:
 
         journals = response.get('Items', [])
 
+        # Auto-migrate old journals to TipTap format (for display only, don't persist here)
+        from app.utils.tiptap_converter import TipTapConverter
+        journals = [TipTapConverter.auto_migrate_journal(j) for j in journals]
+
+        # Filter out private journals that don't belong to the current user
+        journals = [
+            j for j in journals
+            if not j.get('is_private', False) or j.get('user_id') == user_id
+        ]
+
         # Apply filters
         if tags:
             journals = [j for j in journals if any(tag in j.get('tags', []) for tag in tags)]
@@ -543,15 +604,14 @@ class JournalService:
                 'space_id': journal['space_id'],
                 'user_id': journal['user_id'],
                 'title': journal['title'],
-                'content': journal['content'],
                 'template_id': journal.get('template_id'),
-                # REMOVED: template_data - data is embedded in content
                 'tags': journal.get('tags', []),
                 'emotions': journal.get('emotions', []),
                 'created_at': journal['created_at'],
                 'updated_at': journal['updated_at'],
                 'word_count': journal.get('word_count', 0),
                 'is_pinned': journal.get('is_pinned', False),
+                'is_private': journal.get('is_private', False),
                 'author': author_info
             })
 
@@ -610,15 +670,14 @@ class JournalService:
                 'space_id': journal['space_id'],
                 'user_id': journal['user_id'],
                 'title': journal['title'],
-                'content': journal['content'],
                 'template_id': journal.get('template_id'),
-                # REMOVED: template_data - data is embedded in content
                 'tags': journal.get('tags', []),
                 'emotions': journal.get('emotions', []),
                 'created_at': journal['created_at'],
                 'updated_at': journal['updated_at'],
                 'word_count': journal.get('word_count', 0),
                 'is_pinned': journal.get('is_pinned', False),
+                'is_private': journal.get('is_private', False),
                 'author': author_info
             })
 

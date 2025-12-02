@@ -12,7 +12,6 @@ import { TableSection } from '../components/sections/TableSection'
 import AIWritingPrompts from '../../../components/AIWritingPrompts'
 import { useJournal } from '../hooks/useJournal'
 import { useSectionTipTap } from '../hooks/useSectionTipTap'
-import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { aiService } from '../../../services/ai'
 import { ElliePerch } from '../../../components/ellie'
@@ -40,6 +39,7 @@ export const JournalCreatePage: React.FC = () => {
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
   const [emotions, setEmotions] = useState<string[]>([])
+  const [isPrivate, setIsPrivate] = useState(false)
   const [showTemplatePicker, setShowTemplatePicker] = useState(true)
   const [customSections, setCustomSections] = useState<CustomSection[]>([])
   const [showAIDock, setShowAIDock] = useState(false)
@@ -113,6 +113,12 @@ export const JournalCreatePage: React.FC = () => {
         } else {
           initialData[section.id] = ''
         }
+
+        // Initialize TipTap state for all sections (ensures they're saved even if empty)
+        updateSection(section.id, {
+          type: 'doc',
+          content: [{ type: 'paragraph' }]
+        })
       })
       setTemplateData(initialData)
       setShowTemplatePicker(false)
@@ -165,6 +171,37 @@ export const JournalCreatePage: React.FC = () => {
       if (value.length > 0 && (!Array.isArray(previousValue) || previousValue.length === 0)) {
         handleSectionComplete(sectionId)
       }
+
+      // Convert Q&A pairs to TipTap format with qaPair nodes
+      const section = selectedTemplate?.sections.find(s => s.id === sectionId) ||
+                      customSections.find(s => s.id === sectionId)
+
+      if (section?.type === 'q_and_a') {
+        const qaPairs = value as QAPair[]
+        const tiptapContent = {
+          type: 'doc',
+          content: qaPairs.map(pair => ({
+            type: 'qaPair',
+            attrs: {
+              id: pair.id,
+              isCollapsed: pair.isCollapsed || false
+            },
+            content: [
+              {
+                type: 'qaPairQuestion',
+                content: pair.question ? [{ type: 'text', text: pair.question }] : []
+              },
+              {
+                type: 'qaPairAnswer',
+                content: pair.answer ? [{ type: 'text', text: pair.answer }] : []
+              }
+            ]
+          }))
+        }
+
+        // Save to TipTap format
+        updateSection(sectionId, tiptapContent)
+      }
     }
   }
 
@@ -180,105 +217,6 @@ export const JournalCreatePage: React.FC = () => {
         .split(',')
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0)
-
-      // Use JournalContentManager to serialize template data into content field
-      let finalContent = content
-      if (selectedTemplate || customSections.length > 0) {
-        // Convert templateData to the format expected by JournalContentManager
-        const sections: Record<string, { content: string; title: string; type: string }> = {}
-
-        // Add template sections
-        if (selectedTemplate) {
-          selectedTemplate.sections.forEach((section) => {
-            const sectionContent = templateData[section.id]
-
-            // Handle different section types
-            if (section.type === 'q_and_a') {
-              // Q&A sections store arrays of QAPair objects
-              if (Array.isArray(sectionContent) && sectionContent.length > 0) {
-                sections[section.id] = {
-                  content: JSON.stringify(sectionContent),
-                  title: section.title,
-                  type: section.type
-                }
-              }
-            } else if (section.type === 'list' || section.type === 'checkbox') {
-              // List and checkbox sections store arrays of ListItem objects
-              if (Array.isArray(sectionContent) && sectionContent.length > 0) {
-                sections[section.id] = {
-                  content: JSON.stringify(sectionContent),
-                  title: section.title,
-                  type: section.type
-                }
-              }
-            } else if (section.type === 'table') {
-              // Table sections store arrays of TableRow objects
-              if (Array.isArray(sectionContent) && sectionContent.length > 0) {
-                sections[section.id] = {
-                  content: JSON.stringify(sectionContent),
-                  title: section.title,
-                  type: section.type
-                }
-              }
-            } else if (section.type === 'scale') {
-              // Scale sections store numbers - always save them
-              if (typeof sectionContent === 'number') {
-                sections[section.id] = {
-                  content: String(sectionContent),
-                  title: section.title,
-                  type: section.type
-                }
-              }
-            } else {
-              // Other sections (paragraph) store strings
-              if (sectionContent && typeof sectionContent === 'string' && sectionContent.trim()) {
-                sections[section.id] = {
-                  content: sectionContent,
-                  title: section.title,
-                  type: section.type
-                }
-              }
-            }
-          })
-        }
-
-        // Add custom sections
-        customSections.forEach(section => {
-          if (section.type === 'q_and_a' || section.type === 'list' || section.type === 'checkbox') {
-            // Q&A, List, and Checkbox sections store arrays
-            if (Array.isArray(section.content) && section.content.length > 0) {
-              sections[section.id] = {
-                content: JSON.stringify(section.content),
-                title: section.title,
-                type: section.type
-              }
-            }
-          } else {
-            // Other section types store strings
-            if (section.content && typeof section.content === 'string' && section.content.trim()) {
-              sections[section.id] = {
-                content: section.content,
-                title: section.title,
-                type: section.type
-              }
-            }
-          }
-        })
-
-        // Serialize everything into content with embedded metadata
-        // Only include template info if we have a real template (not 'blank')
-        finalContent = JournalContentManager.serialize({
-          template: selectedTemplate?.id || undefined,
-          templateVersion: selectedTemplate ? String(selectedTemplate.version) : undefined,
-          metadata: {
-            title,
-            emotions: emotions.length > 0 ? emotions : undefined
-          },
-          sections
-        })
-
-        console.log('[DEBUG] Serialized content with embedded metadata:', finalContent.substring(0, 200))
-      }
 
       console.log('[DEBUG] Emotions state before submission:', emotions)
       console.log('[DEBUG] Emotions length:', emotions.length)
@@ -296,10 +234,10 @@ export const JournalCreatePage: React.FC = () => {
 
       const journal = await createJournal(spaceId, {
         title,
-        content: finalContent,
-        contentTiptap: contentTiptapToSave || undefined,
+        contentTiptap: contentTiptapToSave || { type: 'doc', content: [] },
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
+        isPrivate,
         templateId: selectedTemplate?.id
         // NO templateData field!
       })
@@ -774,6 +712,18 @@ export const JournalCreatePage: React.FC = () => {
             }}
             disabled={loading}
           />
+        </div>
+
+        <div className="journal-form-group">
+          <label className="journal-form-checkbox-label">
+            <input
+              type="checkbox"
+              checked={isPrivate}
+              onChange={(e) => setIsPrivate(e.target.checked)}
+              disabled={loading}
+            />
+            <span>Private journal (only visible to you)</span>
+          </label>
         </div>
 
         {error && <div className="journal-form-error">{error}</div>}

@@ -10,15 +10,14 @@ export interface JournalAuthor {
 
 /**
  * Journal entry interface matching backend response format
- * NOTE: Template data is now embedded in the content field using JournalContentManager
+ * TipTap-Only Format: API now returns ONLY contentTiptap, no markdown content field
  */
 export interface JournalEntry {
   journalId: string
   spaceId: string
   userId: string
   title: string
-  content: string  // Contains embedded template metadata via HTML comments
-  contentTiptap?: Record<string, unknown> | null  // TipTap JSON format for native highlighting
+  contentTiptap?: Record<string, unknown> | null  // TipTap JSON format (primary and only content format)
   templateId?: string  // For identifying which template was used
   tags: string[]
   emotions?: string[]  // New field for multiple emotion IDs
@@ -26,6 +25,7 @@ export interface JournalEntry {
   updatedAt: string
   wordCount: number
   isPinned: boolean
+  isPrivate: boolean  // Privacy setting
   author?: JournalAuthor
 }
 
@@ -42,29 +42,29 @@ export interface JournalListResponse {
 
 /**
  * Create journal request payload (spaceId comes from URL, not body)
- * NOTE: content should contain serialized template data via JournalContentManager
+ * TipTap-Only Format: contentTiptap is now required, no markdown content field
  */
 export interface CreateJournalRequest {
   title: string
-  content: string  // Serialized with JournalContentManager.serialize()
-  contentTiptap?: Record<string, unknown>  // TipTap JSON format for native highlighting
+  contentTiptap: Record<string, unknown>  // TipTap JSON format (required)
   tags?: string[]
   emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
+  isPrivate?: boolean  // Privacy setting
   templateId?: string  // For identifying which template was used
 }
 
 /**
  * Update journal request payload
- * NOTE: content should contain serialized template data via JournalContentManager
+ * TipTap-Only Format: Only contentTiptap is accepted, no markdown content field
  */
 export interface UpdateJournalRequest {
   title?: string
-  content?: string  // Serialized with JournalContentManager.serialize()
-  contentTiptap?: Record<string, unknown>  // TipTap JSON format for native highlighting
+  contentTiptap?: Record<string, unknown>  // TipTap JSON format
   tags?: string[]
   emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
+  isPrivate?: boolean  // Privacy setting
   templateId?: string  // For identifying which template was used
 }
 

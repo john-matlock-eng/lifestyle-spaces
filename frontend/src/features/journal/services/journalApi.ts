@@ -20,18 +20,6 @@ const validateTitle = (title: string): void => {
 }
 
 /**
- * Validate journal content
- */
-const validateContent = (content: string): void => {
-  if (!content || content.trim() === '') {
-    throw new Error('Journal content is required')
-  }
-  if (content.length > 50000) {
-    throw new Error('Journal content must be 50,000 characters or less')
-  }
-}
-
-/**
  * Journal API service
  */
 export const journalApi = {
@@ -44,17 +32,17 @@ export const journalApi = {
     }
 
     validateTitle(data.title)
-    validateContent(data.content)
+    if (!data.contentTiptap) {
+      throw new Error('contentTiptap is required')
+    }
 
     const response = await apiService.post(`/api/spaces/${spaceId}/journals`, {
       title: data.title.trim(),
-      content: data.content,  // Contains serialized template data via JournalContentManager
-      contentTiptap: data.contentTiptap,  // TipTap JSON with embedded highlights
+      contentTiptap: data.contentTiptap,  // TipTap JSON (required)
       tags: data.tags || [],
       emotions: data.emotions,
       isPinned: data.isPinned || false,
       templateId: data.templateId
-      // NO templateData field - it's embedded in content!
     })
 
     if (!response || typeof response !== 'object' || !('journalId' in response)) {
@@ -130,19 +118,14 @@ export const journalApi = {
       validateTitle(data.title)
     }
 
-    if (data.content !== undefined) {
-      validateContent(data.content)
-    }
-
     const updateData: Record<string, unknown> = {}
     if (data.title !== undefined) updateData.title = data.title.trim()
-    if (data.content !== undefined) updateData.content = data.content  // Contains serialized template data
-    if (data.contentTiptap !== undefined) updateData.contentTiptap = data.contentTiptap  // TipTap JSON with embedded highlights
+    if (data.contentTiptap !== undefined) updateData.contentTiptap = data.contentTiptap  // TipTap JSON
     if (data.tags !== undefined) updateData.tags = data.tags
     if (data.emotions !== undefined) updateData.emotions = data.emotions
     if (data.isPinned !== undefined) updateData.isPinned = data.isPinned
+    if (data.isPrivate !== undefined) updateData.isPrivate = data.isPrivate
     if (data.templateId !== undefined) updateData.templateId = data.templateId
-    // NO templateData field - it's embedded in content!
 
     const response = await apiService.put(`/api/spaces/${spaceId}/journals/${journalId}`, updateData)
 

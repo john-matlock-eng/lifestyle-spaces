@@ -11,6 +11,49 @@ interface JournalListProps {
 }
 
 /**
+ * Extract plain text from TipTap JSON content for searching
+ */
+const extractTextFromTipTap = (content: Record<string, unknown> | null | undefined): string => {
+  if (!content) return ''
+
+  // Handle multi-section format (object with section IDs as keys)
+  if (typeof content === 'object' && !('type' in content)) {
+    return Object.values(content)
+      .map((section) => extractTextFromTipTap(section as Record<string, unknown>))
+      .join(' ')
+  }
+
+  // Handle single document format
+  if (!('content' in content) || !Array.isArray(content.content)) return ''
+
+  const extractFromNode = (node: Record<string, unknown>): string => {
+    if (!node) return ''
+
+    // Text node
+    if (node.type === 'text' && typeof node.text === 'string') {
+      return node.text
+    }
+
+    // Q&A pair node - extract question and answer
+    if (node.type === 'qaPair' && node.attrs && typeof node.attrs === 'object') {
+      const attrs = node.attrs as Record<string, unknown>
+      const question = typeof attrs.question === 'string' ? attrs.question : ''
+      const answer = typeof attrs.answer === 'string' ? attrs.answer : ''
+      return `${question} ${answer}`
+    }
+
+    // Node with nested content
+    if ('content' in node && Array.isArray(node.content)) {
+      return node.content.map((n) => extractFromNode(n as Record<string, unknown>)).join(' ')
+    }
+
+    return ''
+  }
+
+  return content.content.map((n) => extractFromNode(n as Record<string, unknown>)).join(' ')
+}
+
+/**
  * Component for displaying a paginated list of journals
  */
 export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
@@ -123,7 +166,8 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       const titleMatch = journal.title?.toLowerCase().includes(query) || false
-      const contentMatch = journal.content?.toLowerCase().includes(query) || false
+      const contentText = journal.contentTiptap ? extractTextFromTipTap(journal.contentTiptap) : ''
+      const contentMatch = contentText.toLowerCase().includes(query)
       const tagsMatch = journal.tags?.some((tag) => tag.toLowerCase().includes(query)) || false
       const authorMatch = journal.author?.displayName?.toLowerCase().includes(query) || false
 

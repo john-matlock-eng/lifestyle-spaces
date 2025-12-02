@@ -181,8 +181,9 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
         ]);
 
         const headers = await getAuthHeaders();
+        // Use TipTap endpoint which requires journalId for TipTap-based journals
         await axios.delete(
-          `${API_BASE_URL}/api/highlights/spaces/${spaceId}/highlights/${highlightId}`,
+          `${API_BASE_URL}/api/tiptap/spaces/${spaceId}/journals/${journalEntryId}/highlights/${highlightId}`,
           { headers }
         );
 

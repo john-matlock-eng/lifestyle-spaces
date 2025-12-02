@@ -215,7 +215,7 @@ async def delete_highlight_from_tiptap(
         ws_manager = get_websocket_manager()
 
         # Get current journal
-        journal = journal_service.get_journal_entry(space_id, journal_id)
+        journal = journal_service.get_journal_entry(space_id, journal_id, user_id)
         if not journal or not journal.get("content_tiptap"):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

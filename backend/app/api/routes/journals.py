@@ -40,6 +40,7 @@ async def create_journal(
             tags=journal.tags,
             emotions=journal.emotions,
             is_pinned=journal.is_pinned,
+            is_private=journal.is_private,  # Include privacy setting
             template_id=journal.template_id
             # REMOVED: template_data - data is embedded in content
         )
@@ -57,16 +58,15 @@ async def create_journal(
             space_id=result["space_id"],
             user_id=result["user_id"],
             title=result["title"],
-            content=result["content"],
             content_tiptap=result.get("content_tiptap"),  # Include TipTap JSON in response
             template_id=result.get("template_id"),
-            # REMOVED: template_data - data is embedded in content
             tags=result.get("tags", []),
             emotions=result.get("emotions", []),
             created_at=result["created_at"],
             updated_at=result["updated_at"],
             word_count=result.get("word_count", 0),
             is_pinned=result.get("is_pinned", False),
+            is_private=result.get("is_private", False),  # Include privacy setting
             author=None  # New journal, author info not needed
         )
 
@@ -129,15 +129,15 @@ async def list_space_journals(
                 space_id=journal["space_id"],
                 user_id=journal["user_id"],
                 title=journal["title"],
-                content=journal["content"],
+                content_tiptap=journal.get("content_tiptap"),  # Include TipTap JSON
                 template_id=journal.get("template_id"),
-                # REMOVED: template_data - data is embedded in content
                 tags=journal.get("tags", []),
                 emotions=journal.get("emotions", []),
                 created_at=journal["created_at"],
                 updated_at=journal["updated_at"],
                 word_count=journal.get("word_count", 0),
                 is_pinned=journal.get("is_pinned", False),
+                is_private=journal.get("is_private", False),  # Include privacy setting
                 author=journal.get("author")
             ))
 
@@ -188,15 +188,15 @@ async def get_journal(
             space_id=result["space_id"],
             user_id=result["user_id"],
             title=result["title"],
-            content=result["content"],
+            content_tiptap=result.get("content_tiptap"),  # Include TipTap JSON
             template_id=result.get("template_id"),
-            # REMOVED: template_data - data is embedded in content
             tags=result.get("tags", []),
             emotions=result.get("emotions", []),
             created_at=result["created_at"],
             updated_at=result["updated_at"],
             word_count=result.get("word_count", 0),
             is_pinned=result.get("is_pinned", False),
+            is_private=result.get("is_private", False),  # Include privacy setting
             author=result.get("author")
         )
     except JournalNotFoundError as e:
@@ -241,15 +241,15 @@ async def update_journal(
             space_id=result["space_id"],
             user_id=result["user_id"],
             title=result["title"],
-            content=result["content"],
+            content_tiptap=result.get("content_tiptap"),  # Include TipTap JSON
             template_id=result.get("template_id"),
-            # REMOVED: template_data - data is embedded in content
             tags=result.get("tags", []),
             emotions=result.get("emotions", []),
             created_at=result["created_at"],
             updated_at=result["updated_at"],
             word_count=result.get("word_count", 0),
             is_pinned=result.get("is_pinned", False),
+            is_private=result.get("is_private", False),  # Include privacy setting
             author=result.get("author")
         )
     except JournalNotFoundError as e:
@@ -338,15 +338,15 @@ async def list_user_journals(
                 space_id=journal["space_id"],
                 user_id=journal["user_id"],
                 title=journal["title"],
-                content=journal["content"],
+                content_tiptap=journal.get("content_tiptap"),  # Include TipTap JSON
                 template_id=journal.get("template_id"),
-                # REMOVED: template_data - data is embedded in content
                 tags=journal.get("tags", []),
                 emotions=journal.get("emotions", []),
                 created_at=journal["created_at"],
                 updated_at=journal["updated_at"],
                 word_count=journal.get("word_count", 0),
                 is_pinned=journal.get("is_pinned", False),
+                is_private=journal.get("is_private", False),  # Include privacy setting
                 author=journal.get("author")
             ))
 
