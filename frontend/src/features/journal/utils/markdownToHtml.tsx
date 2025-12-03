@@ -18,20 +18,22 @@ export interface MarkdownElement {
 export function parseMarkdownWithPositions(text: string): MarkdownElement[] {
   const lines = text.split('\n');
   const elements: MarkdownElement[] = [];
-  let currentPos = 0;
+  let currentPos = 0; // Tracks position in RENDERED text (DOM text content)
+  let paragraphStart = 0; // Start position of current paragraph
   let currentParagraph: string[] = [];
   let currentList: MarkdownElement[] = [];
 
   const flushParagraph = () => {
     if (currentParagraph.length > 0) {
       const content = currentParagraph.join('\n');
-      const inlineElements = parseInlineMarkdown(content, currentPos - content.length);
+      const inlineElements = parseInlineMarkdown(content, paragraphStart);
       elements.push({
         type: 'paragraph',
         content: inlineElements,
-        start: currentPos - content.length,
-        end: currentPos,
+        start: paragraphStart,
+        end: paragraphStart + content.length,
       });
+      currentPos = paragraphStart + content.length;
       currentParagraph = [];
     }
   };
@@ -55,16 +57,19 @@ export function parseMarkdownWithPositions(text: string): MarkdownElement[] {
     const trimmedLine = line.trim();
 
     // Empty line - paragraph break
+    // Don't increment currentPos for empty lines - they don't render as text in the DOM
     if (trimmedLine === '') {
       flushParagraph();
       flushList();
-      currentPos += line.length + 1; // +1 for newline
+      // Reset paragraph start for next paragraph
+      paragraphStart = currentPos;
       continue;
     }
 
     // List item
     if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
       flushParagraph();
+      paragraphStart = currentPos;
 
       const content = trimmedLine.slice(2); // Remove "- " or "* "
       const itemStart = currentPos;
@@ -79,7 +84,7 @@ export function parseMarkdownWithPositions(text: string): MarkdownElement[] {
       });
 
       // Track position based on RENDERED text (content without prefix)
-      currentPos += content.length + 1; // +1 for newline/space between items
+      currentPos = itemEnd;
       continue;
     }
 
@@ -87,6 +92,7 @@ export function parseMarkdownWithPositions(text: string): MarkdownElement[] {
     const numberedMatch = trimmedLine.match(/^(\d+)\.\s+(.+)$/);
     if (numberedMatch) {
       flushParagraph();
+      paragraphStart = currentPos;
 
       const content = numberedMatch[2];
       const itemStart = currentPos;
@@ -101,14 +107,17 @@ export function parseMarkdownWithPositions(text: string): MarkdownElement[] {
       });
 
       // Track position based on RENDERED text (content without number prefix)
-      currentPos += content.length + 1; // +1 for newline/space between items
+      currentPos = itemEnd;
       continue;
     }
 
     // Regular paragraph line
     flushList();
+    if (currentParagraph.length === 0) {
+      // Starting a new paragraph
+      paragraphStart = currentPos;
+    }
     currentParagraph.push(line);
-    currentPos += line.length + 1;
   }
 
   // Flush remaining content
