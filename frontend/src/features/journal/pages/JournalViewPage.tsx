@@ -392,7 +392,23 @@ ${content}
                           // Render TipTap version if available
                           <TipTapViewer
                             contentTiptap={journal.contentTiptap[section.id] as Record<string, unknown>}
+                            highlights={highlights.filter(h => h.textRange.startContainerId === section.id)}
                             minHeight="150px"
+                            onHighlightCreate={(highlightData) => {
+                              // Convert TipTap highlight to API format
+                              const selection = {
+                                text: highlightData.text,
+                                range: {
+                                  startOffset: highlightData.range.from,
+                                  endOffset: highlightData.range.to,
+                                  startContainerId: section.id,
+                                  endContainerId: section.id,
+                                },
+                                boundingRect: new DOMRect(),
+                              };
+                              createHighlight(selection, highlightData.color);
+                            }}
+                            onHighlightClick={handleHighlightClick}
                           />
                         ) : section.type === 'q_and_a' ? (
                           // Fallback to markdown Q&A rendering
@@ -475,10 +491,40 @@ ${content}
             return isMultiSection ? (
               <MultiSectionTipTapViewer
                 contentTiptap={journal.contentTiptap}
+                highlights={highlights}
+                onHighlightCreate={(highlightData) => {
+                  // Convert TipTap highlight to API format (includes sectionId)
+                  const selection = {
+                    text: highlightData.text,
+                    range: {
+                      startOffset: highlightData.range.from,
+                      endOffset: highlightData.range.to,
+                      startContainerId: highlightData.sectionId,
+                      endContainerId: highlightData.sectionId,
+                    },
+                    boundingRect: new DOMRect(),
+                  };
+                  createHighlight(selection, highlightData.color);
+                }}
+                onHighlightClick={handleHighlightClick}
               />
             ) : (
               <TipTapViewer
                 contentTiptap={journal.contentTiptap}
+                highlights={highlights}
+                onHighlightCreate={(highlightData) => {
+                  // Convert TipTap highlight to API format
+                  const selection = {
+                    text: highlightData.text,
+                    range: {
+                      startOffset: highlightData.range.from,
+                      endOffset: highlightData.range.to,
+                    },
+                    boundingRect: new DOMRect(),
+                  };
+                  createHighlight(selection, highlightData.color);
+                }}
+                onHighlightClick={handleHighlightClick}
               />
             )
           })()

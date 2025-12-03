@@ -1,9 +1,25 @@
 import React from 'react'
 import { TipTapViewer } from './TipTapViewer'
+import type { Highlight } from '../types/highlight.types'
+
+interface HighlightData {
+  id: string;
+  color: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  commentCount: number;
+  text: string;
+  range: { from: number; to: number };
+  sectionId?: string;
+}
 
 interface MultiSectionTipTapViewerProps {
   contentTiptap: Record<string, unknown>
+  highlights?: Highlight[]
   onContentChange?: (contentTiptap: Record<string, unknown>) => void
+  onHighlightCreate?: (highlight: HighlightData) => void
+  onHighlightClick?: (highlight: Highlight) => void
   minHeight?: string
 }
 
@@ -12,7 +28,10 @@ interface MultiSectionTipTapViewerProps {
  */
 export const MultiSectionTipTapViewer: React.FC<MultiSectionTipTapViewerProps> = ({
   contentTiptap,
+  highlights = [],
   onContentChange,
+  onHighlightCreate,
+  onHighlightClick,
   minHeight = '200px',
 }) => {
   const handleSectionChange = (sectionId: string, updatedContent: Record<string, unknown>) => {
@@ -20,6 +39,15 @@ export const MultiSectionTipTapViewer: React.FC<MultiSectionTipTapViewerProps> =
       onContentChange({
         ...contentTiptap,
         [sectionId]: updatedContent,
+      })
+    }
+  }
+
+  const handleHighlightCreate = (sectionId: string, highlight: Omit<HighlightData, 'sectionId'>) => {
+    if (onHighlightCreate) {
+      onHighlightCreate({
+        ...highlight,
+        sectionId,
       })
     }
   }
@@ -53,7 +81,10 @@ export const MultiSectionTipTapViewer: React.FC<MultiSectionTipTapViewerProps> =
           <div className="template-section-content">
             <TipTapViewer
               contentTiptap={sectionContent as Record<string, unknown>}
+              highlights={highlights.filter(h => h.textRange.startContainerId === sectionId)}
               onContentChange={(updated) => handleSectionChange(sectionId, updated)}
+              onHighlightCreate={(highlight) => handleHighlightCreate(sectionId, highlight)}
+              onHighlightClick={onHighlightClick}
               minHeight={minHeight}
             />
           </div>
