@@ -28,6 +28,17 @@ class HighlightService:
     def __init__(self):
         self.db = get_db()
 
+    def is_space_member(self, space_id: str, user_id: str) -> bool:
+        """Check if user is a member of the space."""
+        try:
+            item = self.db.get_item(
+                pk=f'SPACE#{space_id}',
+                sk=f'MEMBER#{user_id}'
+            )
+            return item is not None
+        except Exception:
+            return False
+
     def _get_journal_title(self, space_id: str, journal_entry_id: str) -> str:
         """Get the title of a journal entry."""
         try:
