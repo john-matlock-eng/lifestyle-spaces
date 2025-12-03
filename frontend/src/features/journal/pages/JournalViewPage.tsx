@@ -35,7 +35,7 @@ import '../styles/journal-compact.css'
 export const JournalViewPage: React.FC = () => {
   const navigate = useNavigate()
   const { spaceId, journalId } = useParams<{ spaceId: string; journalId: string }>()
-  const { journal, loading, error, loadJournal, updateJournal, deleteJournal } = useJournal()
+  const { journal, loading, error, loadJournal, deleteJournal } = useJournal()
   const { user } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
   const [template, setTemplate] = useState<Template | null>(null)
@@ -392,20 +392,6 @@ ${content}
                           // Render TipTap version if available
                           <TipTapViewer
                             contentTiptap={journal.contentTiptap[section.id] as Record<string, unknown>}
-                            onContentChange={async (updated) => {
-                              if (!spaceId || !journalId || !journal.contentTiptap) return
-                              try {
-                                await updateJournal(spaceId, journalId, {
-                                  contentTiptap: {
-                                    ...journal.contentTiptap,
-                                    [section.id]: updated
-                                  }
-                                })
-                                await loadJournal(spaceId, journalId)
-                              } catch (error) {
-                                console.error('[JournalView] Failed to save contentTiptap:', error)
-                              }
-                            }}
                             minHeight="150px"
                           />
                         ) : section.type === 'q_and_a' ? (
@@ -489,32 +475,10 @@ ${content}
             return isMultiSection ? (
               <MultiSectionTipTapViewer
                 contentTiptap={journal.contentTiptap}
-                onContentChange={async (updatedContent) => {
-                  if (!spaceId || !journalId) return
-                  try {
-                    await updateJournal(spaceId, journalId, {
-                      contentTiptap: updatedContent
-                    })
-                    await loadJournal(spaceId, journalId)
-                  } catch (error) {
-                    console.error('[JournalView] Failed to save contentTiptap:', error)
-                  }
-                }}
               />
             ) : (
               <TipTapViewer
                 contentTiptap={journal.contentTiptap}
-                onContentChange={async (updatedContent) => {
-                  if (!spaceId || !journalId) return
-                  try {
-                    await updateJournal(spaceId, journalId, {
-                      contentTiptap: updatedContent
-                    })
-                    await loadJournal(spaceId, journalId)
-                  } catch (error) {
-                    console.error('[JournalView] Failed to save contentTiptap:', error)
-                  }
-                }}
               />
             )
           })()
