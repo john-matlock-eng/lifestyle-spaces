@@ -44,7 +44,7 @@ const createHighlightDecorationPlugin = (
       init() {
         return DecorationSet.empty
       },
-      apply(tr, oldState, _oldEditorState, newEditorState) {
+      apply(_tr, _oldState, _oldEditorState, newEditorState) {
         // Create decorations from highlights
         const decorations: Decoration[] = []
         const docSize = newEditorState.doc.content.size
@@ -74,7 +74,7 @@ const createHighlightDecorationPlugin = (
       decorations(state) {
         return this.getState(state)
       },
-      handleClick(view, pos, event) {
+      handleClick(_view, _pos, event) {
         const target = event.target as HTMLElement
         const highlightEl = target.closest('.api-highlight')
 
