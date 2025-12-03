@@ -78,7 +78,8 @@ export function parseMarkdownWithPositions(text: string): MarkdownElement[] {
         end: itemEnd,
       });
 
-      currentPos += line.length + 1;
+      // Track position based on RENDERED text (content without prefix)
+      currentPos += content.length + 1; // +1 for newline/space between items
       continue;
     }
 
@@ -99,7 +100,8 @@ export function parseMarkdownWithPositions(text: string): MarkdownElement[] {
         end: itemEnd,
       });
 
-      currentPos += line.length + 1;
+      // Track position based on RENDERED text (content without number prefix)
+      currentPos += content.length + 1; // +1 for newline/space between items
       continue;
     }
 
@@ -118,10 +120,12 @@ export function parseMarkdownWithPositions(text: string): MarkdownElement[] {
 
 /**
  * Parse inline markdown (bold, italic) within a line
+ * Tracks positions based on RENDERED text, not source markdown
  */
 function parseInlineMarkdown(text: string, startPos: number): MarkdownElement[] {
   const elements: MarkdownElement[] = [];
-  let i = 0;
+  let i = 0; // Position in source text
+  let renderedPos = startPos; // Position in rendered text
   let currentText = '';
   let currentStart = startPos;
 
@@ -133,6 +137,7 @@ function parseInlineMarkdown(text: string, startPos: number): MarkdownElement[] 
         start: currentStart,
         end: currentStart + currentText.length,
       });
+      renderedPos = currentStart + currentText.length;
       currentText = '';
     }
   };
@@ -151,11 +156,12 @@ function parseInlineMarkdown(text: string, startPos: number): MarkdownElement[] 
         elements.push({
           type: 'bold',
           content,
-          start: startPos + i,
-          end: startPos + i + content.length,
+          start: renderedPos,
+          end: renderedPos + content.length,
         });
-        i += 2 + content.length + 2;
-        currentStart = startPos + i;
+        renderedPos += content.length;
+        i += 2 + content.length + 2; // Skip markers in source
+        currentStart = renderedPos;
         continue;
       }
     }
@@ -171,11 +177,12 @@ function parseInlineMarkdown(text: string, startPos: number): MarkdownElement[] 
         elements.push({
           type: 'italic',
           content,
-          start: startPos + i,
-          end: startPos + i + content.length,
+          start: renderedPos,
+          end: renderedPos + content.length,
         });
-        i += 1 + content.length + 1;
-        currentStart = startPos + i;
+        renderedPos += content.length;
+        i += 1 + content.length + 1; // Skip markers in source
+        currentStart = renderedPos;
         continue;
       }
     }
