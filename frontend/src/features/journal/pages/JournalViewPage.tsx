@@ -12,6 +12,7 @@ import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizati
 import { AIAssistantDock } from '../components/AIAssistantDock'
 import { HighlightableText } from '../components/HighlightableText'
 import { TipTapViewer } from '../components/TipTapViewer'
+import { MultiSectionTipTapViewer } from '../components/MultiSectionTipTapViewer'
 import { CommentThread } from '../components/CommentThread'
 import { PresenceAvatars } from '../components/PresenceAvatars'
 import { ConnectionStatus } from '../components/ConnectionStatus'
@@ -34,7 +35,7 @@ import '../styles/journal-compact.css'
 export const JournalViewPage: React.FC = () => {
   const navigate = useNavigate()
   const { spaceId, journalId } = useParams<{ spaceId: string; journalId: string }>()
-  const { journal, loading, error, loadJournal, updateJournal, deleteJournal } = useJournal()
+  const { journal, loading, error, loadJournal, deleteJournal } = useJournal()
   const { user } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
   const [template, setTemplate] = useState<Template | null>(null)
@@ -373,33 +374,160 @@ ${content}
       </div>
 
       <div className="journal-view-content">
-        {journal.contentTiptap ? (
-          // Render TipTap journal with native highlighting (zero offset drift)
-          <TipTapViewer
-            contentTiptap={journal.contentTiptap}
-            onHighlightCreate={async (highlight) => {
-              // When a new highlight is created in TipTap, the document is already updated
-              console.log('[JournalView] New TipTap highlight created:', highlight)
-            }}
-            onContentChange={async (updatedContent) => {
-              // When highlights change, save the updated contentTiptap to backend
-              if (!spaceId || !journalId) return
+        {journal.contentTiptap && template && displaySections.length > 0 ? (
+          // Hybrid: TipTap sections + Markdown fallback for missing sections
+          (() => {
+            const tiptapSections = new Set(Object.keys(journal.contentTiptap))
 
-              try {
-                console.log('[JournalView] Saving updated contentTiptap to backend...')
-                // Update journal with new contentTiptap (which includes the highlight)
-                await updateJournal(spaceId, journalId, {
-                  contentTiptap: updatedContent
-                })
-                console.log('[JournalView] ContentTiptap saved successfully')
+            return (
+              <div className="template-content">
+                {displaySections.map((section) => {
+                  const hasTiptap = tiptapSections.has(section.id)
 
-                // Reload journal to get updated data (including extracted highlights)
-                await loadJournal(spaceId, journalId)
-              } catch (error) {
-                console.error('[JournalView] Failed to save contentTiptap:', error)
-              }
-            }}
-          />
+                  return (
+                    <div key={section.id} className="template-section template-section-compact">
+                      <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
+                      <div className="template-section-content">
+                        {hasTiptap && journal.contentTiptap ? (
+                          // Render TipTap version if available
+                          <TipTapViewer
+                            contentTiptap={journal.contentTiptap[section.id] as Record<string, unknown>}
+                            highlights={highlights.filter(h => h.textRange.startContainerId === section.id)}
+                            minHeight="150px"
+                            onHighlightCreate={(highlightData) => {
+                              // Convert TipTap highlight to API format
+                              const selection = {
+                                text: highlightData.text,
+                                range: {
+                                  startOffset: highlightData.range.from,
+                                  endOffset: highlightData.range.to,
+                                  startContainerId: section.id,
+                                  endContainerId: section.id,
+                                },
+                                boundingRect: new DOMRect(),
+                              };
+                              createHighlight(selection, highlightData.color);
+                            }}
+                            onHighlightClick={handleHighlightClick}
+                          />
+                        ) : section.type === 'q_and_a' ? (
+                          // Fallback to markdown Q&A rendering
+                          <QASectionDisplay
+                            value={section.content}
+                            sectionId={section.id}
+                            journalEntryId={journalId || ''}
+                            spaceId={spaceId || ''}
+                            highlights={highlights}
+                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                            onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
+                            onHighlightDelete={deleteHighlight}
+                          />
+                        ) : section.type === 'list' ? (
+                          <ListSectionDisplay
+                            value={section.content}
+                            sectionId={section.id}
+                            journalEntryId={journalId || ''}
+                            spaceId={spaceId || ''}
+                            highlights={highlights}
+                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                            onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
+                            onHighlightDelete={deleteHighlight}
+                          />
+                        ) : section.type === 'checkbox' ? (
+                          <CheckboxSectionDisplay
+                            value={section.content}
+                            sectionId={section.id}
+                            journalEntryId={journalId || ''}
+                            spaceId={spaceId || ''}
+                            highlights={highlights}
+                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                            onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
+                            onHighlightDelete={deleteHighlight}
+                          />
+                        ) : section.type === 'scale' ? (
+                          <ScaleSectionDisplay
+                            value={section.content}
+                            config={template?.sections.find(s => s.id === section.id)?.config}
+                          />
+                        ) : section.type === 'table' ? (
+                          <TableSectionDisplay
+                            value={section.content}
+                            config={template?.sections.find(s => s.id === section.id)?.config}
+                          />
+                        ) : (
+                          // Fallback to markdown paragraph rendering
+                          <HighlightableText
+                            content={section.content}
+                            sectionId={section.id}
+                            journalEntryId={journalId || ''}
+                            spaceId={spaceId || ''}
+                            highlights={highlights}
+                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                            onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
+                            onHighlightDelete={deleteHighlight}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()
+        ) : journal.contentTiptap ? (
+          // Pure TipTap (no template)
+          (() => {
+            const isMultiSection = journal.contentTiptap &&
+              typeof journal.contentTiptap === 'object' &&
+              !journal.contentTiptap.type &&
+              Object.values(journal.contentTiptap).some(
+                (val) => typeof val === 'object' && val !== null && 'type' in val
+              )
+
+            return isMultiSection ? (
+              <MultiSectionTipTapViewer
+                contentTiptap={journal.contentTiptap}
+                highlights={highlights}
+                onHighlightCreate={(highlightData) => {
+                  // Convert TipTap highlight to API format (includes sectionId)
+                  const selection = {
+                    text: highlightData.text,
+                    range: {
+                      startOffset: highlightData.range.from,
+                      endOffset: highlightData.range.to,
+                      startContainerId: highlightData.sectionId,
+                      endContainerId: highlightData.sectionId,
+                    },
+                    boundingRect: new DOMRect(),
+                  };
+                  createHighlight(selection, highlightData.color);
+                }}
+                onHighlightClick={handleHighlightClick}
+              />
+            ) : (
+              <TipTapViewer
+                contentTiptap={journal.contentTiptap}
+                highlights={highlights}
+                onHighlightCreate={(highlightData) => {
+                  // Convert TipTap highlight to API format
+                  const selection = {
+                    text: highlightData.text,
+                    range: {
+                      startOffset: highlightData.range.from,
+                      endOffset: highlightData.range.to,
+                    },
+                    boundingRect: new DOMRect(),
+                  };
+                  createHighlight(selection, highlightData.color);
+                }}
+                onHighlightClick={handleHighlightClick}
+              />
+            )
+          })()
         ) : template && displaySections.length > 0 ? (
           // Render template sections with highlighting
           <div className="template-content">

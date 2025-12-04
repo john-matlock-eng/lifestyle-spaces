@@ -16,7 +16,8 @@ interface HighlightData {
 }
 
 interface RichTextEditorProps {
-  content: string
+  content?: string
+  initialContentJson?: Record<string, unknown>
   onChange: (content: string) => void
   onTipTapChange?: (contentTiptap: Record<string, unknown>) => void
   placeholder?: string
@@ -33,6 +34,7 @@ interface RichTextEditorProps {
  */
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   content,
+  initialContentJson,
   onChange,
   onTipTapChange,
   placeholder = 'Start writing...',
@@ -45,7 +47,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 }) => {
   const editor = useEditor({
     extensions: getEditorExtensions(placeholder, enableHighlights),
-    content,
+    content: initialContentJson || content,
     editable: !disabled,
     onCreate: ({ editor }) => {
       // Initialize TipTap JSON on editor creation
@@ -84,7 +86,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   // Update editor content when prop changes
   useEffect(() => {
-    if (editor) {
+    if (editor && content !== undefined) {
       // @ts-expect-error - markdown storage is added by tiptap-markdown extension
       const currentMarkdown = editor.storage.markdown.getMarkdown() as string
       if (content !== currentMarkdown) {

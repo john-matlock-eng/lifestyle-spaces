@@ -18,6 +18,7 @@ import type {
   HighlightColor
 } from '../types/highlight.types';
 import { HIGHLIGHT_COLORS } from '../types/highlight.types';
+import { parseMarkdownWithPositions, renderMarkdownElements } from '../utils/markdownToHtml';
 
 interface HighlightableTextProps {
   content: string;
@@ -31,6 +32,7 @@ interface HighlightableTextProps {
   onHighlightDelete?: (highlightId: string) => void;
   isReadOnly?: boolean;
   className?: string;
+  useMarkdown?: boolean; // Whether to render as markdown (default: true)
 }
 
 export const HighlightableText: React.FC<HighlightableTextProps> = ({
@@ -43,6 +45,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
   onHighlightDelete,
   isReadOnly = false,
   className = '',
+  useMarkdown = true,
 }) => {
   const [selection, setSelection] = useState<HighlightSelection | null>(null);
   const [showCreateButton, setShowCreateButton] = useState(false);
@@ -95,10 +98,11 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         return;
       }
 
-      const selectedText = windowSelection.toString().trim();
+      const range = windowSelection.getRangeAt(0);
+      const selectedText = range.toString();
       console.log('[HighlightableText] Selected text:', selectedText);
 
-      if (!selectedText) {
+      if (!selectedText || selectedText.trim().length === 0) {
         console.log('[HighlightableText] Empty selection');
         setSelection(null);
         setShowCreateButton(false);
@@ -106,7 +110,6 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         return;
       }
 
-      const range = windowSelection.getRangeAt(0);
       const boundingRect = range.getBoundingClientRect();
       console.log('[HighlightableText] boundingRect:', boundingRect);
 
@@ -126,7 +129,11 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         const startOffset = preSelectionRange.toString().length;
         const endOffset = startOffset + selectedText.length;
 
-        console.log('[HighlightableText] Calculated offsets:', { startOffset, endOffset });
+        // For Q&A content (useMarkdown=false), offsets are already based on stripped text
+        // since the DOM contains the stripped text rendered with HTML formatting
+        // No conversion needed - the offsets are relative to the stripped text
+
+        console.log('[HighlightableText] Calculated offsets:', { startOffset, endOffset, useMarkdown });
 
         setSelection({
           text: selectedText,
@@ -154,7 +161,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         console.error('[HighlightableText] Error calculating selection:', error);
       }
     }, delay);
-  }, [isReadOnly, sectionId, editingHighlightId]);
+  }, [isReadOnly, sectionId, editingHighlightId, useMarkdown]);
 
   // Handle text selection on desktop (mouse events)
   const handleMouseUp = useCallback(() => {
@@ -344,8 +351,97 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
     setButtonPosition(null);
   }, []);
 
+  // Render markdown with highlights using position-aware rendering
+  const renderPlainTextWithHighlights = () => {
+    // Parse markdown into structured elements
+    const markdownElements = parseMarkdownWithPositions(content);
+
+    // If no highlights, render markdown normally
+    if (filteredHighlights.length === 0) {
+      const renderText = (text: string) => text;
+      return <div className="markdown-content">{renderMarkdownElements(markdownElements, renderText)}</div>;
+    }
+
+    // Sort highlights by start offset
+    const sortedHighlights = [...filteredHighlights].sort(
+      (a, b) => a.textRange.startOffset - b.textRange.startOffset
+    );
+
+    // Create a function to render text with highlights
+    const renderTextWithHighlights = (text: string, textStart: number, textEnd: number): React.ReactNode => {
+      const textLength = textEnd - textStart;
+      const parts: React.ReactNode[] = [];
+      let lastIndex = 0;
+
+      // Find highlights that overlap with this text segment
+      const overlapping = sortedHighlights.filter(h => {
+        return h.textRange.startOffset < textEnd && h.textRange.endOffset > textStart;
+      });
+
+      overlapping.forEach((highlight, idx) => {
+        // Calculate positions relative to this text segment
+        const relStart = Math.max(0, highlight.textRange.startOffset - textStart);
+        const relEnd = Math.min(textLength, highlight.textRange.endOffset - textStart);
+
+        // Text before highlight
+        if (relStart > lastIndex) {
+          parts.push(text.substring(lastIndex, relStart));
+        }
+
+        // Highlighted text
+        const isBeingEdited = highlight.id === editingHighlightId;
+        parts.push(
+          <mark
+            key={`h-${highlight.id}-${idx}`}
+            className="highlight cursor-pointer transition-all hover:opacity-80"
+            style={{
+              backgroundColor: highlight.color || HIGHLIGHT_COLORS.yellow,
+              padding: '2px 0',
+              borderRadius: '2px',
+              border: isBeingEdited ? '2px dashed var(--theme-primary-500)' : undefined,
+              outline: isBeingEdited ? '2px solid var(--theme-primary-300)' : undefined,
+              animation: isBeingEdited ? 'pulse 2s ease-in-out infinite' : undefined,
+            }}
+            onClick={(e) => handleExistingHighlightClick(e, highlight)}
+            title={isBeingEdited ? 'Editing - select new text and click Save' : `Click for options (${highlight.commentCount || 0} comments)`}
+          >
+            {text.substring(relStart, relEnd)}
+            {highlight.commentCount > 0 && (
+              <span
+                style={{
+                  marginLeft: '4px',
+                  fontSize: '0.8em',
+                  verticalAlign: 'super',
+                  opacity: 0.7,
+                }}
+              >
+                [{highlight.commentCount}]
+              </span>
+            )}
+          </mark>
+        );
+
+        lastIndex = relEnd;
+      });
+
+      // Remaining text
+      if (lastIndex < textLength) {
+        parts.push(text.substring(lastIndex));
+      }
+
+      return parts.length > 0 ? <>{parts}</> : text;
+    };
+
+    return <div className="markdown-content">{renderMarkdownElements(markdownElements, renderTextWithHighlights)}</div>;
+  };
+
   // Render text with highlights - preserves markdown formatting
   const renderHighlightedContent = () => {
+    // If not using markdown, render as plain text
+    if (!useMarkdown) {
+      return renderPlainTextWithHighlights();
+    }
+
     // If no highlights, render markdown normally
     if (filteredHighlights.length === 0) {
       return <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>;

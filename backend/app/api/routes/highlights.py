@@ -31,15 +31,19 @@ async def create_highlight(
     request: CreateHighlightRequest,
     current_user: dict = Depends(get_current_user),
 ):
-    """Create a new highlight on a journal entry."""
+    """Create a new highlight on a journal entry. Any space member can create highlights."""
     service = HighlightService()
     ws_manager = get_websocket_manager()
 
-    # TODO: Verify user has access to this space
-    # TODO: Verify journal entry exists and belongs to this space
-
     user_id = current_user.get("sub") or current_user.get("userId")
     user_name = current_user.get("profile", {}).get("display_name", "Unknown User")
+
+    # Verify user is a member of this space
+    if not service.is_space_member(space_id, user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a member of this space to create highlights",
+        )
 
     highlight = await service.create_highlight(
         space_id=space_id,
@@ -69,10 +73,17 @@ async def get_highlights(
     journal_entry_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """Get all highlights for a journal entry."""
+    """Get all highlights for a journal entry. Any space member can view highlights."""
     service = HighlightService()
 
-    # TODO: Verify user has access to this space
+    user_id = current_user.get("sub") or current_user.get("userId")
+
+    # Verify user is a member of this space
+    if not service.is_space_member(space_id, user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a member of this space to view highlights",
+        )
 
     highlights = await service.get_highlights_for_journal(space_id, journal_entry_id)
     return highlights
@@ -87,11 +98,18 @@ async def delete_highlight(
     highlight_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """Delete a highlight. Only the creator can delete."""
+    """Delete a highlight. Only the creator can delete their own highlights."""
     service = HighlightService()
     ws_manager = get_websocket_manager()
 
     user_id = current_user.get("sub") or current_user.get("userId")
+
+    # Verify user is a member of this space
+    if not service.is_space_member(space_id, user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a member of this space",
+        )
 
     # Get highlight first to find journal_entry_id
     highlight = await service.get_highlight(space_id, highlight_id)
@@ -134,11 +152,18 @@ async def update_highlight(
     request: UpdateHighlightRequest,
     current_user: dict = Depends(get_current_user),
 ):
-    """Update a highlight's text selection. Only the creator can update."""
+    """Update a highlight's text selection. Only the creator can update their own highlights."""
     service = HighlightService()
     ws_manager = get_websocket_manager()
 
     user_id = current_user.get("sub") or current_user.get("userId")
+
+    # Verify user is a member of this space
+    if not service.is_space_member(space_id, user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a member of this space",
+        )
 
     # Get highlight first to find journal_entry_id
     highlight = await service.get_highlight(space_id, highlight_id)
@@ -184,14 +209,19 @@ async def create_comment(
     request: CreateCommentRequest,
     current_user: dict = Depends(get_current_user),
 ):
-    """Create a new comment on a highlight."""
+    """Create a new comment on a highlight. Any space member can comment."""
+    highlight_service = HighlightService()
     service = CommentService()
-
-    # TODO: Verify user has access to this space
-    # TODO: Verify highlight exists
 
     user_id = current_user.get("sub") or current_user.get("userId")
     user_name = current_user.get("profile", {}).get("display_name", "Unknown User")
+
+    # Verify user is a member of this space
+    if not highlight_service.is_space_member(space_id, user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a member of this space to comment",
+        )
 
     comment = await service.create_comment(
         space_id=space_id,
@@ -213,10 +243,18 @@ async def get_comments(
     highlight_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """Get all comments for a highlight."""
+    """Get all comments for a highlight. Any space member can view comments."""
+    highlight_service = HighlightService()
     service = CommentService()
 
-    # TODO: Verify user has access to this space
+    user_id = current_user.get("sub") or current_user.get("userId")
+
+    # Verify user is a member of this space
+    if not highlight_service.is_space_member(space_id, user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a member of this space to view comments",
+        )
 
     comments = await service.get_comments_for_highlight(space_id, highlight_id)
     return comments
@@ -232,10 +270,18 @@ async def update_comment(
     new_text: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """Update a comment. Only the author can update."""
+    """Update a comment. Only the author can update their own comments."""
+    highlight_service = HighlightService()
     service = CommentService()
 
     user_id = current_user.get("sub") or current_user.get("userId")
+
+    # Verify user is a member of this space
+    if not highlight_service.is_space_member(space_id, user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a member of this space",
+        )
 
     comment = await service.update_comment(
         space_id=space_id,
@@ -262,10 +308,18 @@ async def delete_comment(
     comment_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """Delete a comment. Only the author can delete."""
+    """Delete a comment. Only the author can delete their own comments."""
+    highlight_service = HighlightService()
     service = CommentService()
 
     user_id = current_user.get("sub") or current_user.get("userId")
+
+    # Verify user is a member of this space
+    if not highlight_service.is_space_member(space_id, user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a member of this space",
+        )
 
     success = await service.delete_comment(
         space_id=space_id,

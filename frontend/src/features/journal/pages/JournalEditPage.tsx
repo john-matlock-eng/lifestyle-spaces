@@ -48,7 +48,7 @@ export const JournalEditPage: React.FC = () => {
   const [currentSectionId, setCurrentSectionId] = useState<string | undefined>()
 
   // Multi-section TipTap state management
-  const { updateSection, getAllSections } = useSectionTipTap()
+  const { updateSection, getAllSections, setAllSections, getSectionContent } = useSectionTipTap()
 
   // Track if journal has been initialized to prevent duplicate template loads
   const initializedJournalId = useRef<string | null>(null)
@@ -114,6 +114,12 @@ export const JournalEditPage: React.FC = () => {
       setTitle(journal.title)
       setTags(journal.tags.join(', '))
       setEmotions(journal.emotions || [])
+
+      // Initialize TipTap sections if available
+      if (journal.contentTiptap) {
+        // @ts-expect-error - contentTiptap is typed as Record<string, unknown> but setAllSections expects SectionTipTapState
+        setAllSections(journal.contentTiptap)
+      }
 
       // Parse content to extract template data if it exists
       // Skip loading for "blank" template (non-templated journals)
@@ -629,7 +635,7 @@ export const JournalEditPage: React.FC = () => {
                   <QASection
                     value={(Array.isArray(templateData[section.id]) ? templateData[section.id] :
                       Array.isArray(section.defaultValue) ? section.defaultValue :
-                      []) as QAPair[]}
+                        []) as QAPair[]}
                     onChange={(value) => handleTemplateDataChange(section.id, value)}
                     placeholder={section.placeholder}
                     disabled={isSubmitting}
@@ -666,7 +672,7 @@ export const JournalEditPage: React.FC = () => {
                   <ListSection
                     value={(Array.isArray(templateData[section.id]) ? templateData[section.id] :
                       Array.isArray(section.defaultValue) ? section.defaultValue :
-                      []) as ListItem[]}
+                        []) as ListItem[]}
                     onChange={(value) => handleTemplateDataChange(section.id, value)}
                     placeholder={section.placeholder}
                     disabled={isSubmitting}
@@ -675,7 +681,7 @@ export const JournalEditPage: React.FC = () => {
                   <CheckboxSection
                     value={(Array.isArray(templateData[section.id]) ? templateData[section.id] :
                       Array.isArray(section.defaultValue) ? section.defaultValue :
-                      []) as ListItem[]}
+                        []) as ListItem[]}
                     onChange={(value) => handleTemplateDataChange(section.id, value)}
                     placeholder={section.placeholder}
                     disabled={isSubmitting}
@@ -684,7 +690,7 @@ export const JournalEditPage: React.FC = () => {
                   <TableSection
                     value={(Array.isArray(templateData[section.id]) ? templateData[section.id] :
                       Array.isArray(section.defaultValue) ? section.defaultValue :
-                      []) as TableRow[]}
+                        []) as TableRow[]}
                     onChange={(value) => handleTemplateDataChange(section.id, value)}
                     placeholder={section.placeholder}
                     disabled={isSubmitting}
@@ -705,9 +711,10 @@ export const JournalEditPage: React.FC = () => {
                   />
                 ) : (
                   <RichTextEditor
-                    content={typeof templateData[section.id] === 'string' ? templateData[section.id] as string :
+                    content={getSectionContent(section.id) ? undefined : (typeof templateData[section.id] === 'string' ? templateData[section.id] as string :
                       typeof section.defaultValue === 'string' ? section.defaultValue :
-                      ''}
+                        '')}
+                    initialContentJson={getSectionContent(section.id) || undefined}
                     onChange={(value) => handleTemplateDataChange(section.id, value)}
                     onTipTapChange={(json) => updateSection(section.id, json)}
                     placeholder={section.placeholder}
@@ -727,7 +734,8 @@ export const JournalEditPage: React.FC = () => {
               Content *
             </label>
             <RichTextEditor
-              content={content}
+              content={getSectionContent('content') ? undefined : content}
+              initialContentJson={getSectionContent('content') || undefined}
               onChange={setContent}
               onTipTapChange={(json) => updateSection('content', json)}
               placeholder="Start writing your thoughts..."
@@ -786,7 +794,8 @@ export const JournalEditPage: React.FC = () => {
             <div className="custom-section-content">
               {section.type === 'paragraph' && (
                 <RichTextEditor
-                  content={typeof section.content === 'string' ? section.content : ''}
+                  content={getSectionContent(section.id) ? undefined : (typeof section.content === 'string' ? section.content : '')}
+                  initialContentJson={getSectionContent(section.id) || undefined}
                   onChange={(content) => handleUpdateCustomSection(section.id, { content })}
                   onTipTapChange={(json) => updateSection(section.id, json)}
                   placeholder="Write here..."
@@ -911,50 +920,50 @@ export const JournalEditPage: React.FC = () => {
             // For templated journals, combine all section content
             template || customSections.length > 0
               ? [
-                  // Template sections
-                  ...Object.values(templateData).map(val => {
-                    if (typeof val === 'string') return val
-                    if (Array.isArray(val)) {
-                      // For Q&A pairs and lists, extract content
-                      return val.map((item: QAPair | ListItem | unknown) => {
-                        if (typeof item === 'object' && item !== null) {
-                          const qaItem = item as QAPair
-                          if ('question' in qaItem && 'answer' in qaItem) {
-                            return `**Q:** ${qaItem.question}\n\n**A:** ${qaItem.answer || '(not answered yet)'}`
-                          }
-                          const listItem = item as ListItem
-                          if ('text' in listItem) {
-                            return `- ${listItem.text}`
-                          }
+                // Template sections
+                ...Object.values(templateData).map(val => {
+                  if (typeof val === 'string') return val
+                  if (Array.isArray(val)) {
+                    // For Q&A pairs and lists, extract content
+                    return val.map((item: QAPair | ListItem | unknown) => {
+                      if (typeof item === 'object' && item !== null) {
+                        const qaItem = item as QAPair
+                        if ('question' in qaItem && 'answer' in qaItem) {
+                          return `**Q:** ${qaItem.question}\n\n**A:** ${qaItem.answer || '(not answered yet)'}`
                         }
-                        return String(item)
-                      }).join('\n\n')
-                    }
-                    return String(val)
-                  }),
-                  // Custom sections
-                  ...customSections.map(section => {
-                    if (typeof section.content === 'string') return section.content
-                    if (Array.isArray(section.content)) {
-                      return section.content.map((item: QAPair | ListItem | unknown) => {
-                        if (typeof item === 'object' && item !== null) {
-                          const qaItem = item as QAPair
-                          if ('question' in qaItem && 'answer' in qaItem) {
-                            return `**Q:** ${qaItem.question}\n\n**A:** ${qaItem.answer || '(not answered yet)'}`
-                          }
-                          const listItem = item as ListItem
-                          if ('text' in listItem) {
-                            return `- ${listItem.text}`
-                          }
+                        const listItem = item as ListItem
+                        if ('text' in listItem) {
+                          return `- ${listItem.text}`
                         }
-                        return String(item)
-                      }).join('\n\n')
-                    }
-                    return String(section.content)
-                  })
-                ]
-                  .filter(text => text.trim())
-                  .join('\n\n---\n\n')
+                      }
+                      return String(item)
+                    }).join('\n\n')
+                  }
+                  return String(val)
+                }),
+                // Custom sections
+                ...customSections.map(section => {
+                  if (typeof section.content === 'string') return section.content
+                  if (Array.isArray(section.content)) {
+                    return section.content.map((item: QAPair | ListItem | unknown) => {
+                      if (typeof item === 'object' && item !== null) {
+                        const qaItem = item as QAPair
+                        if ('question' in qaItem && 'answer' in qaItem) {
+                          return `**Q:** ${qaItem.question}\n\n**A:** ${qaItem.answer || '(not answered yet)'}`
+                        }
+                        const listItem = item as ListItem
+                        if ('text' in listItem) {
+                          return `- ${listItem.text}`
+                        }
+                      }
+                      return String(item)
+                    }).join('\n\n')
+                  }
+                  return String(section.content)
+                })
+              ]
+                .filter(text => text.trim())
+                .join('\n\n---\n\n')
               : content
           }
           journalTitle={title}
@@ -981,7 +990,7 @@ export const JournalEditPage: React.FC = () => {
         collarStyle={customization.collarStyle}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
-        
+
         showPerchControl={true}
       />
     </div>
