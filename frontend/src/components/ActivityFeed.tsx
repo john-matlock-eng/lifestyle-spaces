@@ -9,6 +9,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Activity, ActivityType } from '../types/activity';
 import { activityService } from '../services/activityService';
 import './ActivityFeed.css';
@@ -18,10 +19,41 @@ interface ActivityFeedProps {
 }
 
 export const ActivityFeed: React.FC<ActivityFeedProps> = ({ spaceId }) => {
+  const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nextToken, setNextToken] = useState<string | undefined>();
+
+  // Determine if an activity is clickable (not deleted items)
+  const isClickable = (activityType: ActivityType): boolean => {
+    return !['journal_deleted', 'highlight_deleted', 'member_joined'].includes(activityType);
+  };
+
+  // Handle click on an activity item
+  const handleActivityClick = (activity: Activity) => {
+    if (!isClickable(activity.activityType)) return;
+
+    const { activityType, metadata } = activity;
+    const journalId = metadata.journal_id;
+
+    if (!journalId) return;
+
+    // Build the navigation URL
+    let url = `/spaces/${spaceId}/journals/${journalId}`;
+
+    // Add query params for highlights and comments
+    if (activityType === 'highlight_created' && metadata.highlight_id) {
+      url += `?highlightId=${metadata.highlight_id}`;
+    } else if (activityType === 'comment_created' && metadata.highlight_id) {
+      url += `?highlightId=${metadata.highlight_id}`;
+      if (metadata.comment_id) {
+        url += `&commentId=${metadata.comment_id}`;
+      }
+    }
+
+    navigate(url);
+  };
 
   const loadActivities = useCallback(async () => {
     try {
@@ -216,36 +248,51 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ spaceId }) => {
           <div key={dateKey} className="activity-feed__date-group">
             <h3 className="activity-feed__date-header">{dateKey}</h3>
             <div className="activity-feed__items">
-              {items.map((activity) => (
-                <div key={activity.activityId} className="activity-feed__item">
-                  <div className="activity-feed__icon">
-                    {getActivityIcon(activity.activityType)}
+              {items.map((activity) => {
+                const clickable = isClickable(activity.activityType);
+                return (
+                  <div
+                    key={activity.activityId}
+                    className={`activity-feed__item ${clickable ? 'activity-feed__item--clickable' : ''}`}
+                    onClick={clickable ? () => handleActivityClick(activity) : undefined}
+                    role={clickable ? 'button' : undefined}
+                    tabIndex={clickable ? 0 : undefined}
+                    onKeyDown={clickable ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleActivityClick(activity);
+                      }
+                    } : undefined}
+                  >
+                    <div className="activity-feed__icon">
+                      {getActivityIcon(activity.activityType)}
+                    </div>
+                    <div className="activity-feed__details">
+                      <p className="activity-feed__message">
+                        {getActivityMessage(activity)}
+                      </p>
+                      {activity.metadata.content_preview && (
+                        <p className="activity-feed__preview">
+                          {activity.metadata.content_preview}
+                        </p>
+                      )}
+                      {activity.metadata.highlighted_text && (
+                        <p className="activity-feed__preview activity-feed__preview--highlight">
+                          "{activity.metadata.highlighted_text}"
+                        </p>
+                      )}
+                      {activity.metadata.comment_text && (
+                        <p className="activity-feed__preview">
+                          "{activity.metadata.comment_text}"
+                        </p>
+                      )}
+                      <span className="activity-feed__timestamp">
+                        {formatTimestamp(activity.timestamp)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="activity-feed__details">
-                    <p className="activity-feed__message">
-                      {getActivityMessage(activity)}
-                    </p>
-                    {activity.metadata.content_preview && (
-                      <p className="activity-feed__preview">
-                        {activity.metadata.content_preview}
-                      </p>
-                    )}
-                    {activity.metadata.highlighted_text && (
-                      <p className="activity-feed__preview activity-feed__preview--highlight">
-                        "{activity.metadata.highlighted_text}"
-                      </p>
-                    )}
-                    {activity.metadata.comment_text && (
-                      <p className="activity-feed__preview">
-                        "{activity.metadata.comment_text}"
-                      </p>
-                    )}
-                    <span className="activity-feed__timestamp">
-                      {formatTimestamp(activity.timestamp)}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}

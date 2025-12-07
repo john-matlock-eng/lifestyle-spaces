@@ -77,13 +77,37 @@
   transition: all 0.2s;
 }
 
-.activity-feed__item:hover {
-  border-color: var(--theme-primary-300);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+.activity-feed__item--clickable {
+  cursor: pointer;
+}
+
+.activity-feed__item--clickable:hover {
+  border-color: var(--theme-primary-400);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.activity-feed__item--clickable:focus {
+  outline: none;
+  border-color: var(--theme-primary-500);
+  box-shadow: 0 0 0 3px var(--theme-primary-500-alpha-10);
+}
+
+.activity-feed__item--clickable:active {
+  transform: translateY(0);
+}
+
+.activity-feed__item:not(.activity-feed__item--clickable) {
+  opacity: 0.7;
+}
+
+.activity-feed__item:not(.activity-feed__item--clickable):hover {
+  border-color: var(--theme-border-light);
+  box-shadow: none;
 }
 
 /* Dark mode adjustments for hover shadow */
-:root.dark .activity-feed__item:hover {
+:root.dark .activity-feed__item--clickable:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 

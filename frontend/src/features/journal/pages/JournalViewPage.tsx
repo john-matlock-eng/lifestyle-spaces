@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
@@ -35,6 +35,7 @@ import '../styles/journal-compact.css'
 export const JournalViewPage: React.FC = () => {
   const navigate = useNavigate()
   const { spaceId, journalId } = useParams<{ spaceId: string; journalId: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { journal, loading, error, loadJournal, deleteJournal } = useJournal()
   const { user } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
@@ -43,6 +44,7 @@ export const JournalViewPage: React.FC = () => {
   const [showAIDock, setShowAIDock] = useState(false)
   const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
+  const [pendingHighlightId, setPendingHighlightId] = useState<string | null>(null)
 
   // Highlights and comments real-time feature
   const {
@@ -104,6 +106,27 @@ export const JournalViewPage: React.FC = () => {
       setDisplaySections([])
     }
   }, [journal])
+
+  // Handle URL params for deep linking to highlights/comments from activity feed
+  useEffect(() => {
+    const highlightId = searchParams.get('highlightId')
+    if (highlightId) {
+      setPendingHighlightId(highlightId)
+      // Clear the URL params after capturing them
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
+
+  // Open highlight when highlights are loaded and we have a pending highlight ID
+  useEffect(() => {
+    if (pendingHighlightId && highlights.length > 0) {
+      const highlight = highlights.find(h => h.id === pendingHighlightId)
+      if (highlight) {
+        handleHighlightClick(highlight)
+        setPendingHighlightId(null)
+      }
+    }
+  }, [pendingHighlightId, highlights])
 
   const handleEdit = () => {
     if (spaceId && journalId) {
