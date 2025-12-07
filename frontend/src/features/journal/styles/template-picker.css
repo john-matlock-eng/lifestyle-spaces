@@ -61,7 +61,7 @@
 
 .template-card.selected {
   border-width: 3px;
-  box-shadow: 0 4px 16px rgba(100, 108, 255, 0.2);
+  box-shadow: 0 4px 16px var(--theme-primary-500-alpha-10);
   background-color: var(--theme-primary-50, #f5f7ff);
 }
 

@@ -903,7 +903,9 @@
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--theme-border-light);
+  background-color: var(--theme-bg-surface);
+  color: var(--theme-text-primary);
 }
 
 .member-status {
@@ -921,7 +923,7 @@
 }
 
 .member-status--online {
-  color: #16a34a;
+  color: var(--theme-success-600);
 }
 
 .member-status--offline {
@@ -948,8 +950,8 @@
 .members-list__loading-spinner {
   width: 2rem;
   height: 2rem;
-  border: 2px solid #e5e7eb;
-  border-top: 2px solid #3b82f6;
+  border: 2px solid var(--theme-border-light);
+  border-top: 2px solid var(--theme-primary-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -1016,7 +1018,7 @@
 .pending-invitations {
   margin-top: 2rem;
   padding-top: 2rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--theme-border-light);
 }
 
 .pending-invitations__title {
@@ -1037,8 +1039,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem;
-  background-color: #fefce8;
-  border: 1px solid #fde68a;
+  background-color: var(--theme-warning-50);
+  border: 1px solid var(--theme-warning-200);
   border-radius: 0.5rem;
   margin-bottom: 0.5rem;
   gap: 1rem;
@@ -1063,11 +1065,11 @@
 }
 
 .invitation-status {
-  color: #ca8a04;
+  color: var(--theme-warning-700);
   font-size: 0.75rem;
   font-weight: 500;
   padding: 0.125rem 0.375rem;
-  background-color: #fef3c7;
+  background-color: var(--theme-warning-100);
   border-radius: 0.25rem;
 }
 
