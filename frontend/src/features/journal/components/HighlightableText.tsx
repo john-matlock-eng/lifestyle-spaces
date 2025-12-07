@@ -149,7 +149,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         // Position button ABOVE selection to avoid mobile OS context menu (which appears below)
         const buttonPos = {
           x: boundingRect.left + (boundingRect.width / 2),
-          y: boundingRect.top - 60, // 60px above selection to clear the button height
+          y: boundingRect.top - 135, // 135px above selection to clear mobile OS context menu
         };
 
         console.log('[HighlightableText] Setting button position:', buttonPos);
