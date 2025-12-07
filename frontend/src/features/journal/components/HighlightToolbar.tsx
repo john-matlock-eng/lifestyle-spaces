@@ -21,7 +21,7 @@ interface HighlightToolbarProps {
   disabled?: boolean;
 }
 
-const TOOLBAR_OFFSET_Y = -60; // Position above selection
+const TOOLBAR_OFFSET_Y = -135; // Position above selection, clear of mobile OS context menu
 
 export const HighlightToolbar: React.FC<HighlightToolbarProps> = ({
   editor,
