@@ -52,11 +52,11 @@
 }
 
 .view-toggle-btn:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--theme-bg-hover);
 }
 
 .view-toggle-btn.active {
-  background: white;
+  background: var(--theme-bg-surface);
   color: var(--theme-text-primary, #1a1a1a);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }

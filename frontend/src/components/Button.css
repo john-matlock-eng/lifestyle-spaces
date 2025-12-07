@@ -39,36 +39,36 @@
 }
 
 .btn-success {
-  background-color: #28a745;
+  background-color: var(--theme-success-600);
   color: white;
-  border-color: #28a745;
+  border-color: var(--theme-success-600);
 }
 
 .btn-success:hover:not(.btn-disabled) {
-  background-color: #1e7e34;
-  border-color: #1e7e34;
+  background-color: var(--theme-success-700);
+  border-color: var(--theme-success-700);
 }
 
 .btn-danger {
-  background-color: #dc3545;
+  background-color: var(--theme-error-600);
   color: white;
-  border-color: #dc3545;
+  border-color: var(--theme-error-600);
 }
 
 .btn-danger:hover:not(.btn-disabled) {
-  background-color: #c82333;
-  border-color: #c82333;
+  background-color: var(--theme-error-700);
+  border-color: var(--theme-error-700);
 }
 
 .btn-warning {
-  background-color: #ffc107;
-  color: #212529;
-  border-color: #ffc107;
+  background-color: var(--theme-warning-500);
+  color: var(--theme-warning-900);
+  border-color: var(--theme-warning-500);
 }
 
 .btn-warning:hover:not(.btn-disabled) {
-  background-color: #e0a800;
-  border-color: #e0a800;
+  background-color: var(--theme-warning-600);
+  border-color: var(--theme-warning-600);
 }
 
 /* Button sizes */
