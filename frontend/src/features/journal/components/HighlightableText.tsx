@@ -146,10 +146,10 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           boundingRect,
         });
 
-        // Position button below selection to avoid OS context menu (viewport-relative for fixed positioning)
+        // Position button ABOVE selection to avoid mobile OS context menu (which appears below)
         const buttonPos = {
           x: boundingRect.left + (boundingRect.width / 2),
-          y: boundingRect.bottom + 10, // 10px below selection
+          y: boundingRect.top - 135, // 135px above selection to clear mobile OS context menu
         };
 
         console.log('[HighlightableText] Setting button position:', buttonPos);
@@ -728,15 +728,15 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
-          animation: 'slideInFromBottom 0.3s ease-out',
+          animation: 'slideInFromTop 0.3s ease-out',
           minWidth: '240px',
         }}
       >
         <style>{`
-          @keyframes slideInFromBottom {
+          @keyframes slideInFromTop {
             from {
               opacity: 0;
-              transform: translate(-50%, 10%) scale(0.95);
+              transform: translate(-50%, -10%) scale(0.95);
             }
             to {
               opacity: 1;
@@ -744,18 +744,18 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
             }
           }
 
-          /* Pointer arrow pointing up - uses theme primary-500 */
+          /* Pointer arrow pointing down - menu is above selection */
           .highlight-color-picker::after {
             content: '';
             position: absolute;
-            top: -8px;
+            bottom: -8px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
             border-left: 8px solid transparent;
             border-right: 8px solid transparent;
-            border-bottom: 8px solid var(--theme-primary-500);
+            border-top: 8px solid var(--theme-primary-700);
           }
         `}</style>
 
