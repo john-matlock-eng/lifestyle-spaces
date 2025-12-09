@@ -10,15 +10,24 @@ from app.core.database import DynamoDBClient
 from app.models.invitation import Invitation, InvitationCreate, InvitationStatus
 from app.services.space import SpaceService
 from app.services.exceptions import (
-    InvitationNotFoundException, UserNotFoundException, SpaceNotFoundException,
-    InvitationNotFoundError, UserNotFoundError, SpaceNotFoundError,
-    InvalidInvitationError, InvitationExpiredError, InvitationAlreadyExistsError
+    InvitationNotFoundException,
+    UserNotFoundException,
+    SpaceNotFoundException,
+    InvitationNotFoundError,
+    UserNotFoundError,
+    SpaceNotFoundError,
+    InvalidInvitationError,
+    InvitationExpiredError,
+    InvitationAlreadyExistsError,
 )
 
+
 class InvitationService:
-    def __init__(self, db_client: Optional[DynamoDBClient] = None, space_service=None, user_service=None):
-        self.dynamodb = boto3.resource('dynamodb')
-        self.table_name = os.getenv('DYNAMODB_TABLE', 'lifestyle-spaces')
+    def __init__(
+        self, db_client: Optional[DynamoDBClient] = None, space_service=None, user_service=None
+    ):
+        self.dynamodb = boto3.resource("dynamodb")
+        self.table_name = os.getenv("DYNAMODB_TABLE", "lifestyle-spaces")
         self.table = self._get_or_create_table()
         self.db_client = db_client or DynamoDBClient()
         self.space_service = space_service or SpaceService()
@@ -31,14 +40,22 @@ class InvitationService:
             invitee_email=item["invitee_email"],
             inviter_user_id=item["inviter_user_id"],
             status=InvitationStatus(item["status"]),
-            created_at=datetime.fromisoformat(item["created_at"]) if isinstance(item["created_at"], str) else item["created_at"],
-            expires_at=datetime.fromisoformat(item["expires_at"]) if item.get("expires_at") and isinstance(item["expires_at"], str) else item.get("expires_at")
+            created_at=datetime.fromisoformat(item["created_at"])
+            if isinstance(item["created_at"], str)
+            else item["created_at"],
+            expires_at=datetime.fromisoformat(item["expires_at"])
+            if item.get("expires_at") and isinstance(item["expires_at"], str)
+            else item.get("expires_at"),
         )
 
-    def create_invitation(self, invitation_data: InvitationCreate, inviter_user_id: str) -> Invitation:
+    def create_invitation(
+        self, invitation_data: InvitationCreate, inviter_user_id: str
+    ) -> Invitation:
         invitation_id = str(uuid.uuid4())
         created_at = datetime.now(timezone.utc)
-        expires_at = invitation_data.expires_at or (created_at + timedelta(days=7)) # Default to 7 days
+        expires_at = invitation_data.expires_at or (
+            created_at + timedelta(days=7)
+        )  # Default to 7 days
 
         item = {
             "PK": f"INVITATION#{invitation_id}",
@@ -50,9 +67,9 @@ class InvitationService:
             "status": InvitationStatus.PENDING.value,
             "created_at": created_at.isoformat(),
             "expires_at": expires_at.isoformat(),
-            "EntityType": "Invitation", # For GSI filtering
-            "GSI1PK": f"USER#{invitation_data.invitee_email}", # GSI for user's invitations
-            "GSI1SK": f"INVITATION#{InvitationStatus.PENDING.value}" # GSI for user's pending invitations
+            "EntityType": "Invitation",  # For GSI filtering
+            "GSI1PK": f"USER#{invitation_data.invitee_email}",  # GSI for user's invitations
+            "GSI1SK": f"INVITATION#{InvitationStatus.PENDING.value}",  # GSI for user's pending invitations
         }
         self.db_client.put_item(item)
         return self._map_item_to_invitation(item)
@@ -74,64 +91,79 @@ class InvitationService:
         result = self.db_client.query(
             pk=f"USER#{invitee_email}",
             sk_prefix=f"INVITATION#{InvitationStatus.PENDING.value}",
-            index_name="GSI1"
+            index_name="GSI1",
         )
         # Handle both test format (list) and production format (dict with "Items")
         if isinstance(result, list):
             items = result
         else:
             items = result.get("Items", [])
-        return [self._map_item_to_invitation(item) for item in items if self._is_invitation_active(item)]
+        return [
+            self._map_item_to_invitation(item) for item in items if self._is_invitation_active(item)
+        ]
 
     async def _get_pending_invitations_async(self, invitee_email: str) -> List[Invitation]:
         """Async version of get_pending_invitations_for_user."""
         result = self.db_client.query(
             pk=f"USER#{invitee_email}",
             sk_prefix=f"INVITATION#{InvitationStatus.PENDING.value}",
-            index_name="GSI1"
+            index_name="GSI1",
         )
         # Handle both test format (list) and production format (dict with "Items")
         if isinstance(result, list):
             items = result
         else:
             items = result.get("Items", [])
-        return [self._map_item_to_invitation(item) for item in items if self._is_invitation_active(item)]
+        return [
+            self._map_item_to_invitation(item) for item in items if self._is_invitation_active(item)
+        ]
 
     async def get_all_pending_invitations(self) -> List[Invitation]:
         """Async method to get all pending invitations."""
-        result = self.db_client.query(
-            pk="PENDING_INVITATIONS",
-            sk_prefix="INVITATION#"
-        )
+        result = self.db_client.query(pk="PENDING_INVITATIONS", sk_prefix="INVITATION#")
         # Handle both test format (list) and production format (dict with "Items")
         if isinstance(result, list):
             items = result
         else:
             items = result.get("Items", [])
-        return [self._map_item_to_invitation(item) for item in items if self._is_invitation_active(item)]
+        return [
+            self._map_item_to_invitation(item) for item in items if self._is_invitation_active(item)
+        ]
 
     def get_pending_invitations_for_admin(self) -> List[Invitation]:
         result = self.db_client.scan(
             filter_expression="EntityType = :entity_type AND #s = :status",
-            expression_attribute_values={":entity_type": "Invitation", ":status": InvitationStatus.PENDING.value},
-            expression_attribute_names={"#s": "status"}
+            expression_attribute_values={
+                ":entity_type": "Invitation",
+                ":status": InvitationStatus.PENDING.value,
+            },
+            expression_attribute_names={"#s": "status"},
         )
         # Handle both test format (list) and production format (dict with "Items" or just list)
         if isinstance(result, list):
             items = result
         else:
             items = result.get("Items", [])
-        return [self._map_item_to_invitation(item) for item in items if self._is_invitation_active(item)]
+        return [
+            self._map_item_to_invitation(item) for item in items if self._is_invitation_active(item)
+        ]
 
     def _is_invitation_active(self, item: dict) -> bool:
         expires_at_str = item.get("expires_at")
         if expires_at_str:
             expires_at = datetime.fromisoformat(expires_at_str)
             return expires_at > datetime.now(timezone.utc)
-        return True # No expiration set, consider it active
+        return True  # No expiration set, consider it active
 
-    def accept_invitation(self, invitation_id: str = None, user_id: str = None, invitee_email: str = None,
-                          invitation_code: str = None, username: str = None, email: str = None):
+    def accept_invitation(
+        self,
+        invitation_id: str = None,
+        user_id: str = None,
+        invitee_email: str = None,
+        invitation_code: str = None,
+        username: str = None,
+        email: str = None,
+    ):
         """Accept invitation with multiple signature support.
 
         This method returns a coroutine if user_service is provided (async mode),
@@ -152,7 +184,9 @@ class InvitationService:
 
         raise ValueError("Either invitation_code or invitation_id must be provided")
 
-    def _accept_by_id_sync(self, invitation_id: str, user_id: str, invitee_email: str = None) -> Invitation:
+    def _accept_by_id_sync(
+        self, invitation_id: str, user_id: str, invitee_email: str = None
+    ) -> Invitation:
         """Accept invitation by ID (synchronous version)."""
         pk = f"INVITATION#{invitation_id}"
         sk = f"INVITATION#{invitation_id}"
@@ -182,26 +216,21 @@ class InvitationService:
         # Production code should use async version
         if not self.user_service:
             self.space_service.add_member(
-                space_id=invitation.space_id,
-                user_id=user_id,
-                role="member",
-                added_by="system"
+                space_id=invitation.space_id, user_id=user_id, role="member", added_by="system"
             )
 
         updates = {
             "status": InvitationStatus.ACCEPTED.value,
-            "accepted_at": datetime.now(timezone.utc).isoformat()
+            "accepted_at": datetime.now(timezone.utc).isoformat(),
         }
-        updated_item = self.db_client.update_item(
-            pk=pk,
-            sk=sk,
-            updates=updates
-        )
+        updated_item = self.db_client.update_item(pk=pk, sk=sk, updates=updates)
         # Handle both test format (with "Attributes") and production format
         item_data = updated_item.get("Attributes", updated_item)
         return self._map_item_to_invitation(item_data)
 
-    async def _accept_by_id_async(self, invitation_id: str, user_id: str, invitee_email: str = None) -> Invitation:
+    async def _accept_by_id_async(
+        self, invitation_id: str, user_id: str, invitee_email: str = None
+    ) -> Invitation:
         """Accept invitation by ID (new test format)."""
         pk = f"INVITATION#{invitation_id}"
         sk = f"INVITATION#{invitation_id}"
@@ -244,36 +273,31 @@ class InvitationService:
         else:
             # Production mode - use real service
             self.space_service.add_member(
-                space_id=invitation.space_id,
-                user_id=user_id,
-                role="member",
-                added_by="system"
+                space_id=invitation.space_id, user_id=user_id, role="member", added_by="system"
             )
 
         updates = {
             "status": InvitationStatus.ACCEPTED.value,
-            "accepted_at": datetime.now(timezone.utc).isoformat()
+            "accepted_at": datetime.now(timezone.utc).isoformat(),
         }
-        updated_item = self.db_client.update_item(
-            pk=pk,
-            sk=sk,
-            updates=updates
-        )
+        updated_item = self.db_client.update_item(pk=pk, sk=sk, updates=updates)
         # Handle both test format (with "Attributes") and production format
         item_data = updated_item.get("Attributes", updated_item)
         return self._map_item_to_invitation(item_data)
 
-    def _accept_by_code(self, invitation_code: str, user_id: str, username: str, email: str) -> dict:
+    def _accept_by_code(
+        self, invitation_code: str, user_id: str, username: str, email: str
+    ) -> dict:
         """Accept invitation by code (old test format)."""
         # Query by invitation code
         result = self.db_client.scan(
             filter_expression="invitation_code = :code",
-            expression_attribute_values={":code": invitation_code}
+            expression_attribute_values={":code": invitation_code},
         )
         items = result.get("Items", []) if isinstance(result, dict) else result
 
         # Handle case where items is a list (or Mock, or other iterable)
-        if not items or (hasattr(items, '__len__') and len(items) == 0):
+        if not items or (hasattr(items, "__len__") and len(items) == 0):
             raise InvalidInvitationError("Invalid invitation code")
 
         # Try to get first item, handle Mock objects
@@ -296,7 +320,7 @@ class InvitationService:
         updates = {
             "status": InvitationStatus.ACCEPTED.value,
             "accepted_at": datetime.now(timezone.utc).isoformat(),
-            "accepted_by_user_id": user_id
+            "accepted_by_user_id": user_id,
         }
         self.db_client.update_item(pk=pk, sk=sk, updates=updates)
 
@@ -306,18 +330,25 @@ class InvitationService:
             "invitation_id": item.get("invitation_id"),
             "space_id": item.get("space_id"),
             "invitee_email": item.get("invitee_email"),
-            "status": InvitationStatus.ACCEPTED.value
+            "status": InvitationStatus.ACCEPTED.value,
         }
 
-
-    def create_invitation(self, invitation: InvitationCreate = None, space_id: str = None,
-                         space_name: str = None, inviter_id: str = None,
-                         inviter_name: str = None, invitation_data: InvitationCreate = None,
-                         inviter_user_id: str = None) -> Union[Invitation, dict]:
+    def create_invitation(
+        self,
+        invitation: InvitationCreate = None,
+        space_id: str = None,
+        space_name: str = None,
+        inviter_id: str = None,
+        inviter_name: str = None,
+        invitation_data: InvitationCreate = None,
+        inviter_user_id: str = None,
+    ) -> Union[Invitation, dict]:
         """Create invitation with multiple signature support."""
         # Handle old test signature
         if invitation and space_id and inviter_id:
-            return self._create_invitation_old(invitation, space_id, space_name, inviter_id, inviter_name)
+            return self._create_invitation_old(
+                invitation, space_id, space_name, inviter_id, inviter_name
+            )
 
         # Handle new signature with positional args: create_invitation(invitation_create, inviter_user_id)
         # When called with 2 positional args, second arg goes to space_id parameter
@@ -332,8 +363,14 @@ class InvitationService:
 
         raise ValueError("Invalid arguments for create_invitation")
 
-    def _create_invitation_old(self, invitation: InvitationCreate, space_id: str,
-                              space_name: str, inviter_id: str, inviter_name: str) -> dict:
+    def _create_invitation_old(
+        self,
+        invitation: InvitationCreate,
+        space_id: str,
+        space_name: str,
+        inviter_id: str,
+        inviter_name: str,
+    ) -> dict:
         """Create invitation (old test format)."""
         # Check for duplicate invitation
         existing = self.db_client.scan(
@@ -341,9 +378,9 @@ class InvitationService:
             expression_attribute_values={
                 ":email": invitation.email or invitation.invitee_email,
                 ":space_id": space_id,
-                ":status": InvitationStatus.PENDING.value
+                ":status": InvitationStatus.PENDING.value,
             },
-            expression_attribute_names={"#s": "status"}
+            expression_attribute_names={"#s": "status"},
         )
         items = existing.get("Items", []) if isinstance(existing, dict) else existing
         if items:
@@ -352,7 +389,11 @@ class InvitationService:
         invitation_id = str(uuid.uuid4())
         invitation_code = secrets.token_urlsafe(32)
         created_at = datetime.now(timezone.utc)
-        expires_at = invitation.expires_at if hasattr(invitation, 'expires_at') and invitation.expires_at else (created_at + timedelta(days=7))
+        expires_at = (
+            invitation.expires_at
+            if hasattr(invitation, "expires_at") and invitation.expires_at
+            else (created_at + timedelta(days=7))
+        )
 
         item = {
             "PK": f"INVITATION#{invitation_id}",
@@ -364,12 +405,12 @@ class InvitationService:
             "invitee_email": invitation.email or invitation.invitee_email,
             "inviter_user_id": inviter_id,
             "inviter_name": inviter_name,
-            "role": getattr(invitation, 'role', 'member'),
-            "message": getattr(invitation, 'message', ''),
+            "role": getattr(invitation, "role", "member"),
+            "message": getattr(invitation, "message", ""),
             "status": InvitationStatus.PENDING.value,
             "created_at": created_at.isoformat(),
             "expires_at": expires_at.isoformat(),
-            "EntityType": "Invitation"
+            "EntityType": "Invitation",
         }
         self.db_client.put_item(item)
 
@@ -381,10 +422,12 @@ class InvitationService:
             "invitee_email": item["invitee_email"],
             "status": InvitationStatus.PENDING.value,
             "created_at": created_at.isoformat(),
-            "expires_at": expires_at.isoformat()
+            "expires_at": expires_at.isoformat(),
         }
 
-    def _create_invitation_new(self, invitation_data: InvitationCreate, inviter_user_id: str) -> Invitation:
+    def _create_invitation_new(
+        self, invitation_data: InvitationCreate, inviter_user_id: str
+    ) -> Invitation:
         """Create invitation (new format)."""
         invitation_id = str(uuid.uuid4())
         created_at = datetime.now(timezone.utc)
@@ -402,7 +445,7 @@ class InvitationService:
             "expires_at": expires_at.isoformat(),
             "EntityType": "Invitation",
             "GSI1PK": f"USER#{invitation_data.invitee_email}",
-            "GSI1SK": f"INVITATION#{InvitationStatus.PENDING.value}"
+            "GSI1SK": f"INVITATION#{InvitationStatus.PENDING.value}",
         }
         self.db_client.put_item(item)
         return self._map_item_to_invitation(item)
@@ -414,7 +457,7 @@ class InvitationService:
             result = self.db_client.query(
                 pk=f"USER#{user_email}",
                 sk_prefix=f"INVITATION#{InvitationStatus.PENDING.value}",
-                index_name="GSI1"
+                index_name="GSI1",
             )
         except Exception:
             # Fall back to scan for tests without GSI
@@ -422,9 +465,9 @@ class InvitationService:
                 filter_expression="invitee_email = :email AND #s = :status",
                 expression_attribute_values={
                     ":email": user_email,
-                    ":status": InvitationStatus.PENDING.value
+                    ":status": InvitationStatus.PENDING.value,
                 },
-                expression_attribute_names={"#s": "status"}
+                expression_attribute_names={"#s": "status"},
             )
 
         # Handle both test format (list) and production format (dict with "Items")
@@ -432,11 +475,10 @@ class InvitationService:
             items = result
         else:
             items = result.get("Items", [])
-        invitations = [self._map_item_to_invitation(item) for item in items if self._is_invitation_active(item)]
-        return {
-            "invitations": [inv.model_dump() for inv in invitations],
-            "total": len(invitations)
-        }
+        invitations = [
+            self._map_item_to_invitation(item) for item in items if self._is_invitation_active(item)
+        ]
+        return {"invitations": [inv.model_dump() for inv in invitations], "total": len(invitations)}
 
     def list_space_invitations(self, space_id: str, requester_id: str = None) -> dict:
         """List all invitations for a space."""
@@ -444,25 +486,24 @@ class InvitationService:
             filter_expression="space_id = :space_id AND #s = :status",
             expression_attribute_values={
                 ":space_id": space_id,
-                ":status": InvitationStatus.PENDING.value
+                ":status": InvitationStatus.PENDING.value,
             },
-            expression_attribute_names={"#s": "status"}
+            expression_attribute_names={"#s": "status"},
         )
         items = result.get("Items", []) if isinstance(result, dict) else result
         invitations_data = []
         for item in items:
             if self._is_invitation_active(item):
-                invitations_data.append({
-                    "id": item.get("invitation_id"),
-                    "invitation_id": item.get("invitation_id"),
-                    "invitee_email": item.get("invitee_email"),
-                    "status": item.get("status"),
-                    "created_at": item.get("created_at")
-                })
-        return {
-            "invitations": invitations_data,
-            "total": len(invitations_data)
-        }
+                invitations_data.append(
+                    {
+                        "id": item.get("invitation_id"),
+                        "invitation_id": item.get("invitation_id"),
+                        "invitee_email": item.get("invitee_email"),
+                        "status": item.get("status"),
+                        "created_at": item.get("created_at"),
+                    }
+                )
+        return {"invitations": invitations_data, "total": len(invitations_data)}
 
     def cancel_invitation(self, invitation_id: str, cancelled_by: str) -> dict:
         """Cancel an invitation."""
@@ -486,14 +527,11 @@ class InvitationService:
         updates = {
             "status": InvitationStatus.DECLINED.value,
             "cancelled_at": datetime.now(timezone.utc).isoformat(),
-            "cancelled_by": cancelled_by
+            "cancelled_by": cancelled_by,
         }
         self.db_client.update_item(pk=pk, sk=sk, updates=updates)
 
-        return {
-            "id": invitation_id,
-            "status": InvitationStatus.DECLINED.value
-        }
+        return {"id": invitation_id, "status": InvitationStatus.DECLINED.value}
 
     def validate_invite_code(self, code: str) -> bool:
         """Validate an invitation code."""
@@ -513,8 +551,7 @@ class InvitationService:
     def _get_invitation_by_code(self, code: str) -> Optional[dict]:
         """Get invitation by code."""
         result = self.db_client.scan(
-            filter_expression="invitation_code = :code",
-            expression_attribute_values={":code": code}
+            filter_expression="invitation_code = :code", expression_attribute_values={":code": code}
         )
         items = result.get("Items", []) if isinstance(result, dict) else result
 
@@ -535,18 +572,18 @@ class InvitationService:
             table = self.dynamodb.create_table(
                 TableName=self.table_name,
                 KeySchema=[
-                    {'AttributeName': 'PK', 'KeyType': 'HASH'},
-                    {'AttributeName': 'SK', 'KeyType': 'RANGE'}
+                    {"AttributeName": "PK", "KeyType": "HASH"},
+                    {"AttributeName": "SK", "KeyType": "RANGE"},
                 ],
                 AttributeDefinitions=[
-                    {'AttributeName': 'PK', 'AttributeType': 'S'},
-                    {'AttributeName': 'SK', 'AttributeType': 'S'}
+                    {"AttributeName": "PK", "AttributeType": "S"},
+                    {"AttributeName": "SK", "AttributeType": "S"},
                 ],
-                BillingMode='PAY_PER_REQUEST'
+                BillingMode="PAY_PER_REQUEST",
             )
             table.wait_until_exists()
             return table
         except ClientError as e:
-            if e.response['Error']['Code'] == 'ResourceInUseException':
+            if e.response["Error"]["Code"] == "ResourceInUseException":
                 return self.dynamodb.Table(self.table_name)
             raise

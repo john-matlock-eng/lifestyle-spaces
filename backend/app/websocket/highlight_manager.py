@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class WebSocketMessage(BaseModel):
     """WebSocket message format."""
+
     type: str
     payload: Dict[str, Any]
     timestamp: str
@@ -29,6 +30,7 @@ class WebSocketMessage(BaseModel):
 
 class PresenceData(BaseModel):
     """User presence information."""
+
     user_id: str
     user_name: str
     color: str
@@ -89,11 +91,7 @@ class HighlightWebSocketManager:
         self.presence_interval = 5
 
     async def connect(
-        self,
-        websocket: WebSocket,
-        journal_entry_id: str,
-        user_id: str,
-        user_name: str
+        self, websocket: WebSocket, journal_entry_id: str, user_id: str, user_name: str
     ) -> ConnectionInfo:
         """
         Accept a new WebSocket connection.
@@ -143,9 +141,7 @@ class HighlightWebSocketManager:
                 if journal_entry_id in self.message_history:
                     del self.message_history[journal_entry_id]
 
-        logger.info(
-            f"WebSocket disconnected: user={conn_info.user_id}, journal={journal_entry_id}"
-        )
+        logger.info(f"WebSocket disconnected: user={conn_info.user_id}, journal={journal_entry_id}")
 
     async def broadcast_message(
         self,
@@ -153,7 +149,7 @@ class HighlightWebSocketManager:
         message_type: str,
         payload: Dict[str, Any],
         sender_id: Optional[str] = None,
-        correlation_id: Optional[str] = None
+        correlation_id: Optional[str] = None,
     ):
         """
         Broadcast a message to all connections for a journal entry.
@@ -175,7 +171,7 @@ class HighlightWebSocketManager:
             payload=payload,
             timestamp=datetime.utcnow().isoformat(),
             user_id=sender_id or "",
-            correlation_id=correlation_id
+            correlation_id=correlation_id,
         )
 
         message_json = message.json()
@@ -208,7 +204,7 @@ class HighlightWebSocketManager:
         joined: bool = False,
         left: bool = False,
         is_typing: bool = False,
-        cursor_position: Optional[int] = None
+        cursor_position: Optional[int] = None,
     ):
         """
         Broadcast user presence update.
@@ -228,36 +224,33 @@ class HighlightWebSocketManager:
         # Get all active users
         active_users = []
         for conn_info in self.active_connections[journal_entry_id]:
-            active_users.append({
-                "userId": conn_info.user_id,
-                "userName": conn_info.user_name,
-                "color": conn_info.color,
-                "isTyping": conn_info.is_typing,
-                "cursorPosition": conn_info.cursor_position,
-                "lastActivity": conn_info.last_heartbeat.isoformat()
-            })
+            active_users.append(
+                {
+                    "userId": conn_info.user_id,
+                    "userName": conn_info.user_name,
+                    "color": conn_info.color,
+                    "isTyping": conn_info.is_typing,
+                    "cursorPosition": conn_info.cursor_position,
+                    "lastActivity": conn_info.last_heartbeat.isoformat(),
+                }
+            )
 
         payload = {
             "activeUsers": active_users,
             "totalCount": len(active_users),
             "event": "joined" if joined else ("left" if left else "update"),
             "userId": user_id,
-            "userName": user_name
+            "userName": user_name,
         }
 
-        await self.broadcast_message(
-            journal_entry_id,
-            "USER_PRESENCE",
-            payload,
-            sender_id=user_id
-        )
+        await self.broadcast_message(journal_entry_id, "USER_PRESENCE", payload, sender_id=user_id)
 
     async def update_user_state(
         self,
         journal_entry_id: str,
         user_id: str,
         is_typing: Optional[bool] = None,
-        cursor_position: Optional[int] = None
+        cursor_position: Optional[int] = None,
     ):
         """
         Update user state (typing, cursor position).
@@ -313,11 +306,7 @@ class HighlightWebSocketManager:
                 logger.warning(f"Cleaning up stale connection: {conn_info.user_id}")
                 self.disconnect(journal_entry_id, conn_info)
 
-    async def _send_connection_confirmation(
-        self,
-        websocket: WebSocket,
-        journal_entry_id: str
-    ):
+    async def _send_connection_confirmation(self, websocket: WebSocket, journal_entry_id: str):
         """
         Send connection confirmation with recent message history.
 
@@ -332,9 +321,9 @@ class HighlightWebSocketManager:
             "payload": {
                 "journalEntryId": journal_entry_id,
                 "messageHistory": history[-100:],  # Last 100 messages
-                "serverTime": datetime.utcnow().isoformat()
+                "serverTime": datetime.utcnow().isoformat(),
             },
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
         await websocket.send_text(json.dumps(confirmation))
@@ -352,7 +341,7 @@ class HighlightWebSocketManager:
 
         # Trim history if too large
         if len(history) > self.max_history_size:
-            self.message_history[journal_entry_id] = history[-self.max_history_size:]
+            self.message_history[journal_entry_id] = history[-self.max_history_size :]
 
     def get_active_user_count(self, journal_entry_id: str) -> int:
         """

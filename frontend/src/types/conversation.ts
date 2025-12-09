@@ -8,6 +8,8 @@ export interface Conversation {
   journalAuthor: string;
   journalAuthorName: string;
   lastActivity: string;
+  lastActivityType: 'highlight_comment' | 'journal_comment' | 'highlight';
+  lastActivityHighlightId: string | null;
   highlightCount: number;
   highlightCommentCount: number;
   journalCommentCount: number;

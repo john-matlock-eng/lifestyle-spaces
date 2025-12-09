@@ -14,7 +14,7 @@ from app.services.exceptions import (
     SpaceNotFoundError,
     UnauthorizedError,
     ValidationError,
-    JournalNotFoundError
+    JournalNotFoundError,
 )
 from app.models.activity import ActivityType
 
@@ -26,12 +26,14 @@ class JournalService:
 
     def __init__(self):
         """Initialize DynamoDB client and table."""
-        aws_region = os.getenv('AWS_REGION', 'us-east-1')
-        self.table_name = os.getenv('DYNAMODB_TABLE', 'lifestyle-spaces')
+        aws_region = os.getenv("AWS_REGION", "us-east-1")
+        self.table_name = os.getenv("DYNAMODB_TABLE", "lifestyle-spaces")
 
-        logger.info(f"Initializing JournalService with table: {self.table_name}, region: {aws_region}")
+        logger.info(
+            f"Initializing JournalService with table: {self.table_name}, region: {aws_region}"
+        )
 
-        self.dynamodb = boto3.resource('dynamodb', region_name=aws_region)
+        self.dynamodb = boto3.resource("dynamodb", region_name=aws_region)
         self.table = self._get_or_create_table()
 
     def _get_or_create_table(self):
@@ -48,32 +50,32 @@ class JournalService:
             table = self.dynamodb.create_table(
                 TableName=self.table_name,
                 KeySchema=[
-                    {'AttributeName': 'PK', 'KeyType': 'HASH'},
-                    {'AttributeName': 'SK', 'KeyType': 'RANGE'}
+                    {"AttributeName": "PK", "KeyType": "HASH"},
+                    {"AttributeName": "SK", "KeyType": "RANGE"},
                 ],
                 AttributeDefinitions=[
-                    {'AttributeName': 'PK', 'AttributeType': 'S'},
-                    {'AttributeName': 'SK', 'AttributeType': 'S'},
-                    {'AttributeName': 'GSI1PK', 'AttributeType': 'S'},
-                    {'AttributeName': 'GSI1SK', 'AttributeType': 'S'}
+                    {"AttributeName": "PK", "AttributeType": "S"},
+                    {"AttributeName": "SK", "AttributeType": "S"},
+                    {"AttributeName": "GSI1PK", "AttributeType": "S"},
+                    {"AttributeName": "GSI1SK", "AttributeType": "S"},
                 ],
                 GlobalSecondaryIndexes=[
                     {
-                        'IndexName': 'GSI1',
-                        'KeySchema': [
-                            {'AttributeName': 'GSI1PK', 'KeyType': 'HASH'},
-                            {'AttributeName': 'GSI1SK', 'KeyType': 'RANGE'}
+                        "IndexName": "GSI1",
+                        "KeySchema": [
+                            {"AttributeName": "GSI1PK", "KeyType": "HASH"},
+                            {"AttributeName": "GSI1SK", "KeyType": "RANGE"},
                         ],
-                        'Projection': {'ProjectionType': 'ALL'},
-                        'BillingMode': 'PAY_PER_REQUEST'
+                        "Projection": {"ProjectionType": "ALL"},
+                        "BillingMode": "PAY_PER_REQUEST",
                     }
                 ],
-                BillingMode='PAY_PER_REQUEST'
+                BillingMode="PAY_PER_REQUEST",
             )
             table.wait_until_exists()
             return table
         except ClientError as e:
-            if e.response['Error']['Code'] == 'ResourceInUseException':
+            if e.response["Error"]["Code"] == "ResourceInUseException":
                 return self.dynamodb.Table(self.table_name)
             raise
 
@@ -88,19 +90,17 @@ class JournalService:
         """Check if user is a member of the space."""
         try:
             response = self.table.get_item(
-                Key={'PK': f'SPACE#{space_id}', 'SK': f'MEMBER#{user_id}'}
+                Key={"PK": f"SPACE#{space_id}", "SK": f"MEMBER#{user_id}"}
             )
-            return 'Item' in response
+            return "Item" in response
         except ClientError:
             return False
 
     def _get_space(self, space_id: str) -> Optional[Dict[str, Any]]:
         """Get space metadata."""
         try:
-            response = self.table.get_item(
-                Key={'PK': f'SPACE#{space_id}', 'SK': 'METADATA'}
-            )
-            return response.get('Item')
+            response = self.table.get_item(Key={"PK": f"SPACE#{space_id}", "SK": "METADATA"})
+            return response.get("Item")
         except ClientError:
             return None
 
@@ -108,15 +108,17 @@ class JournalService:
         """Get user's role in a space."""
         try:
             response = self.table.get_item(
-                Key={'PK': f'SPACE#{space_id}', 'SK': f'MEMBER#{user_id}'}
+                Key={"PK": f"SPACE#{space_id}", "SK": f"MEMBER#{user_id}"}
             )
-            if 'Item' in response:
-                return response['Item'].get('role')
+            if "Item" in response:
+                return response["Item"].get("role")
             return None
         except ClientError:
             return None
 
-    def create_journal_entry(self, space_id: str, user_id: str, data: JournalCreate) -> Dict[str, Any]:
+    def create_journal_entry(
+        self, space_id: str, user_id: str, data: JournalCreate
+    ) -> Dict[str, Any]:
         """
         Create a new journal entry.
 
@@ -133,7 +135,9 @@ class JournalService:
             UnauthorizedError: If user is not a space member
             ValidationError: If data is invalid
         """
-        logger.info(f"[CREATE_JOURNAL] Starting journal creation for user={user_id}, space={space_id}")
+        logger.info(
+            f"[CREATE_JOURNAL] Starting journal creation for user={user_id}, space={space_id}"
+        )
 
         # Validate space exists
         space = self._get_space(space_id)
@@ -153,29 +157,29 @@ class JournalService:
 
         # Create journal item (NO template_data - data is embedded in content)
         journal_item = {
-            'PK': f'SPACE#{space_id}',
-            'SK': f'JOURNAL#{journal_id}',
-            'GSI1PK': f'USER#{user_id}',
-            'GSI1SK': f'JOURNAL#{journal_id}#{now}',
-            'journal_id': journal_id,
-            'space_id': space_id,
-            'user_id': user_id,
-            'title': data.title.strip(),
-            'content': data.content,
-            'template_id': data.template_id,
+            "PK": f"SPACE#{space_id}",
+            "SK": f"JOURNAL#{journal_id}",
+            "GSI1PK": f"USER#{user_id}",
+            "GSI1SK": f"JOURNAL#{journal_id}#{now}",
+            "journal_id": journal_id,
+            "space_id": space_id,
+            "user_id": user_id,
+            "title": data.title.strip(),
+            "content": data.content,
+            "template_id": data.template_id,
             # REMOVED: template_data - data is embedded in content
-            'tags': data.tags,
-            'emotions': data.emotions or [],
-            'created_at': now,
-            'updated_at': now,
-            'is_encrypted': False,
-            'word_count': word_count,
-            'is_pinned': data.is_pinned
+            "tags": data.tags,
+            "emotions": data.emotions or [],
+            "created_at": now,
+            "updated_at": now,
+            "is_encrypted": False,
+            "word_count": word_count,
+            "is_pinned": data.is_pinned,
         }
 
         # Add content_tiptap if provided (TipTap JSON format for native highlighting)
         if data.content_tiptap is not None:
-            journal_item['content_tiptap'] = data.content_tiptap
+            journal_item["content_tiptap"] = data.content_tiptap
 
         # Write to DynamoDB
         self.table.put_item(Item=journal_item)
@@ -185,6 +189,7 @@ class JournalService:
         # Record activity
         try:
             from app.services.activity import get_activity_service
+
             activity_service = get_activity_service()
             activity_service.record_activity(
                 space_id=space_id,
@@ -192,35 +197,37 @@ class JournalService:
                 user_id=user_id,
                 user_name=activity_service._get_user_display_name(user_id),
                 metadata={
-                    'journal_id': journal_id,
-                    'journal_title': data.title.strip(),
-                    'content_preview': data.content[:100] if len(data.content) > 100 else data.content,
-                    'template_id': data.template_id
-                }
+                    "journal_id": journal_id,
+                    "journal_title": data.title.strip(),
+                    "content_preview": data.content[:100]
+                    if len(data.content) > 100
+                    else data.content,
+                    "template_id": data.template_id,
+                },
             )
         except Exception as e:
             # Don't fail the request if activity tracking fails
             logger.warning(f"Failed to record journal created activity: {e}")
 
         result = {
-            'journal_id': journal_id,
-            'space_id': space_id,
-            'user_id': user_id,
-            'title': data.title.strip(),
-            'content': data.content,
-            'template_id': data.template_id,
+            "journal_id": journal_id,
+            "space_id": space_id,
+            "user_id": user_id,
+            "title": data.title.strip(),
+            "content": data.content,
+            "template_id": data.template_id,
             # REMOVED: template_data - data is embedded in content
-            'tags': data.tags,
-            'emotions': data.emotions or [],
-            'created_at': now,
-            'updated_at': now,
-            'word_count': word_count,
-            'is_pinned': data.is_pinned
+            "tags": data.tags,
+            "emotions": data.emotions or [],
+            "created_at": now,
+            "updated_at": now,
+            "word_count": word_count,
+            "is_pinned": data.is_pinned,
         }
 
         # Include content_tiptap if provided
         if data.content_tiptap is not None:
-            result['content_tiptap'] = data.content_tiptap
+            result["content_tiptap"] = data.content_tiptap
 
         return result
 
@@ -240,7 +247,9 @@ class JournalService:
             JournalNotFoundError: If journal doesn't exist
             UnauthorizedError: If user doesn't have access
         """
-        logger.info(f"[GET_JOURNAL] Fetching journal={journal_id} in space={space_id} for user={user_id}")
+        logger.info(
+            f"[GET_JOURNAL] Fetching journal={journal_id} in space={space_id} for user={user_id}"
+        )
 
         # Verify user is space member first
         if not self._is_space_member(space_id, user_id):
@@ -249,41 +258,40 @@ class JournalService:
 
         # Direct key lookup - most efficient!
         response = self.table.get_item(
-            Key={
-                'PK': f'SPACE#{space_id}',
-                'SK': f'JOURNAL#{journal_id}'
-            }
+            Key={"PK": f"SPACE#{space_id}", "SK": f"JOURNAL#{journal_id}"}
         )
 
-        if 'Item' not in response:
+        if "Item" not in response:
             logger.error(f"[GET_JOURNAL] Journal {journal_id} not found in space {space_id}")
             raise JournalNotFoundError(f"Journal {journal_id} not found")
 
-        journal = response['Item']
+        journal = response["Item"]
         logger.info(f"[GET_JOURNAL] Journal found via direct key lookup")
 
         # Get author info
-        author_info = self._get_author_info(journal['user_id'])
+        author_info = self._get_author_info(journal["user_id"])
 
         return {
-            'journal_id': journal['journal_id'],
-            'space_id': journal['space_id'],
-            'user_id': journal['user_id'],
-            'title': journal['title'],
-            'content': journal['content'],
-            'content_tiptap': journal.get('content_tiptap'),
-            'template_id': journal.get('template_id'),
+            "journal_id": journal["journal_id"],
+            "space_id": journal["space_id"],
+            "user_id": journal["user_id"],
+            "title": journal["title"],
+            "content": journal["content"],
+            "content_tiptap": journal.get("content_tiptap"),
+            "template_id": journal.get("template_id"),
             # REMOVED: template_data - data is embedded in content
-            'tags': journal.get('tags', []),
-            'emotions': journal.get('emotions', []),
-            'created_at': journal['created_at'],
-            'updated_at': journal['updated_at'],
-            'word_count': journal.get('word_count', 0),
-            'is_pinned': journal.get('is_pinned', False),
-            'author': author_info
+            "tags": journal.get("tags", []),
+            "emotions": journal.get("emotions", []),
+            "created_at": journal["created_at"],
+            "updated_at": journal["updated_at"],
+            "word_count": journal.get("word_count", 0),
+            "is_pinned": journal.get("is_pinned", False),
+            "author": author_info,
         }
 
-    def update_journal_entry(self, space_id: str, journal_id: str, user_id: str, data: JournalUpdate) -> Dict[str, Any]:
+    def update_journal_entry(
+        self, space_id: str, journal_id: str, user_id: str, data: JournalUpdate
+    ) -> Dict[str, Any]:
         """
         Update a journal entry.
 
@@ -300,77 +308,77 @@ class JournalService:
             JournalNotFoundError: If journal doesn't exist
             UnauthorizedError: If user is not the author
         """
-        logger.info(f"[UPDATE_JOURNAL] Updating journal={journal_id} in space={space_id} by user={user_id}")
+        logger.info(
+            f"[UPDATE_JOURNAL] Updating journal={journal_id} in space={space_id} by user={user_id}"
+        )
 
         # Direct key lookup
         response = self.table.get_item(
-            Key={
-                'PK': f'SPACE#{space_id}',
-                'SK': f'JOURNAL#{journal_id}'
-            }
+            Key={"PK": f"SPACE#{space_id}", "SK": f"JOURNAL#{journal_id}"}
         )
 
-        if 'Item' not in response:
+        if "Item" not in response:
             raise JournalNotFoundError(f"Journal {journal_id} not found")
 
-        journal = response['Item']
+        journal = response["Item"]
 
         # Verify user is the author
-        if journal['user_id'] != user_id:
+        if journal["user_id"] != user_id:
             raise UnauthorizedError("Only the author can update this journal")
 
         # Build update expression
         update_expr = "SET updated_at = :updated_at"
-        expr_values = {':updated_at': datetime.now(timezone.utc).isoformat()}
+        expr_values = {":updated_at": datetime.now(timezone.utc).isoformat()}
         expr_names = {}
 
         if data.title is not None:
             update_expr += ", title = :title"
-            expr_values[':title'] = data.title.strip()
+            expr_values[":title"] = data.title.strip()
 
         if data.content is not None:
             update_expr += ", content = :content, word_count = :word_count"
-            expr_values[':content'] = data.content
-            expr_values[':word_count'] = self._calculate_word_count(data.content)
+            expr_values[":content"] = data.content
+            expr_values[":word_count"] = self._calculate_word_count(data.content)
 
         if data.tags is not None:
             update_expr += ", tags = :tags"
-            expr_values[':tags'] = data.tags
+            expr_values[":tags"] = data.tags
 
         if data.emotions is not None:
             update_expr += ", emotions = :emotions"
-            expr_values[':emotions'] = data.emotions
+            expr_values[":emotions"] = data.emotions
 
         if data.is_pinned is not None:
             update_expr += ", is_pinned = :is_pinned"
-            expr_values[':is_pinned'] = data.is_pinned
+            expr_values[":is_pinned"] = data.is_pinned
 
         if data.template_id is not None:
             update_expr += ", template_id = :template_id"
-            expr_values[':template_id'] = data.template_id
+            expr_values[":template_id"] = data.template_id
 
         if data.content_tiptap is not None:
             update_expr += ", content_tiptap = :content_tiptap"
-            expr_values[':content_tiptap'] = data.content_tiptap
+            expr_values[":content_tiptap"] = data.content_tiptap
 
         # REMOVED: template_data update - data is embedded in content
 
         # Update the journal
         update_params = {
-            'Key': {'PK': journal['PK'], 'SK': journal['SK']},
-            'UpdateExpression': update_expr,
-            'ExpressionAttributeValues': expr_values,
-            'ReturnValues': 'ALL_NEW'
+            "Key": {"PK": journal["PK"], "SK": journal["SK"]},
+            "UpdateExpression": update_expr,
+            "ExpressionAttributeValues": expr_values,
+            "ReturnValues": "ALL_NEW",
         }
         if expr_names:
-            update_params['ExpressionAttributeNames'] = expr_names
+            update_params["ExpressionAttributeNames"] = expr_names
 
         response = self.table.update_item(**update_params)
-        updated_journal = response['Attributes']
+        updated_journal = response["Attributes"]
 
         # Record activity
         try:
             from app.services.activity import get_activity_service
+
             activity_service = get_activity_service()
             activity_service.record_activity(
                 space_id=space_id,
@@ -378,33 +386,35 @@ class JournalService:
                 user_id=user_id,
                 user_name=activity_service._get_user_display_name(user_id),
                 metadata={
-                    'journal_id': journal_id,
-                    'journal_title': updated_journal['title'],
-                    'content_preview': updated_journal['content'][:100] if len(updated_journal['content']) > 100 else updated_journal['content']
-                }
+                    "journal_id": journal_id,
+                    "journal_title": updated_journal["title"],
+                    "content_preview": updated_journal["content"][:100]
+                    if len(updated_journal["content"]) > 100
+                    else updated_journal["content"],
+                },
             )
         except Exception as e:
             # Don't fail the request if activity tracking fails
             logger.warning(f"Failed to record journal updated activity: {e}")
 
         # Get author info
-        author_info = self._get_author_info(updated_journal['user_id'])
+        author_info = self._get_author_info(updated_journal["user_id"])
 
         return {
-            'journal_id': updated_journal['journal_id'],
-            'space_id': updated_journal['space_id'],
-            'user_id': updated_journal['user_id'],
-            'title': updated_journal['title'],
-            'content': updated_journal['content'],
-            'template_id': updated_journal.get('template_id'),
+            "journal_id": updated_journal["journal_id"],
+            "space_id": updated_journal["space_id"],
+            "user_id": updated_journal["user_id"],
+            "title": updated_journal["title"],
+            "content": updated_journal["content"],
+            "template_id": updated_journal.get("template_id"),
             # REMOVED: template_data - data is embedded in content
-            'tags': updated_journal.get('tags', []),
-            'emotions': updated_journal.get('emotions', []),
-            'created_at': updated_journal['created_at'],
-            'updated_at': updated_journal['updated_at'],
-            'word_count': updated_journal.get('word_count', 0),
-            'is_pinned': updated_journal.get('is_pinned', False),
-            'author': author_info
+            "tags": updated_journal.get("tags", []),
+            "emotions": updated_journal.get("emotions", []),
+            "created_at": updated_journal["created_at"],
+            "updated_at": updated_journal["updated_at"],
+            "word_count": updated_journal.get("word_count", 0),
+            "is_pinned": updated_journal.get("is_pinned", False),
+            "author": author_info,
         }
 
     def delete_journal_entry(self, space_id: str, journal_id: str, user_id: str) -> bool:
@@ -423,49 +433,44 @@ class JournalService:
             JournalNotFoundError: If journal doesn't exist
             UnauthorizedError: If user is not the author or space owner
         """
-        logger.info(f"[DELETE_JOURNAL] Deleting journal={journal_id} in space={space_id} by user={user_id}")
+        logger.info(
+            f"[DELETE_JOURNAL] Deleting journal={journal_id} in space={space_id} by user={user_id}"
+        )
 
         # Direct key lookup
         response = self.table.get_item(
-            Key={
-                'PK': f'SPACE#{space_id}',
-                'SK': f'JOURNAL#{journal_id}'
-            }
+            Key={"PK": f"SPACE#{space_id}", "SK": f"JOURNAL#{journal_id}"}
         )
 
-        if 'Item' not in response:
+        if "Item" not in response:
             raise JournalNotFoundError(f"Journal {journal_id} not found")
 
-        journal = response['Item']
+        journal = response["Item"]
 
-        is_author = journal['user_id'] == user_id
-        is_space_owner = self._get_user_role(space_id, user_id) == 'owner'
+        is_author = journal["user_id"] == user_id
+        is_space_owner = self._get_user_role(space_id, user_id) == "owner"
 
         # Verify user is author or space owner
         if not (is_author or is_space_owner):
             raise UnauthorizedError("Only the author or space owner can delete this journal")
 
         # Save journal title before deleting
-        journal_title = journal.get('title', 'Untitled')
+        journal_title = journal.get("title", "Untitled")
 
         # Delete the journal
-        self.table.delete_item(
-            Key={'PK': journal['PK'], 'SK': journal['SK']}
-        )
+        self.table.delete_item(Key={"PK": journal["PK"], "SK": journal["SK"]})
 
         # Record activity
         try:
             from app.services.activity import get_activity_service
+
             activity_service = get_activity_service()
             activity_service.record_activity(
                 space_id=space_id,
                 activity_type=ActivityType.JOURNAL_DELETED,
                 user_id=user_id,
                 user_name=activity_service._get_user_display_name(user_id),
-                metadata={
-                    'journal_id': journal_id,
-                    'journal_title': journal_title
-                }
+                metadata={"journal_id": journal_id, "journal_title": journal_title},
             )
         except Exception as e:
             # Don't fail the request if activity tracking fails
@@ -481,7 +486,7 @@ class JournalService:
         page: int = 1,
         page_size: int = 20,
         tags: Optional[List[str]] = None,
-        author_id: Optional[str] = None
+        author_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         List journals in a space with filtering and pagination.
@@ -514,20 +519,23 @@ class JournalService:
 
         # Query journals for this space
         response = self.table.query(
-            KeyConditionExpression=Key('PK').eq(f'SPACE#{space_id}') & Key('SK').begins_with('JOURNAL#')
+            KeyConditionExpression=Key("PK").eq(f"SPACE#{space_id}")
+            & Key("SK").begins_with("JOURNAL#")
         )
 
-        journals = response.get('Items', [])
+        journals = response.get("Items", [])
 
         # Apply filters
         if tags:
-            journals = [j for j in journals if any(tag in j.get('tags', []) for tag in tags)]
+            journals = [j for j in journals if any(tag in j.get("tags", []) for tag in tags)]
 
         if author_id:
-            journals = [j for j in journals if j.get('user_id') == author_id]
+            journals = [j for j in journals if j.get("user_id") == author_id]
 
         # Sort by created_at descending (newest first), with pinned items first
-        journals.sort(key=lambda x: (not x.get('is_pinned', False), x.get('created_at', '')), reverse=True)
+        journals.sort(
+            key=lambda x: (not x.get("is_pinned", False), x.get("created_at", "")), reverse=True
+        )
 
         # Pagination
         total = len(journals)
@@ -538,34 +546,38 @@ class JournalService:
         # Enrich with author info
         enriched_journals = []
         for journal in paginated_journals:
-            author_info = self._get_author_info(journal['user_id'])
-            enriched_journals.append({
-                'journal_id': journal['journal_id'],
-                'space_id': journal['space_id'],
-                'user_id': journal['user_id'],
-                'title': journal['title'],
-                'content': journal['content'],
-                'content_tiptap': journal.get('content_tiptap'),
-                'template_id': journal.get('template_id'),
-                # REMOVED: template_data - data is embedded in content
-                'tags': journal.get('tags', []),
-                'emotions': journal.get('emotions', []),
-                'created_at': journal['created_at'],
-                'updated_at': journal['updated_at'],
-                'word_count': journal.get('word_count', 0),
-                'is_pinned': journal.get('is_pinned', False),
-                'author': author_info
-            })
+            author_info = self._get_author_info(journal["user_id"])
+            enriched_journals.append(
+                {
+                    "journal_id": journal["journal_id"],
+                    "space_id": journal["space_id"],
+                    "user_id": journal["user_id"],
+                    "title": journal["title"],
+                    "content": journal["content"],
+                    "content_tiptap": journal.get("content_tiptap"),
+                    "template_id": journal.get("template_id"),
+                    # REMOVED: template_data - data is embedded in content
+                    "tags": journal.get("tags", []),
+                    "emotions": journal.get("emotions", []),
+                    "created_at": journal["created_at"],
+                    "updated_at": journal["updated_at"],
+                    "word_count": journal.get("word_count", 0),
+                    "is_pinned": journal.get("is_pinned", False),
+                    "author": author_info,
+                }
+            )
 
         return {
-            'journals': enriched_journals,
-            'total': total,
-            'page': page,
-            'page_size': page_size,
-            'has_more': end < total
+            "journals": enriched_journals,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "has_more": end < total,
         }
 
-    def list_user_journals(self, user_id: str, page: int = 1, page_size: int = 20) -> Dict[str, Any]:
+    def list_user_journals(
+        self, user_id: str, page: int = 1, page_size: int = 20
+    ) -> Dict[str, Any]:
         """
         List all journals created by a user across all spaces.
 
@@ -581,21 +593,22 @@ class JournalService:
 
         # Query user's journals via GSI1
         response = self.table.query(
-            IndexName='GSI1',
-            KeyConditionExpression=Key('GSI1PK').eq(f'USER#{user_id}') & Key('GSI1SK').begins_with('JOURNAL#')
+            IndexName="GSI1",
+            KeyConditionExpression=Key("GSI1PK").eq(f"USER#{user_id}")
+            & Key("GSI1SK").begins_with("JOURNAL#"),
         )
 
-        journals = response.get('Items', [])
+        journals = response.get("Items", [])
 
         # Filter out journals from spaces user is no longer a member of
         accessible_journals = []
         for journal in journals:
-            space_id = journal.get('space_id')
+            space_id = journal.get("space_id")
             if self._is_space_member(space_id, user_id):
                 accessible_journals.append(journal)
 
         # Sort by created_at descending (newest first)
-        accessible_journals.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+        accessible_journals.sort(key=lambda x: x.get("created_at", ""), reverse=True)
 
         # Pagination
         total = len(accessible_journals)
@@ -606,52 +619,51 @@ class JournalService:
         # Enrich with author info
         enriched_journals = []
         for journal in paginated_journals:
-            author_info = self._get_author_info(journal['user_id'])
-            enriched_journals.append({
-                'journal_id': journal['journal_id'],
-                'space_id': journal['space_id'],
-                'user_id': journal['user_id'],
-                'title': journal['title'],
-                'content': journal['content'],
-                'content_tiptap': journal.get('content_tiptap'),
-                'template_id': journal.get('template_id'),
-                # REMOVED: template_data - data is embedded in content
-                'tags': journal.get('tags', []),
-                'emotions': journal.get('emotions', []),
-                'created_at': journal['created_at'],
-                'updated_at': journal['updated_at'],
-                'word_count': journal.get('word_count', 0),
-                'is_pinned': journal.get('is_pinned', False),
-                'author': author_info
-            })
+            author_info = self._get_author_info(journal["user_id"])
+            enriched_journals.append(
+                {
+                    "journal_id": journal["journal_id"],
+                    "space_id": journal["space_id"],
+                    "user_id": journal["user_id"],
+                    "title": journal["title"],
+                    "content": journal["content"],
+                    "content_tiptap": journal.get("content_tiptap"),
+                    "template_id": journal.get("template_id"),
+                    # REMOVED: template_data - data is embedded in content
+                    "tags": journal.get("tags", []),
+                    "emotions": journal.get("emotions", []),
+                    "created_at": journal["created_at"],
+                    "updated_at": journal["updated_at"],
+                    "word_count": journal.get("word_count", 0),
+                    "is_pinned": journal.get("is_pinned", False),
+                    "author": author_info,
+                }
+            )
 
         return {
-            'journals': enriched_journals,
-            'total': total,
-            'page': page,
-            'page_size': page_size,
-            'has_more': end < total
+            "journals": enriched_journals,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "has_more": end < total,
         }
 
     def _get_author_info(self, user_id: str) -> Dict[str, Any]:
         """Get author information for a user."""
         try:
             from app.services.user_profile import UserProfileService
+
             user_profile_service = UserProfileService()
             profile = user_profile_service.get_user_profile(user_id)
 
             if profile:
                 return {
-                    'user_id': user_id,
-                    'username': profile.get('username', 'Unknown'),
-                    'display_name': profile.get('display_name', profile.get('username', 'Unknown'))
+                    "user_id": user_id,
+                    "username": profile.get("username", "Unknown"),
+                    "display_name": profile.get("display_name", profile.get("username", "Unknown")),
                 }
         except Exception:
             pass
 
         # Return minimal info if profile not found
-        return {
-            'user_id': user_id,
-            'username': 'Unknown',
-            'display_name': 'Unknown'
-        }
+        return {"user_id": user_id, "username": "Unknown", "display_name": "Unknown"}

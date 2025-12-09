@@ -28,10 +28,7 @@ class JournalCommentService:
     def is_space_member(self, space_id: str, user_id: str) -> bool:
         """Check if user is a member of the space."""
         try:
-            item = self.db.get_item(
-                pk=f'SPACE#{space_id}',
-                sk=f'MEMBER#{user_id}'
-            )
+            item = self.db.get_item(pk=f"SPACE#{space_id}", sk=f"MEMBER#{user_id}")
             return item is not None
         except Exception:
             return False
@@ -39,15 +36,12 @@ class JournalCommentService:
     def _get_journal_title(self, space_id: str, journal_id: str) -> str:
         """Get the title of a journal entry."""
         try:
-            item = self.db.get_item(
-                pk=f"SPACE#{space_id}",
-                sk=f"JOURNAL#{journal_id}"
-            )
+            item = self.db.get_item(pk=f"SPACE#{space_id}", sk=f"JOURNAL#{journal_id}")
             if item:
-                return item.get('title', 'Untitled')
+                return item.get("title", "Untitled")
         except Exception as e:
             logger.warning(f"Failed to get journal title for {journal_id}: {e}")
-        return 'Untitled'
+        return "Untitled"
 
     async def create_comment(
         self,
@@ -100,6 +94,7 @@ class JournalCommentService:
         # Record activity
         try:
             from app.services.activity import get_activity_service
+
             activity_service = get_activity_service()
             journal_title = self._get_journal_title(space_id, journal_id)
             activity_service.record_activity(
@@ -108,11 +103,11 @@ class JournalCommentService:
                 user_id=user_id,
                 user_name=user_name,
                 metadata={
-                    'comment_id': comment_id,
-                    'journal_id': journal_id,
-                    'journal_title': journal_title,
-                    'comment_text': request.text[:100] if len(request.text) > 100 else request.text
-                }
+                    "comment_id": comment_id,
+                    "journal_id": journal_id,
+                    "journal_title": journal_title,
+                    "comment_text": request.text[:100] if len(request.text) > 100 else request.text,
+                },
             )
         except Exception as e:
             logger.warning(f"Failed to record journal comment created activity: {e}")
@@ -124,10 +119,7 @@ class JournalCommentService:
     ) -> List[JournalCommentModel]:
         """Get all comments for a specific journal."""
         # Query using GSI1 (JOURNAL#{journal_id})
-        items = self.db.query(
-            pk=f"JOURNAL#{journal_id}",
-            index_name="GSI1"
-        )
+        items = self.db.query(pk=f"JOURNAL#{journal_id}", index_name="GSI1")
 
         comments = []
         for item in items:
@@ -140,10 +132,7 @@ class JournalCommentService:
 
     async def get_comment(self, space_id: str, comment_id: str) -> Optional[JournalCommentModel]:
         """Get a specific comment by ID."""
-        item = self.db.get_item(
-            pk=f"SPACE#{space_id}",
-            sk=f"JOURNAL_COMMENT#{comment_id}"
-        )
+        item = self.db.get_item(pk=f"SPACE#{space_id}", sk=f"JOURNAL_COMMENT#{comment_id}")
 
         if not item:
             return None
@@ -173,7 +162,7 @@ class JournalCommentService:
                 "mentions": request.mentions or [],
                 "updatedAt": now,
                 "isEdited": True,
-            }
+            },
         )
 
         comment.text = request.text
@@ -190,10 +179,7 @@ class JournalCommentService:
             return False
 
         # Delete the comment
-        self.db.delete_item(
-            pk=f"SPACE#{space_id}",
-            sk=f"JOURNAL_COMMENT#{comment_id}"
-        )
+        self.db.delete_item(pk=f"SPACE#{space_id}", sk=f"JOURNAL_COMMENT#{comment_id}")
 
         return True
 

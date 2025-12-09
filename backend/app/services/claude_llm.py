@@ -36,9 +36,7 @@ class ClaudeLLMService:
 
         if not secret_arn:
             logger.error("CLAUDE_API_KEY_SECRET_ARN environment variable not set")
-            raise ExternalServiceError(
-                "CLAUDE_API_KEY_SECRET_ARN environment variable not set"
-            )
+            raise ExternalServiceError("CLAUDE_API_KEY_SECRET_ARN environment variable not set")
 
         try:
             # Create a Secrets Manager client
@@ -80,11 +78,9 @@ class ClaudeLLMService:
 
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error: {str(e)}")
-            secret_str = get_secret_value_response.get('SecretString', 'N/A')
+            secret_str = get_secret_value_response.get("SecretString", "N/A")
             logger.error(f"Secret string was: {secret_str}")
-            raise ExternalServiceError(
-                f"Failed to parse Claude API key secret as JSON: {str(e)}"
-            )
+            raise ExternalServiceError(f"Failed to parse Claude API key secret as JSON: {str(e)}")
         except Exception as e:
             logger.error("=== Claude API Key Retrieval FAILED ===")
             logger.error(f"Error type: {type(e).__name__}")
@@ -126,7 +122,7 @@ class ClaudeLLMService:
         system_prompt: Optional[str] = None,
         max_tokens: int = 1024,
         temperature: float = 1.0,
-        model: str = "claude-3-5-sonnet-20241022"
+        model: str = "claude-3-5-sonnet-20241022",
     ) -> Dict[str, Any]:
         """
         Generate a response from Claude LLM
@@ -158,12 +154,7 @@ class ClaudeLLMService:
                 "model": model,
                 "max_tokens": max_tokens,
                 "temperature": temperature,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
+                "messages": [{"role": "user", "content": prompt}],
             }
 
             # Add system prompt if provided
@@ -178,7 +169,7 @@ class ClaudeLLMService:
             if message.content:
                 # Content is a list of content blocks
                 for block in message.content:
-                    if hasattr(block, 'text'):
+                    if hasattr(block, "text"):
                         response_text += block.text
 
             # Return structured response
@@ -188,7 +179,7 @@ class ClaudeLLMService:
                 "usage": {
                     "input_tokens": message.usage.input_tokens if message.usage else 0,
                     "output_tokens": message.usage.output_tokens if message.usage else 0,
-                }
+                },
             }
 
         except Exception as e:
@@ -198,7 +189,7 @@ class ClaudeLLMService:
         self,
         journal_content: str,
         journal_title: Optional[str] = None,
-        emotions: Optional[list] = None
+        emotions: Optional[list] = None,
     ) -> Dict[str, Any]:
         """
         Generate insights and suggestions for a journal entry
@@ -242,10 +233,7 @@ Please provide:
         )
 
         return self.generate_response(
-            prompt=prompt,
-            system_prompt=system_prompt,
-            max_tokens=800,
-            temperature=0.7
+            prompt=prompt, system_prompt=system_prompt, max_tokens=800, temperature=0.7
         )
 
 

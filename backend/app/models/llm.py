@@ -13,27 +13,15 @@ class LLMPromptRequest(BaseModel):
         None,
         alias="systemPrompt",
         max_length=2000,
-        description="Optional system prompt to guide the model"
+        description="Optional system prompt to guide the model",
     )
     max_tokens: int = Field(
-        default=1024,
-        alias="maxTokens",
-        ge=1,
-        le=4096,
-        description="Maximum tokens in response"
+        default=1024, alias="maxTokens", ge=1, le=4096, description="Maximum tokens in response"
     )
-    temperature: float = Field(
-        default=1.0,
-        ge=0.0,
-        le=2.0,
-        description="Sampling temperature"
-    )
-    model: str = Field(
-        default="claude-3-5-sonnet-20241022",
-        description="Claude model to use"
-    )
+    temperature: float = Field(default=1.0, ge=0.0, le=2.0, description="Sampling temperature")
+    model: str = Field(default="claude-3-5-sonnet-20241022", description="Claude model to use")
 
-    @field_validator('model')
+    @field_validator("model")
     @classmethod
     def validate_model(cls, v: str) -> str:
         """Validate that the model is a supported Claude model"""
@@ -56,7 +44,7 @@ class LLMPromptRequest(BaseModel):
                 "systemPrompt": "You are a helpful journaling assistant.",
                 "maxTokens": 800,
                 "temperature": 0.7,
-                "model": "claude-3-5-sonnet-20241022"
+                "model": "claude-3-5-sonnet-20241022",
             }
         }
 
@@ -86,10 +74,7 @@ class LLMPromptResponse(BaseModel):
             "example": {
                 "response": "Here are some good habits for effective journaling...",
                 "model": "claude-3-5-sonnet-20241022",
-                "usage": {
-                    "inputTokens": 25,
-                    "outputTokens": 150
-                }
+                "usage": {"inputTokens": 25, "outputTokens": 150},
             }
         }
 
@@ -102,18 +87,16 @@ class JournalInsightsRequest(BaseModel):
         alias="journalContent",
         min_length=1,
         max_length=20000,
-        description="The journal entry content"
+        description="The journal entry content",
     )
     journal_title: Optional[str] = Field(
         None,
         alias="journalTitle",
         max_length=200,
-        description="Optional title of the journal entry"
+        description="Optional title of the journal entry",
     )
     emotions: Optional[list[str]] = Field(
-        None,
-        max_length=20,
-        description="Optional list of emotions tagged in the entry"
+        None, max_length=20, description="Optional list of emotions tagged in the entry"
     )
 
     class Config:
@@ -123,7 +106,7 @@ class JournalInsightsRequest(BaseModel):
             "example": {
                 "journalContent": "Today was a challenging day at work...",
                 "journalTitle": "Reflections on a Busy Week",
-                "emotions": ["stressed", "hopeful", "determined"]
+                "emotions": ["stressed", "hopeful", "determined"],
             }
         }
 

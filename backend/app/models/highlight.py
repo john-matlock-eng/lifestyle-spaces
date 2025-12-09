@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 
 class TextRange(BaseModel):
     """Text selection range for highlights."""
+
     start_offset: int = Field(alias="startOffset")
     end_offset: int = Field(alias="endOffset")
     start_container_id: Optional[str] = Field(None, alias="startContainerId")
@@ -41,6 +42,7 @@ class HighlightModel(BaseModel):
     - For single-section journals, section_id can be None or 'content'
     - TipTap positions are relative to the section's document
     """
+
     id: str
     journal_entry_id: str = Field(alias="journalEntryId")
     space_id: str = Field(alias="spaceId")
@@ -61,6 +63,7 @@ class HighlightModel(BaseModel):
 
 class CommentModel(BaseModel):
     """Comment on a highlight model."""
+
     id: str
     highlight_id: str = Field(alias="highlightId")
     space_id: str = Field(alias="spaceId")
@@ -85,6 +88,7 @@ class CreateHighlightRequest(BaseModel):
     Multi-Section Support:
     - section_id: Optional section identifier for multi-section journals
     """
+
     section_id: Optional[str] = Field(None, alias="sectionId")  # NEW: section context
     highlighted_text: str = Field(alias="highlightedText")
     text_range: TextRange = Field(alias="textRange")
@@ -97,6 +101,7 @@ class CreateHighlightRequest(BaseModel):
 
 class UpdateHighlightRequest(BaseModel):
     """Request to update a highlight's text selection."""
+
     highlighted_text: str = Field(alias="highlightedText")
     text_range: TextRange = Field(alias="textRange")
 
@@ -107,6 +112,7 @@ class UpdateHighlightRequest(BaseModel):
 
 class CreateCommentRequest(BaseModel):
     """Request to create a new comment."""
+
     text: str
     parent_comment_id: Optional[str] = Field(None, alias="parentCommentId")
     mentions: Optional[List[str]] = Field(default_factory=list)
@@ -208,6 +214,7 @@ class TipTapHighlight(BaseModel):
     Multi-Section Support:
     - section_id: Identifies which section this highlight belongs to
     """
+
     id: str
     color: str = "yellow"
     author_id: str = Field(alias="authorId")
@@ -222,8 +229,7 @@ class TipTapHighlight(BaseModel):
 
 
 def extract_highlights_from_tiptap(
-    content: Dict[str, Any],
-    section_id: Optional[str] = None
+    content: Dict[str, Any], section_id: Optional[str] = None
 ) -> List[TipTapHighlight]:
     """
     Extract all highlights from TipTap document JSON.
@@ -241,28 +247,31 @@ def extract_highlights_from_tiptap(
     def traverse(node: Dict[str, Any]):
         """Recursively traverse TipTap document nodes."""
         # Check if node has marks (text nodes have marks)
-        if 'marks' in node:
-            for mark in node['marks']:
-                if mark.get('type') == 'highlight':
-                    attrs = mark.get('attrs', {})
-                    highlight_id = attrs.get('id')
+        if "marks" in node:
+            for mark in node["marks"]:
+                if mark.get("type") == "highlight":
+                    attrs = mark.get("attrs", {})
+                    highlight_id = attrs.get("id")
 
                     # Only add each unique highlight once
                     if highlight_id and highlight_id not in seen_ids:
                         seen_ids.add(highlight_id)
-                        highlights.append(TipTapHighlight(
-                            id=highlight_id,
-                            color=attrs.get('color', 'yellow'),
-                            authorId=attrs.get('authorId', ''),
-                            authorName=attrs.get('authorName', ''),
-                            createdAt=attrs.get('createdAt', ''),
-                            commentCount=attrs.get('commentCount', 0),
-                            sectionId=attrs.get('sectionId') or section_id  # Use mark's sectionId or provided
-                        ))
+                        highlights.append(
+                            TipTapHighlight(
+                                id=highlight_id,
+                                color=attrs.get("color", "yellow"),
+                                authorId=attrs.get("authorId", ""),
+                                authorName=attrs.get("authorName", ""),
+                                createdAt=attrs.get("createdAt", ""),
+                                commentCount=attrs.get("commentCount", 0),
+                                sectionId=attrs.get("sectionId")
+                                or section_id,  # Use mark's sectionId or provided
+                            )
+                        )
 
         # Recurse into child nodes
-        if 'content' in node:
-            for child in node['content']:
+        if "content" in node:
+            for child in node["content"]:
                 traverse(child)
 
     # Start traversal from root
@@ -287,13 +296,13 @@ def extract_highlights_from_multi_section_tiptap(
     highlights: List[TipTapHighlight] = []
 
     # Check if single document format
-    if content_tiptap.get('type') == 'doc':
+    if content_tiptap.get("type") == "doc":
         # Single section
-        return extract_highlights_from_tiptap(content_tiptap, section_id='content')
+        return extract_highlights_from_tiptap(content_tiptap, section_id="content")
 
     # Multi-section format
     for section_id, section_doc in content_tiptap.items():
-        if isinstance(section_doc, dict) and section_doc.get('type') == 'doc':
+        if isinstance(section_doc, dict) and section_doc.get("type") == "doc":
             section_highlights = extract_highlights_from_tiptap(section_doc, section_id=section_id)
             highlights.extend(section_highlights)
 
@@ -301,9 +310,7 @@ def extract_highlights_from_multi_section_tiptap(
 
 
 def update_highlight_comment_count_in_tiptap(
-    content: Dict[str, Any],
-    highlight_id: str,
-    comment_count: int
+    content: Dict[str, Any], highlight_id: str, comment_count: int
 ) -> Dict[str, Any]:
     """
     Update comment count for a specific highlight in TipTap document.
@@ -316,37 +323,36 @@ def update_highlight_comment_count_in_tiptap(
     Returns:
         Updated TipTap document JSON
     """
+
     def traverse(node: Dict[str, Any]) -> Dict[str, Any]:
         """Recursively traverse and update highlight marks."""
         # Process marks if present
-        if 'marks' in node:
+        if "marks" in node:
             updated_marks = []
-            for mark in node['marks']:
-                if mark.get('type') == 'highlight':
-                    attrs = mark.get('attrs', {})
-                    if attrs.get('id') == highlight_id:
+            for mark in node["marks"]:
+                if mark.get("type") == "highlight":
+                    attrs = mark.get("attrs", {})
+                    if attrs.get("id") == highlight_id:
                         # Update comment count
-                        attrs['commentCount'] = comment_count
-                        mark['attrs'] = attrs
+                        attrs["commentCount"] = comment_count
+                        mark["attrs"] = attrs
                 updated_marks.append(mark)
-            node['marks'] = updated_marks
+            node["marks"] = updated_marks
 
         # Recurse into child nodes
-        if 'content' in node:
-            node['content'] = [traverse(child) for child in node['content']]
+        if "content" in node:
+            node["content"] = [traverse(child) for child in node["content"]]
 
         return node
 
     # Create a deep copy to avoid mutating input
     import copy
+
     updated_content = copy.deepcopy(content)
     return traverse(updated_content)
 
 
-def remove_highlight_from_tiptap(
-    content: Dict[str, Any],
-    highlight_id: str
-) -> Dict[str, Any]:
+def remove_highlight_from_tiptap(content: Dict[str, Any], highlight_id: str) -> Dict[str, Any]:
     """
     Remove a specific highlight from TipTap document.
 
@@ -357,23 +363,29 @@ def remove_highlight_from_tiptap(
     Returns:
         Updated TipTap document JSON with highlight removed
     """
+
     def traverse(node: Dict[str, Any]) -> Dict[str, Any]:
         """Recursively traverse and remove highlight marks."""
         # Process marks if present
-        if 'marks' in node:
+        if "marks" in node:
             # Filter out the highlight mark with matching ID
-            node['marks'] = [
-                mark for mark in node['marks']
-                if not (mark.get('type') == 'highlight' and mark.get('attrs', {}).get('id') == highlight_id)
+            node["marks"] = [
+                mark
+                for mark in node["marks"]
+                if not (
+                    mark.get("type") == "highlight"
+                    and mark.get("attrs", {}).get("id") == highlight_id
+                )
             ]
 
         # Recurse into child nodes
-        if 'content' in node:
-            node['content'] = [traverse(child) for child in node['content']]
+        if "content" in node:
+            node["content"] = [traverse(child) for child in node["content"]]
 
         return node
 
     # Create a deep copy to avoid mutating input
     import copy
+
     updated_content = copy.deepcopy(content)
     return traverse(updated_content)

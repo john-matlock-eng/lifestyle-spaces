@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class ReadStatusModel(BaseModel):
     """Tracks when a user last read comments on a journal."""
+
     user_id: str = Field(alias="userId")
     space_id: str = Field(alias="spaceId")
     journal_id: str = Field(alias="journalId")

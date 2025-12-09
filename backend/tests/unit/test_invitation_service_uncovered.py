@@ -27,8 +27,9 @@ from app.services.exceptions import (
 @pytest.fixture
 def invitation_service():
     """Create InvitationService with mocked dependencies."""
-    with patch('app.services.invitation.boto3.resource') as mock_resource, \
-         patch('app.services.space.boto3.resource') as mock_space_resource:
+    with patch("app.services.invitation.boto3.resource") as mock_resource, patch(
+        "app.services.space.boto3.resource"
+    ) as mock_space_resource:
         # Setup mock before creating service
         mock_dynamodb = Mock()
         mock_resource.return_value = mock_dynamodb
@@ -59,7 +60,7 @@ class TestMapItemToInvitation:
             "inviter_user_id": "user-789",
             "status": "pending",
             "created_at": "2024-01-01T12:00:00+00:00",
-            "expires_at": "2024-01-08T12:00:00+00:00"
+            "expires_at": "2024-01-08T12:00:00+00:00",
         }
 
         result = invitation_service._map_item_to_invitation(item)
@@ -82,7 +83,7 @@ class TestMapItemToInvitation:
             "inviter_user_id": "user-123",
             "status": "pending",
             "created_at": created,
-            "expires_at": expires
+            "expires_at": expires,
         }
 
         result = invitation_service._map_item_to_invitation(item)
@@ -98,7 +99,7 @@ class TestMapItemToInvitation:
             "invitee_email": "noexpiry@example.com",
             "inviter_user_id": "user-456",
             "status": "pending",
-            "created_at": "2024-01-01T12:00:00+00:00"
+            "created_at": "2024-01-01T12:00:00+00:00",
         }
 
         result = invitation_service._map_item_to_invitation(item)
@@ -115,7 +116,7 @@ class TestMapItemToInvitation:
             "inviter_user_id": "user-999",
             "status": "pending",
             "created_at": "2024-01-01T12:00:00+00:00",
-            "expires_at": None
+            "expires_at": None,
         }
 
         result = invitation_service._map_item_to_invitation(item)
@@ -137,7 +138,7 @@ class TestGetPendingInvitationsSync:
             "inviter_user_id": "user-list",
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         # Mock query to return a list directly (test format)
@@ -159,7 +160,7 @@ class TestGetPendingInvitationsSync:
             "inviter_user_id": "user-dict",
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         # Mock query to return dict with Items key (production format)
@@ -184,7 +185,7 @@ class TestGetPendingInvitationsAsync:
             "inviter_user_id": "user-async",
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         # Mock query to return list
@@ -209,7 +210,7 @@ class TestGetAllPendingInvitations:
             "inviter_user_id": "user-all",
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         invitation_service.db_client.query.return_value = [item]
@@ -232,7 +233,7 @@ class TestGetPendingInvitationsForAdmin:
             "inviter_user_id": "user-admin",
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         invitation_service.db_client.scan.return_value = [item]
@@ -268,7 +269,7 @@ class TestAcceptByIdSync:
             "inviter_user_id": "user-sync",
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         # Return item wrapped in "Item" key
@@ -303,13 +304,15 @@ class TestAcceptByIdAsync:
             "inviter_user_id": "user-456",
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         invitation_service.db_client.get_item.return_value = item
 
         with pytest.raises(InvitationNotFoundException) as exc_info:
-            await invitation_service._accept_by_id_async("inv-mismatch", "user-123", "wrong@example.com")
+            await invitation_service._accept_by_id_async(
+                "inv-mismatch", "user-123", "wrong@example.com"
+            )
 
         assert "not for this user" in str(exc_info.value)
 
@@ -323,7 +326,7 @@ class TestAcceptByIdAsync:
             "inviter_user_id": "user-456",
             "status": "pending",
             "created_at": (datetime.now(timezone.utc) - timedelta(days=14)).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(),
         }
 
         invitation_service.db_client.get_item.return_value = item
@@ -343,7 +346,7 @@ class TestAcceptByIdAsync:
             "inviter_user_id": "user-prod",
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         invitation_service.db_client.get_item.return_value = item
@@ -364,7 +367,9 @@ class TestAcceptByCode:
         invitation_service.db_client.scan.return_value = {"Items": []}
 
         with pytest.raises(InvalidInvitationError) as exc_info:
-            invitation_service._accept_by_code("invalid-code", "user-123", "username", "email@test.com")
+            invitation_service._accept_by_code(
+                "invalid-code", "user-123", "username", "email@test.com"
+            )
 
         assert "Invalid invitation code" in str(exc_info.value)
 
@@ -378,13 +383,15 @@ class TestAcceptByCode:
             "invitee_email": "test@example.com",
             "status": "pending",
             "created_at": (datetime.now(timezone.utc) - timedelta(days=14)).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(),
         }
 
         invitation_service.db_client.scan.return_value = {"Items": [item]}
 
         with pytest.raises(InvitationExpiredError) as exc_info:
-            invitation_service._accept_by_code("expired-code", "user-123", "username", "email@test.com")
+            invitation_service._accept_by_code(
+                "expired-code", "user-123", "username", "email@test.com"
+            )
 
         assert "expired" in str(exc_info.value).lower()
 
@@ -398,13 +405,15 @@ class TestAcceptByCode:
             "invitee_email": "success@example.com",
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         invitation_service.db_client.scan.return_value = {"Items": [item]}
         invitation_service.db_client.update_item.return_value = item
 
-        result = invitation_service._accept_by_code("valid-code", "user-123", "testuser", "test@example.com")
+        result = invitation_service._accept_by_code(
+            "valid-code", "user-123", "testuser", "test@example.com"
+        )
 
         assert result["invitation_id"] == "inv-success"
         assert result["status"] == InvitationStatus.ACCEPTED.value
@@ -416,10 +425,7 @@ class TestCreateInvitationMultipleSignatures:
 
     def test_create_with_old_signature(self, invitation_service):
         """Test create_invitation with old test signature (lines 314-315)."""
-        invitation_data = InvitationCreate(
-            invitee_email="old@example.com",
-            space_id="space-123"
-        )
+        invitation_data = InvitationCreate(invitee_email="old@example.com", space_id="space-123")
 
         invitation_service.db_client.scan.return_value = {"Items": []}
 
@@ -434,7 +440,7 @@ class TestCreateInvitationMultipleSignatures:
             space_id="space-123",
             space_name="Test Space",
             inviter_id="user-456",
-            inviter_name="Test User"
+            inviter_name="Test User",
         )
 
         assert result["invitee_email"] == "old@example.com"
@@ -442,10 +448,7 @@ class TestCreateInvitationMultipleSignatures:
 
     def test_create_with_new_positional_args(self, invitation_service):
         """Test create_invitation with new positional args signature (lines 319-321)."""
-        invitation_data = InvitationCreate(
-            invitee_email="new@example.com",
-            space_id="space-789"
-        )
+        invitation_data = InvitationCreate(invitee_email="new@example.com", space_id="space-789")
 
         invitation_service.db_client.put_item.return_value = None
 
@@ -457,15 +460,13 @@ class TestCreateInvitationMultipleSignatures:
     def test_create_with_keyword_args(self, invitation_service):
         """Test create_invitation with keyword args (lines 324-326)."""
         invitation_data = InvitationCreate(
-            invitee_email="keyword@example.com",
-            space_id="space-999"
+            invitee_email="keyword@example.com", space_id="space-999"
         )
 
         invitation_service.db_client.put_item.return_value = None
 
         result = invitation_service.create_invitation(
-            invitation_data=invitation_data,
-            inviter_user_id="user-keyword"
+            invitation_data=invitation_data, inviter_user_id="user-keyword"
         )
 
         assert result.invitee_email == "keyword@example.com"
@@ -484,8 +485,7 @@ class TestCreateInvitationOld:
     def test_create_old_duplicate_invitation(self, invitation_service):
         """Test _create_invitation_old raises error for duplicate (lines 334-345)."""
         invitation_data = InvitationCreate(
-            invitee_email="duplicate@example.com",
-            space_id="space-123"
+            invitee_email="duplicate@example.com", space_id="space-123"
         )
 
         # Mock existing invitation
@@ -493,24 +493,21 @@ class TestCreateInvitationOld:
             "invitation_id": "existing-inv",
             "invitee_email": "duplicate@example.com",
             "space_id": "space-123",
-            "status": "pending"
+            "status": "pending",
         }
 
         invitation_service.db_client.scan.return_value = {"Items": [existing_item]}
 
         with pytest.raises(InvitationAlreadyExistsError) as exc_info:
             invitation_service._create_invitation_old(
-                invitation_data,
-                "space-123",
-                "Test Space",
-                "user-456",
-                "Test User"
+                invitation_data, "space-123", "Test Space", "user-456", "Test User"
             )
 
         assert "already exists" in str(exc_info.value).lower()
 
     def test_create_old_with_email_attribute(self, invitation_service):
         """Test _create_invitation_old with email attribute (lines 347-380)."""
+
         # Create invitation with 'email' instead of 'invitee_email'
         class OldInvitation:
             email = "oldemail@example.com"
@@ -522,11 +519,7 @@ class TestCreateInvitationOld:
         invitation_service.db_client.put_item.return_value = None
 
         result = invitation_service._create_invitation_old(
-            OldInvitation(),
-            "space-old",
-            "Old Space",
-            "user-old",
-            "Old User"
+            OldInvitation(), "space-old", "Old Space", "user-old", "Old User"
         )
 
         assert result["invitee_email"] == "oldemail@example.com"
@@ -549,7 +542,7 @@ class TestListUserInvitations:
             "inviter_user_id": "user-fallback",
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         invitation_service.db_client.scan.return_value = {"Items": [item]}
@@ -570,7 +563,7 @@ class TestListUserInvitations:
             "inviter_user_id": "user-list",
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         # Return list instead of dict
@@ -593,7 +586,7 @@ class TestCancelInvitation:
             "inviter_user_id": "user-cancel",
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         invitation_service.db_client.get_item.return_value = {"Item": item}
@@ -615,10 +608,7 @@ class TestCancelInvitation:
 
     def test_cancel_non_pending_invitation(self, invitation_service):
         """Test cancel_invitation raises error for non-pending (lines 477-478)."""
-        item = {
-            "invitation_id": "inv-accepted",
-            "status": "accepted"
-        }
+        item = {"invitation_id": "inv-accepted", "status": "accepted"}
 
         invitation_service.db_client.get_item.return_value = item
 
@@ -629,10 +619,7 @@ class TestCancelInvitation:
 
     def test_cancel_success(self, invitation_service):
         """Test successful cancellation (lines 480-490)."""
-        item = {
-            "invitation_id": "inv-to-cancel",
-            "status": "pending"
-        }
+        item = {"invitation_id": "inv-to-cancel", "status": "pending"}
 
         invitation_service.db_client.get_item.return_value = item
         invitation_service.db_client.update_item.return_value = item
@@ -648,10 +635,7 @@ class TestGetInvitationByCode:
 
     def test_get_by_code_with_list_result(self, invitation_service):
         """Test _get_invitation_by_code with list result (lines 513-516)."""
-        item = {
-            "invitation_id": "inv-by-code",
-            "invitation_code": "test-code-123"
-        }
+        item = {"invitation_id": "inv-by-code", "invitation_code": "test-code-123"}
 
         # Return list instead of dict
         invitation_service.db_client.scan.return_value = [item]
@@ -674,7 +658,7 @@ class TestCreateTable:
 
     def test_create_table_resource_in_use(self):
         """Test _create_table handles ResourceInUseException (lines 544-546)."""
-        with patch('app.services.invitation.boto3.resource') as mock_resource:
+        with patch("app.services.invitation.boto3.resource") as mock_resource:
             mock_dynamodb = Mock()
             mock_resource.return_value = mock_dynamodb
 
@@ -683,10 +667,9 @@ class TestCreateTable:
             mock_dynamodb.Table.return_value = mock_table
 
             # First call to create_table raises ResourceInUseException
-            error_response = {'Error': {'Code': 'ResourceInUseException'}}
+            error_response = {"Error": {"Code": "ResourceInUseException"}}
             mock_dynamodb.create_table.side_effect = ClientError(
-                error_response=error_response,
-                operation_name='CreateTable'
+                error_response=error_response, operation_name="CreateTable"
             )
 
             service = InvitationService()
@@ -699,7 +682,7 @@ class TestCreateTable:
 
     def test_create_table_other_error(self):
         """Test _create_table re-raises other errors."""
-        with patch('app.services.invitation.boto3.resource') as mock_resource:
+        with patch("app.services.invitation.boto3.resource") as mock_resource:
             mock_dynamodb = Mock()
             mock_resource.return_value = mock_dynamodb
 
@@ -707,10 +690,9 @@ class TestCreateTable:
             mock_dynamodb.Table.return_value = mock_table
 
             # Raise a different error
-            error_response = {'Error': {'Code': 'AccessDenied'}}
+            error_response = {"Error": {"Code": "AccessDenied"}}
             mock_dynamodb.create_table.side_effect = ClientError(
-                error_response=error_response,
-                operation_name='CreateTable'
+                error_response=error_response, operation_name="CreateTable"
             )
 
             service = InvitationService()
@@ -719,4 +701,4 @@ class TestCreateTable:
             with pytest.raises(ClientError) as exc_info:
                 service._create_table()
 
-            assert exc_info.value.response['Error']['Code'] == 'AccessDenied'
+            assert exc_info.value.response["Error"]["Code"] == "AccessDenied"

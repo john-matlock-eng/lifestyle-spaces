@@ -150,32 +150,23 @@ class TestJournalValidators:
     def test_journal_create_long_title(self):
         """Test journal creation with title too long."""
         with pytest.raises(ValidationError) as exc_info:
-            JournalCreateRequest(
-                title="x" * 201,  # Over 200 characters
-                content="Valid content"
-            )
+            JournalCreateRequest(title="x" * 201, content="Valid content")  # Over 200 characters
         assert "title" in str(exc_info.value).lower()
 
     def test_journal_update_empty_title(self):
         """Test journal update with empty title."""
         with pytest.raises(ValidationError) as exc_info:
-            JournalUpdate(
-                title="   "  # Only whitespace
-            )
+            JournalUpdate(title="   ")  # Only whitespace
         assert "title" in str(exc_info.value).lower()
 
     def test_journal_update_long_title(self):
         """Test journal update with title too long."""
         with pytest.raises(ValidationError) as exc_info:
-            JournalUpdate(
-                title="x" * 201  # Over 200 characters
-            )
+            JournalUpdate(title="x" * 201)  # Over 200 characters
         assert "title" in str(exc_info.value).lower()
 
     def test_journal_update_empty_content(self):
         """Test journal update with empty content."""
         with pytest.raises(ValidationError) as exc_info:
-            JournalUpdate(
-                content="   "  # Only whitespace
-            )
+            JournalUpdate(content="   ")  # Only whitespace
         assert "content" in str(exc_info.value).lower()

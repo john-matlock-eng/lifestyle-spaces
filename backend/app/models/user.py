@@ -8,6 +8,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 
 class UserBase(BaseModel):
     """Base user model."""
+
     email: EmailStr
     username: str
     full_name: Optional[str] = None
@@ -15,15 +16,17 @@ class UserBase(BaseModel):
 
 class User(BaseModel):
     """Represents a user for internal service use."""
+
     user_id: str
     email: EmailStr
-    spaces: List[str] = [] # List of space_ids
+    spaces: List[str] = []  # List of space_ids
 
 
 class UserCreate(UserBase):
     """User creation model."""
+
     password: str = Field(..., min_length=8)
-    
+
     @field_validator("password")
     @classmethod
     def validate_password(cls, v: str) -> str:
@@ -34,12 +37,14 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     """User update model."""
+
     email: Optional[EmailStr] = None
     full_name: Optional[str] = None
 
 
 class UserResponse(UserBase):
     """User response model."""
+
     id: str
     is_active: bool = True
     created_at: datetime
@@ -48,12 +53,14 @@ class UserResponse(UserBase):
 
 class LoginRequest(BaseModel):
     """Login request model."""
+
     email: EmailStr
     password: str
 
 
 class TokenResponse(BaseModel):
     """Token response model."""
+
     access_token: str
     id_token: Optional[str] = None  # ID token contains custom attributes
     refresh_token: Optional[str] = None  # Refresh token for obtaining new tokens

@@ -12,7 +12,7 @@ from app.models.user import User
 @pytest.fixture
 def mock_claude_service():
     """Mock Claude LLM service"""
-    with patch('app.api.routes.llm.get_claude_service') as mock:
+    with patch("app.api.routes.llm.get_claude_service") as mock:
         service = Mock()
         mock.return_value = service
         yield service
@@ -21,11 +21,7 @@ def mock_claude_service():
 @pytest.fixture
 def mock_auth_user():
     """Create a mock user for authentication"""
-    user = User(
-        user_id="test-user-123",
-        email="test@example.com",
-        display_name="Test User"
-    )
+    user = User(user_id="test-user-123", email="test@example.com", display_name="Test User")
     return user
 
 
@@ -51,10 +47,7 @@ class TestLLMGenerateEndpoint:
         mock_claude_service.generate_response.return_value = {
             "response": "AI-generated response here",
             "model": "claude-3-5-sonnet-20241022",
-            "usage": {
-                "input_tokens": 30,
-                "output_tokens": 100
-            }
+            "usage": {"input_tokens": 30, "output_tokens": 100},
         }
 
         # Make request
@@ -66,8 +59,8 @@ class TestLLMGenerateEndpoint:
                 "systemPrompt": "You are a helpful assistant.",
                 "maxTokens": 500,
                 "temperature": 0.7,
-                "model": "claude-3-5-sonnet-20241022"
-            }
+                "model": "claude-3-5-sonnet-20241022",
+            },
         )
 
         # Assertions
@@ -91,14 +84,11 @@ class TestLLMGenerateEndpoint:
         mock_claude_service.generate_response.return_value = {
             "response": "Default response",
             "model": "claude-3-5-sonnet-20241022",
-            "usage": {"input_tokens": 10, "output_tokens": 20}
+            "usage": {"input_tokens": 10, "output_tokens": 20},
         }
 
         client = TestClient(app)
-        response = client.post(
-            "/api/llm/generate",
-            json={"prompt": "Simple question"}
-        )
+        response = client.post("/api/llm/generate", json={"prompt": "Simple question"})
 
         assert response.status_code == 200
         data = response.json()
@@ -113,11 +103,7 @@ class TestLLMGenerateEndpoint:
         """Test validation error for invalid model"""
         client = TestClient(app)
         response = client.post(
-            "/api/llm/generate",
-            json={
-                "prompt": "Test",
-                "model": "invalid-model-name"
-            }
+            "/api/llm/generate", json={"prompt": "Test", "model": "invalid-model-name"}
         )
 
         assert response.status_code == 422  # Validation error
@@ -129,10 +115,7 @@ class TestLLMGenerateEndpoint:
         )
 
         client = TestClient(app)
-        response = client.post(
-            "/api/llm/generate",
-            json={"prompt": "Test"}
-        )
+        response = client.post("/api/llm/generate", json={"prompt": "Test"})
 
         assert response.status_code == 503
         data = response.json()
@@ -141,10 +124,7 @@ class TestLLMGenerateEndpoint:
     def test_generate_empty_prompt(self, override_get_current_user):
         """Test validation error for empty prompt"""
         client = TestClient(app)
-        response = client.post(
-            "/api/llm/generate",
-            json={"prompt": ""}
-        )
+        response = client.post("/api/llm/generate", json={"prompt": ""})
 
         assert response.status_code == 422  # Validation error
 
@@ -153,17 +133,11 @@ class TestLLMGenerateEndpoint:
         client = TestClient(app)
 
         # Test too low
-        response = client.post(
-            "/api/llm/generate",
-            json={"prompt": "Test", "maxTokens": 0}
-        )
+        response = client.post("/api/llm/generate", json={"prompt": "Test", "maxTokens": 0})
         assert response.status_code == 422
 
         # Test too high
-        response = client.post(
-            "/api/llm/generate",
-            json={"prompt": "Test", "maxTokens": 5000}
-        )
+        response = client.post("/api/llm/generate", json={"prompt": "Test", "maxTokens": 5000})
         assert response.status_code == 422
 
     def test_generate_temperature_validation(self, override_get_current_user):
@@ -171,17 +145,11 @@ class TestLLMGenerateEndpoint:
         client = TestClient(app)
 
         # Test negative
-        response = client.post(
-            "/api/llm/generate",
-            json={"prompt": "Test", "temperature": -0.1}
-        )
+        response = client.post("/api/llm/generate", json={"prompt": "Test", "temperature": -0.1})
         assert response.status_code == 422
 
         # Test too high
-        response = client.post(
-            "/api/llm/generate",
-            json={"prompt": "Test", "temperature": 2.5}
-        )
+        response = client.post("/api/llm/generate", json={"prompt": "Test", "temperature": 2.5})
         assert response.status_code == 422
 
 
@@ -193,7 +161,7 @@ class TestJournalInsightsEndpoint:
         mock_claude_service.generate_journal_insights.return_value = {
             "response": "Here are some insights about your journal entry...",
             "model": "claude-3-5-sonnet-20241022",
-            "usage": {"input_tokens": 150, "output_tokens": 200}
+            "usage": {"input_tokens": 150, "output_tokens": 200},
         }
 
         client = TestClient(app)
@@ -202,8 +170,8 @@ class TestJournalInsightsEndpoint:
             json={
                 "journalContent": "Today was a productive day. I completed all my tasks.",
                 "journalTitle": "Productive Day",
-                "emotions": ["satisfied", "accomplished"]
-            }
+                "emotions": ["satisfied", "accomplished"],
+            },
         )
 
         assert response.status_code == 200
@@ -223,13 +191,12 @@ class TestJournalInsightsEndpoint:
         mock_claude_service.generate_journal_insights.return_value = {
             "response": "Minimal insights",
             "model": "claude-3-5-sonnet-20241022",
-            "usage": {"input_tokens": 50, "output_tokens": 30}
+            "usage": {"input_tokens": 50, "output_tokens": 30},
         }
 
         client = TestClient(app)
         response = client.post(
-            "/api/llm/journal-insights",
-            json={"journalContent": "Just a simple entry."}
+            "/api/llm/journal-insights", json={"journalContent": "Just a simple entry."}
         )
 
         assert response.status_code == 200
@@ -240,10 +207,7 @@ class TestJournalInsightsEndpoint:
     def test_journal_insights_empty_content(self, override_get_current_user):
         """Test validation error for empty journal content"""
         client = TestClient(app)
-        response = client.post(
-            "/api/llm/journal-insights",
-            json={"journalContent": ""}
-        )
+        response = client.post("/api/llm/journal-insights", json={"journalContent": ""})
 
         assert response.status_code == 422  # Validation error
 
@@ -254,10 +218,7 @@ class TestJournalInsightsEndpoint:
         )
 
         client = TestClient(app)
-        response = client.post(
-            "/api/llm/journal-insights",
-            json={"journalContent": "Test entry"}
-        )
+        response = client.post("/api/llm/journal-insights", json={"journalContent": "Test entry"})
 
         assert response.status_code == 503
         assert "LLM service error" in response.json()["detail"]
@@ -267,15 +228,12 @@ class TestJournalInsightsEndpoint:
         mock_claude_service.generate_journal_insights.return_value = {
             "response": "Insights for long entry",
             "model": "claude-3-5-sonnet-20241022",
-            "usage": {"input_tokens": 500, "output_tokens": 150}
+            "usage": {"input_tokens": 500, "output_tokens": 150},
         }
 
         client = TestClient(app)
         long_content = "This is a very long journal entry. " * 100
-        response = client.post(
-            "/api/llm/journal-insights",
-            json={"journalContent": long_content}
-        )
+        response = client.post("/api/llm/journal-insights", json={"journalContent": long_content})
 
         assert response.status_code == 200
 
@@ -284,8 +242,7 @@ class TestJournalInsightsEndpoint:
         client = TestClient(app)
         too_long_content = "X" * 25000  # Exceeds 20000 char limit
         response = client.post(
-            "/api/llm/journal-insights",
-            json={"journalContent": too_long_content}
+            "/api/llm/journal-insights", json={"journalContent": too_long_content}
         )
 
         assert response.status_code == 422  # Validation error

@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class QAPair(BaseModel):
     """Question and Answer pair."""
+
     question: str = Field(..., description="The question")
     answer: str = Field(..., description="The answer")
     id: str = Field(..., description="Unique ID for this Q&A pair")
@@ -14,25 +15,23 @@ class QAPair(BaseModel):
 
 class TemplateSection(BaseModel):
     """Enhanced template section model."""
+
     id: str = Field(..., description="Unique section identifier")
     title: str = Field(..., description="Section title")
     type: Literal["paragraph", "q_and_a", "list", "checkbox", "scale", "time_log", "table"] = Field(
-        default="paragraph",
-        description="Section type"
+        default="paragraph", description="Section type"
     )
     placeholder: str = Field(..., description="Placeholder text for the section")
     default_value: Optional[Any] = Field(None, alias="defaultValue", description="Default content")
 
     # Type-specific configurations
     config: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Type-specific configuration"
+        default=None, description="Type-specific configuration"
     )
 
     # Ellie (Shih Tzu companion) guidance for this section
     ellie: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Ellie guidance configuration for this section"
+        default=None, description="Ellie guidance configuration for this section"
     )
 
     model_config = ConfigDict(populate_by_name=True)
@@ -40,6 +39,7 @@ class TemplateSection(BaseModel):
 
 class Template(BaseModel):
     """Journal template model."""
+
     id: str = Field(..., description="Unique template identifier")
     name: str = Field(..., description="Template display name")
     description: str = Field(..., description="Template description")
@@ -50,8 +50,7 @@ class Template(BaseModel):
 
     # Ellie (Shih Tzu companion) guidance for template-level events
     ellie: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Ellie guidance configuration for template-level events"
+        default=None, description="Ellie guidance configuration for template-level events"
     )
 
     model_config = ConfigDict(populate_by_name=True)
@@ -59,6 +58,7 @@ class Template(BaseModel):
 
 class TemplateListResponse(BaseModel):
     """Response model for listing templates."""
+
     templates: List[Template]
     total: int
 

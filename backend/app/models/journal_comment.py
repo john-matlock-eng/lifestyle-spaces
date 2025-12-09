@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class JournalCommentModel(BaseModel):
     """Journal-level comment model (not tied to a specific highlight)."""
+
     id: str
     journal_id: str = Field(alias="journalId")
     space_id: str = Field(alias="spaceId")
@@ -33,6 +34,7 @@ class JournalCommentModel(BaseModel):
 
 class CreateJournalCommentRequest(BaseModel):
     """Request to create a new journal comment."""
+
     text: str
     parent_comment_id: Optional[str] = Field(None, alias="parentCommentId")
     mentions: Optional[List[str]] = Field(default_factory=list)
@@ -42,6 +44,7 @@ class CreateJournalCommentRequest(BaseModel):
 
 class UpdateJournalCommentRequest(BaseModel):
     """Request to update a journal comment."""
+
     text: str
     mentions: Optional[List[str]] = Field(default_factory=list)
 
@@ -50,6 +53,7 @@ class UpdateJournalCommentRequest(BaseModel):
 
 class JournalCommentResponse(BaseModel):
     """Response model for a journal comment."""
+
     id: str
     journal_id: str = Field(alias="journalId")
     space_id: str = Field(alias="spaceId")
@@ -67,6 +71,7 @@ class JournalCommentResponse(BaseModel):
 
 class JournalCommentListResponse(BaseModel):
     """Response model for list of journal comments."""
+
     comments: List[JournalCommentModel]
     count: int
 

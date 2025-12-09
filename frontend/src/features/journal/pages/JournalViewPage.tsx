@@ -114,11 +114,18 @@ export const JournalViewPage: React.FC = () => {
     }
   }, [journal])
 
-  // Handle URL params for deep linking to highlights/comments from activity feed
+  // Handle URL params for deep linking to highlights/comments from activity feed or conversations
   useEffect(() => {
     const highlightId = searchParams.get('highlightId')
+    const openJournalComments = searchParams.get('openJournalComments')
+
     if (highlightId) {
       setPendingHighlightId(highlightId)
+      // Clear the URL params after capturing them
+      setSearchParams({}, { replace: true })
+    } else if (openJournalComments === 'true') {
+      // Open the journal-level discussion panel
+      setShowJournalCommentPanel(true)
       // Clear the URL params after capturing them
       setSearchParams({}, { replace: true })
     }

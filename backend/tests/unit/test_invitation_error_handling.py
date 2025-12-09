@@ -26,7 +26,7 @@ class TestInvitationErrorHandling:
             "sub": "user123",
             "email": "test@example.com",
             "username": "testuser",
-            "full_name": "Test User"
+            "full_name": "Test User",
         }
 
         # Override auth dependency
@@ -42,9 +42,9 @@ class TestInvitationErrorHandling:
     # Test RuntimeError handling in create_invitation (lines 108-111)
     def test_create_invitation_database_configuration_error(self):
         """Test logging when database configuration error occurs in create_invitation."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service, \
-             patch('app.api.routes.invitations.InvitationService') as mock_invitation_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service, patch(
+            "app.api.routes.invitations.InvitationService"
+        ) as mock_invitation_service:
             # Mock space service
             mock_space_instance = Mock()
             mock_space_instance.get_space.return_value = {"id": "space123", "name": "Test Space"}
@@ -60,10 +60,7 @@ class TestInvitationErrorHandling:
 
             response = self.client.post(
                 "/api/spaces/space123/invitations",
-                json={
-                    "email": "test@example.com",
-                    "role": "member"
-                }
+                json={"email": "test@example.com", "role": "member"},
             )
 
             # Should return 500 with database configuration error
@@ -74,9 +71,9 @@ class TestInvitationErrorHandling:
 
     def test_create_invitation_generic_exception_logging(self):
         """Test logging when generic exception occurs in create_invitation."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service, \
-             patch('app.api.routes.invitations.InvitationService') as mock_invitation_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service, patch(
+            "app.api.routes.invitations.InvitationService"
+        ) as mock_invitation_service:
             # Mock space service
             mock_space_instance = Mock()
             mock_space_instance.get_space.return_value = {"id": "space123", "name": "Test Space"}
@@ -92,10 +89,7 @@ class TestInvitationErrorHandling:
 
             response = self.client.post(
                 "/api/spaces/space123/invitations",
-                json={
-                    "email": "test@example.com",
-                    "role": "member"
-                }
+                json={"email": "test@example.com", "role": "member"},
             )
 
             # Should return 500 with generic error message
@@ -106,10 +100,9 @@ class TestInvitationErrorHandling:
 
     def test_create_invitation_debug_mode_shows_error(self):
         """Test that debug mode shows actual error in create_invitation."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service, \
-             patch('app.api.routes.invitations.InvitationService') as mock_invitation_service, \
-             patch.dict('os.environ', {'DEBUG': 'true'}):
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service, patch(
+            "app.api.routes.invitations.InvitationService"
+        ) as mock_invitation_service, patch.dict("os.environ", {"DEBUG": "true"}):
             # Mock space service
             mock_space_instance = Mock()
             mock_space_instance.get_space.return_value = {"id": "space123", "name": "Test Space"}
@@ -124,10 +117,7 @@ class TestInvitationErrorHandling:
 
             response = self.client.post(
                 "/api/spaces/space123/invitations",
-                json={
-                    "email": "test@example.com",
-                    "role": "member"
-                }
+                json={"email": "test@example.com", "role": "member"},
             )
 
             # In debug mode, should show actual error
@@ -138,9 +128,9 @@ class TestInvitationErrorHandling:
     # Test exception logging in create_bulk_invitations (lines 220-234)
     def test_create_bulk_invitations_exception_logging(self):
         """Test logging when exception occurs in create_bulk_invitations."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service, \
-             patch('app.api.routes.invitations.InvitationService') as mock_invitation_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service, patch(
+            "app.api.routes.invitations.InvitationService"
+        ) as mock_invitation_service:
             # Mock space service
             mock_space_instance = Mock()
             mock_space_instance.get_space.side_effect = Exception("Database connection error")
@@ -148,10 +138,7 @@ class TestInvitationErrorHandling:
 
             response = self.client.post(
                 "/api/spaces/space123/invitations/bulk",
-                json={
-                    "emails": ["test@example.com"],
-                    "role": "member"
-                }
+                json={"emails": ["test@example.com"], "role": "member"},
             )
 
             # Should return 500 with generic error
@@ -162,9 +149,9 @@ class TestInvitationErrorHandling:
 
     def test_create_bulk_invitations_debug_mode(self):
         """Test that debug mode shows error details in create_bulk_invitations."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service, \
-             patch.dict('os.environ', {'DEBUG': 'true'}):
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service, patch.dict(
+            "os.environ", {"DEBUG": "true"}
+        ):
             # Mock space service to raise exception
             mock_space_instance = Mock()
             error_msg = "Specific database error"
@@ -173,10 +160,7 @@ class TestInvitationErrorHandling:
 
             response = self.client.post(
                 "/api/spaces/space123/invitations/bulk",
-                json={
-                    "emails": ["test@example.com"],
-                    "role": "member"
-                }
+                json={"emails": ["test@example.com"], "role": "member"},
             )
 
             # In debug mode, should show actual error
@@ -188,8 +172,7 @@ class TestInvitationErrorHandling:
         """Test SpaceNotFoundError handling in bulk invitations."""
         from app.services.exceptions import SpaceNotFoundError
 
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service:
             # Mock space service to raise SpaceNotFoundError
             mock_space_instance = Mock()
             mock_space_instance.get_space.side_effect = SpaceNotFoundError("Space does not exist")
@@ -197,10 +180,7 @@ class TestInvitationErrorHandling:
 
             response = self.client.post(
                 "/api/spaces/nonexistent/invitations/bulk",
-                json={
-                    "emails": ["test@example.com"],
-                    "role": "member"
-                }
+                json={"emails": ["test@example.com"], "role": "member"},
             )
 
             # Should return 404
@@ -211,8 +191,7 @@ class TestInvitationErrorHandling:
     # Test exception logging in get_space_invitations (lines 295-301)
     def test_get_space_invitations_exception_logging(self):
         """Test logging when exception occurs in get_space_invitations."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service:
             # Mock space service to raise unexpected exception
             mock_space_instance = Mock()
             mock_space_instance.get_space_member_role.side_effect = Exception("Unexpected error")
@@ -228,9 +207,9 @@ class TestInvitationErrorHandling:
 
     def test_get_space_invitations_database_error(self):
         """Test database error handling in get_space_invitations."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service, \
-             patch('app.api.routes.invitations.InvitationService') as mock_invitation_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service, patch(
+            "app.api.routes.invitations.InvitationService"
+        ) as mock_invitation_service:
             # Mock space service
             mock_space_instance = Mock()
             mock_space_instance.get_space_member_role.return_value = "admin"
@@ -255,18 +234,17 @@ class TestInvitationErrorHandling:
         """Test InvalidInvitationError handling in accept_invitation."""
         from app.services.exceptions import InvalidInvitationError
 
-        with patch('app.api.routes.invitations.InvitationService') as mock_service, \
-             patch('app.api.routes.invitations.SpaceService'):
-
+        with patch("app.api.routes.invitations.InvitationService") as mock_service, patch(
+            "app.api.routes.invitations.SpaceService"
+        ):
             # Mock service to raise InvalidInvitationError directly
             mock_instance = MagicMock()
-            mock_instance.accept_invitation.side_effect = InvalidInvitationError("Invalid invitation")
+            mock_instance.accept_invitation.side_effect = InvalidInvitationError(
+                "Invalid invitation"
+            )
             mock_service.return_value = mock_instance
 
-            response = self.client.post(
-                "/api/invitations/inv123/accept",
-                json={}
-            )
+            response = self.client.post("/api/invitations/inv123/accept", json={})
 
             # Should return 400
             assert response.status_code == 400
@@ -277,18 +255,17 @@ class TestInvitationErrorHandling:
         """Test InvitationExpiredError handling in accept_invitation."""
         from app.services.exceptions import InvitationExpiredError
 
-        with patch('app.api.routes.invitations.InvitationService') as mock_service, \
-             patch('app.api.routes.invitations.SpaceService'):
-
+        with patch("app.api.routes.invitations.InvitationService") as mock_service, patch(
+            "app.api.routes.invitations.SpaceService"
+        ):
             # Mock service to raise InvitationExpiredError directly
             mock_instance = MagicMock()
-            mock_instance.accept_invitation.side_effect = InvitationExpiredError("Invitation has expired")
+            mock_instance.accept_invitation.side_effect = InvitationExpiredError(
+                "Invitation has expired"
+            )
             mock_service.return_value = mock_instance
 
-            response = self.client.post(
-                "/api/invitations/inv123/accept",
-                json={}
-            )
+            response = self.client.post("/api/invitations/inv123/accept", json={})
 
             # Should return 400
             assert response.status_code == 400
@@ -297,17 +274,13 @@ class TestInvitationErrorHandling:
 
     def test_accept_invitation_value_error_generic(self):
         """Test ValueError handling for generic errors in accept_invitation."""
-        with patch('app.api.routes.invitations.InvitationService') as mock_service:
-
+        with patch("app.api.routes.invitations.InvitationService") as mock_service:
             # Mock service to raise generic ValueError
             mock_instance = Mock()
             mock_instance.accept_invitation.side_effect = ValueError("Generic validation error")
             mock_service.return_value = mock_instance
 
-            response = self.client.post(
-                "/api/invitations/inv123/accept",
-                json={}
-            )
+            response = self.client.post("/api/invitations/inv123/accept", json={})
 
             # Should return 400 with error message
             assert response.status_code == 400
@@ -316,17 +289,13 @@ class TestInvitationErrorHandling:
 
     def test_accept_invitation_generic_exception_logging(self):
         """Test logging when generic exception occurs in accept_invitation."""
-        with patch('app.api.routes.invitations.InvitationService') as mock_service:
-
+        with patch("app.api.routes.invitations.InvitationService") as mock_service:
             # Mock service to raise generic exception
             mock_instance = Mock()
             mock_instance.accept_invitation.side_effect = Exception("Database error")
             mock_service.return_value = mock_instance
 
-            response = self.client.post(
-                "/api/invitations/inv123/accept",
-                json={}
-            )
+            response = self.client.post("/api/invitations/inv123/accept", json={})
 
             # Should return 500 with generic message
             assert response.status_code == 500
@@ -336,9 +305,9 @@ class TestInvitationErrorHandling:
     # Test that hasattr checks work for dict vs object format (line 193, 333, 337, 343-344)
     def test_create_invitation_handles_dict_format(self):
         """Test that create_invitation handles dict response format correctly."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service, \
-             patch('app.api.routes.invitations.InvitationService') as mock_invitation_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service, patch(
+            "app.api.routes.invitations.InvitationService"
+        ) as mock_invitation_service:
             # Mock space service
             mock_space_instance = Mock()
             mock_space_instance.get_space.return_value = {"id": "space123", "name": "Test Space"}
@@ -351,16 +320,13 @@ class TestInvitationErrorHandling:
                 "id": "inv123",
                 "space_id": "space123",
                 "invitee_email": "test@example.com",
-                "status": "pending"
+                "status": "pending",
             }
             mock_invitation_service.return_value = mock_invitation_instance
 
             response = self.client.post(
                 "/api/spaces/space123/invitations",
-                json={
-                    "email": "test@example.com",
-                    "role": "member"
-                }
+                json={"email": "test@example.com", "role": "member"},
             )
 
             # Should succeed with dict format
@@ -370,15 +336,15 @@ class TestInvitationErrorHandling:
 
     def test_accept_invitation_handles_dict_with_space_details(self):
         """Test that accept_invitation handles dict response with space details."""
-        with patch('app.api.routes.invitations.InvitationService') as mock_service, \
-             patch('app.api.routes.invitations.SpaceService') as mock_space_service:
-
+        with patch("app.api.routes.invitations.InvitationService") as mock_service, patch(
+            "app.api.routes.invitations.SpaceService"
+        ) as mock_space_service:
             # Mock invitation service to return dict with space_name and role
             mock_instance = Mock()
             mock_instance.accept_invitation.return_value = {
                 "space_id": "space123",
                 "space_name": "My Space",
-                "role": "member"
+                "role": "member",
             }
             mock_service.return_value = mock_instance
 
@@ -386,10 +352,7 @@ class TestInvitationErrorHandling:
             mock_space_instance = Mock()
             mock_space_service.return_value = mock_space_instance
 
-            response = self.client.post(
-                "/api/invitations/inv123/accept",
-                json={}
-            )
+            response = self.client.post("/api/invitations/inv123/accept", json={})
 
             # Should succeed and format response correctly
             assert response.status_code == 200
@@ -401,9 +364,9 @@ class TestInvitationErrorHandling:
         """Test that accept_invitation handles exception getting space details."""
         from app.models.invitation import Invitation, InvitationStatus
 
-        with patch('app.api.routes.invitations.InvitationService') as mock_service, \
-             patch('app.api.routes.invitations.SpaceService') as mock_space_service:
-
+        with patch("app.api.routes.invitations.InvitationService") as mock_service, patch(
+            "app.api.routes.invitations.SpaceService"
+        ) as mock_space_service:
             # Mock invitation service to return object
             mock_invitation = Invitation(
                 invitation_id="inv123",
@@ -412,7 +375,7 @@ class TestInvitationErrorHandling:
                 inviter_user_id="user456",
                 status=InvitationStatus.ACCEPTED,
                 created_at=datetime.now(timezone.utc),
-                expires_at=datetime.now(timezone.utc) + timedelta(days=7)
+                expires_at=datetime.now(timezone.utc) + timedelta(days=7),
             )
             mock_instance = Mock()
             mock_instance.accept_invitation.return_value = mock_invitation
@@ -423,10 +386,7 @@ class TestInvitationErrorHandling:
             mock_space_instance.get_space.side_effect = Exception("Space service error")
             mock_space_service.return_value = mock_space_instance
 
-            response = self.client.post(
-                "/api/invitations/inv123/accept",
-                json={}
-            )
+            response = self.client.post("/api/invitations/inv123/accept", json={})
 
             # Should still succeed with default space name
             assert response.status_code == 200
@@ -435,9 +395,9 @@ class TestInvitationErrorHandling:
 
     def test_accept_invitation_without_space_id_fallback(self):
         """Test accept_invitation fallback when space_id cannot be determined."""
-        with patch('app.api.routes.invitations.InvitationService') as mock_service, \
-             patch('app.api.routes.invitations.SpaceService') as mock_space_service:
-
+        with patch("app.api.routes.invitations.InvitationService") as mock_service, patch(
+            "app.api.routes.invitations.SpaceService"
+        ) as mock_space_service:
             # Mock invitation service to return empty dict
             mock_instance = MagicMock()
             mock_instance.accept_invitation.return_value = {}
@@ -447,10 +407,7 @@ class TestInvitationErrorHandling:
             mock_space_instance = MagicMock()
             mock_space_service.return_value = mock_space_instance
 
-            response = self.client.post(
-                "/api/invitations/inv123/accept",
-                json={}
-            )
+            response = self.client.post("/api/invitations/inv123/accept", json={})
 
             # Should succeed with fallback values
             assert response.status_code == 200
@@ -459,9 +416,9 @@ class TestInvitationErrorHandling:
 
     def test_create_bulk_invitations_individual_exception(self):
         """Test that individual invitation failures are caught in bulk creation."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service, \
-             patch('app.api.routes.invitations.InvitationService') as mock_invitation_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service, patch(
+            "app.api.routes.invitations.InvitationService"
+        ) as mock_invitation_service:
             # Mock space service
             mock_space_instance = Mock()
             mock_space_instance.get_space.return_value = {"id": "space123", "name": "Test Space"}
@@ -475,21 +432,14 @@ class TestInvitationErrorHandling:
                 email = invitation_data.invitee_email
                 if email == "error@example.com":
                     raise Exception("Database write error")
-                return {
-                    "id": f"inv_{email}",
-                    "invitee_email": email,
-                    "status": "pending"
-                }
+                return {"id": f"inv_{email}", "invitee_email": email, "status": "pending"}
 
             mock_invitation_instance.create_invitation.side_effect = mock_create
             mock_invitation_service.return_value = mock_invitation_instance
 
             response = self.client.post(
                 "/api/spaces/space123/invitations/bulk",
-                json={
-                    "emails": ["good@example.com", "error@example.com"],
-                    "role": "member"
-                }
+                json={"emails": ["good@example.com", "error@example.com"], "role": "member"},
             )
 
             # Should succeed with partial results
@@ -504,9 +454,9 @@ class TestInvitationErrorHandling:
         """Test bulk invitations when service returns Invitation objects."""
         from app.models.invitation import Invitation, InvitationStatus
 
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service, \
-             patch('app.api.routes.invitations.InvitationService') as mock_invitation_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service, patch(
+            "app.api.routes.invitations.InvitationService"
+        ) as mock_invitation_service:
             # Mock space service
             mock_space_instance = Mock()
             mock_space_instance.get_space.return_value = {"id": "space123", "name": "Test Space"}
@@ -524,7 +474,7 @@ class TestInvitationErrorHandling:
                     inviter_user_id=inviter_id,
                     status=InvitationStatus.PENDING,
                     created_at=datetime.now(timezone.utc),
-                    expires_at=datetime.now(timezone.utc) + timedelta(days=7)
+                    expires_at=datetime.now(timezone.utc) + timedelta(days=7),
                 )
 
             mock_invitation_instance.create_invitation.side_effect = mock_create
@@ -532,10 +482,7 @@ class TestInvitationErrorHandling:
 
             response = self.client.post(
                 "/api/spaces/space123/invitations/bulk",
-                json={
-                    "emails": ["test@example.com"],
-                    "role": "member"
-                }
+                json={"emails": ["test@example.com"], "role": "member"},
             )
 
             # Should succeed and format Invitation object correctly

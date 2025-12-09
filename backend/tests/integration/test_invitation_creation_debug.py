@@ -22,32 +22,32 @@ def setup_dynamodb():
     """Set up mocked DynamoDB table."""
     with mock_dynamodb():
         # Create DynamoDB client
-        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
 
         # Create table with test name (matches config.py default for tests)
         table = dynamodb.create_table(
-            TableName='lifestyle-spaces-test',
+            TableName="lifestyle-spaces-test",
             KeySchema=[
-                {'AttributeName': 'PK', 'KeyType': 'HASH'},
-                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
+                {"AttributeName": "PK", "KeyType": "HASH"},
+                {"AttributeName": "SK", "KeyType": "RANGE"},
             ],
             AttributeDefinitions=[
-                {'AttributeName': 'PK', 'AttributeType': 'S'},
-                {'AttributeName': 'SK', 'AttributeType': 'S'},
-                {'AttributeName': 'GSI1PK', 'AttributeType': 'S'},
-                {'AttributeName': 'GSI1SK', 'AttributeType': 'S'}
+                {"AttributeName": "PK", "AttributeType": "S"},
+                {"AttributeName": "SK", "AttributeType": "S"},
+                {"AttributeName": "GSI1PK", "AttributeType": "S"},
+                {"AttributeName": "GSI1SK", "AttributeType": "S"},
             ],
             GlobalSecondaryIndexes=[
                 {
-                    'IndexName': 'GSI1',
-                    'KeySchema': [
-                        {'AttributeName': 'GSI1PK', 'KeyType': 'HASH'},
-                        {'AttributeName': 'GSI1SK', 'KeyType': 'RANGE'}
+                    "IndexName": "GSI1",
+                    "KeySchema": [
+                        {"AttributeName": "GSI1PK", "KeyType": "HASH"},
+                        {"AttributeName": "GSI1SK", "KeyType": "RANGE"},
                     ],
-                    'Projection': {'ProjectionType': 'ALL'}
+                    "Projection": {"ProjectionType": "ALL"},
                 }
             ],
-            BillingMode='PAY_PER_REQUEST'
+            BillingMode="PAY_PER_REQUEST",
         )
 
         # Wait for table to be ready
@@ -60,31 +60,31 @@ def setup_dynamodb():
 
         table.put_item(
             Item={
-                'PK': f'SPACE#{space_id}',
-                'SK': 'METADATA',
-                'id': space_id,
-                'space_id': space_id,
-                'name': 'Test Space',
-                'description': 'A test space for invitation testing',
-                'type': 'workspace',
-                'is_public': False,
-                'owner_id': user_id,
-                'created_by': user_id,
-                'created_at': created_at,
-                'updated_at': created_at,
-                'EntityType': 'Space'
+                "PK": f"SPACE#{space_id}",
+                "SK": "METADATA",
+                "id": space_id,
+                "space_id": space_id,
+                "name": "Test Space",
+                "description": "A test space for invitation testing",
+                "type": "workspace",
+                "is_public": False,
+                "owner_id": user_id,
+                "created_by": user_id,
+                "created_at": created_at,
+                "updated_at": created_at,
+                "EntityType": "Space",
             }
         )
 
         # Add user as member/owner
         table.put_item(
             Item={
-                'PK': f'SPACE#{space_id}',
-                'SK': f'MEMBER#{user_id}',
-                'user_id': user_id,
-                'role': 'owner',
-                'added_at': created_at,
-                'EntityType': 'SpaceMember'
+                "PK": f"SPACE#{space_id}",
+                "SK": f"MEMBER#{user_id}",
+                "user_id": user_id,
+                "role": "owner",
+                "added_at": created_at,
+                "EntityType": "SpaceMember",
             }
         )
 
@@ -109,7 +109,7 @@ def test_invitation_creation_with_real_service(setup_dynamodb):
         "sub": "test-user-123",
         "email": "test@example.com",
         "username": "testuser",
-        "full_name": "Test User"
+        "full_name": "Test User",
     }
 
     # Override auth dependency
@@ -123,10 +123,7 @@ def test_invitation_creation_with_real_service(setup_dynamodb):
         space_id = "3bf108cc-54d4-4db5-91fa-e6fe256bbe39"
         response = client.post(
             f"/api/spaces/{space_id}/invitations",
-            json={
-                "email": "matlock.john@gmail.com",
-                "role": "member"
-            }
+            json={"email": "matlock.john@gmail.com", "role": "member"},
         )
 
         # Print response for debugging
@@ -137,7 +134,9 @@ def test_invitation_creation_with_real_service(setup_dynamodb):
         assert response.status_code != 500, f"Got 500 error: {response.json()}"
 
         # Should be 201 Created
-        assert response.status_code == 201, f"Expected 201, got {response.status_code}: {response.json()}"
+        assert (
+            response.status_code == 201
+        ), f"Expected 201, got {response.status_code}: {response.json()}"
 
         # Verify response structure
         data = response.json()
@@ -155,18 +154,18 @@ def test_invitation_service_create_directly():
     """
     with mock_dynamodb():
         # Set up DynamoDB
-        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
         table = dynamodb.create_table(
-            TableName='lifestyle-spaces-test',
+            TableName="lifestyle-spaces-test",
             KeySchema=[
-                {'AttributeName': 'PK', 'KeyType': 'HASH'},
-                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
+                {"AttributeName": "PK", "KeyType": "HASH"},
+                {"AttributeName": "SK", "KeyType": "RANGE"},
             ],
             AttributeDefinitions=[
-                {'AttributeName': 'PK', 'AttributeType': 'S'},
-                {'AttributeName': 'SK', 'AttributeType': 'S'}
+                {"AttributeName": "PK", "AttributeType": "S"},
+                {"AttributeName": "SK", "AttributeType": "S"},
             ],
-            BillingMode='PAY_PER_REQUEST'
+            BillingMode="PAY_PER_REQUEST",
         )
         table.wait_until_exists()
 
@@ -180,8 +179,7 @@ def test_invitation_service_create_directly():
 
         # Create invitation data
         invitation_data = InvitationCreate(
-            space_id="3bf108cc-54d4-4db5-91fa-e6fe256bbe39",
-            invitee_email="matlock.john@gmail.com"
+            space_id="3bf108cc-54d4-4db5-91fa-e6fe256bbe39", invitee_email="matlock.john@gmail.com"
         )
 
         # Call the method with the same signature as the route
@@ -193,10 +191,11 @@ def test_invitation_service_create_directly():
 
             # Should return an Invitation object
             assert result is not None
-            assert hasattr(result, 'invitation_id') or isinstance(result, dict)
+            assert hasattr(result, "invitation_id") or isinstance(result, dict)
 
         except Exception as e:
             print(f"\nException caught: {type(e).__name__}: {e}")
             import traceback
+
             traceback.print_exc()
             raise

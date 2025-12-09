@@ -23,14 +23,23 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting Lifestyle Spaces API v{__version__}")
     logger.info(f"Environment: {settings.environment}")
     logger.info(f"DynamoDB Table: {settings.dynamodb_table}")
-    
+
     # Log Cognito configuration status
     import os
-    cognito_pool = os.getenv('COGNITO_USER_POOL_ID', 'NOT SET')
-    cognito_client = os.getenv('COGNITO_USER_POOL_CLIENT_ID', 'NOT SET')
-    logger.info(f"Cognito User Pool: {cognito_pool[:20]}..." if cognito_pool != 'NOT SET' else "Cognito User Pool: NOT SET")
-    logger.info(f"Cognito Client: {cognito_client[:20]}..." if cognito_client != 'NOT SET' else "Cognito Client: NOT SET")
-    
+
+    cognito_pool = os.getenv("COGNITO_USER_POOL_ID", "NOT SET")
+    cognito_client = os.getenv("COGNITO_USER_POOL_CLIENT_ID", "NOT SET")
+    logger.info(
+        f"Cognito User Pool: {cognito_pool[:20]}..."
+        if cognito_pool != "NOT SET"
+        else "Cognito User Pool: NOT SET"
+    )
+    logger.info(
+        f"Cognito Client: {cognito_client[:20]}..."
+        if cognito_client != "NOT SET"
+        else "Cognito Client: NOT SET"
+    )
+
     yield
     # Shutdown
     logger.info("Shutting down Lifestyle Spaces API")
@@ -43,7 +52,7 @@ app = FastAPI(
     version=__version__,
     docs_url="/docs" if settings.environment != "production" else None,
     redoc_url="/redoc" if settings.environment != "production" else None,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # Configure CORS
@@ -55,25 +64,31 @@ app.add_middleware(
     allow_headers=settings.cors_allow_headers,
 )
 
+
 # Add request logging middleware
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     """Log all incoming requests and responses."""
     # Log request
     logger.info(f"Incoming request: {request.method} {request.url.path}")
-    
+
     try:
         # Process request
         response = await call_next(request)
-        
+
         # Log response status
-        logger.info(f"Response: {request.method} {request.url.path} - Status: {response.status_code}")
-        
+        logger.info(
+            f"Response: {request.method} {request.url.path} - Status: {response.status_code}"
+        )
+
         return response
     except Exception as e:
         # Log any errors that occur during request processing
-        logger.error(f"Error processing {request.method} {request.url.path}: {str(e)}", exc_info=True)
+        logger.error(
+            f"Error processing {request.method} {request.url.path}: {str(e)}", exc_info=True
+        )
         raise
+
 
 # Add exception handler for debugging
 @app.exception_handler(Exception)
@@ -82,7 +97,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     # Log the full error with traceback
     logger.error(f"Unhandled exception on {request.method} {request.url.path}: {str(exc)}")
     logger.error(f"Full traceback:\n{traceback.format_exc()}")
-    
+
     # Return error response
     return JSONResponse(
         status_code=500,
@@ -90,15 +105,30 @@ async def global_exception_handler(request: Request, exc: Exception):
             "error": "Internal server error",
             "message": str(exc) if settings.environment == "dev" else "An error occurred",
             "path": str(request.url.path),
-            "method": request.method
-        }
+            "method": request.method,
+        },
     )
+
 
 # Include routers
 app.include_router(health.router)
 
 # Import API routes
-from app.api.routes import auth, users, spaces, invitations, user_profile, journals, templates, llm, highlights, websocket_highlights, activities, journal_comments, conversations
+from app.api.routes import (
+    auth,
+    users,
+    spaces,
+    invitations,
+    user_profile,
+    journals,
+    templates,
+    llm,
+    highlights,
+    websocket_highlights,
+    activities,
+    journal_comments,
+    conversations,
+)
 
 # Include API routers
 app.include_router(auth.router)

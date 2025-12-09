@@ -20,38 +20,38 @@ class TestActivityFeedAPI:
         space_id = str(uuid.uuid4())
         user_id = "user-123"
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": user_id,
                 "email": "test@example.com",
-                "username": "testuser"
+                "username": "testuser",
             }
 
             # Mock UserProfileService
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": user_id,
                     "username": "testuser",
                     "email": "test@example.com",
-                    "display_name": "Test User"
+                    "display_name": "Test User",
                 }
 
                 # Mock space membership check
-                with patch('app.api.routes.activities.get_dynamodb_table') as mock_table:
+                with patch("app.api.routes.activities.get_dynamodb_table") as mock_table:
                     mock_table_instance = Mock()
                     mock_table.return_value = mock_table_instance
                     mock_table_instance.get_item.return_value = {
-                        'Item': {
-                            'PK': f'SPACE#{space_id}',
-                            'SK': f'MEMBER#{user_id}',
-                            'role': 'member'
+                        "Item": {
+                            "PK": f"SPACE#{space_id}",
+                            "SK": f"MEMBER#{user_id}",
+                            "role": "member",
                         }
                     }
 
                     # Mock activity service
-                    with patch('app.api.routes.activities.get_activity_service') as mock_service:
+                    with patch("app.api.routes.activities.get_activity_service") as mock_service:
                         mock_service_instance = Mock()
                         mock_service.return_value = mock_service_instance
 
@@ -66,8 +66,8 @@ class TestActivityFeedAPI:
                                 "metadata": {
                                     "journal_id": str(uuid.uuid4()),
                                     "journal_title": "My Journal",
-                                    "content_preview": "This is a test journal..."
-                                }
+                                    "content_preview": "This is a test journal...",
+                                },
                             }
                         ]
 
@@ -76,7 +76,7 @@ class TestActivityFeedAPI:
                         # Act
                         response = test_client.get(
                             f"/api/spaces/{space_id}/activities",
-                            headers={"Authorization": "Bearer test-token"}
+                            headers={"Authorization": "Bearer test-token"},
                         )
 
                         # Assert
@@ -93,25 +93,25 @@ class TestActivityFeedAPI:
         space_id = str(uuid.uuid4())
         user_id = "user-123"
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": user_id,
                 "email": "test@example.com",
-                "username": "testuser"
+                "username": "testuser",
             }
 
             # Mock UserProfileService
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": user_id,
                     "username": "testuser",
-                    "email": "test@example.com"
+                    "email": "test@example.com",
                 }
 
                 # Mock space membership check - not a member
-                with patch('app.api.routes.activities.get_dynamodb_table') as mock_table:
+                with patch("app.api.routes.activities.get_dynamodb_table") as mock_table:
                     mock_table_instance = Mock()
                     mock_table.return_value = mock_table_instance
                     mock_table_instance.get_item.return_value = {}  # No Item = not a member
@@ -119,7 +119,7 @@ class TestActivityFeedAPI:
                     # Act
                     response = test_client.get(
                         f"/api/spaces/{space_id}/activities",
-                        headers={"Authorization": "Bearer test-token"}
+                        headers={"Authorization": "Bearer test-token"},
                     )
 
                     # Assert
@@ -132,30 +132,30 @@ class TestActivityFeedAPI:
         user_id = "user-123"
         next_token = "some-pagination-token"
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": user_id,
                 "email": "test@example.com",
-                "username": "testuser"
+                "username": "testuser",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": user_id,
                     "username": "testuser",
-                    "email": "test@example.com"
+                    "email": "test@example.com",
                 }
 
-                with patch('app.api.routes.activities.get_dynamodb_table') as mock_table:
+                with patch("app.api.routes.activities.get_dynamodb_table") as mock_table:
                     mock_table_instance = Mock()
                     mock_table.return_value = mock_table_instance
                     mock_table_instance.get_item.return_value = {
-                        'Item': {'PK': f'SPACE#{space_id}', 'SK': f'MEMBER#{user_id}'}
+                        "Item": {"PK": f"SPACE#{space_id}", "SK": f"MEMBER#{user_id}"}
                     }
 
-                    with patch('app.api.routes.activities.get_activity_service') as mock_service:
+                    with patch("app.api.routes.activities.get_activity_service") as mock_service:
                         mock_service_instance = Mock()
                         mock_service.return_value = mock_service_instance
                         mock_service_instance.get_space_activities.return_value = ([], next_token)
@@ -163,7 +163,7 @@ class TestActivityFeedAPI:
                         # Act
                         response = test_client.get(
                             f"/api/spaces/{space_id}/activities?limit=25",
-                            headers={"Authorization": "Bearer test-token"}
+                            headers={"Authorization": "Bearer test-token"},
                         )
 
                         # Assert
@@ -181,7 +181,7 @@ class TestActivityService:
         from app.models.activity import ActivityType
 
         # Arrange
-        with patch('app.services.activity.get_dynamodb_table') as mock_table:
+        with patch("app.services.activity.get_dynamodb_table") as mock_table:
             mock_table_instance = Mock()
             mock_table.return_value = mock_table_instance
 
@@ -197,17 +197,17 @@ class TestActivityService:
                 user_id=user_id,
                 user_name="Test User",
                 metadata={
-                    'journal_id': journal_id,
-                    'journal_title': "My Journal",
-                    'content_preview': "This is a test..."
-                }
+                    "journal_id": journal_id,
+                    "journal_title": "My Journal",
+                    "content_preview": "This is a test...",
+                },
             )
 
             # Assert
             assert activity.space_id == space_id
             assert activity.user_id == user_id
             assert activity.activity_type == ActivityType.JOURNAL_CREATED
-            assert activity.metadata['journal_id'] == journal_id
+            assert activity.metadata["journal_id"] == journal_id
             mock_table_instance.put_item.assert_called_once()
 
     def test_get_space_activities(self):
@@ -219,23 +219,23 @@ class TestActivityService:
         activity_id = str(uuid.uuid4())
         timestamp = datetime.now(timezone.utc).isoformat()
 
-        with patch('app.services.activity.get_dynamodb_table') as mock_table:
+        with patch("app.services.activity.get_dynamodb_table") as mock_table:
             mock_table_instance = Mock()
             mock_table.return_value = mock_table_instance
 
             mock_table_instance.query.return_value = {
-                'Items': [
+                "Items": [
                     {
-                        'ActivityId': activity_id,
-                        'SpaceId': space_id,
-                        'ActivityType': 'journal_created',
-                        'UserId': 'user-123',
-                        'UserName': 'Test User',
-                        'Timestamp': timestamp,
-                        'Metadata': {
-                            'journal_id': str(uuid.uuid4()),
-                            'journal_title': 'My Journal'
-                        }
+                        "ActivityId": activity_id,
+                        "SpaceId": space_id,
+                        "ActivityType": "journal_created",
+                        "UserId": "user-123",
+                        "UserName": "Test User",
+                        "Timestamp": timestamp,
+                        "Metadata": {
+                            "journal_id": str(uuid.uuid4()),
+                            "journal_title": "My Journal",
+                        },
                     }
                 ]
             }
@@ -248,7 +248,7 @@ class TestActivityService:
             # Assert
             assert len(activities) == 1
             assert activities[0].activity_id == activity_id
-            assert activities[0].activity_type == 'journal_created'
+            assert activities[0].activity_type == "journal_created"
             assert next_token is None
 
     def test_activity_types(self):

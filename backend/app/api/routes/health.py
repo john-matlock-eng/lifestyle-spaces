@@ -16,7 +16,7 @@ router = APIRouter(tags=["health"])
 async def health_check():
     """
     Health check endpoint.
-    
+
     Returns:
         dict: Health status information
     """
@@ -24,7 +24,7 @@ async def health_check():
     response_data = {
         "status": "healthy",
         "version": __version__,
-        "environment": settings.environment
+        "environment": settings.environment,
     }
     logger.info(f"Health check returning: {response_data}")
     return response_data

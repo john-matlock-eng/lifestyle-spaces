@@ -21,24 +21,26 @@ class TestJournalCommentAPI:
         comment_id = str(uuid.uuid4())
         timestamp = datetime.now(timezone.utc).isoformat()
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": user_id,
                 "email": "test@example.com",
-                "username": "testuser"
+                "username": "testuser",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": user_id,
                     "username": "testuser",
                     "email": "test@example.com",
-                    "display_name": "Test User"
+                    "display_name": "Test User",
                 }
 
-                with patch('app.api.routes.journal_comments.get_journal_comment_service') as mock_service_getter:
+                with patch(
+                    "app.api.routes.journal_comments.get_journal_comment_service"
+                ) as mock_service_getter:
                     mock_service = Mock()
                     mock_service_getter.return_value = mock_service
 
@@ -47,6 +49,7 @@ class TestJournalCommentAPI:
 
                     # Mock create_comment as async
                     from app.models.journal_comment import JournalCommentModel
+
                     mock_comment = JournalCommentModel(
                         id=comment_id,
                         journalId=journal_id,
@@ -57,7 +60,7 @@ class TestJournalCommentAPI:
                         createdAt=timestamp,
                         updatedAt=timestamp,
                         isEdited=False,
-                        mentions=[]
+                        mentions=[],
                     )
                     mock_service.create_comment = AsyncMock(return_value=mock_comment)
 
@@ -65,7 +68,7 @@ class TestJournalCommentAPI:
                     response = test_client.post(
                         f"/api/spaces/{space_id}/journals/{journal_id}/comments",
                         json={"text": "This is a test comment"},
-                        headers={"Authorization": "Bearer test-token"}
+                        headers={"Authorization": "Bearer test-token"},
                     )
 
                     # Assert
@@ -86,28 +89,31 @@ class TestJournalCommentAPI:
         comment_id = str(uuid.uuid4())
         timestamp = datetime.now(timezone.utc).isoformat()
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": user_id,
                 "email": "test@example.com",
-                "username": "testuser"
+                "username": "testuser",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": user_id,
                     "username": "testuser",
-                    "display_name": "Test User"
+                    "display_name": "Test User",
                 }
 
-                with patch('app.api.routes.journal_comments.get_journal_comment_service') as mock_service_getter:
+                with patch(
+                    "app.api.routes.journal_comments.get_journal_comment_service"
+                ) as mock_service_getter:
                     mock_service = Mock()
                     mock_service_getter.return_value = mock_service
                     mock_service.is_space_member.return_value = True
 
                     from app.models.journal_comment import JournalCommentModel
+
                     mock_comment = JournalCommentModel(
                         id=comment_id,
                         journalId=journal_id,
@@ -119,18 +125,15 @@ class TestJournalCommentAPI:
                         createdAt=timestamp,
                         updatedAt=timestamp,
                         isEdited=False,
-                        mentions=[]
+                        mentions=[],
                     )
                     mock_service.create_comment = AsyncMock(return_value=mock_comment)
 
                     # Act
                     response = test_client.post(
                         f"/api/spaces/{space_id}/journals/{journal_id}/comments",
-                        json={
-                            "text": "This is a reply",
-                            "parentCommentId": parent_comment_id
-                        },
-                        headers={"Authorization": "Bearer test-token"}
+                        json={"text": "This is a reply", "parentCommentId": parent_comment_id},
+                        headers={"Authorization": "Bearer test-token"},
                     )
 
                     # Assert
@@ -145,22 +148,24 @@ class TestJournalCommentAPI:
         journal_id = str(uuid.uuid4())
         user_id = "user-123"
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": user_id,
                 "email": "test@example.com",
-                "username": "testuser"
+                "username": "testuser",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": user_id,
-                    "username": "testuser"
+                    "username": "testuser",
                 }
 
-                with patch('app.api.routes.journal_comments.get_journal_comment_service') as mock_service_getter:
+                with patch(
+                    "app.api.routes.journal_comments.get_journal_comment_service"
+                ) as mock_service_getter:
                     mock_service = Mock()
                     mock_service_getter.return_value = mock_service
                     mock_service.is_space_member.return_value = False  # Not a member
@@ -169,7 +174,7 @@ class TestJournalCommentAPI:
                     response = test_client.post(
                         f"/api/spaces/{space_id}/journals/{journal_id}/comments",
                         json={"text": "This is a test comment"},
-                        headers={"Authorization": "Bearer test-token"}
+                        headers={"Authorization": "Bearer test-token"},
                     )
 
                     # Assert
@@ -184,27 +189,30 @@ class TestJournalCommentAPI:
         comment_id = str(uuid.uuid4())
         timestamp = datetime.now(timezone.utc).isoformat()
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": user_id,
                 "email": "test@example.com",
-                "username": "testuser"
+                "username": "testuser",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": user_id,
-                    "username": "testuser"
+                    "username": "testuser",
                 }
 
-                with patch('app.api.routes.journal_comments.get_journal_comment_service') as mock_service_getter:
+                with patch(
+                    "app.api.routes.journal_comments.get_journal_comment_service"
+                ) as mock_service_getter:
                     mock_service = Mock()
                     mock_service_getter.return_value = mock_service
                     mock_service.is_space_member.return_value = True
 
                     from app.models.journal_comment import JournalCommentModel
+
                     mock_comments = [
                         JournalCommentModel(
                             id=comment_id,
@@ -216,7 +224,7 @@ class TestJournalCommentAPI:
                             createdAt=timestamp,
                             updatedAt=timestamp,
                             isEdited=False,
-                            mentions=[]
+                            mentions=[],
                         )
                     ]
                     mock_service.get_comments_for_journal = AsyncMock(return_value=mock_comments)
@@ -224,7 +232,7 @@ class TestJournalCommentAPI:
                     # Act
                     response = test_client.get(
                         f"/api/spaces/{space_id}/journals/{journal_id}/comments",
-                        headers={"Authorization": "Bearer test-token"}
+                        headers={"Authorization": "Bearer test-token"},
                     )
 
                     # Assert
@@ -242,27 +250,30 @@ class TestJournalCommentAPI:
         user_id = "user-123"
         timestamp = datetime.now(timezone.utc).isoformat()
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": user_id,
                 "email": "test@example.com",
-                "username": "testuser"
+                "username": "testuser",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": user_id,
-                    "username": "testuser"
+                    "username": "testuser",
                 }
 
-                with patch('app.api.routes.journal_comments.get_journal_comment_service') as mock_service_getter:
+                with patch(
+                    "app.api.routes.journal_comments.get_journal_comment_service"
+                ) as mock_service_getter:
                     mock_service = Mock()
                     mock_service_getter.return_value = mock_service
                     mock_service.is_space_member.return_value = True
 
                     from app.models.journal_comment import JournalCommentModel
+
                     mock_comment = JournalCommentModel(
                         id=comment_id,
                         journalId=str(uuid.uuid4()),
@@ -273,7 +284,7 @@ class TestJournalCommentAPI:
                         createdAt=timestamp,
                         updatedAt=timestamp,
                         isEdited=True,
-                        mentions=[]
+                        mentions=[],
                     )
                     mock_service.update_comment = AsyncMock(return_value=mock_comment)
 
@@ -281,7 +292,7 @@ class TestJournalCommentAPI:
                     response = test_client.put(
                         f"/api/spaces/{space_id}/journal-comments/{comment_id}",
                         json={"text": "Updated text"},
-                        headers={"Authorization": "Bearer test-token"}
+                        headers={"Authorization": "Bearer test-token"},
                     )
 
                     # Assert
@@ -297,32 +308,36 @@ class TestJournalCommentAPI:
         comment_id = str(uuid.uuid4())
         user_id = "user-123"
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": user_id,
                 "email": "test@example.com",
-                "username": "testuser"
+                "username": "testuser",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": user_id,
-                    "username": "testuser"
+                    "username": "testuser",
                 }
 
-                with patch('app.api.routes.journal_comments.get_journal_comment_service') as mock_service_getter:
+                with patch(
+                    "app.api.routes.journal_comments.get_journal_comment_service"
+                ) as mock_service_getter:
                     mock_service = Mock()
                     mock_service_getter.return_value = mock_service
                     mock_service.is_space_member.return_value = True
-                    mock_service.update_comment = AsyncMock(return_value=None)  # Returns None for not found/unauthorized
+                    mock_service.update_comment = AsyncMock(
+                        return_value=None
+                    )  # Returns None for not found/unauthorized
 
                     # Act
                     response = test_client.put(
                         f"/api/spaces/{space_id}/journal-comments/{comment_id}",
                         json={"text": "Updated text"},
-                        headers={"Authorization": "Bearer test-token"}
+                        headers={"Authorization": "Bearer test-token"},
                     )
 
                     # Assert
@@ -335,22 +350,24 @@ class TestJournalCommentAPI:
         comment_id = str(uuid.uuid4())
         user_id = "user-123"
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": user_id,
                 "email": "test@example.com",
-                "username": "testuser"
+                "username": "testuser",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": user_id,
-                    "username": "testuser"
+                    "username": "testuser",
                 }
 
-                with patch('app.api.routes.journal_comments.get_journal_comment_service') as mock_service_getter:
+                with patch(
+                    "app.api.routes.journal_comments.get_journal_comment_service"
+                ) as mock_service_getter:
                     mock_service = Mock()
                     mock_service_getter.return_value = mock_service
                     mock_service.is_space_member.return_value = True
@@ -359,7 +376,7 @@ class TestJournalCommentAPI:
                     # Act
                     response = test_client.delete(
                         f"/api/spaces/{space_id}/journal-comments/{comment_id}",
-                        headers={"Authorization": "Bearer test-token"}
+                        headers={"Authorization": "Bearer test-token"},
                     )
 
                     # Assert
@@ -372,22 +389,24 @@ class TestJournalCommentAPI:
         comment_id = str(uuid.uuid4())
         user_id = "user-123"
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": user_id,
                 "email": "test@example.com",
-                "username": "testuser"
+                "username": "testuser",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": user_id,
-                    "username": "testuser"
+                    "username": "testuser",
                 }
 
-                with patch('app.api.routes.journal_comments.get_journal_comment_service') as mock_service_getter:
+                with patch(
+                    "app.api.routes.journal_comments.get_journal_comment_service"
+                ) as mock_service_getter:
                     mock_service = Mock()
                     mock_service_getter.return_value = mock_service
                     mock_service.is_space_member.return_value = True
@@ -396,7 +415,7 @@ class TestJournalCommentAPI:
                     # Act
                     response = test_client.delete(
                         f"/api/spaces/{space_id}/journal-comments/{comment_id}",
-                        headers={"Authorization": "Bearer test-token"}
+                        headers={"Authorization": "Bearer test-token"},
                     )
 
                     # Assert
@@ -409,22 +428,24 @@ class TestJournalCommentAPI:
         journal_id = str(uuid.uuid4())
         user_id = "user-123"
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": user_id,
                 "email": "test@example.com",
-                "username": "testuser"
+                "username": "testuser",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": user_id,
-                    "username": "testuser"
+                    "username": "testuser",
                 }
 
-                with patch('app.api.routes.journal_comments.get_journal_comment_service') as mock_service_getter:
+                with patch(
+                    "app.api.routes.journal_comments.get_journal_comment_service"
+                ) as mock_service_getter:
                     mock_service = Mock()
                     mock_service_getter.return_value = mock_service
                     mock_service.is_space_member.return_value = True
@@ -433,7 +454,7 @@ class TestJournalCommentAPI:
                     # Act
                     response = test_client.get(
                         f"/api/spaces/{space_id}/journals/{journal_id}/comments/count",
-                        headers={"Authorization": "Bearer test-token"}
+                        headers={"Authorization": "Bearer test-token"},
                     )
 
                     # Assert
@@ -452,13 +473,13 @@ class TestJournalCommentService:
         from app.models.journal_comment import CreateJournalCommentRequest
 
         # Arrange
-        with patch('app.services.journal_comment_service.get_db') as mock_db:
+        with patch("app.services.journal_comment_service.get_db") as mock_db:
             mock_db_instance = Mock()
             mock_db.return_value = mock_db_instance
 
-            mock_db_instance.get_item.return_value = {'title': 'Test Journal'}
+            mock_db_instance.get_item.return_value = {"title": "Test Journal"}
 
-            with patch('app.services.activity.get_dynamodb_table') as mock_table:
+            with patch("app.services.activity.get_dynamodb_table") as mock_table:
                 mock_table.return_value = Mock()
 
                 service = JournalCommentService()
@@ -474,7 +495,7 @@ class TestJournalCommentService:
                     journal_id=journal_id,
                     user_id=user_id,
                     user_name="Test User",
-                    request=request
+                    request=request,
                 )
 
                 # Assert
@@ -494,7 +515,7 @@ class TestJournalCommentService:
         journal_id = str(uuid.uuid4())
         timestamp = datetime.now(timezone.utc).isoformat()
 
-        with patch('app.services.journal_comment_service.get_db') as mock_db:
+        with patch("app.services.journal_comment_service.get_db") as mock_db:
             mock_db_instance = Mock()
             mock_db.return_value = mock_db_instance
 
@@ -510,7 +531,7 @@ class TestJournalCommentService:
                     "createdAt": timestamp,
                     "updatedAt": timestamp,
                     "isEdited": False,
-                    "mentions": []
+                    "mentions": [],
                 },
                 {
                     "EntityType": "JournalComment",
@@ -523,8 +544,8 @@ class TestJournalCommentService:
                     "createdAt": timestamp,
                     "updatedAt": timestamp,
                     "isEdited": False,
-                    "mentions": []
-                }
+                    "mentions": [],
+                },
             ]
 
             service = JournalCommentService()
@@ -562,7 +583,7 @@ class TestJournalCommentModel:
             createdAt="2024-01-01T00:00:00Z",
             updatedAt="2024-01-01T00:00:00Z",
             isEdited=False,
-            mentions=["user-abc"]
+            mentions=["user-abc"],
         )
 
         data = comment.model_dump(by_alias=True)
@@ -578,7 +599,7 @@ class TestJournalCommentModel:
         from app.models.journal_comment import (
             JournalCommentModel,
             journal_comment_to_db_item,
-            db_item_to_journal_comment
+            db_item_to_journal_comment,
         )
 
         # Create a model
@@ -593,7 +614,7 @@ class TestJournalCommentModel:
             createdAt="2024-01-01T00:00:00Z",
             updatedAt="2024-01-01T00:00:00Z",
             isEdited=True,
-            mentions=["user-abc"]
+            mentions=["user-abc"],
         )
 
         # Convert to DB item

@@ -11,11 +11,14 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class ConversationModel(BaseModel):
     """Represents a journal with its discussion activity."""
+
     journal_id: str = Field(alias="journalId")
     journal_title: str = Field(alias="journalTitle")
     journal_author: str = Field(alias="journalAuthor")
     journal_author_name: str = Field(alias="journalAuthorName")
     last_activity: str = Field(alias="lastActivity")
+    last_activity_type: str = Field(alias="lastActivityType")  # "highlight_comment", "journal_comment", "highlight"
+    last_activity_highlight_id: Optional[str] = Field(None, alias="lastActivityHighlightId")
     highlight_count: int = Field(alias="highlightCount")
     highlight_comment_count: int = Field(alias="highlightCommentCount")
     journal_comment_count: int = Field(alias="journalCommentCount")
@@ -28,6 +31,7 @@ class ConversationModel(BaseModel):
 
 class ConversationsResponse(BaseModel):
     """Response model for list of conversations in a space."""
+
     conversations: List[ConversationModel]
     total_unread: int = Field(alias="totalUnread")
     next_token: Optional[str] = Field(None, alias="nextToken")
@@ -37,6 +41,7 @@ class ConversationsResponse(BaseModel):
 
 class UnreadCountResponse(BaseModel):
     """Response model for unread count."""
+
     total_unread: int = Field(alias="totalUnread")
     space_id: str = Field(alias="spaceId")
 
@@ -45,6 +50,7 @@ class UnreadCountResponse(BaseModel):
 
 class MarkReadRequest(BaseModel):
     """Request to mark a journal as read."""
+
     # Optional: mark specific types as read
     mark_highlight_comments: bool = Field(True, alias="markHighlightComments")
     mark_journal_comments: bool = Field(True, alias="markJournalComments")
@@ -54,6 +60,7 @@ class MarkReadRequest(BaseModel):
 
 class MarkReadResponse(BaseModel):
     """Response for marking a journal as read."""
+
     success: bool
     journal_id: str = Field(alias="journalId")
     space_id: str = Field(alias="spaceId")

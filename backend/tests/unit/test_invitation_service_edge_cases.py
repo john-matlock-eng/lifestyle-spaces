@@ -116,7 +116,7 @@ class TestInvitationServiceEdgeCases:
             "inviter_user_id": "user456",
             "status": InvitationStatus.ACCEPTED.value,  # Already accepted
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         self.mock_db_client.scan.return_value = [invitation_item]
@@ -143,7 +143,7 @@ class TestInvitationServiceEdgeCases:
             "inviter_user_id": "user456",
             "status": InvitationStatus.DECLINED.value,  # Declined
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         self.mock_db_client.scan.return_value = [invitation_item]
@@ -169,7 +169,7 @@ class TestInvitationServiceEdgeCases:
             "inviter_user_id": "user456",
             "status": InvitationStatus.PENDING.value,
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         self.mock_db_client.scan.return_value = [invitation_item]
@@ -195,7 +195,7 @@ class TestInvitationServiceEdgeCases:
             "inviter_user_id": "user456",
             "status": InvitationStatus.PENDING.value,
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         invitation2 = {
@@ -205,7 +205,7 @@ class TestInvitationServiceEdgeCases:
             "inviter_user_id": "user456",
             "status": InvitationStatus.PENDING.value,
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         self.mock_db_client.scan.return_value = [invitation1, invitation2]
@@ -238,7 +238,7 @@ class TestInvitationServiceEdgeCases:
             "inviter_user_id": "user456",
             "status": InvitationStatus.PENDING.value,
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         expired_invitation = {
@@ -248,7 +248,7 @@ class TestInvitationServiceEdgeCases:
             "inviter_user_id": "user456",
             "status": InvitationStatus.PENDING.value,
             "created_at": (datetime.now(timezone.utc) - timedelta(days=10)).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()  # Expired
+            "expires_at": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),  # Expired
         }
 
         self.mock_db_client.scan.return_value = [active_invitation, expired_invitation]
@@ -283,7 +283,7 @@ class TestInvitationServiceEdgeCases:
             "inviter_user_id": "user456",
             "status": InvitationStatus.PENDING.value,
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
         }
 
         # Mock scan to return dict with Items key
@@ -305,20 +305,13 @@ class TestInvitationServiceEdgeCases:
         self.mock_db_client.put_item.return_value = {"ResponseMetadata": {"HTTPStatusCode": 200}}
 
         # Create invitation data with role and message
-        invitation_data = InvitationCreate(
-            invitee_email="test@example.com",
-            space_id="space123"
-        )
+        invitation_data = InvitationCreate(invitee_email="test@example.com", space_id="space123")
         invitation_data.role = "admin"
         invitation_data.message = "Welcome to the team!"
 
         # Call old format method
         result = self.service._create_invitation_old(
-            invitation_data,
-            "space123",
-            "Test Space",
-            "user456",
-            "Test User"
+            invitation_data, "space123", "Test Space", "user456", "Test User"
         )
 
         # Verify result includes all fields
@@ -344,11 +337,7 @@ class TestInvitationServiceEdgeCases:
 
         # Call old format method
         result = self.service._create_invitation_old(
-            invitation_data,
-            "space123",
-            "Test Space",
-            "user456",
-            "Test User"
+            invitation_data, "space123", "Test Space", "user456", "Test User"
         )
 
         # Verify email was handled correctly
@@ -364,23 +353,16 @@ class TestInvitationServiceEdgeCases:
             "invitation_id": "existing123",
             "space_id": "space123",
             "invitee_email": "test@example.com",
-            "status": InvitationStatus.PENDING.value
+            "status": InvitationStatus.PENDING.value,
         }
         self.mock_db_client.scan.return_value = [existing_invitation]
 
-        invitation_data = InvitationCreate(
-            invitee_email="test@example.com",
-            space_id="space123"
-        )
+        invitation_data = InvitationCreate(invitee_email="test@example.com", space_id="space123")
 
         # Should raise InvitationAlreadyExistsError
         with pytest.raises(InvitationAlreadyExistsError) as exc_info:
             self.service._create_invitation_old(
-                invitation_data,
-                "space123",
-                "Test Space",
-                "user456",
-                "Test User"
+                invitation_data, "space123", "Test Space", "user456", "Test User"
             )
 
         assert "already exists" in str(exc_info.value).lower()
@@ -396,18 +378,12 @@ class TestInvitationServiceEdgeCases:
         # Create invitation data with custom expiration
         custom_expiry = datetime.now(timezone.utc) + timedelta(days=30)
         invitation_data = InvitationCreate(
-            invitee_email="test@example.com",
-            space_id="space123",
-            expires_at=custom_expiry
+            invitee_email="test@example.com", space_id="space123", expires_at=custom_expiry
         )
 
         # Call old format method
         result = self.service._create_invitation_old(
-            invitation_data,
-            "space123",
-            "Test Space",
-            "user456",
-            "Test User"
+            invitation_data, "space123", "Test Space", "user456", "Test User"
         )
 
         # Verify custom expiration was used
@@ -422,18 +398,11 @@ class TestInvitationServiceEdgeCases:
         self.mock_db_client.put_item.return_value = {"ResponseMetadata": {"HTTPStatusCode": 200}}
 
         # Create invitation data without expiration
-        invitation_data = InvitationCreate(
-            invitee_email="test@example.com",
-            space_id="space123"
-        )
+        invitation_data = InvitationCreate(invitee_email="test@example.com", space_id="space123")
 
         # Call old format method
         result = self.service._create_invitation_old(
-            invitation_data,
-            "space123",
-            "Test Space",
-            "user456",
-            "Test User"
+            invitation_data, "space123", "Test Space", "user456", "Test User"
         )
 
         # Verify expiration was set (should be ~7 days from now)
@@ -453,24 +422,18 @@ class TestInvitationServiceEdgeCases:
 
         # Track what was put into DB
         put_item_calls = []
+
         def capture_put_item(item):
             put_item_calls.append(item)
             return {"ResponseMetadata": {"HTTPStatusCode": 200}}
 
         self.mock_db_client.put_item.side_effect = capture_put_item
 
-        invitation_data = InvitationCreate(
-            invitee_email="test@example.com",
-            space_id="space123"
-        )
+        invitation_data = InvitationCreate(invitee_email="test@example.com", space_id="space123")
 
         # Call old format method
         result = self.service._create_invitation_old(
-            invitation_data,
-            "space123",
-            "Test Space",
-            "user456",
-            "Test User"
+            invitation_data, "space123", "Test Space", "user456", "Test User"
         )
 
         # Verify invitation_code was generated and stored

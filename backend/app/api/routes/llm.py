@@ -20,8 +20,7 @@ router = APIRouter(prefix="/api/llm", tags=["llm"])
 
 @router.post("/generate", response_model=LLMPromptResponse, status_code=status.HTTP_200_OK)
 async def generate_llm_response(
-    request: LLMPromptRequest,
-    current_user=Depends(get_current_user)
+    request: LLMPromptRequest, current_user=Depends(get_current_user)
 ) -> LLMPromptResponse:
     """
     Generate a response from Claude LLM
@@ -38,8 +37,12 @@ async def generate_llm_response(
     """
     # Handle both dict and User object
     if isinstance(current_user, dict):
-        user_id = (current_user.get("sub") or current_user.get("user_id") or
-                   current_user.get("userId") or "unknown")
+        user_id = (
+            current_user.get("sub")
+            or current_user.get("user_id")
+            or current_user.get("userId")
+            or "unknown"
+        )
     else:
         user_id = getattr(current_user, "user_id", "unknown")
 
@@ -70,25 +73,21 @@ async def generate_llm_response(
     except ExternalServiceError as e:
         logger.error(f"LLM service error for user {user_id}: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"LLM service error: {str(e)}"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"LLM service error: {str(e)}"
         )
     except Exception as e:
         logger.error(f"Unexpected error in LLM generation: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while generating LLM response"
+            detail="An unexpected error occurred while generating LLM response",
         )
 
 
 @router.post(
-    "/journal-insights",
-    response_model=JournalInsightsResponse,
-    status_code=status.HTTP_200_OK
+    "/journal-insights", response_model=JournalInsightsResponse, status_code=status.HTTP_200_OK
 )
 async def generate_journal_insights(
-    request: JournalInsightsRequest,
-    current_user=Depends(get_current_user)
+    request: JournalInsightsRequest, current_user=Depends(get_current_user)
 ) -> JournalInsightsResponse:
     """
     Generate AI-powered insights for a journal entry
@@ -105,8 +104,12 @@ async def generate_journal_insights(
     """
     # Handle both dict and User object
     if isinstance(current_user, dict):
-        user_id = (current_user.get("sub") or current_user.get("user_id") or
-                   current_user.get("userId") or "unknown")
+        user_id = (
+            current_user.get("sub")
+            or current_user.get("user_id")
+            or current_user.get("userId")
+            or "unknown"
+        )
     else:
         user_id = getattr(current_user, "user_id", "unknown")
 
@@ -135,12 +138,11 @@ async def generate_journal_insights(
     except ExternalServiceError as e:
         logger.error(f"LLM service error for user {user_id}: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"LLM service error: {str(e)}"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"LLM service error: {str(e)}"
         )
     except Exception as e:
         logger.error(f"Unexpected error in journal insights: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while generating journal insights"
+            detail="An unexpected error occurred while generating journal insights",
         )

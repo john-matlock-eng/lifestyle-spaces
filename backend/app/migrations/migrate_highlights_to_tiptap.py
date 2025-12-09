@@ -35,32 +35,19 @@ def markdown_to_tiptap_json(markdown: str) -> Dict[str, Any]:
     or the tiptap-markdown library to do the conversion.
     """
     # Split into paragraphs
-    paragraphs = markdown.strip().split('\n\n')
+    paragraphs = markdown.strip().split("\n\n")
 
     nodes = []
     for para in paragraphs:
         if para.strip():
             # Simple paragraph node
-            nodes.append({
-                "type": "paragraph",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": para.strip()
-                    }
-                ]
-            })
+            nodes.append({"type": "paragraph", "content": [{"type": "text", "text": para.strip()}]})
 
-    return {
-        "type": "doc",
-        "content": nodes
-    }
+    return {"type": "doc", "content": nodes}
 
 
 def apply_highlight_to_tiptap(
-    tiptap_content: Dict[str, Any],
-    highlight: Dict[str, Any],
-    text_to_find: str
+    tiptap_content: Dict[str, Any], highlight: Dict[str, Any], text_to_find: str
 ) -> Dict[str, Any]:
     """
     Apply a highlight mark to text in TipTap document.
@@ -73,6 +60,7 @@ def apply_highlight_to_tiptap(
     Returns:
         Updated TipTap document with highlight mark applied
     """
+
     def find_and_mark_text(node: Dict[str, Any], target_text: str) -> bool:
         """Recursively find text and add highlight mark."""
         if node.get("type") == "text" and target_text in node.get("text", ""):
@@ -81,17 +69,19 @@ def apply_highlight_to_tiptap(
                 node["marks"] = []
 
             # Add highlight mark
-            node["marks"].append({
-                "type": "highlight",
-                "attrs": {
-                    "id": highlight["id"],
-                    "color": highlight.get("color", "yellow"),
-                    "authorId": highlight["author_id"],
-                    "authorName": highlight["author_name"],
-                    "createdAt": highlight["created_at"],
-                    "commentCount": highlight.get("comment_count", 0)
+            node["marks"].append(
+                {
+                    "type": "highlight",
+                    "attrs": {
+                        "id": highlight["id"],
+                        "color": highlight.get("color", "yellow"),
+                        "authorId": highlight["author_id"],
+                        "authorName": highlight["author_name"],
+                        "createdAt": highlight["created_at"],
+                        "commentCount": highlight.get("comment_count", 0),
+                    },
                 }
-            })
+            )
             return True
 
         # Recurse into child nodes
@@ -104,16 +94,13 @@ def apply_highlight_to_tiptap(
 
     # Make a copy to avoid mutating input
     import copy
+
     result = copy.deepcopy(tiptap_content)
     find_and_mark_text(result, text_to_find)
     return result
 
 
-async def migrate_journal(
-    journal_id: str,
-    space_id: str,
-    dry_run: bool = False
-) -> bool:
+async def migrate_journal(journal_id: str, space_id: str, dry_run: bool = False) -> bool:
     """
     Migrate a single journal to TipTap format.
 
@@ -133,7 +120,7 @@ async def migrate_journal(
         journal = {
             "journal_id": journal_id,
             "content": "This is a sample journal entry.\n\nIt has multiple paragraphs.",
-            "content_tiptap": None  # Not yet migrated
+            "content_tiptap": None,  # Not yet migrated
         }
 
         logger.info(f"Processing journal {journal_id}")
@@ -155,7 +142,7 @@ async def migrate_journal(
                 "author_id": "user-123",
                 "author_name": "Test User",
                 "created_at": datetime.utcnow().isoformat(),
-                "comment_count": 2
+                "comment_count": 2,
             }
         ]
 
@@ -171,9 +158,7 @@ async def migrate_journal(
                 f"to text: '{highlight['highlighted_text'][:50]}...'"
             )
             tiptap_content = apply_highlight_to_tiptap(
-                tiptap_content,
-                highlight,
-                highlight["highlighted_text"]
+                tiptap_content, highlight, highlight["highlighted_text"]
             )
 
         # 5. Save updated journal
@@ -196,10 +181,7 @@ async def migrate_journal(
         return False
 
 
-async def migrate_all_journals(
-    space_id: Optional[str] = None,
-    dry_run: bool = False
-):
+async def migrate_all_journals(space_id: Optional[str] = None, dry_run: bool = False):
     """
     Migrate all journals to TipTap format.
 
@@ -238,9 +220,7 @@ async def migrate_all_journals(
 
     for journal in journals:
         result = await migrate_journal(
-            journal_id=journal["journal_id"],
-            space_id=journal["space_id"],
-            dry_run=dry_run
+            journal_id=journal["journal_id"], space_id=journal["space_id"], dry_run=dry_run
         )
 
         if result:
@@ -262,24 +242,16 @@ def main():
         description="Migrate offset-based highlights to TipTap-native format"
     )
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show what would be migrated without making changes"
+        "--dry-run", action="store_true", help="Show what would be migrated without making changes"
     )
-    parser.add_argument(
-        "--space-id",
-        type=str,
-        help="Only migrate journals in specified space"
-    )
+    parser.add_argument("--space-id", type=str, help="Only migrate journals in specified space")
 
     args = parser.parse_args()
 
     # Run migration
     import asyncio
-    asyncio.run(migrate_all_journals(
-        space_id=args.space_id,
-        dry_run=args.dry_run
-    ))
+
+    asyncio.run(migrate_all_journals(space_id=args.space_id, dry_run=args.dry_run))
 
 
 if __name__ == "__main__":

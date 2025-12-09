@@ -21,8 +21,7 @@ async def list_templates():
     except Exception as e:
         logger.error(f"Failed to list templates: {e}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to list templates"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to list templates"
         )
 
 
@@ -34,13 +33,9 @@ async def get_template(template_id: str):
         service = TemplateService()
         return service.get_template(template_id)
     except TemplateNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to get template: {e}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get template"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get template"
         )

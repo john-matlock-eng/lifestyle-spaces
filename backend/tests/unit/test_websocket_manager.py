@@ -64,7 +64,7 @@ class TestWebSocketMessage:
             payload={"id": "123", "text": "test"},
             timestamp="2025-01-01T00:00:00",
             user_id="user-123",
-            correlation_id="corr-456"
+            correlation_id="corr-456",
         )
 
         assert message.type == "NEW_HIGHLIGHT"
@@ -75,9 +75,7 @@ class TestWebSocketMessage:
     def test_websocket_message_defaults(self):
         """Test WebSocket message with default values."""
         message = WebSocketMessage(
-            type="NEW_COMMENT",
-            payload={"comment": "test"},
-            timestamp="2025-01-01T00:00:00"
+            type="NEW_COMMENT", payload={"comment": "test"}, timestamp="2025-01-01T00:00:00"
         )
 
         assert message.user_id == ""
@@ -95,7 +93,7 @@ class TestPresenceData:
             color="#3B82F6",
             cursor_position=100,
             is_typing=True,
-            last_activity="2025-01-01T00:00:00"
+            last_activity="2025-01-01T00:00:00",
         )
 
         assert presence.user_id == "user-123"
@@ -110,7 +108,7 @@ class TestPresenceData:
             user_id="user-123",
             user_name="John Doe",
             color="#3B82F6",
-            last_activity="2025-01-01T00:00:00"
+            last_activity="2025-01-01T00:00:00",
         )
 
         assert presence.cursor_position is None
@@ -136,12 +134,7 @@ class TestHighlightWebSocketManager:
     @pytest.mark.asyncio
     async def test_connect(self, manager, mock_websocket):
         """Test connecting a WebSocket."""
-        conn_info = await manager.connect(
-            mock_websocket,
-            "journal-123",
-            "user-456",
-            "John Doe"
-        )
+        conn_info = await manager.connect(mock_websocket, "journal-123", "user-456", "John Doe")
 
         assert conn_info.user_id == "user-456"
         assert conn_info.user_name == "John Doe"
@@ -210,7 +203,7 @@ class TestHighlightWebSocketManager:
             "journal-123",
             "NEW_HIGHLIGHT",
             {"id": "highlight-1", "text": "test"},
-            sender_id="user-1"
+            sender_id="user-1",
         )
 
         # Both users should receive the message
@@ -225,9 +218,7 @@ class TestHighlightWebSocketManager:
         """Test broadcasting when no connections exist."""
         # Should not raise an error
         await manager.broadcast_message(
-            "journal-nonexistent",
-            "NEW_HIGHLIGHT",
-            {"id": "highlight-1"}
+            "journal-nonexistent", "NEW_HIGHLIGHT", {"id": "highlight-1"}
         )
 
     @pytest.mark.asyncio
@@ -243,11 +234,7 @@ class TestHighlightWebSocketManager:
         manager.active_connections["journal-123"].add(conn1)
         manager.active_connections["journal-123"].add(conn2)
 
-        await manager.broadcast_message(
-            "journal-123",
-            "NEW_HIGHLIGHT",
-            {"id": "highlight-1"}
-        )
+        await manager.broadcast_message("journal-123", "NEW_HIGHLIGHT", {"id": "highlight-1"})
 
         # user-2 should be disconnected due to error
         assert len(manager.active_connections["journal-123"]) == 1
@@ -261,12 +248,7 @@ class TestHighlightWebSocketManager:
         conn = ConnectionInfo(ws, "user-1", "User 1")
         manager.active_connections["journal-123"].add(conn)
 
-        await manager.broadcast_presence_update(
-            "journal-123",
-            "user-1",
-            "User 1",
-            joined=True
-        )
+        await manager.broadcast_presence_update("journal-123", "user-1", "User 1", joined=True)
 
         ws.send_text.assert_called_once()
         call_args = ws.send_text.call_args[0][0]
@@ -282,10 +264,7 @@ class TestHighlightWebSocketManager:
         """Test presence update when no connections exist."""
         # Should not raise an error
         await manager.broadcast_presence_update(
-            "journal-nonexistent",
-            "user-1",
-            "User 1",
-            joined=True
+            "journal-nonexistent", "user-1", "User 1", joined=True
         )
 
     @pytest.mark.asyncio
@@ -300,11 +279,7 @@ class TestHighlightWebSocketManager:
         # Small delay to ensure timestamp changes
         await asyncio.sleep(0.01)
 
-        await manager.update_user_state(
-            "journal-123",
-            "user-1",
-            is_typing=True
-        )
+        await manager.update_user_state("journal-123", "user-1", is_typing=True)
 
         assert conn.is_typing is True
         assert conn.last_heartbeat > old_heartbeat
@@ -316,11 +291,7 @@ class TestHighlightWebSocketManager:
         conn = ConnectionInfo(ws, "user-1", "User 1")
         manager.active_connections["journal-123"].add(conn)
 
-        await manager.update_user_state(
-            "journal-123",
-            "user-1",
-            cursor_position=100
-        )
+        await manager.update_user_state("journal-123", "user-1", cursor_position=100)
 
         assert conn.cursor_position == 100
 
@@ -328,11 +299,7 @@ class TestHighlightWebSocketManager:
     async def test_update_user_state_no_connection(self, manager):
         """Test updating state for non-existent connection."""
         # Should not raise an error
-        await manager.update_user_state(
-            "journal-nonexistent",
-            "user-1",
-            is_typing=True
-        )
+        await manager.update_user_state("journal-nonexistent", "user-1", is_typing=True)
 
     @pytest.mark.asyncio
     async def test_handle_heartbeat(self, manager):
@@ -413,10 +380,7 @@ class TestHighlightWebSocketManager:
     async def test_send_connection_confirmation(self, manager, mock_websocket):
         """Test sending connection confirmation."""
         # Add some history
-        manager.message_history["journal-123"] = [
-            '{"type": "MSG1"}',
-            '{"type": "MSG2"}'
-        ]
+        manager.message_history["journal-123"] = ['{"type": "MSG1"}', '{"type": "MSG2"}']
 
         await manager._send_connection_confirmation(mock_websocket, "journal-123")
 
@@ -466,6 +430,7 @@ class TestWebSocketManagerSingleton:
         """Test that get_websocket_manager creates an instance."""
         # Clear the global manager
         import app.websocket.highlight_manager as manager_module
+
         manager_module._manager = None
 
         manager = get_websocket_manager()

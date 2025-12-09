@@ -58,7 +58,7 @@ async def create_highlight(
         journal_entry_id=journal_entry_id,
         message_type="NEW_HIGHLIGHT",
         payload=highlight.dict(by_alias=True),
-        sender_id=user_id
+        sender_id=user_id,
     )
 
     return highlight
@@ -136,7 +136,7 @@ async def delete_highlight(
         journal_entry_id=highlight.journal_entry_id,
         message_type="DELETE_HIGHLIGHT",
         payload={"id": highlight_id},
-        sender_id=user_id
+        sender_id=user_id,
     )
 
     return None
@@ -191,7 +191,7 @@ async def update_highlight(
         journal_entry_id=highlight.journal_entry_id,
         message_type="UPDATE_HIGHLIGHT",
         payload=updated_highlight.dict(by_alias=True),
-        sender_id=user_id
+        sender_id=user_id,
     )
 
     return updated_highlight

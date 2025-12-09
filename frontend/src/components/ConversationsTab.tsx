@@ -77,8 +77,19 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ spaceId }) =
   }, [spaceId, sortBy]);
 
   const handleConversationClick = (conversation: Conversation) => {
-    // Navigate to journal with comments panel open
-    navigate(`/spaces/${spaceId}/journals/${conversation.journalId}?openComments=true`);
+    // Navigate to journal with the appropriate panel open based on last activity type
+    const baseUrl = `/spaces/${spaceId}/journals/${conversation.journalId}`;
+
+    if (conversation.lastActivityType === 'highlight_comment' && conversation.lastActivityHighlightId) {
+      // Open the specific highlight's comment panel
+      navigate(`${baseUrl}?highlightId=${conversation.lastActivityHighlightId}`);
+    } else if (conversation.lastActivityType === 'journal_comment') {
+      // Open the journal-level discussion panel
+      navigate(`${baseUrl}?openJournalComments=true`);
+    } else {
+      // Default: just open the journal
+      navigate(baseUrl);
+    }
   };
 
   const handleMarkAsRead = async (e: React.MouseEvent, conversation: Conversation) => {
