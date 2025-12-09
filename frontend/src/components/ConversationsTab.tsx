@@ -19,7 +19,11 @@ interface ConversationsTabProps {
 // Format timestamp smartly
 const formatTimestamp = (isoString: string): string => {
   const now = new Date();
-  const then = new Date(isoString);
+  // Ensure UTC parsing - append Z if no timezone specified
+  const normalizedString = isoString.endsWith('Z') || isoString.includes('+') || isoString.includes('-', 10)
+    ? isoString
+    : isoString + 'Z';
+  const then = new Date(normalizedString);
   const diffMs = now.getTime() - then.getTime();
   const diffMin = Math.floor(diffMs / 60000);
   const diffHour = Math.floor(diffMin / 60);
