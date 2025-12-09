@@ -24,8 +24,11 @@ class ActivityType(str, Enum):
     HIGHLIGHT_CREATED = "highlight_created"
     HIGHLIGHT_DELETED = "highlight_deleted"
 
-    # Comment activities
+    # Comment activities (highlight comments)
     COMMENT_CREATED = "comment_created"
+
+    # Journal comment activities (conversations)
+    JOURNAL_COMMENT_CREATED = "journal_comment_created"
 
     # Member activities
     MEMBER_JOINED = "member_joined"

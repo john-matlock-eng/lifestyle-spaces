@@ -8,6 +8,7 @@ import { MembersList } from '../components/spaces/MembersList';
 import { InviteMemberModal } from '../components/spaces/InviteMemberModal';
 import { JournalList } from '../features/journal/components/JournalList';
 import { ActivityFeed } from '../components/ActivityFeed';
+import { ConversationsTab } from '../components/ConversationsTab';
 import { regenerateInviteCode, updateSpace } from '../services/spaces';
 import { ElliePerch } from '../components/ellie';
 import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationContext';
@@ -15,7 +16,7 @@ import type { SpaceMemberRole, SpaceMember } from '../types';
 import './SpaceDetail.css';
 
 // Valid tab names - defined outside component to avoid recreating on every render
-const VALID_TABS = ['content', 'journals', 'members', 'settings', 'schedules'] as const;
+const VALID_TABS = ['content', 'journals', 'conversations', 'members', 'settings', 'schedules'] as const;
 type TabName = typeof VALID_TABS[number];
 
 export const SpaceDetail: React.FC = () => {
@@ -484,6 +485,18 @@ export const SpaceDetail: React.FC = () => {
           <button
             type="button"
             role="tab"
+            aria-selected={activeTab === 'conversations'}
+            aria-controls="conversations-panel"
+            id="conversations-tab"
+            onClick={() => handleTabClick('conversations')}
+            onKeyDown={(e) => handleTabKeyDown(e, 'conversations')}
+            className={`tab ${activeTab === 'conversations' ? 'tab--active' : ''}`}
+          >
+            Conversations
+          </button>
+          <button
+            type="button"
+            role="tab"
             aria-selected={activeTab === 'members'}
             aria-controls="members-panel"
             id="members-tab"
@@ -549,6 +562,17 @@ export const SpaceDetail: React.FC = () => {
             className="tab-panel"
           >
             <JournalList spaceId={spaceId} />
+          </div>
+        )}
+
+        {activeTab === 'conversations' && spaceId && (
+          <div
+            role="tabpanel"
+            id="conversations-panel"
+            aria-labelledby="conversations-tab"
+            className="tab-panel"
+          >
+            <ConversationsTab spaceId={spaceId} />
           </div>
         )}
 
