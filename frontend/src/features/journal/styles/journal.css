@@ -3,6 +3,33 @@
  * Uses theme CSS variables for consistent theming
  */
 
+/* =================================
+   Highlight Styles (consistent across all sections)
+   ================================= */
+.highlightable-text mark,
+.qa-pair-answer-display mark,
+.list-section-display mark,
+.checkbox-section-display mark,
+.scale-section-display mark,
+.table-section-display mark {
+  /* Ensure highlight colors are visible in both light and dark modes */
+  color: #1a1a1a !important;
+  padding: 2px 1px;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Ensure highlights maintain good contrast in dark mode */
+.dark .highlightable-text mark,
+.dark .qa-pair-answer-display mark,
+.dark .list-section-display mark,
+.dark .checkbox-section-display mark,
+.dark .scale-section-display mark,
+.dark .table-section-display mark {
+  color: #1f2937 !important;
+}
+
 /* Button Styles */
 .button-primary {
   padding: 10px 20px;

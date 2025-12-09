@@ -2,12 +2,12 @@
  * ConversationsTab Component
  *
  * Displays aggregated discussion data for all journals in a space.
- * Shows journals with active discussions, sorted by recent activity,
- * with unread counts and participant info.
+ * Clean inbox-style list with automatic read tracking.
  */
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { MessageSquare, Highlighter, Check } from 'lucide-react';
 import { conversationService } from '../services/conversationService';
 import type { Conversation } from '../types/conversation';
 import './ConversationsTab.css';
@@ -25,10 +25,10 @@ const formatTimestamp = (isoString: string): string => {
   const diffHour = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHour / 24);
 
-  if (diffMin < 1) return 'just now';
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHour < 24) return `${diffHour}h ago`;
-  if (diffDay < 7) return `${diffDay}d ago`;
+  if (diffMin < 1) return 'now';
+  if (diffMin < 60) return `${diffMin}m`;
+  if (diffHour < 24) return `${diffHour}h`;
+  if (diffDay < 7) return `${diffDay}d`;
 
   return then.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
@@ -44,6 +44,18 @@ const getParticipantColor = (name: string): string => {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
+};
+
+// Get activity type label
+const getActivityLabel = (type: string): string => {
+  switch (type) {
+    case 'highlight_comment':
+      return 'highlight';
+    case 'journal_comment':
+      return 'discussion';
+    default:
+      return 'activity';
+  }
 };
 
 export const ConversationsTab: React.FC<ConversationsTabProps> = ({ spaceId }) => {
@@ -76,27 +88,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ spaceId }) =
     fetchConversations();
   }, [spaceId, sortBy]);
 
-  const handleConversationClick = (conversation: Conversation) => {
-    // Navigate to journal with the appropriate panel open based on last activity type
-    const baseUrl = `/spaces/${spaceId}/journals/${conversation.journalId}`;
-
-    if (conversation.lastActivityType === 'highlight_comment' && conversation.lastActivityHighlightId) {
-      // Open the specific highlight's comment panel
-      navigate(`${baseUrl}?highlightId=${conversation.lastActivityHighlightId}`);
-    } else if (conversation.lastActivityType === 'journal_comment') {
-      // Open the journal-level discussion panel
-      navigate(`${baseUrl}?openJournalComments=true`);
-    } else {
-      // Default: just open the journal
-      navigate(baseUrl);
-    }
-  };
-
-  const handleMarkAsRead = async (e: React.MouseEvent, conversation: Conversation) => {
-    e.stopPropagation();
-    try {
-      await conversationService.markJournalAsRead(spaceId, conversation.journalId);
-      // Update local state
+  const handleConversationClick = async (conversation: Conversation) => {
+    // Auto-mark as read when clicking (fire and forget)
+    if (conversation.unreadCount > 0) {
+      // Update local state immediately for responsiveness
       setConversations(prev =>
         prev.map(c =>
           c.journalId === conversation.journalId
@@ -105,6 +100,39 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ spaceId }) =
         )
       );
       setTotalUnread(prev => Math.max(0, prev - conversation.unreadCount));
+
+      // Mark as read in background
+      conversationService.markJournalAsRead(spaceId, conversation.journalId).catch(err => {
+        console.error('Error auto-marking as read:', err);
+      });
+    }
+
+    // Navigate to journal with the appropriate panel open
+    const baseUrl = `/spaces/${spaceId}/journals/${conversation.journalId}`;
+
+    if (conversation.lastActivityType === 'highlight_comment' && conversation.lastActivityHighlightId) {
+      navigate(`${baseUrl}?highlightId=${conversation.lastActivityHighlightId}`);
+    } else if (conversation.lastActivityType === 'journal_comment') {
+      navigate(`${baseUrl}?openJournalComments=true`);
+    } else {
+      navigate(baseUrl);
+    }
+  };
+
+  const handleMarkAsRead = async (e: React.MouseEvent, conversation: Conversation) => {
+    e.stopPropagation();
+    try {
+      // Update local state immediately
+      setConversations(prev =>
+        prev.map(c =>
+          c.journalId === conversation.journalId
+            ? { ...c, unreadCount: 0 }
+            : c
+        )
+      );
+      setTotalUnread(prev => Math.max(0, prev - conversation.unreadCount));
+
+      await conversationService.markJournalAsRead(spaceId, conversation.journalId);
     } catch (err) {
       console.error('Error marking as read:', err);
     }
@@ -139,7 +167,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ spaceId }) =
         <div className="conversations-header-left">
           <h2 className="conversations-title">Conversations</h2>
           {totalUnread > 0 && (
-            <span className="conversations-unread-badge">{totalUnread} unread</span>
+            <span className="conversations-unread-badge">{totalUnread} new</span>
           )}
         </div>
         <div className="conversations-header-right">
@@ -148,8 +176,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ spaceId }) =
             onChange={(e) => setSortBy(e.target.value as 'recent' | 'unread')}
             className="conversations-sort-select"
           >
-            <option value="recent">Most Recent</option>
-            <option value="unread">Unread First</option>
+            <option value="recent">Recent</option>
+            <option value="unread">Unread</option>
           </select>
         </div>
       </div>
@@ -157,83 +185,112 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ spaceId }) =
       {/* Conversations List */}
       {conversations.length === 0 ? (
         <div className="conversations-empty">
-          <div className="conversations-empty-icon">💬</div>
+          <MessageSquare size={48} strokeWidth={1} />
           <h3>No conversations yet</h3>
           <p>Discussions will appear here when members start commenting on journals.</p>
         </div>
       ) : (
         <div className="conversations-list">
-          {conversations.map((conversation) => (
-            <div
-              key={conversation.journalId}
-              className={`conversation-card ${conversation.unreadCount > 0 ? 'conversation-card--unread' : ''}`}
-              onClick={() => handleConversationClick(conversation)}
-            >
-              <div className="conversation-card-main">
-                <div className="conversation-card-header">
-                  <h3 className="conversation-journal-title">{conversation.journalTitle}</h3>
-                  <span className="conversation-timestamp">
-                    {formatTimestamp(conversation.lastActivity)}
-                  </span>
+          {conversations.map((conversation) => {
+            const isUnread = conversation.unreadCount > 0;
+            const isHighlight = conversation.lastActivityType === 'highlight_comment';
+            const totalComments = conversation.highlightCommentCount + conversation.journalCommentCount;
+
+            return (
+              <div
+                key={conversation.journalId}
+                className={`conversation-row ${isUnread ? 'conversation-row--unread' : ''}`}
+                onClick={() => handleConversationClick(conversation)}
+              >
+                {/* Left: Activity type icon */}
+                <div className="conversation-row-icon">
+                  {isHighlight ? (
+                    <Highlighter size={18} />
+                  ) : (
+                    <MessageSquare size={18} />
+                  )}
+                  {isUnread && <span className="conversation-unread-dot" />}
                 </div>
 
-                <div className="conversation-author">
-                  by {conversation.journalAuthorName}
-                </div>
-
-                {conversation.previewText && (
-                  <p className="conversation-preview">{conversation.previewText}</p>
-                )}
-
-                <div className="conversation-stats">
-                  <span className="conversation-stat" title="Highlights">
-                    🎨 {conversation.highlightCount}
-                  </span>
-                  <span className="conversation-stat" title="Highlight comments">
-                    💬 {conversation.highlightCommentCount}
-                  </span>
-                  <span className="conversation-stat" title="Discussion comments">
-                    🗨️ {conversation.journalCommentCount}
-                  </span>
-                </div>
-              </div>
-
-              <div className="conversation-card-side">
-                {conversation.unreadCount > 0 && (
-                  <div className="conversation-unread-indicator">
-                    <span className="conversation-unread-count">{conversation.unreadCount}</span>
-                    <button
-                      className="conversation-mark-read-btn"
-                      onClick={(e) => handleMarkAsRead(e, conversation)}
-                      title="Mark as read"
-                    >
-                      ✓
-                    </button>
+                {/* Middle: Content */}
+                <div className="conversation-row-content">
+                  <div className="conversation-row-top">
+                    <span className={`conversation-row-title ${isUnread ? 'conversation-row-title--unread' : ''}`}>
+                      {conversation.journalTitle}
+                    </span>
+                    <span className="conversation-row-meta">
+                      <span className="conversation-row-type">{getActivityLabel(conversation.lastActivityType)}</span>
+                      <span className="conversation-row-time">{formatTimestamp(conversation.lastActivity)}</span>
+                    </span>
                   </div>
-                )}
 
-                {conversation.participants.length > 0 && (
-                  <div className="conversation-participants">
-                    {conversation.participants.slice(0, 3).map((name, index) => (
-                      <div
-                        key={index}
-                        className="conversation-participant-avatar"
-                        style={{ backgroundColor: getParticipantColor(name) }}
-                        title={name}
-                      >
-                        {name.charAt(0).toUpperCase()}
-                      </div>
-                    ))}
-                    {conversation.participants.length > 3 && (
-                      <div className="conversation-participant-more">
-                        +{conversation.participants.length - 3}
-                      </div>
+                  <div className="conversation-row-middle">
+                    <span className="conversation-row-author">
+                      {conversation.journalAuthorName}
+                    </span>
+                    {conversation.previewText && (
+                      <span className="conversation-row-preview">
+                        {conversation.previewText}
+                      </span>
                     )}
                   </div>
-                )}
+
+                  <div className="conversation-row-bottom">
+                    {/* Participants */}
+                    <div className="conversation-row-participants">
+                      {conversation.participants.slice(0, 4).map((name, index) => (
+                        <div
+                          key={index}
+                          className="conversation-avatar"
+                          style={{ backgroundColor: getParticipantColor(name) }}
+                          title={name}
+                        >
+                          {name.charAt(0).toUpperCase()}
+                        </div>
+                      ))}
+                      {conversation.participants.length > 4 && (
+                        <div className="conversation-avatar conversation-avatar--more">
+                          +{conversation.participants.length - 4}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Stats */}
+                    <div className="conversation-row-stats">
+                      {totalComments > 0 && (
+                        <span className="conversation-row-stat">
+                          {totalComments} {totalComments === 1 ? 'comment' : 'comments'}
+                        </span>
+                      )}
+                      {conversation.highlightCount > 0 && (
+                        <span className="conversation-row-stat">
+                          {conversation.highlightCount} {conversation.highlightCount === 1 ? 'highlight' : 'highlights'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Unread count and actions */}
+                <div className="conversation-row-actions">
+                  {isUnread ? (
+                    <>
+                      <span className="conversation-unread-count">{conversation.unreadCount}</span>
+                      <button
+                        className="conversation-mark-read-btn"
+                        onClick={(e) => handleMarkAsRead(e, conversation)}
+                        title="Mark as read"
+                      >
+                        <Check size={14} />
+                      </button>
+                    </>
+                  ) : (
+                    <span className="conversation-row-chevron">›</span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
