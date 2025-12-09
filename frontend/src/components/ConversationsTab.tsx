@@ -1,15 +1,15 @@
 /**
  * ConversationsTab Component
  *
- * Displays aggregated discussion data for all journals in a space.
- * Clean inbox-style list with automatic read tracking.
+ * Displays thread-level conversation data for a space.
+ * Each row is a conversation thread (highlight or journal discussion).
  */
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Highlighter, Check } from 'lucide-react';
+import { MessageSquare, Highlighter, Check, Reply, User } from 'lucide-react';
 import { conversationService } from '../services/conversationService';
-import type { Conversation } from '../types/conversation';
+import type { ConversationThread, GetThreadsOptions } from '../types/conversation';
 import './ConversationsTab.css';
 
 interface ConversationsTabProps {
@@ -46,93 +46,99 @@ const getParticipantColor = (name: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-// Get activity type label
-const getActivityLabel = (type: string): string => {
-  switch (type) {
-    case 'highlight_comment':
-      return 'highlight';
-    case 'journal_comment':
-      return 'discussion';
-    default:
-      return 'activity';
+// Get participation status text
+const getParticipationText = (thread: ConversationThread): string => {
+  if (thread.userStarted && thread.userParticipated) {
+    return 'You started';
   }
+  if (thread.userParticipated) {
+    return 'You replied';
+  }
+  return '';
 };
 
 export const ConversationsTab: React.FC<ConversationsTabProps> = ({ spaceId }) => {
   const navigate = useNavigate();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [threads, setThreads] = useState<ConversationThread[]>([]);
   const [totalUnread, setTotalUnread] = useState(0);
+  const [threadsWithReplies, setThreadsWithReplies] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<'recent' | 'unread'>('recent');
+  const [sortBy, setSortBy] = useState<GetThreadsOptions['sort']>('recent');
+  const [filterType, setFilterType] = useState<GetThreadsOptions['type']>(undefined);
 
   useEffect(() => {
-    const fetchConversations = async () => {
+    const fetchThreads = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await conversationService.getSpaceConversations(spaceId, {
+        const response = await conversationService.getThreads(spaceId, {
           sort: sortBy,
+          type: filterType,
           limit: 50,
         });
-        setConversations(response.conversations);
+        setThreads(response.threads);
         setTotalUnread(response.totalUnread);
+        setThreadsWithReplies(response.threadsWithReplies);
       } catch (err) {
-        console.error('Error fetching conversations:', err);
+        console.error('Error fetching threads:', err);
         setError('Failed to load conversations');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchConversations();
-  }, [spaceId, sortBy]);
+    fetchThreads();
+  }, [spaceId, sortBy, filterType]);
 
-  const handleConversationClick = async (conversation: Conversation) => {
-    // Auto-mark as read when clicking (fire and forget)
-    if (conversation.unreadCount > 0) {
-      // Update local state immediately for responsiveness
-      setConversations(prev =>
-        prev.map(c =>
-          c.journalId === conversation.journalId
-            ? { ...c, unreadCount: 0 }
-            : c
+  const handleThreadClick = async (thread: ConversationThread) => {
+    // Auto-mark as read
+    if (thread.isUnread) {
+      setThreads(prev =>
+        prev.map(t =>
+          t.threadId === thread.threadId
+            ? { ...t, isUnread: false, unreadCount: 0, hasReplyToUser: false }
+            : t
         )
       );
-      setTotalUnread(prev => Math.max(0, prev - conversation.unreadCount));
+      setTotalUnread(prev => Math.max(0, prev - thread.unreadCount));
+      if (thread.hasReplyToUser) {
+        setThreadsWithReplies(prev => Math.max(0, prev - 1));
+      }
 
-      // Mark as read in background
-      conversationService.markJournalAsRead(spaceId, conversation.journalId).catch(err => {
-        console.error('Error auto-marking as read:', err);
+      conversationService.markJournalAsRead(spaceId, thread.journalId).catch(err => {
+        console.error('Error marking as read:', err);
       });
     }
 
-    // Navigate to journal with the appropriate panel open
-    const baseUrl = `/spaces/${spaceId}/journals/${conversation.journalId}`;
+    // Navigate to the appropriate location
+    const baseUrl = `/spaces/${spaceId}/journals/${thread.journalId}`;
 
-    if (conversation.lastActivityType === 'highlight_comment' && conversation.lastActivityHighlightId) {
-      navigate(`${baseUrl}?highlightId=${conversation.lastActivityHighlightId}`);
-    } else if (conversation.lastActivityType === 'journal_comment') {
-      navigate(`${baseUrl}?openJournalComments=true`);
+    if (thread.threadType === 'highlight') {
+      // Open the highlight's comment panel
+      navigate(`${baseUrl}?highlightId=${thread.threadId}`);
     } else {
-      navigate(baseUrl);
+      // Open the journal discussion panel
+      navigate(`${baseUrl}?openJournalComments=true`);
     }
   };
 
-  const handleMarkAsRead = async (e: React.MouseEvent, conversation: Conversation) => {
+  const handleMarkAsRead = async (e: React.MouseEvent, thread: ConversationThread) => {
     e.stopPropagation();
-    try {
-      // Update local state immediately
-      setConversations(prev =>
-        prev.map(c =>
-          c.journalId === conversation.journalId
-            ? { ...c, unreadCount: 0 }
-            : c
-        )
-      );
-      setTotalUnread(prev => Math.max(0, prev - conversation.unreadCount));
+    setThreads(prev =>
+      prev.map(t =>
+        t.threadId === thread.threadId
+          ? { ...t, isUnread: false, unreadCount: 0, hasReplyToUser: false }
+          : t
+      )
+    );
+    setTotalUnread(prev => Math.max(0, prev - thread.unreadCount));
+    if (thread.hasReplyToUser) {
+      setThreadsWithReplies(prev => Math.max(0, prev - 1));
+    }
 
-      await conversationService.markJournalAsRead(spaceId, conversation.journalId);
+    try {
+      await conversationService.markJournalAsRead(spaceId, thread.journalId);
     } catch (err) {
       console.error('Error marking as read:', err);
     }
@@ -169,123 +175,151 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ spaceId }) =
           {totalUnread > 0 && (
             <span className="conversations-unread-badge">{totalUnread} new</span>
           )}
+          {threadsWithReplies > 0 && (
+            <span className="conversations-replies-badge">
+              <Reply size={12} />
+              {threadsWithReplies}
+            </span>
+          )}
         </div>
         <div className="conversations-header-right">
           <select
+            value={filterType || 'all'}
+            onChange={(e) => setFilterType(e.target.value === 'all' ? undefined : e.target.value as GetThreadsOptions['type'])}
+            className="conversations-filter-select"
+          >
+            <option value="all">All</option>
+            <option value="highlight">Highlights</option>
+            <option value="journal_discussion">Discussions</option>
+          </select>
+          <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as 'recent' | 'unread')}
+            onChange={(e) => setSortBy(e.target.value as GetThreadsOptions['sort'])}
             className="conversations-sort-select"
           >
             <option value="recent">Recent</option>
             <option value="unread">Unread</option>
+            <option value="replies">Replies to you</option>
           </select>
         </div>
       </div>
 
-      {/* Conversations List */}
-      {conversations.length === 0 ? (
+      {/* Threads List */}
+      {threads.length === 0 ? (
         <div className="conversations-empty">
           <MessageSquare size={48} strokeWidth={1} />
           <h3>No conversations yet</h3>
-          <p>Discussions will appear here when members start commenting on journals.</p>
+          <p>Discussions will appear here when members start commenting on highlights or journals.</p>
         </div>
       ) : (
         <div className="conversations-list">
-          {conversations.map((conversation) => {
-            const isUnread = conversation.unreadCount > 0;
-            const isHighlight = conversation.lastActivityType === 'highlight_comment';
-            const totalComments = conversation.highlightCommentCount + conversation.journalCommentCount;
+          {threads.map((thread) => {
+            const isHighlight = thread.threadType === 'highlight';
+            const participationText = getParticipationText(thread);
 
             return (
               <div
-                key={conversation.journalId}
-                className={`conversation-row ${isUnread ? 'conversation-row--unread' : ''}`}
-                onClick={() => handleConversationClick(conversation)}
+                key={thread.threadId}
+                className={`thread-row ${thread.isUnread ? 'thread-row--unread' : ''} ${thread.hasReplyToUser ? 'thread-row--has-reply' : ''}`}
+                onClick={() => handleThreadClick(thread)}
               >
-                {/* Left: Activity type icon */}
-                <div className="conversation-row-icon">
-                  {isHighlight ? (
-                    <Highlighter size={18} />
-                  ) : (
-                    <MessageSquare size={18} />
+                {/* Left: Type icon with indicators */}
+                <div className="thread-row-icon-area">
+                  <div className={`thread-row-icon ${isHighlight ? 'thread-row-icon--highlight' : 'thread-row-icon--discussion'}`}>
+                    {isHighlight ? (
+                      <Highlighter size={16} />
+                    ) : (
+                      <MessageSquare size={16} />
+                    )}
+                  </div>
+                  {thread.isUnread && <span className="thread-unread-dot" />}
+                  {thread.hasReplyToUser && (
+                    <span className="thread-reply-indicator" title="Someone replied to you">
+                      <Reply size={10} />
+                    </span>
                   )}
-                  {isUnread && <span className="conversation-unread-dot" />}
                 </div>
 
                 {/* Middle: Content */}
-                <div className="conversation-row-content">
-                  <div className="conversation-row-top">
-                    <span className={`conversation-row-title ${isUnread ? 'conversation-row-title--unread' : ''}`}>
-                      {conversation.journalTitle}
-                    </span>
-                    <span className="conversation-row-meta">
-                      <span className="conversation-row-type">{getActivityLabel(conversation.lastActivityType)}</span>
-                      <span className="conversation-row-time">{formatTimestamp(conversation.lastActivity)}</span>
-                    </span>
+                <div className="thread-row-content">
+                  {/* Top row: title and time */}
+                  <div className="thread-row-top">
+                    <div className="thread-row-title-area">
+                      {isHighlight && thread.highlightText ? (
+                        <span className={`thread-row-title ${thread.isUnread ? 'thread-row-title--unread' : ''}`}>
+                          "{thread.highlightText}"
+                        </span>
+                      ) : (
+                        <span className={`thread-row-title ${thread.isUnread ? 'thread-row-title--unread' : ''}`}>
+                          Journal Discussion
+                        </span>
+                      )}
+                    </div>
+                    <span className="thread-row-time">{formatTimestamp(thread.lastActivity)}</span>
                   </div>
 
-                  <div className="conversation-row-middle">
-                    <span className="conversation-row-author">
-                      {conversation.journalAuthorName}
-                    </span>
-                    {conversation.previewText && (
-                      <span className="conversation-row-preview">
-                        {conversation.previewText}
+                  {/* Second row: journal info and participation */}
+                  <div className="thread-row-context">
+                    <span className="thread-row-journal">{thread.journalTitle}</span>
+                    <span className="thread-row-author">by {thread.journalAuthorName}</span>
+                    {participationText && (
+                      <span className="thread-row-participation">
+                        <User size={10} />
+                        {participationText}
                       </span>
                     )}
                   </div>
 
-                  <div className="conversation-row-bottom">
-                    {/* Participants */}
-                    <div className="conversation-row-participants">
-                      {conversation.participants.slice(0, 4).map((name, index) => (
+                  {/* Third row: latest comment preview */}
+                  {thread.latestCommentText && (
+                    <div className="thread-row-preview">
+                      <span className="thread-row-preview-author">{thread.latestCommentAuthor}:</span>
+                      <span className="thread-row-preview-text">{thread.latestCommentText}</span>
+                    </div>
+                  )}
+
+                  {/* Bottom row: participants and stats */}
+                  <div className="thread-row-bottom">
+                    <div className="thread-row-participants">
+                      {thread.participants.slice(0, 4).map((name, index) => (
                         <div
                           key={index}
-                          className="conversation-avatar"
+                          className="thread-avatar"
                           style={{ backgroundColor: getParticipantColor(name) }}
                           title={name}
                         >
                           {name.charAt(0).toUpperCase()}
                         </div>
                       ))}
-                      {conversation.participants.length > 4 && (
-                        <div className="conversation-avatar conversation-avatar--more">
-                          +{conversation.participants.length - 4}
+                      {thread.participants.length > 4 && (
+                        <div className="thread-avatar thread-avatar--more">
+                          +{thread.participants.length - 4}
                         </div>
                       )}
                     </div>
-
-                    {/* Stats */}
-                    <div className="conversation-row-stats">
-                      {totalComments > 0 && (
-                        <span className="conversation-row-stat">
-                          {totalComments} {totalComments === 1 ? 'comment' : 'comments'}
-                        </span>
-                      )}
-                      {conversation.highlightCount > 0 && (
-                        <span className="conversation-row-stat">
-                          {conversation.highlightCount} {conversation.highlightCount === 1 ? 'highlight' : 'highlights'}
-                        </span>
-                      )}
+                    <div className="thread-row-stats">
+                      <span className="thread-row-stat">
+                        {thread.commentCount} {thread.commentCount === 1 ? 'comment' : 'comments'}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Right: Unread count and actions */}
-                <div className="conversation-row-actions">
-                  {isUnread ? (
+                <div className="thread-row-actions">
+                  {thread.isUnread ? (
                     <>
-                      <span className="conversation-unread-count">{conversation.unreadCount}</span>
+                      <span className="thread-unread-count">{thread.unreadCount}</span>
                       <button
-                        className="conversation-mark-read-btn"
-                        onClick={(e) => handleMarkAsRead(e, conversation)}
+                        className="thread-mark-read-btn"
+                        onClick={(e) => handleMarkAsRead(e, thread)}
                         title="Mark as read"
                       >
                         <Check size={14} />
                       </button>
                     </>
                   ) : (
-                    <span className="conversation-row-chevron">›</span>
+                    <span className="thread-row-chevron">›</span>
                   )}
                 </div>
               </div>

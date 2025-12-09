@@ -1,36 +1,43 @@
 /**
- * Conversation service for fetching aggregated discussion data.
+ * Conversation service for fetching thread-level discussion data.
  */
 
 import type {
-  ConversationsResponse,
+  ThreadsResponse,
   UnreadCountResponse,
   MarkReadResponse,
+  GetThreadsOptions,
+  // Legacy
+  ConversationsResponse,
   GetConversationsOptions,
 } from '../types/conversation';
 import { apiService } from './api';
 
 export const conversationService = {
   /**
-   * Get conversations (journals with discussions) for a space.
+   * Get conversation threads for a space.
+   * Each thread is either a highlight with comments or a journal discussion.
    */
-  async getSpaceConversations(
+  async getThreads(
     spaceId: string,
-    options: GetConversationsOptions = {}
-  ): Promise<ConversationsResponse> {
-    const { limit = 20, sort = 'recent' } = options;
+    options: GetThreadsOptions = {}
+  ): Promise<ThreadsResponse> {
+    const { limit = 50, sort = 'recent', type } = options;
     const params = new URLSearchParams({
       limit: limit.toString(),
       sort,
     });
+    if (type) {
+      params.append('type', type);
+    }
 
-    return apiService.get<ConversationsResponse>(
-      `/api/spaces/${spaceId}/conversations?${params.toString()}`
+    return apiService.get<ThreadsResponse>(
+      `/api/spaces/${spaceId}/threads?${params.toString()}`
     );
   },
 
   /**
-   * Get the total unread count for a space.
+   * Get the total unread count and threads with replies for a space.
    */
   async getUnreadCount(spaceId: string): Promise<UnreadCountResponse> {
     return apiService.get<UnreadCountResponse>(
@@ -49,6 +56,26 @@ export const conversationService = {
     return apiService.post<MarkReadResponse>(
       `/api/spaces/${spaceId}/journals/${journalId}/mark-read`,
       options || {}
+    );
+  },
+
+  // ========== Legacy methods (deprecated) ==========
+
+  /**
+   * @deprecated Use getThreads instead
+   */
+  async getSpaceConversations(
+    spaceId: string,
+    options: GetConversationsOptions = {}
+  ): Promise<ConversationsResponse> {
+    const { limit = 20, sort = 'recent' } = options;
+    const params = new URLSearchParams({
+      limit: limit.toString(),
+      sort,
+    });
+
+    return apiService.get<ConversationsResponse>(
+      `/api/spaces/${spaceId}/conversations?${params.toString()}`
     );
   },
 };

@@ -636,53 +636,53 @@ class TestConversationServiceUnit:
 
             assert result is None
 
-    def test_get_author_info_found(self):
-        """Test _get_author_info when profile exists."""
+    def test_get_user_info_found(self):
+        """Test _get_user_info when profile exists."""
         from app.services.conversation_service import ConversationService
 
         with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
             "app.services.conversation_service.boto3"
-        ) as mock_boto3:
+        ):
             mock_db = Mock()
             mock_get_db.return_value = mock_db
             mock_db.get_item.return_value = {"displayName": "John Doe"}
 
             service = ConversationService()
-            result = service._get_author_info("user-123")
+            result = service._get_user_info("user-123")
 
             assert result["user_id"] == "user-123"
             assert result["display_name"] == "John Doe"
 
-    def test_get_author_info_not_found(self):
-        """Test _get_author_info when profile doesn't exist."""
+    def test_get_user_info_not_found(self):
+        """Test _get_user_info when profile doesn't exist."""
         from app.services.conversation_service import ConversationService
 
         with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
             "app.services.conversation_service.boto3"
-        ) as mock_boto3:
+        ):
             mock_db = Mock()
             mock_get_db.return_value = mock_db
             mock_db.get_item.return_value = None
 
             service = ConversationService()
-            result = service._get_author_info("user-123")
+            result = service._get_user_info("user-123")
 
             assert result["user_id"] == "user-123"
             assert result["display_name"] == "Unknown"
 
-    def test_get_author_info_handles_exception(self):
-        """Test _get_author_info handles exceptions."""
+    def test_get_user_info_handles_exception(self):
+        """Test _get_user_info handles exceptions."""
         from app.services.conversation_service import ConversationService
 
         with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
             "app.services.conversation_service.boto3"
-        ) as mock_boto3:
+        ):
             mock_db = Mock()
             mock_get_db.return_value = mock_db
             mock_db.get_item.side_effect = Exception("DB error")
 
             service = ConversationService()
-            result = service._get_author_info("user-123")
+            result = service._get_user_info("user-123")
 
             assert result["display_name"] == "Unknown"
 
@@ -1127,3 +1127,496 @@ class TestGetConversationService:
             service2 = get_conversation_service()
 
             assert service1 is service2
+
+
+class TestConversationThreads:
+    """Tests for thread-level conversation methods."""
+
+    def test_get_highlight_comments(self):
+        """Test _get_highlight_comments returns comments for a highlight."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ):
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+            mock_db.query.return_value = [
+                {"EntityType": "Comment", "text": "Comment 1"},
+                {"EntityType": "Comment", "text": "Comment 2"},
+                {"EntityType": "OtherEntity", "text": "Not a comment"},
+            ]
+
+            service = ConversationService()
+            result = service._get_highlight_comments("highlight-123")
+
+            assert len(result) == 2
+            assert all(c["EntityType"] == "Comment" for c in result)
+
+    def test_build_highlight_thread_no_comments(self):
+        """Test _build_highlight_thread returns None when no comments."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ):
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+            mock_db.query.return_value = []  # No comments
+
+            service = ConversationService()
+            result = service._build_highlight_thread(
+                {"id": "h1", "text": "Test"},
+                {"journal_id": "j1", "title": "Journal", "user_id": "u1"},
+                "user-123",
+                None,
+                {}
+            )
+
+            assert result is None
+
+    def test_build_highlight_thread_with_comments(self):
+        """Test _build_highlight_thread builds thread with comments."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ):
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            # Mock comments query
+            def mock_query(pk, index_name=None):
+                if pk == "HIGHLIGHT#h1":
+                    return [
+                        {
+                            "EntityType": "Comment",
+                            "authorId": "user-123",
+                            "authorName": "Test User",
+                            "text": "My comment",
+                            "createdAt": "2024-01-10T10:00:00Z",
+                        },
+                        {
+                            "EntityType": "Comment",
+                            "authorId": "user-456",
+                            "authorName": "Other User",
+                            "text": "Reply to you",
+                            "createdAt": "2024-01-11T10:00:00Z",
+                        },
+                    ]
+                return []
+
+            mock_db.query.side_effect = mock_query
+            mock_db.get_item.return_value = {"displayName": "Journal Author"}
+
+            service = ConversationService()
+            result = service._build_highlight_thread(
+                {
+                    "id": "h1",
+                    "text": "Highlighted text here",
+                    "createdBy": "user-123",
+                    "createdAt": "2024-01-09T10:00:00Z",
+                    "updatedAt": "2024-01-11T10:00:00Z",
+                },
+                {"journal_id": "j1", "title": "Test Journal", "user_id": "author-1"},
+                "user-123",
+                None,  # No read status
+                {}
+            )
+
+            assert result is not None
+            assert result.thread_id == "h1"
+            assert result.thread_type == "highlight"
+            assert result.comment_count == 2
+            assert result.user_participated is True
+            assert result.user_started is True
+            assert result.has_reply_to_user is True  # user-456 replied after user-123
+            assert result.is_unread is True  # No read status means unread
+            assert result.unread_count == 2
+
+    def test_build_journal_discussion_thread_no_comments(self):
+        """Test _build_journal_discussion_thread returns None when no comments."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ):
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            service = ConversationService()
+            result = service._build_journal_discussion_thread(
+                {"journal_id": "j1", "title": "Journal", "user_id": "u1"},
+                [],  # No comments
+                "user-123",
+                None,
+                {}
+            )
+
+            assert result is None
+
+    def test_build_journal_discussion_thread_with_comments(self):
+        """Test _build_journal_discussion_thread builds thread with comments."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ):
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+            mock_db.get_item.return_value = {"displayName": "Journal Author"}
+
+            service = ConversationService()
+            result = service._build_journal_discussion_thread(
+                {"journal_id": "j1", "title": "Test Journal", "user_id": "author-1"},
+                [
+                    {
+                        "authorId": "user-456",
+                        "authorName": "Other User",
+                        "text": "First comment",
+                        "createdAt": "2024-01-10T10:00:00Z",
+                    },
+                    {
+                        "authorId": "user-123",
+                        "authorName": "Me",
+                        "text": "My reply",
+                        "createdAt": "2024-01-11T10:00:00Z",
+                    },
+                ],
+                "user-123",
+                None,  # No read status
+                {}
+            )
+
+            assert result is not None
+            assert result.thread_id == "journal-discussion-j1"
+            assert result.thread_type == "journal_discussion"
+            assert result.comment_count == 2
+            assert result.user_participated is True
+            assert result.has_reply_to_user is False  # No reply after user's comment
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_threads_success(self):
+        """Test get_conversation_threads returns thread-level data."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ) as mock_boto3:
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            mock_table = Mock()
+            mock_boto3.resource.return_value.Table.return_value = mock_table
+            mock_table.query.return_value = {
+                "Items": [
+                    {"journal_id": "j1", "title": "Journal 1", "user_id": "author-1"},
+                ]
+            }
+
+            # Mock various queries
+            def mock_query(pk, index_name=None):
+                if pk == "JOURNAL#j1":
+                    return [
+                        {
+                            "EntityType": "Highlight",
+                            "spaceId": "space-123",
+                            "id": "h1",
+                            "text": "Highlighted",
+                            "createdBy": "user-456",
+                            "createdAt": "2024-01-09T10:00:00Z",
+                            "updatedAt": "2024-01-10T10:00:00Z",
+                        },
+                    ]
+                elif pk == "HIGHLIGHT#h1":
+                    return [
+                        {
+                            "EntityType": "Comment",
+                            "authorId": "user-456",
+                            "authorName": "Other",
+                            "text": "Comment",
+                            "createdAt": "2024-01-10T10:00:00Z",
+                        },
+                    ]
+                return []
+
+            mock_db.query.side_effect = mock_query
+            mock_db.get_item.return_value = {"displayName": "Author Name"}
+
+            service = ConversationService()
+            result = await service.get_conversation_threads("space-123", "user-123")
+
+            assert result is not None
+            assert isinstance(result.threads, list)
+            assert result.total_unread >= 0
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_threads_with_filter(self):
+        """Test get_conversation_threads with type filter."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ) as mock_boto3:
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            mock_table = Mock()
+            mock_boto3.resource.return_value.Table.return_value = mock_table
+            mock_table.query.return_value = {"Items": []}
+
+            service = ConversationService()
+            result = await service.get_conversation_threads(
+                "space-123", "user-123", filter_type="highlight"
+            )
+
+            assert result is not None
+            assert len(result.threads) == 0
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_threads_sort_by_replies(self):
+        """Test get_conversation_threads sorts by replies."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ) as mock_boto3:
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            mock_table = Mock()
+            mock_boto3.resource.return_value.Table.return_value = mock_table
+            mock_table.query.return_value = {"Items": []}
+
+            service = ConversationService()
+            result = await service.get_conversation_threads(
+                "space-123", "user-123", sort_by="replies"
+            )
+
+            assert result is not None
+
+    def test_build_highlight_thread_missing_highlight_id(self):
+        """Test _build_highlight_thread returns None when highlight has no id."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ):
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            service = ConversationService()
+            result = service._build_highlight_thread(
+                {"text": "No ID here"},  # No id or highlightId
+                {"journal_id": "j1", "title": "Journal", "user_id": "u1"},
+                "user-123",
+                None,
+                {}
+            )
+
+            assert result is None
+
+    def test_build_highlight_thread_with_read_status(self):
+        """Test _build_highlight_thread correctly calculates unread with read_status."""
+        from app.services.conversation_service import ConversationService
+        from app.models.read_status import ReadStatusModel
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ):
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            def mock_query(pk, index_name=None):
+                if pk == "HIGHLIGHT#h1":
+                    return [
+                        {
+                            "EntityType": "Comment",
+                            "authorId": "user-456",
+                            "authorName": "Other User",
+                            "text": "Old comment",
+                            "createdAt": "2024-01-10T10:00:00Z",
+                        },
+                        {
+                            "EntityType": "Comment",
+                            "authorId": "user-789",
+                            "authorName": "Third User",
+                            "text": "New comment",
+                            "createdAt": "2024-01-15T10:00:00Z",
+                        },
+                    ]
+                return []
+
+            mock_db.query.side_effect = mock_query
+            mock_db.get_item.return_value = {"displayName": "Author"}
+
+            read_status = ReadStatusModel(
+                userId="user-123",
+                spaceId="space-456",
+                journalId="journal-789",
+                lastReadHighlightCommentAt="2024-01-12T10:00:00Z",
+                lastReadJournalCommentAt="2024-01-12T10:00:00Z",
+            )
+
+            service = ConversationService()
+            result = service._build_highlight_thread(
+                {"id": "h1", "text": "Test", "createdBy": "user-999", "createdAt": "2024-01-09T10:00:00Z"},
+                {"journal_id": "j1", "title": "Journal", "user_id": "author-1"},
+                "user-123",
+                read_status,
+                {}
+            )
+
+            assert result is not None
+            assert result.unread_count == 1  # Only the comment after read timestamp
+            assert result.is_unread is True
+
+    def test_build_journal_discussion_thread_with_read_status(self):
+        """Test _build_journal_discussion_thread correctly calculates unread with read_status."""
+        from app.services.conversation_service import ConversationService
+        from app.models.read_status import ReadStatusModel
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ):
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+            mock_db.get_item.return_value = {"displayName": "Author"}
+
+            read_status = ReadStatusModel(
+                userId="user-123",
+                spaceId="space-456",
+                journalId="journal-789",
+                lastReadHighlightCommentAt="2024-01-12T10:00:00Z",
+                lastReadJournalCommentAt="2024-01-12T10:00:00Z",
+            )
+
+            service = ConversationService()
+            result = service._build_journal_discussion_thread(
+                {"journal_id": "j1", "title": "Test Journal", "user_id": "author-1"},
+                [
+                    {
+                        "authorId": "user-456",
+                        "authorName": "Other User",
+                        "text": "Old comment",
+                        "createdAt": "2024-01-10T10:00:00Z",
+                    },
+                    {
+                        "authorId": "user-789",
+                        "authorName": "Third User",
+                        "text": "New comment",
+                        "createdAt": "2024-01-15T10:00:00Z",
+                    },
+                ],
+                "user-123",
+                read_status,
+                {}
+            )
+
+            assert result is not None
+            assert result.unread_count == 1  # Only the comment after read timestamp
+            assert result.is_unread is True
+
+    def test_build_journal_discussion_thread_has_reply_to_user(self):
+        """Test _build_journal_discussion_thread detects replies to user."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ):
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+            mock_db.get_item.return_value = {"displayName": "Author"}
+
+            service = ConversationService()
+            result = service._build_journal_discussion_thread(
+                {"journal_id": "j1", "title": "Test Journal", "user_id": "author-1"},
+                [
+                    {
+                        "authorId": "user-123",  # Current user comments first
+                        "authorName": "Me",
+                        "text": "My comment",
+                        "createdAt": "2024-01-10T10:00:00Z",
+                    },
+                    {
+                        "authorId": "user-456",  # Someone else replies after
+                        "authorName": "Other User",
+                        "text": "Reply to you",
+                        "createdAt": "2024-01-11T10:00:00Z",
+                    },
+                ],
+                "user-123",
+                None,
+                {}
+            )
+
+            assert result is not None
+            assert result.user_participated is True
+            assert result.has_reply_to_user is True  # Other user replied after current user
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_threads_with_journal_discussion_filter(self):
+        """Test get_conversation_threads with journal_discussion filter."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ) as mock_boto3:
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            mock_table = Mock()
+            mock_boto3.resource.return_value.Table.return_value = mock_table
+            mock_table.query.return_value = {
+                "Items": [
+                    {"journal_id": "j1", "title": "Journal 1", "user_id": "author-1"},
+                ]
+            }
+
+            # Return journal comments but no highlights
+            def mock_query(pk, index_name=None):
+                if pk == "JOURNAL#j1":
+                    return [
+                        {
+                            "EntityType": "JournalComment",
+                            "spaceId": "space-123",
+                            "authorId": "user-456",
+                            "authorName": "Other",
+                            "text": "Comment",
+                            "createdAt": "2024-01-10T10:00:00Z",
+                        },
+                    ]
+                return []
+
+            mock_db.query.side_effect = mock_query
+            mock_db.get_item.return_value = {"displayName": "Author Name"}
+
+            service = ConversationService()
+            result = await service.get_conversation_threads(
+                "space-123", "user-123", filter_type="journal_discussion"
+            )
+
+            assert result is not None
+            # Should only include journal discussions, not highlights
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_threads_sort_by_unread(self):
+        """Test get_conversation_threads sorts by unread."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ) as mock_boto3:
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            mock_table = Mock()
+            mock_boto3.resource.return_value.Table.return_value = mock_table
+            mock_table.query.return_value = {"Items": []}
+
+            service = ConversationService()
+            result = await service.get_conversation_threads(
+                "space-123", "user-123", sort_by="unread"
+            )
+
+            assert result is not None
