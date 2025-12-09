@@ -55,7 +55,7 @@ export const SpaceDetail: React.FC = () => {
 
   // Conversation unread counts for tab badge
   const [conversationUnreadCount, setConversationUnreadCount] = useState(0);
-  const [conversationRepliesCount, setConversationRepliesCount] = useState(0);
+  const [, setConversationRepliesCount] = useState(0);
 
   // Ellie companion state
   const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('happy');
