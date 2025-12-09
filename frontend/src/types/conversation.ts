@@ -53,6 +53,8 @@ export interface ThreadsResponse {
   threads: ConversationThread[];
   totalUnread: number;
   threadsWithReplies: number;
+  totalCount: number;
+  hasMore: boolean;
   nextToken: string | null;
 }
 
@@ -71,8 +73,11 @@ export interface MarkReadResponse {
 
 export interface GetThreadsOptions {
   limit?: number;
+  offset?: number;
   sort?: 'recent' | 'unread' | 'replies';
   type?: 'highlight' | 'journal_discussion';
+  filter?: 'all' | 'participated';
+  search?: string;
 }
 
 // ========== Legacy types (deprecated) ==========

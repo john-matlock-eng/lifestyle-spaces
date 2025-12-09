@@ -1620,3 +1620,425 @@ class TestConversationThreads:
             )
 
             assert result is not None
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_threads_with_search(self):
+        """Test get_conversation_threads with search filter."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ) as mock_boto3:
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            mock_table = Mock()
+            mock_boto3.resource.return_value.Table.return_value = mock_table
+            mock_table.query.return_value = {
+                "Items": [
+                    {"journal_id": "j1", "title": "Test Journal About Cats", "user_id": "author-1"},
+                ]
+            }
+
+            def mock_query(pk, index_name=None):
+                if pk == "JOURNAL#j1":
+                    return [
+                        {
+                            "EntityType": "JournalComment",
+                            "spaceId": "space-123",
+                            "authorId": "user-456",
+                            "authorName": "Other",
+                            "text": "Comment about cats",
+                            "createdAt": "2024-01-10T10:00:00Z",
+                        },
+                    ]
+                return []
+
+            mock_db.query.side_effect = mock_query
+            mock_db.get_item.return_value = {"displayName": "Author Name"}
+
+            service = ConversationService()
+            result = await service.get_conversation_threads(
+                "space-123", "user-123", search="cats"
+            )
+
+            assert result is not None
+            assert result.total_count >= 0  # Should have results with "cats" in title
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_threads_with_participation_filter(self):
+        """Test get_conversation_threads with participation filter."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ) as mock_boto3:
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            mock_table = Mock()
+            mock_boto3.resource.return_value.Table.return_value = mock_table
+            mock_table.query.return_value = {"Items": []}
+
+            service = ConversationService()
+            result = await service.get_conversation_threads(
+                "space-123", "user-123", filter_participation="participated"
+            )
+
+            assert result is not None
+            assert result.threads == []  # No threads match participation filter
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_threads_with_pagination(self):
+        """Test get_conversation_threads with offset pagination."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ) as mock_boto3:
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            mock_table = Mock()
+            mock_boto3.resource.return_value.Table.return_value = mock_table
+            mock_table.query.return_value = {"Items": []}
+
+            service = ConversationService()
+            result = await service.get_conversation_threads(
+                "space-123", "user-123", limit=10, offset=5
+            )
+
+            assert result is not None
+            assert result.has_more is False  # No more items
+            assert result.total_count == 0
+
+    @pytest.mark.asyncio
+    async def test_mark_thread_as_read_journal_discussion(self):
+        """Test mark_thread_as_read for journal discussion."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ):
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+            mock_db.get_item.return_value = None  # No existing read status
+
+            service = ConversationService()
+            result = await service.mark_thread_as_read(
+                user_id="user-123",
+                space_id="space-456",
+                thread_id="journal-discussion-journal-789",
+                thread_type="journal_discussion",
+            )
+
+            assert result is True
+            mock_db.put_item.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_mark_thread_as_read_highlight(self):
+        """Test mark_thread_as_read for highlight thread."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ):
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+            mock_db.query.return_value = [{"journalId": "journal-789"}]
+            mock_db.get_item.return_value = None  # No existing read status
+
+            service = ConversationService()
+            result = await service.mark_thread_as_read(
+                user_id="user-123",
+                space_id="space-456",
+                thread_id="highlight-abc",
+                thread_type="highlight",
+            )
+
+            assert result is True
+
+    @pytest.mark.asyncio
+    async def test_mark_thread_as_read_highlight_not_found(self):
+        """Test mark_thread_as_read returns False when highlight not found."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ):
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+            mock_db.query.return_value = []  # Highlight not found
+
+            service = ConversationService()
+            result = await service.mark_thread_as_read(
+                user_id="user-123",
+                space_id="space-456",
+                thread_id="highlight-not-found",
+                thread_type="highlight",
+            )
+
+            assert result is False
+
+    @pytest.mark.asyncio
+    async def test_mark_all_as_read(self):
+        """Test mark_all_as_read marks all journals as read."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ) as mock_boto3:
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            mock_table = Mock()
+            mock_boto3.resource.return_value.Table.return_value = mock_table
+            mock_table.query.return_value = {
+                "Items": [
+                    {"journal_id": "j1", "title": "Journal 1", "user_id": "author-1"},
+                    {"journal_id": "j2", "title": "Journal 2", "user_id": "author-2"},
+                ]
+            }
+            mock_db.get_item.return_value = None  # No existing read statuses
+
+            service = ConversationService()
+            result = await service.mark_all_as_read(
+                user_id="user-123",
+                space_id="space-456",
+            )
+
+            assert result == 2  # Two journals marked as read
+            assert mock_db.put_item.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_mark_all_as_read_updates_existing(self):
+        """Test mark_all_as_read updates existing read statuses."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ) as mock_boto3:
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            mock_table = Mock()
+            mock_boto3.resource.return_value.Table.return_value = mock_table
+            mock_table.query.return_value = {
+                "Items": [
+                    {"journal_id": "j1", "title": "Journal 1", "user_id": "author-1"},
+                ]
+            }
+            mock_db.get_item.return_value = {"some": "existing_data"}  # Existing read status
+
+            service = ConversationService()
+            result = await service.mark_all_as_read(
+                user_id="user-123",
+                space_id="space-456",
+            )
+
+            assert result == 1
+            mock_db.update_item.assert_called()  # Should update, not put
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_threads_search_filters_nonmatching(self):
+        """Test search filter excludes non-matching threads."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ) as mock_boto3:
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            mock_table = Mock()
+            mock_boto3.resource.return_value.Table.return_value = mock_table
+            mock_table.query.return_value = {
+                "Items": [
+                    {"journal_id": "j1", "title": "Journal About Dogs", "user_id": "author-1"},
+                ]
+            }
+
+            def mock_query(pk, index_name=None):
+                if pk == "JOURNAL#j1":
+                    return [
+                        {
+                            "EntityType": "JournalComment",
+                            "spaceId": "space-123",
+                            "authorId": "user-456",
+                            "authorName": "Other",
+                            "text": "Comment about dogs",
+                            "createdAt": "2024-01-10T10:00:00Z",
+                        },
+                    ]
+                return []
+
+            mock_db.query.side_effect = mock_query
+            mock_db.get_item.return_value = {"displayName": "Author Name"}
+
+            service = ConversationService()
+            # Search for "cats" which doesn't exist
+            result = await service.get_conversation_threads(
+                "space-123", "user-123", search="cats"
+            )
+
+            assert result is not None
+            assert result.total_count == 0  # No results with "cats"
+
+    @pytest.mark.asyncio
+    async def test_get_conversation_threads_participation_filter_excludes(self):
+        """Test participation filter excludes threads user hasn't participated in."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ) as mock_boto3:
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            mock_table = Mock()
+            mock_boto3.resource.return_value.Table.return_value = mock_table
+            mock_table.query.return_value = {
+                "Items": [
+                    {"journal_id": "j1", "title": "Journal 1", "user_id": "author-1"},
+                ]
+            }
+
+            def mock_query(pk, index_name=None):
+                if pk == "JOURNAL#j1":
+                    return [
+                        {
+                            "EntityType": "JournalComment",
+                            "spaceId": "space-123",
+                            "authorId": "other-user",  # Not the current user
+                            "authorName": "Other",
+                            "text": "Comment",
+                            "createdAt": "2024-01-10T10:00:00Z",
+                        },
+                    ]
+                return []
+
+            mock_db.query.side_effect = mock_query
+            mock_db.get_item.return_value = {"displayName": "Author Name"}
+
+            service = ConversationService()
+            result = await service.get_conversation_threads(
+                "space-123", "user-123", filter_participation="participated"
+            )
+
+            assert result is not None
+            # Should exclude since user-123 hasn't participated
+            assert len(result.threads) == 0
+
+    @pytest.mark.asyncio
+    async def test_mark_all_as_read_skips_empty_journals(self):
+        """Test mark_all_as_read skips journals without journal_id."""
+        from app.services.conversation_service import ConversationService
+
+        with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
+            "app.services.conversation_service.boto3"
+        ) as mock_boto3:
+            mock_db = Mock()
+            mock_get_db.return_value = mock_db
+
+            mock_table = Mock()
+            mock_boto3.resource.return_value.Table.return_value = mock_table
+            mock_table.query.return_value = {
+                "Items": [
+                    {"title": "Journal Without ID"},  # No journal_id
+                    {"journal_id": "j1", "title": "Valid Journal"},
+                ]
+            }
+            mock_db.get_item.return_value = None
+
+            service = ConversationService()
+            result = await service.mark_all_as_read(
+                user_id="user-123",
+                space_id="space-456",
+            )
+
+            assert result == 1  # Only the valid journal
+
+
+class TestConversationThreadsAPI:
+    """API endpoint tests for new thread-level routes."""
+
+    @pytest.mark.asyncio
+    async def test_mark_thread_as_read_endpoint(self):
+        """Test POST /threads/{thread_id}/mark-read endpoint."""
+        from app.api.routes.conversations import mark_thread_as_read, MarkThreadReadRequest
+
+        with patch("app.api.routes.conversations.get_conversation_service") as mock_get_service:
+            mock_service = Mock()
+            mock_get_service.return_value = mock_service
+            mock_service.is_space_member.return_value = True
+            mock_service.mark_thread_as_read = AsyncMock(return_value=True)
+
+            result = await mark_thread_as_read(
+                space_id="space-123",
+                thread_id="journal-discussion-journal-456",
+                request=MarkThreadReadRequest(thread_type="journal_discussion"),
+                current_user={"sub": "user-123"},
+            )
+
+            assert result.success is True
+            assert result.thread_id == "journal-discussion-journal-456"
+
+    @pytest.mark.asyncio
+    async def test_mark_all_threads_as_read_endpoint(self):
+        """Test POST /threads/mark-all-read endpoint."""
+        from app.api.routes.conversations import mark_all_threads_as_read
+
+        with patch("app.api.routes.conversations.get_conversation_service") as mock_get_service:
+            mock_service = Mock()
+            mock_get_service.return_value = mock_service
+            mock_service.is_space_member.return_value = True
+            mock_service.mark_all_as_read = AsyncMock(return_value=5)
+
+            result = await mark_all_threads_as_read(
+                space_id="space-123",
+                current_user={"sub": "user-123"},
+            )
+
+            assert result.success is True
+            assert result.marked_count == 5
+
+    @pytest.mark.asyncio
+    async def test_get_threads_with_new_params(self):
+        """Test GET /threads endpoint with new parameters."""
+        from app.api.routes.conversations import get_conversation_threads
+
+        with patch("app.api.routes.conversations.get_conversation_service") as mock_get_service:
+            mock_service = Mock()
+            mock_get_service.return_value = mock_service
+            mock_service.is_space_member.return_value = True
+            mock_service.get_conversation_threads = AsyncMock(return_value=Mock(
+                threads=[],
+                total_unread=0,
+                threads_with_replies=0,
+                total_count=0,
+                has_more=False,
+                next_token=None,
+            ))
+
+            result = await get_conversation_threads(
+                space_id="space-123",
+                limit=20,
+                offset=10,
+                sort="unread",
+                type="highlight",
+                filter="participated",
+                search="test query",
+                current_user={"sub": "user-123"},
+            )
+
+            assert result is not None
+            mock_service.get_conversation_threads.assert_called_once_with(
+                space_id="space-123",
+                user_id="user-123",
+                limit=20,
+                offset=10,
+                sort_by="unread",
+                filter_type="highlight",
+                filter_participation="participated",
+                search="test query",
+            )

@@ -22,13 +22,20 @@ export const conversationService = {
     spaceId: string,
     options: GetThreadsOptions = {}
   ): Promise<ThreadsResponse> {
-    const { limit = 50, sort = 'recent', type } = options;
+    const { limit = 50, offset = 0, sort = 'recent', type, filter, search } = options;
     const params = new URLSearchParams({
       limit: limit.toString(),
+      offset: offset.toString(),
       sort,
     });
     if (type) {
       params.append('type', type);
+    }
+    if (filter && filter !== 'all') {
+      params.append('filter', filter);
+    }
+    if (search) {
+      params.append('search', search);
     }
 
     return apiService.get<ThreadsResponse>(
@@ -56,6 +63,30 @@ export const conversationService = {
     return apiService.post<MarkReadResponse>(
       `/api/spaces/${spaceId}/journals/${journalId}/mark-read`,
       options || {}
+    );
+  },
+
+  /**
+   * Mark a specific thread as read.
+   */
+  async markThreadAsRead(
+    spaceId: string,
+    threadId: string,
+    threadType: 'highlight' | 'journal_discussion'
+  ): Promise<MarkReadResponse> {
+    return apiService.post<MarkReadResponse>(
+      `/api/spaces/${spaceId}/threads/${threadId}/mark-read`,
+      { threadType }
+    );
+  },
+
+  /**
+   * Mark all threads in a space as read.
+   */
+  async markAllAsRead(spaceId: string): Promise<{ success: boolean; markedCount: number }> {
+    return apiService.post<{ success: boolean; markedCount: number }>(
+      `/api/spaces/${spaceId}/threads/mark-all-read`,
+      {}
     );
   },
 

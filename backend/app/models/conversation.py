@@ -69,6 +69,8 @@ class ThreadsResponse(BaseModel):
     threads: List[ConversationThread]
     total_unread: int = Field(alias="totalUnread")
     threads_with_replies: int = Field(alias="threadsWithReplies")  # Threads where someone replied to user
+    total_count: int = Field(0, alias="totalCount")  # Total threads matching filters
+    has_more: bool = Field(False, alias="hasMore")  # Whether more threads available
     next_token: Optional[str] = Field(None, alias="nextToken")
 
     model_config = ConfigDict(populate_by_name=True, by_alias=True)

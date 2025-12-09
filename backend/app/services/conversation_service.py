@@ -306,8 +306,11 @@ class ConversationService:
         space_id: str,
         user_id: str,
         limit: int = 50,
+        offset: int = 0,
         sort_by: str = "recent",
         filter_type: Optional[str] = None,  # "highlight", "journal_discussion", or None for all
+        filter_participation: Optional[str] = None,  # "participated" or None for all
+        search: Optional[str] = None,
     ) -> ThreadsResponse:
         """
         Get thread-level conversation data for a space.
@@ -316,8 +319,11 @@ class ConversationService:
             space_id: Space ID
             user_id: User requesting the data
             limit: Maximum threads to return
+            offset: Skip this many threads (for pagination)
             sort_by: "recent", "unread", "replies" (threads with replies to user)
             filter_type: Filter by thread type
+            filter_participation: Filter by user participation ("participated")
+            search: Search query for highlight text, journal title, or comment text
 
         Returns:
             ThreadsResponse with thread-level data
@@ -328,6 +334,7 @@ class ConversationService:
         total_unread = 0
         threads_with_replies = 0
         user_info_cache: Dict[str, dict] = {}
+        search_lower = search.lower() if search else None
 
         for journal in journals:
             journal_id = journal.get("journal_id")
@@ -345,6 +352,18 @@ class ConversationService:
                         highlight, journal, user_id, read_status, user_info_cache
                     )
                     if thread:
+                        # Apply participation filter
+                        if filter_participation == "participated" and not thread.user_participated:
+                            continue
+                        # Apply search filter
+                        if search_lower:
+                            searchable = " ".join([
+                                thread.highlight_text or "",
+                                thread.journal_title or "",
+                                thread.latest_comment_text or "",
+                            ]).lower()
+                            if search_lower not in searchable:
+                                continue
                         threads.append(thread)
                         total_unread += thread.unread_count
                         if thread.has_reply_to_user:
@@ -357,6 +376,17 @@ class ConversationService:
                     journal, journal_comments, user_id, read_status, user_info_cache
                 )
                 if thread:
+                    # Apply participation filter
+                    if filter_participation == "participated" and not thread.user_participated:
+                        continue
+                    # Apply search filter
+                    if search_lower:
+                        searchable = " ".join([
+                            thread.journal_title or "",
+                            thread.latest_comment_text or "",
+                        ]).lower()
+                        if search_lower not in searchable:
+                            continue
                     threads.append(thread)
                     total_unread += thread.unread_count
                     if thread.has_reply_to_user:
@@ -375,15 +405,116 @@ class ConversationService:
             # Default: most recent activity first
             threads.sort(key=lambda t: t.last_activity, reverse=True)
 
-        # Apply limit
-        threads = threads[:limit]
+        # Calculate total before pagination
+        total_count = len(threads)
+        has_more = offset + limit < total_count
+
+        # Apply pagination
+        threads = threads[offset:offset + limit]
 
         return ThreadsResponse(
             threads=threads,
             totalUnread=total_unread,
             threadsWithReplies=threads_with_replies,
+            totalCount=total_count,
+            hasMore=has_more,
             nextToken=None,
         )
+
+    async def mark_thread_as_read(
+        self,
+        user_id: str,
+        space_id: str,
+        thread_id: str,
+        thread_type: str,
+    ) -> bool:
+        """
+        Mark a specific thread as read.
+
+        For highlight threads: Updates lastReadHighlightCommentAt for the journal
+        For journal discussions: Updates lastReadJournalCommentAt for the journal
+        """
+        from datetime import datetime, timezone
+
+        now = datetime.now(timezone.utc).isoformat()
+
+        # For thread-level marking, we need to find the journal_id
+        # For highlights, thread_id is the highlight_id
+        # For journal discussions, thread_id is "journal-discussion-{journal_id}"
+
+        if thread_type == "journal_discussion":
+            # Extract journal_id from thread_id
+            journal_id = thread_id.replace("journal-discussion-", "")
+            mark_journal = True
+            mark_highlight = False
+        else:
+            # For highlights, we need to look up the journal
+            # For now, we'll mark both to ensure proper tracking
+            # In a production system, you'd query to find the specific journal
+            highlight = self.db.query(pk=f"HIGHLIGHT#{thread_id}")
+            if highlight and len(highlight) > 0:
+                journal_id = highlight[0].get("journalId", "")
+            else:
+                return False
+            mark_journal = False
+            mark_highlight = True
+
+        if not journal_id:
+            return False
+
+        return await self.mark_journal_as_read(
+            user_id=user_id,
+            space_id=space_id,
+            journal_id=journal_id,
+            mark_highlight_comments=mark_highlight,
+            mark_journal_comments=mark_journal,
+        )
+
+    async def mark_all_as_read(self, user_id: str, space_id: str) -> int:
+        """
+        Mark all threads in a space as read.
+
+        Returns the number of threads marked as read.
+        """
+        from datetime import datetime, timezone
+
+        now = datetime.now(timezone.utc).isoformat()
+        journals = self._get_journals_for_space(space_id)
+        marked_count = 0
+
+        for journal in journals:
+            journal_id = journal.get("journal_id")
+            if not journal_id:
+                continue
+
+            # Update or create read status for each journal
+            pk = f"READSTATUS#{user_id}"
+            sk = f"SPACE#{space_id}#JOURNAL#{journal_id}"
+
+            existing = self.db.get_item(pk=pk, sk=sk)
+            if existing:
+                self.db.update_item(
+                    pk=pk,
+                    sk=sk,
+                    update_expression="SET lastReadHighlightCommentAt = :ts, lastReadJournalCommentAt = :ts, updatedAt = :ts",
+                    expression_values={":ts": now},
+                )
+            else:
+                self.db.put_item({
+                    "PK": pk,
+                    "SK": sk,
+                    "EntityType": "ReadStatus",
+                    "userId": user_id,
+                    "spaceId": space_id,
+                    "journalId": journal_id,
+                    "lastReadHighlightCommentAt": now,
+                    "lastReadJournalCommentAt": now,
+                    "createdAt": now,
+                    "updatedAt": now,
+                })
+            marked_count += 1
+
+        return marked_count
 
     # ========== Legacy methods for backwards compatibility ==========
 

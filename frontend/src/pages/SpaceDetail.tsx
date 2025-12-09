@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpace } from '../stores/spaceStore';
 import { useAuth } from '../stores/authStore';
@@ -10,6 +10,7 @@ import { JournalList } from '../features/journal/components/JournalList';
 import { ActivityFeed } from '../components/ActivityFeed';
 import { ConversationsTab } from '../components/ConversationsTab';
 import { regenerateInviteCode, updateSpace } from '../services/spaces';
+import { conversationService } from '../services/conversationService';
 import { ElliePerch } from '../components/ellie';
 import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationContext';
 import type { SpaceMemberRole, SpaceMember } from '../types';
@@ -52,6 +53,10 @@ export const SpaceDetail: React.FC = () => {
   const [isEditingCalendar, setIsEditingCalendar] = useState(false);
   const [calendarUrlInput, setCalendarUrlInput] = useState('');
 
+  // Conversation unread counts for tab badge
+  const [conversationUnreadCount, setConversationUnreadCount] = useState(0);
+  const [conversationRepliesCount, setConversationRepliesCount] = useState(0);
+
   // Ellie companion state
   const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('happy');
 
@@ -64,8 +69,21 @@ export const SpaceDetail: React.FC = () => {
       clearError();
       selectSpace(spaceId);
       fetchSpaceInvitations(spaceId);
+      // Fetch initial unread count for conversations tab badge
+      conversationService.getUnreadCount(spaceId)
+        .then(response => {
+          setConversationUnreadCount(response.totalUnread);
+          setConversationRepliesCount(response.threadsWithReplies);
+        })
+        .catch(err => console.error('Error fetching unread count:', err));
     }
   }, [spaceId, selectSpace, fetchSpaceInvitations, clearError]);
+
+  // Callback for ConversationsTab to update unread counts
+  const handleConversationUnreadChange = useCallback((count: number, repliesCount: number) => {
+    setConversationUnreadCount(count);
+    setConversationRepliesCount(repliesCount);
+  }, []);
 
   // Sync activeTab with URL parameter
   useEffect(() => {
@@ -493,6 +511,11 @@ export const SpaceDetail: React.FC = () => {
             className={`tab ${activeTab === 'conversations' ? 'tab--active' : ''}`}
           >
             Conversations
+            {conversationUnreadCount > 0 && (
+              <span className="tab-badge" title={`${conversationUnreadCount} unread`}>
+                {conversationUnreadCount > 99 ? '99+' : conversationUnreadCount}
+              </span>
+            )}
           </button>
           <button
             type="button"
@@ -572,7 +595,7 @@ export const SpaceDetail: React.FC = () => {
             aria-labelledby="conversations-tab"
             className="tab-panel"
           >
-            <ConversationsTab spaceId={spaceId} />
+            <ConversationsTab spaceId={spaceId} onUnreadCountChange={handleConversationUnreadChange} />
           </div>
         )}
 
