@@ -11,13 +11,16 @@
 .list-section-display mark,
 .checkbox-section-display mark,
 .scale-section-display mark,
-.table-section-display mark {
+.table-section-display mark,
+.moment-block-field-text mark {
   /* Ensure highlight colors are visible in both light and dark modes */
   color: #1a1a1a !important;
   padding: 2px 1px;
   border-radius: 3px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
+  /* Prevent background blending with parent elements */
+  isolation: isolate;
 }
 
 /* Ensure highlights maintain good contrast in dark mode */
@@ -26,7 +29,8 @@
 .dark .list-section-display mark,
 .dark .checkbox-section-display mark,
 .dark .scale-section-display mark,
-.dark .table-section-display mark {
+.dark .table-section-display mark,
+.dark .moment-block-field-text mark {
   color: #1f2937 !important;
 }
 
