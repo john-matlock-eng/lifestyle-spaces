@@ -509,8 +509,8 @@ ${content}
                             sectionId={section.id}
                             journalEntryId={journalId || ''}
                             spaceId={spaceId || ''}
-                            highlights={sectionHighlights}
-                            onHighlightCreate={handleHighlightCreate}
+                            highlights={highlights}
+                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
                             onHighlightClick={handleHighlightClick}
                             onHighlightUpdate={updateHighlight}
                             onHighlightDelete={deleteHighlight}
@@ -656,8 +656,8 @@ ${content}
                       sectionId={section.id}
                       journalEntryId={journalId || ''}
                       spaceId={spaceId || ''}
-                      highlights={highlights.filter(h => h.sectionId?.startsWith(`${section.id}-moment`))}
-                      onHighlightCreate={handleHighlightCreate}
+                      highlights={highlights}
+                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
                       onHighlightClick={handleHighlightClick}
                       onHighlightUpdate={updateHighlight}
                       onHighlightDelete={deleteHighlight}

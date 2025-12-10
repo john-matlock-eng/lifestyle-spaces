@@ -1,7 +1,7 @@
 import React from 'react'
 import { Plus, X } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
-import { MomentBlock, MomentSubField } from '../../types/template.types'
+import type { MomentBlock, MomentSubField } from '../../types/template.types'
 import '../../styles/moment-blocks.css'
 
 interface MomentBlocksSectionProps {
@@ -158,7 +158,7 @@ export const MomentBlocksSection: React.FC<MomentBlocksSectionProps> = ({
                 </label>
                 <textarea
                   id={`moment-${moment.id}-${field.id}`}
-                  value={(moment as Record<string, string>)[field.id] || ''}
+                  value={(moment as unknown as Record<string, string>)[field.id] || ''}
                   onChange={(e) => updateMomentField(momentIndex, field.id, e.target.value)}
                   onBlur={(e) => handleFieldBlur(momentIndex, field.id, e.target.value)}
                   placeholder={field.placeholder}

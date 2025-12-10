@@ -143,7 +143,7 @@ export const JournalEditPage: React.FC = () => {
               const isCustomSection = sectionId.startsWith('custom_')
 
               // Parse content based on section type
-              let parsedContent: string | QAPair[] | ListItem[] | TableRow[] | number
+              let parsedContent: string | QAPair[] | ListItem[] | TableRow[] | MomentBlock[] | number
               if (section.type === 'q_and_a') {
                 try {
                   // Parse JSON string back to QAPair array
@@ -227,7 +227,7 @@ export const JournalEditPage: React.FC = () => {
               mainContent = section.content
             } else if (sectionId.startsWith('custom_')) {
               // This is a custom section
-              let parsedContent: string | QAPair[] | ListItem[] | TableRow[] | number
+              let parsedContent: string | QAPair[] | ListItem[] | TableRow[] | MomentBlock[] | number
 
               if (section.type === 'q_and_a') {
                 try {
