@@ -19,8 +19,16 @@
   border-radius: 3px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
-  /* Prevent background blending with parent elements */
+  /* Prevent color blending with parent backgrounds */
   isolation: isolate;
+  mix-blend-mode: normal;
+  background-blend-mode: normal;
+}
+
+/* Add white backdrop to maintain pastel appearance on tinted dark backgrounds */
+.dark .moment-block-field-text mark,
+.dark .qa-pair-answer-display mark {
+  box-shadow: inset 0 0 0 100px rgba(255, 255, 255, 0.2);
 }
 
 /* Ensure highlights maintain good contrast in dark mode */
