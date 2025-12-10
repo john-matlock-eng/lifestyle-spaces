@@ -222,7 +222,6 @@
   background: var(--theme-bg-surface);
   border: 1px solid var(--theme-border-light);
   border-radius: 12px;
-  overflow: hidden;
   /* Subtle indigo tint */
   background: linear-gradient(
     135deg,

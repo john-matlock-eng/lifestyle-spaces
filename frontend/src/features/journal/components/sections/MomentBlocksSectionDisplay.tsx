@@ -70,7 +70,7 @@ export const MomentBlocksSectionDisplay: React.FC<MomentBlocksSectionDisplayProp
         // Filter highlights for this specific moment
         const momentSectionId = `${sectionId}-moment-${moment.id}`;
         const momentHighlights = highlights.filter(h =>
-          h.sectionId?.startsWith(momentSectionId)
+          h.textRange.startContainerId === momentSectionId
         );
 
         // Build markdown content for the moment
