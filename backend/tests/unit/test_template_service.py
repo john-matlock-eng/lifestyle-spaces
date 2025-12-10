@@ -263,7 +263,7 @@ class TestTemplateService:
 
         # Check moment limits
         assert moments_section.config.get("minMoments") == 1
-        assert moments_section.config.get("maxMoments") == 3
+        assert moments_section.config.get("maxMoments") == 10
         assert moments_section.config.get("defaultMoments") == 1
         assert moments_section.config.get("textareaRows") == 4
 
