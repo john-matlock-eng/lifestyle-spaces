@@ -67,26 +67,10 @@ export const MomentBlocksSectionDisplay: React.FC<MomentBlocksSectionDisplayProp
   return (
     <div className={`moment-blocks-display ${className}`}>
       {nonEmptyMoments.map((moment, index) => {
-        // Filter highlights for this specific moment
-        const momentSectionId = `${sectionId}-moment-${moment.id}`;
-        const momentHighlights = highlights.filter(h =>
-          h.textRange.startContainerId === momentSectionId
-        );
-
-        // Build markdown content for the moment
-        const parts: string[] = [];
-
-        if (moment.scene?.trim()) {
-          parts.push(`**The Scene**\n${moment.scene}`);
-        }
-        if (moment.reaction?.trim()) {
-          parts.push(`**The Reaction**\n${moment.reaction}`);
-        }
-        if (moment.takeaway?.trim()) {
-          parts.push(`**The Takeaway**\n${moment.takeaway}`);
-        }
-
-        const markdownContent = parts.join('\n\n');
+        // Create compound section IDs for each sub-field
+        const sceneSectionId = `${sectionId}-moment-${moment.id}-scene`;
+        const reactionSectionId = `${sectionId}-moment-${moment.id}-reaction`;
+        const takeawaySectionId = `${sectionId}-moment-${moment.id}-takeaway`;
 
         return (
           <div key={moment.id} className="moment-block-display">
@@ -94,19 +78,71 @@ export const MomentBlocksSectionDisplay: React.FC<MomentBlocksSectionDisplayProp
               <span className="moment-block-display-number">Moment {index + 1}</span>
             </div>
             <div className="moment-block-display-content">
-              <HighlightableText
-                content={markdownContent}
-                highlights={momentHighlights}
-                journalEntryId={journalEntryId}
-                spaceId={spaceId}
-                sectionId={momentSectionId}
-                onHighlightCreate={onHighlightCreate}
-                onHighlightClick={onHighlightClick}
-                onHighlightUpdate={onHighlightUpdate}
-                onHighlightDelete={onHighlightDelete}
-                isReadOnly={isReadOnly}
-                className="moment-block-text"
-              />
+              {moment.scene?.trim() && (
+                <div className="moment-block-field-display">
+                  <div className="moment-block-field-label">The Scene</div>
+                  <HighlightableText
+                    content={moment.scene}
+                    highlights={highlights.filter(h =>
+                      h.textRange.startContainerId === sceneSectionId
+                    )}
+                    journalEntryId={journalEntryId}
+                    spaceId={spaceId}
+                    sectionId={sceneSectionId}
+                    onHighlightCreate={onHighlightCreate}
+                    onHighlightClick={onHighlightClick}
+                    onHighlightUpdate={onHighlightUpdate}
+                    onHighlightDelete={onHighlightDelete}
+                    isReadOnly={isReadOnly}
+                    useMarkdown={false}
+                    className="moment-block-field-text"
+                  />
+                </div>
+              )}
+
+              {moment.reaction?.trim() && (
+                <div className="moment-block-field-display">
+                  <div className="moment-block-field-label">The Reaction</div>
+                  <HighlightableText
+                    content={moment.reaction}
+                    highlights={highlights.filter(h =>
+                      h.textRange.startContainerId === reactionSectionId
+                    )}
+                    journalEntryId={journalEntryId}
+                    spaceId={spaceId}
+                    sectionId={reactionSectionId}
+                    onHighlightCreate={onHighlightCreate}
+                    onHighlightClick={onHighlightClick}
+                    onHighlightUpdate={onHighlightUpdate}
+                    onHighlightDelete={onHighlightDelete}
+                    isReadOnly={isReadOnly}
+                    useMarkdown={false}
+                    className="moment-block-field-text"
+                  />
+                </div>
+              )}
+
+              {moment.takeaway?.trim() && (
+                <div className="moment-block-field-display">
+                  <div className="moment-block-field-label">The Takeaway</div>
+                  <HighlightableText
+                    content={moment.takeaway}
+                    highlights={highlights.filter(h =>
+                      h.textRange.startContainerId === takeawaySectionId
+                    )}
+                    journalEntryId={journalEntryId}
+                    spaceId={spaceId}
+                    sectionId={takeawaySectionId}
+                    onHighlightCreate={onHighlightCreate}
+                    onHighlightClick={onHighlightClick}
+                    onHighlightUpdate={onHighlightUpdate}
+                    onHighlightDelete={onHighlightDelete}
+                    isReadOnly={isReadOnly}
+                    useMarkdown={false}
+                    className="moment-block-field-text"
+                  />
+                </div>
+              )}
             </div>
           </div>
         );

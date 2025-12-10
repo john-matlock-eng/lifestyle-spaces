@@ -268,19 +268,26 @@
   line-height: 1.7;
 }
 
-.moment-block-text strong {
-  display: block;
+.moment-block-field-display {
+  margin-bottom: 16px;
+}
+
+.moment-block-field-display:last-child {
+  margin-bottom: 0;
+}
+
+.moment-block-field-label {
   font-size: 12px;
   font-weight: 600;
   color: var(--theme-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.3px;
   margin-bottom: 6px;
-  margin-top: 16px;
 }
 
-.moment-block-text strong:first-child {
-  margin-top: 0;
+.moment-block-field-text {
+  line-height: 1.7;
+  color: var(--theme-text-primary);
 }
 
 /* ============================
