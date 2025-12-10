@@ -26,6 +26,7 @@ import { QASectionDisplay } from '../components/sections/QASectionDisplay'
 import { CheckboxSectionDisplay } from '../components/sections/CheckboxSectionDisplay'
 import { ScaleSectionDisplay } from '../components/sections/ScaleSectionDisplay'
 import { TableSectionDisplay } from '../components/sections/TableSectionDisplay'
+import { MomentBlocksSectionDisplay } from '../components/sections/MomentBlocksSectionDisplay'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -502,6 +503,18 @@ ${content}
                             value={section.content}
                             config={template?.sections.find(s => s.id === section.id)?.config}
                           />
+                        ) : section.type === 'moment_blocks' ? (
+                          <MomentBlocksSectionDisplay
+                            value={section.content}
+                            sectionId={section.id}
+                            journalEntryId={journalId || ''}
+                            spaceId={spaceId || ''}
+                            highlights={sectionHighlights}
+                            onHighlightCreate={handleHighlightCreate}
+                            onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
+                            onHighlightDelete={deleteHighlight}
+                          />
                         ) : (
                           // Fallback to markdown paragraph rendering
                           <HighlightableText
@@ -635,6 +648,20 @@ ${content}
                       value={section.content}
                       config={template?.sections.find(s => s.id === section.id)?.config}
                       className="scale-view-section"
+                    />
+                  ) : section.type === 'moment_blocks' ? (
+                    // Render Moment Blocks section with highlighting support
+                    <MomentBlocksSectionDisplay
+                      value={section.content}
+                      sectionId={section.id}
+                      journalEntryId={journalId || ''}
+                      spaceId={spaceId || ''}
+                      highlights={highlights.filter(h => h.sectionId?.startsWith(`${section.id}-moment`))}
+                      onHighlightCreate={handleHighlightCreate}
+                      onHighlightClick={handleHighlightClick}
+                      onHighlightUpdate={updateHighlight}
+                      onHighlightDelete={deleteHighlight}
+                      className="moment-blocks-display-compact"
                     />
                   ) : (
                     // Render other section types with highlighting

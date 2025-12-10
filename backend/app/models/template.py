@@ -18,7 +18,7 @@ class TemplateSection(BaseModel):
 
     id: str = Field(..., description="Unique section identifier")
     title: str = Field(..., description="Section title")
-    type: Literal["paragraph", "q_and_a", "list", "checkbox", "scale", "time_log", "table"] = Field(
+    type: Literal["paragraph", "q_and_a", "list", "checkbox", "scale", "time_log", "table", "moment_blocks"] = Field(
         default="paragraph", description="Section type"
     )
     placeholder: str = Field(..., description="Placeholder text for the section")

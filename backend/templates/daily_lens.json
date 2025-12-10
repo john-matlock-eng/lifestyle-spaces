@@ -1,0 +1,200 @@
+{
+  "id": "daily_lens",
+  "name": "The Daily Lens",
+  "description": "Capture the texture of your day through 2-3 specific moments, exploring each from event through feeling to insight",
+  "version": 1,
+  "icon": "🔍",
+  "color": "#6366F1",
+  "cadence": "daily",
+  "estimatedTime": "10-15 minutes",
+  "ellie": {
+    "onSelect": {
+      "mood": "zen",
+      "message": "Let's find the moments that shaped today 🔍",
+      "animation": "sway"
+    },
+    "onStart": {
+      "mood": "curious",
+      "message": "We're not summarizing today—we're focusing on what actually landed."
+    },
+    "onComplete": {
+      "mood": "proud",
+      "message": "You've captured real texture here. This is how days become wisdom 💜",
+      "particleEffect": "sparkles"
+    },
+    "onSave": {
+      "mood": "zen",
+      "message": "Another day seen clearly. Rest well 🌙",
+      "particleEffect": "hearts"
+    },
+    "theme": {
+      "supportive": true,
+      "energetic": false,
+      "reflective": true
+    }
+  },
+  "sections": [
+    {
+      "id": "arrival",
+      "title": "Headspace & Energy",
+      "type": "paragraph",
+      "placeholder": "Before we look at specific moments, how are you landing right now? What's your internal weather?",
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "zen",
+          "message": "Take a breath. Just check in—no need to perform, just be 🌬️"
+        },
+        "onComplete": {
+          "mood": "happy",
+          "message": "Good grounding. Now let's look at what stood out today."
+        },
+        "hints": [
+          "Tired, wired, scattered, settled?",
+          "What's the background hum of your mind right now?",
+          "Are you arriving from ease or urgency?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "20": {
+              "mood": "zen",
+              "message": "That's enough context. Let's move to the moments."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "moments",
+      "title": "Moments that Mattered",
+      "type": "moment_blocks",
+      "placeholder": "Pick 1-3 specific moments that grabbed your attention today",
+      "defaultValue": [],
+      "config": {
+        "minMoments": 1,
+        "maxMoments": 10,
+        "defaultMoments": 1,
+        "textareaRows": 4,
+        "subFields": [
+          {
+            "id": "scene",
+            "label": "The Scene",
+            "placeholder": "Briefly, what happened?",
+            "hint": "Just the facts—set the stage in 1-2 sentences"
+          },
+          {
+            "id": "reaction",
+            "label": "The Reaction",
+            "placeholder": "What was the somatic or emotional spike?",
+            "hint": "Frustration, warmth, tightening chest, relief, tears?"
+          },
+          {
+            "id": "takeaway",
+            "label": "The Takeaway",
+            "placeholder": "What does this tell you about your needs or values?",
+            "hint": "The insight, question, or intention you're carrying forward",
+            "optional": true
+          }
+        ]
+      },
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "Don't list everything. Just pick the moments that 'glowed' or 'stung' 🔍"
+        },
+        "onAddMoment": {
+          "mood": "excited",
+          "message": "Another moment to explore—let's go deeper 💭"
+        },
+        "onRemoveMoment": {
+          "mood": "zen",
+          "message": "Sometimes less is more. Focus on what matters most."
+        },
+        "onComplete": {
+          "mood": "proud",
+          "message": "These aren't just events anymore—they're understood experiences 💜"
+        },
+        "perSubField": {
+          "scene": {
+            "onComplete": {
+              "mood": "curious",
+              "message": "Got it. Now, what did that *feel* like?"
+            }
+          },
+          "reaction": {
+            "onComplete": {
+              "mood": "zen",
+              "message": "Thank you for naming that. Now—what's the meaning?"
+            }
+          },
+          "takeaway": {
+            "onComplete": {
+              "mood": "proud",
+              "message": "That's the gold. You're not just logging—you're learning ✨"
+            },
+            "onSkip": {
+              "mood": "zen",
+              "message": "That's okay. Sometimes witnessing is enough."
+            }
+          }
+        },
+        "encouragement": {
+          "momentCount": {
+            "1": {
+              "mood": "zen",
+              "message": "One deep moment is plenty. Quality over quantity."
+            },
+            "2": {
+              "mood": "happy",
+              "message": "Two anchors—you're capturing the day's texture well."
+            },
+            "3": {
+              "mood": "excited",
+              "message": "Three moments! Rich day. Let's see what connects them.",
+              "particleEffect": "sparkles"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "synthesis",
+      "title": "The Common Thread",
+      "type": "paragraph",
+      "placeholder": "Looking at these specific moments together, is there a theme? What are you carrying forward?",
+      "defaultValue": "",
+      "ellie": {
+        "onStart": {
+          "mood": "curious",
+          "message": "Step back now. When you look at these moments side by side, what do you see? 🧵"
+        },
+        "onComplete": {
+          "mood": "celebrating",
+          "message": "You've woven today into understanding. That's powerful work 🌟",
+          "particleEffect": "hearts"
+        },
+        "onSkip": {
+          "mood": "zen",
+          "message": "That's okay—sometimes the synthesis comes later, or not at all."
+        },
+        "hints": [
+          "Any patterns between the moments?",
+          "What's the one-sentence theme of today?",
+          "What intention does this spark for tomorrow?"
+        ],
+        "encouragement": {
+          "wordCount": {
+            "30": {
+              "mood": "happy",
+              "message": "Good synthesis—you're connecting the dots."
+            },
+            "60": {
+              "mood": "proud",
+              "message": "This integration is where the real insight lives 💜"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

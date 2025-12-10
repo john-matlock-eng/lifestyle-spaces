@@ -9,6 +9,7 @@ import { ListSection } from '../components/sections/ListSection'
 import { CheckboxSection } from '../components/sections/CheckboxSection'
 import { ScaleSection } from '../components/sections/ScaleSection'
 import { TableSection } from '../components/sections/TableSection'
+import { MomentBlocksSection } from '../components/sections/MomentBlocksSection'
 import AIWritingPrompts from '../../../components/AIWritingPrompts'
 import { useJournal } from '../hooks/useJournal'
 import { useSectionTipTap } from '../hooks/useSectionTipTap'
@@ -18,7 +19,7 @@ import { aiService } from '../../../services/ai'
 import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { useEllieJournalGuide } from '../hooks/useEllieJournalGuide'
-import type { Template, TemplateData, QAPair, ListItem, TableRow } from '../types/template.types'
+import type { Template, TemplateData, QAPair, ListItem, TableRow, MomentBlock } from '../types/template.types'
 import type { CustomSection } from '../types/customSection.types'
 import { Trash2, Edit2, Bot } from 'lucide-react'
 import '../styles/journal.css'
@@ -99,6 +100,8 @@ export const JournalCreatePage: React.FC = () => {
             initialData[section.id] = (Array.isArray(section.defaultValue) ? section.defaultValue : []) as TableRow[]
           } else if (section.type === 'scale') {
             initialData[section.id] = typeof section.defaultValue === 'number' ? section.defaultValue : 5
+          } else if (section.type === 'moment_blocks') {
+            initialData[section.id] = (Array.isArray(section.defaultValue) ? section.defaultValue : []) as MomentBlock[]
           } else {
             initialData[section.id] = typeof section.defaultValue === 'string' ? section.defaultValue : ''
           }
@@ -110,6 +113,8 @@ export const JournalCreatePage: React.FC = () => {
           initialData[section.id] = [] as TableRow[]
         } else if (section.type === 'scale') {
           initialData[section.id] = 5
+        } else if (section.type === 'moment_blocks') {
+          initialData[section.id] = [] as MomentBlock[]
         } else {
           initialData[section.id] = ''
         }
@@ -124,7 +129,7 @@ export const JournalCreatePage: React.FC = () => {
     }
   }
 
-  const handleTemplateDataChange = (sectionId: string, value: string | QAPair[] | ListItem[] | TableRow[] | number) => {
+  const handleTemplateDataChange = (sectionId: string, value: string | QAPair[] | ListItem[] | TableRow[] | MomentBlock[] | number) => {
     // Notify Ellie of typing activity
     handleTyping()
 
@@ -229,6 +234,15 @@ export const JournalCreatePage: React.FC = () => {
                   type: section.type
                 }
               }
+            } else if (section.type === 'moment_blocks') {
+              // Moment blocks store arrays of MomentBlock objects
+              if (Array.isArray(sectionContent) && sectionContent.length > 0) {
+                sections[section.id] = {
+                  content: JSON.stringify(sectionContent),
+                  title: section.title,
+                  type: section.type
+                }
+              }
             } else {
               // Other sections (paragraph) store strings
               if (sectionContent && typeof sectionContent === 'string' && sectionContent.trim()) {
@@ -244,7 +258,7 @@ export const JournalCreatePage: React.FC = () => {
 
         // Add custom sections
         customSections.forEach(section => {
-          if (section.type === 'q_and_a' || section.type === 'list' || section.type === 'checkbox') {
+          if (section.type === 'q_and_a' || section.type === 'list' || section.type === 'checkbox' || section.type === 'moment_blocks') {
             // Q&A, List, and Checkbox sections store arrays
             if (Array.isArray(section.content) && section.content.length > 0) {
               sections[section.id] = {
@@ -565,6 +579,16 @@ export const JournalCreatePage: React.FC = () => {
                         if (typeof section.defaultValue === 'number') return section.defaultValue
                         return 5
                       })()}
+                      onChange={(value) => handleTemplateDataChange(section.id, value)}
+                      placeholder={section.placeholder}
+                      disabled={loading}
+                      config={section.config}
+                    />
+                  ) : section.type === 'moment_blocks' ? (
+                    <MomentBlocksSection
+                      value={(Array.isArray(templateData[section.id]) ? templateData[section.id] :
+                        Array.isArray(section.defaultValue) ? section.defaultValue :
+                        []) as MomentBlock[]}
                       onChange={(value) => handleTemplateDataChange(section.id, value)}
                       placeholder={section.placeholder}
                       disabled={loading}

@@ -104,6 +104,7 @@ class TestTemplateService:
             "gratitude_daily",
             "weekly_gratitude_reflection",
             "daily_log",
+            "daily_lens",
             "mood_tracker",
             "goal_progress",
             "blank",
@@ -226,3 +227,121 @@ class TestTemplateService:
 
         # Paragraph section should have empty string default
         assert defaults["emotional_landscape"] == ""
+
+    def test_daily_lens_template_loads(self, template_service):
+        """Test that Daily Lens template loads successfully."""
+        template = template_service.get_template("daily_lens")
+
+        assert template.id == "daily_lens"
+        assert template.name == "The Daily Lens"
+        assert template.icon == "🔍"
+        assert template.color == "#6366F1"
+        assert "moments" in template.description.lower()
+
+    def test_daily_lens_has_moment_blocks_section(self, template_service):
+        """Test that Daily Lens has a moment_blocks section type."""
+        template = template_service.get_template("daily_lens")
+
+        # Should have 3 sections: arrival, moments, synthesis
+        assert len(template.sections) == 3
+
+        # Find the moment_blocks section
+        moments_section = next(
+            (s for s in template.sections if s.type == "moment_blocks"), None
+        )
+        assert moments_section is not None
+        assert moments_section.id == "moments"
+        assert moments_section.title == "Moments that Mattered"
+
+    def test_daily_lens_moment_blocks_config(self, template_service):
+        """Test moment_blocks section has correct config structure."""
+        template = template_service.get_template("daily_lens")
+        moments_section = next(s for s in template.sections if s.id == "moments")
+
+        # Check config exists
+        assert moments_section.config is not None
+
+        # Check moment limits
+        assert moments_section.config.get("minMoments") == 1
+        assert moments_section.config.get("maxMoments") == 3
+        assert moments_section.config.get("defaultMoments") == 1
+        assert moments_section.config.get("textareaRows") == 4
+
+        # Check subFields
+        sub_fields = moments_section.config.get("subFields")
+        assert sub_fields is not None
+        assert len(sub_fields) == 3
+
+        # Verify sub-field structure
+        scene = sub_fields[0]
+        assert scene["id"] == "scene"
+        assert scene["label"] == "The Scene"
+        assert "placeholder" in scene
+
+        reaction = sub_fields[1]
+        assert reaction["id"] == "reaction"
+        assert reaction["label"] == "The Reaction"
+
+        takeaway = sub_fields[2]
+        assert takeaway["id"] == "takeaway"
+        assert takeaway["label"] == "The Takeaway"
+        assert takeaway.get("optional") is True
+
+    def test_daily_lens_ellie_configuration(self, template_service):
+        """Test Daily Lens has comprehensive Ellie guidance."""
+        template = template_service.get_template("daily_lens")
+
+        # Template-level Ellie
+        assert template.ellie is not None
+        assert "onSelect" in template.ellie
+        assert "onStart" in template.ellie
+        assert "onComplete" in template.ellie
+        assert "onSave" in template.ellie
+        assert template.ellie.get("theme", {}).get("reflective") is True
+
+        # Check moments section has moment-specific Ellie events
+        moments_section = next(s for s in template.sections if s.id == "moments")
+        assert moments_section.ellie is not None
+        assert "onAddMoment" in moments_section.ellie
+        assert "onRemoveMoment" in moments_section.ellie
+        assert "perSubField" in moments_section.ellie
+
+        # Check momentCount encouragement
+        encouragement = moments_section.ellie.get("encouragement", {})
+        assert "momentCount" in encouragement
+        assert "1" in encouragement["momentCount"]
+        assert "2" in encouragement["momentCount"]
+        assert "3" in encouragement["momentCount"]
+
+    def test_daily_lens_validation(self, template_service):
+        """Test validating Daily Lens template data."""
+        valid_data = {
+            "arrival": "Feeling settled after a long day.",
+            "moments": "[]",
+            "synthesis": "The common thread is connection.",
+        }
+
+        assert template_service.validate_template_data("daily_lens", valid_data) is True
+
+        # Invalid data
+        invalid_data = {"wrong_section": "content"}
+
+        with pytest.raises(ValidationError) as exc_info:
+            template_service.validate_template_data("daily_lens", invalid_data)
+
+        assert "Invalid sections" in str(exc_info.value)
+
+    def test_daily_lens_defaults(self, template_service):
+        """Test default values for Daily Lens template."""
+        defaults = template_service.apply_template_defaults("daily_lens")
+
+        assert "arrival" in defaults
+        assert "moments" in defaults
+        assert "synthesis" in defaults
+
+        # Paragraph sections should have empty string
+        assert defaults["arrival"] == ""
+        assert defaults["synthesis"] == ""
+
+        # moment_blocks should have empty array
+        assert defaults["moments"] == []

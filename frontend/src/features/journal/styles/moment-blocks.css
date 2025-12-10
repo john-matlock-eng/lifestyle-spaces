@@ -1,0 +1,328 @@
+/**
+ * Moment Blocks Section Styles
+ * For "The Daily Lens" template and similar moment-based journaling
+ */
+
+/* ============================
+   Editor Styles
+   ============================ */
+
+.moment-blocks-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.moment-block {
+  background: var(--theme-bg-surface);
+  border: 1px solid var(--theme-border-light);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+  /* Subtle indigo tint for glassmorphism effect */
+  background: linear-gradient(
+    135deg,
+    var(--theme-bg-surface) 0%,
+    rgba(99, 102, 241, 0.03) 100%
+  );
+}
+
+.dark .moment-block {
+  background: linear-gradient(
+    135deg,
+    var(--theme-bg-surface) 0%,
+    rgba(99, 102, 241, 0.08) 100%
+  );
+}
+
+.moment-block:hover {
+  border-color: var(--theme-primary-400);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+}
+
+.dark .moment-block:hover {
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.moment-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--theme-border-light);
+}
+
+.moment-block-number {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--theme-primary-600);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark .moment-block-number {
+  color: var(--theme-primary-400);
+}
+
+.moment-block-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--theme-text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.moment-block-remove:hover:not(:disabled) {
+  background: var(--theme-error-50, rgba(239, 68, 68, 0.1));
+  color: var(--theme-error-600, #dc2626);
+}
+
+.dark .moment-block-remove:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--theme-error-400, #f87171);
+}
+
+.moment-block-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.moment-block-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.moment-block-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.moment-block-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--theme-text-secondary);
+}
+
+.moment-block-optional {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--theme-text-muted);
+  font-style: italic;
+}
+
+.moment-block-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--theme-border-light);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  background: var(--theme-bg-elevated);
+  color: var(--theme-text-primary);
+  resize: vertical;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.moment-block-textarea::placeholder {
+  color: var(--theme-text-muted);
+}
+
+.moment-block-textarea:focus {
+  outline: none;
+  border-color: var(--theme-primary-600);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.dark .moment-block-textarea:focus {
+  border-color: var(--theme-primary-400);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.moment-block-textarea:disabled {
+  background: var(--theme-bg-base);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.moment-block-hint {
+  font-size: 12px;
+  color: var(--theme-text-muted);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.moment-block-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border: 2px dashed var(--theme-border-base);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--theme-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.moment-block-add:hover:not(:disabled) {
+  border-color: var(--theme-primary-400);
+  color: var(--theme-primary-600);
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.dark .moment-block-add:hover:not(:disabled) {
+  color: var(--theme-primary-400);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.moment-block-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================
+   Display Styles (Read-only)
+   ============================ */
+
+.moment-blocks-display {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.moment-blocks-empty {
+  color: var(--theme-text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 24px;
+}
+
+.moment-block-display {
+  background: var(--theme-bg-surface);
+  border: 1px solid var(--theme-border-light);
+  border-radius: 12px;
+  overflow: hidden;
+  /* Subtle indigo tint */
+  background: linear-gradient(
+    135deg,
+    var(--theme-bg-surface) 0%,
+    rgba(99, 102, 241, 0.02) 100%
+  );
+}
+
+.dark .moment-block-display {
+  background: linear-gradient(
+    135deg,
+    var(--theme-bg-surface) 0%,
+    rgba(99, 102, 241, 0.06) 100%
+  );
+}
+
+.moment-block-display-header {
+  padding: 12px 16px;
+  background: rgba(99, 102, 241, 0.06);
+  border-bottom: 1px solid var(--theme-border-light);
+}
+
+.dark .moment-block-display-header {
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.moment-block-display-number {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--theme-primary-600);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark .moment-block-display-number {
+  color: var(--theme-primary-400);
+}
+
+.moment-block-display-content {
+  padding: 16px;
+}
+
+.moment-block-text {
+  line-height: 1.7;
+}
+
+.moment-block-text strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--theme-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+  margin-top: 16px;
+}
+
+.moment-block-text strong:first-child {
+  margin-top: 0;
+}
+
+/* ============================
+   Responsive Styles
+   ============================ */
+
+@media (max-width: 640px) {
+  .moment-block {
+    padding: 16px;
+  }
+
+  .moment-block-header {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+
+  .moment-block-textarea {
+    padding: 10px 12px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .moment-block-add {
+    padding: 12px 16px;
+  }
+
+  .moment-block-display-content {
+    padding: 12px;
+  }
+}
+
+/* ============================
+   Compact View Styles
+   ============================ */
+
+.moment-blocks-display-compact .moment-block-display {
+  border-radius: 8px;
+}
+
+.moment-blocks-display-compact .moment-block-display-header {
+  padding: 8px 12px;
+}
+
+.moment-blocks-display-compact .moment-block-display-content {
+  padding: 12px;
+}
+
+.moment-blocks-display-compact .moment-block-display-number {
+  font-size: 11px;
+}
