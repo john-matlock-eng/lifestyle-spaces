@@ -395,7 +395,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
             key={`h-${highlight.id}-${idx}`}
             className="highlight cursor-pointer transition-all hover:opacity-80"
             style={{
-              backgroundColor: highlight.color || HIGHLIGHT_COLORS.yellow,
+              backgroundColor: HIGHLIGHT_COLORS[highlight.color as HighlightColor] || highlight.color || HIGHLIGHT_COLORS.yellow,
               padding: '2px 0',
               borderRadius: '2px',
               border: isBeingEdited ? '2px dashed var(--theme-primary-500)' : undefined,
@@ -493,7 +493,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
             key={`h-${highlight.id}-${idx}`}
             className="highlight cursor-pointer transition-all hover:opacity-80"
             style={{
-              backgroundColor: highlight.color || HIGHLIGHT_COLORS.yellow,
+              backgroundColor: HIGHLIGHT_COLORS[highlight.color as HighlightColor] || highlight.color || HIGHLIGHT_COLORS.yellow,
               padding: '2px 0',
               borderRadius: '2px',
               border: isBeingEdited ? '2px dashed var(--theme-primary-500)' : undefined,
