@@ -476,9 +476,6 @@ class ConversationService:
 
         Returns the number of threads marked as read.
         """
-        from datetime import datetime, timezone
-
-        now = datetime.now(timezone.utc).isoformat()
         journals = self._get_journals_for_space(space_id)
         marked_count = 0
 
@@ -487,31 +484,14 @@ class ConversationService:
             if not journal_id:
                 continue
 
-            # Update or create read status for each journal
-            pk = f"READSTATUS#{user_id}"
-            sk = f"SPACE#{space_id}#JOURNAL#{journal_id}"
-
-            existing = self.db.get_item(pk=pk, sk=sk)
-            if existing:
-                self.db.update_item(
-                    pk=pk,
-                    sk=sk,
-                    update_expression="SET lastReadHighlightCommentAt = :ts, lastReadJournalCommentAt = :ts, updatedAt = :ts",
-                    expression_values={":ts": now},
-                )
-            else:
-                self.db.put_item({
-                    "PK": pk,
-                    "SK": sk,
-                    "EntityType": "ReadStatus",
-                    "userId": user_id,
-                    "spaceId": space_id,
-                    "journalId": journal_id,
-                    "lastReadHighlightCommentAt": now,
-                    "lastReadJournalCommentAt": now,
-                    "createdAt": now,
-                    "updatedAt": now,
-                })
+            # Use the standard mark_journal_as_read to ensure consistent PK/SK patterns
+            await self.mark_journal_as_read(
+                user_id=user_id,
+                space_id=space_id,
+                journal_id=journal_id,
+                mark_highlight_comments=True,
+                mark_journal_comments=True,
+            )
             marked_count += 1
 
         return marked_count

@@ -1812,7 +1812,7 @@ class TestConversationThreads:
 
     @pytest.mark.asyncio
     async def test_mark_all_as_read_updates_existing(self):
-        """Test mark_all_as_read updates existing read statuses."""
+        """Test mark_all_as_read updates existing read statuses via put_item (upsert)."""
         from app.services.conversation_service import ConversationService
 
         with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
@@ -1828,7 +1828,14 @@ class TestConversationThreads:
                     {"journal_id": "j1", "title": "Journal 1", "user_id": "author-1"},
                 ]
             }
-            mock_db.get_item.return_value = {"some": "existing_data"}  # Existing read status
+            # Even with existing data, mark_journal_as_read uses put_item (upsert)
+            mock_db.get_item.return_value = {
+                "userId": "user-123",
+                "spaceId": "space-456",
+                "journalId": "j1",
+                "lastReadHighlightCommentAt": "2024-01-01T00:00:00+00:00",
+                "lastReadJournalCommentAt": "2024-01-01T00:00:00+00:00",
+            }
 
             service = ConversationService()
             result = await service.mark_all_as_read(
@@ -1837,7 +1844,8 @@ class TestConversationThreads:
             )
 
             assert result == 1
-            mock_db.update_item.assert_called()  # Should update, not put
+            # mark_journal_as_read uses put_item for upsert behavior
+            mock_db.put_item.assert_called()
 
     @pytest.mark.asyncio
     async def test_get_conversation_threads_search_filters_nonmatching(self):
