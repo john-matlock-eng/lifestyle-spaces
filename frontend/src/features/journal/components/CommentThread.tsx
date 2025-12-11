@@ -1,14 +1,15 @@
 /**
- * CommentThread Component - DARK MODE COMPATIBLE DESIGN
+ * CommentThread Component - INLINE SIDE PANEL DESIGN
  *
- * Displays a highlight with its associated comment thread.
+ * Displays a highlight with its associated comment thread as an inline side panel.
  * Features:
  * - Full dark mode support with automatic detection
- * - Glassmorphism sliding panel from right
+ * - Inline side panel (no backdrop/blur overlay)
+ * - Navigation between highlights with < > buttons
  * - Theme-aware gradient header with dark mode variants
  * - Enhanced contrast for readability
  * - Consistent avatar colors per user
- * - Smooth animations (slideInRight, fadeIn)
+ * - Smooth animations (fadeIn)
  * - Modern comment bubbles with proper backgrounds
  * - Smart timestamp formatting (just now, 5m ago, etc.)
  * - @mention highlighting with theme awareness
@@ -16,11 +17,10 @@
  * - Floating mention autocomplete
  * - Improved spacing and visual hierarchy
  *
- * Uses React Portal to render at document.body level.
+ * Renders inline within the page layout (not as a portal).
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import type { Highlight, Comment } from '../types/highlight.types';
 import { HIGHLIGHT_COLORS } from '../types/highlight.types';
 
@@ -32,6 +32,9 @@ interface CommentThreadProps {
   onAddComment: (text: string, parentId?: string) => void;
   onDeleteComment: (commentId: string) => void;
   onClose: () => void;
+  // Navigation between highlights
+  allHighlights?: Highlight[];
+  onNavigateHighlight?: (highlight: Highlight) => void;
 }
 
 // Generate consistent color for user based on their ID (using theme colors)
@@ -117,6 +120,8 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   onAddComment,
   onDeleteComment,
   onClose,
+  allHighlights = [],
+  onNavigateHighlight,
 }) => {
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
@@ -225,6 +230,24 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   const rootComments = comments.filter((c) => !c.parentCommentId);
   const getReplies = (parentId: string) =>
     comments.filter((c) => c.parentCommentId === parentId);
+
+  // Navigation helpers
+  const currentIndex = allHighlights.findIndex(h => h.id === highlight.id);
+  const hasPrevious = currentIndex > 0;
+  const hasNext = currentIndex < allHighlights.length - 1;
+  const totalHighlights = allHighlights.length;
+
+  const handlePrevious = () => {
+    if (hasPrevious && onNavigateHighlight) {
+      onNavigateHighlight(allHighlights[currentIndex - 1]);
+    }
+  };
+
+  const handleNext = () => {
+    if (hasNext && onNavigateHighlight) {
+      onNavigateHighlight(allHighlights[currentIndex + 1]);
+    }
+  };
 
   // Render a single comment
   const renderComment = (comment: Comment, depth: number = 0) => {
@@ -404,131 +427,143 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
     );
   };
 
-  // Render the panel using React Portal
-  const panelElement = (
-    <>
-      {/* Backdrop */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(4px)',
-          zIndex: 9998,
-          animation: 'fadeIn 0.3s ease-out',
-        }}
-        onClick={onClose}
-      />
+  // Render the inline panel (no backdrop/blur)
+  return (
+    <div
+      ref={panelRef}
+      className="comment-thread-panel"
+      style={{
+        width: '100%',
+        height: '100%',
+        background: isDarkMode ? '#0f172a' : 'var(--theme-bg-surface)',
+        border: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.1)' : 'var(--theme-border-light)'}`,
+        borderRadius: '12px',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
 
-      {/* Sliding Panel */}
+        .comment-item {
+          animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Custom scrollbar for comment list */
+        .comments-scrollable::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .comments-scrollable::-webkit-scrollbar-track {
+          background: ${isDarkMode ? 'rgba(15, 23, 42, 0.5)' : 'rgba(0, 0, 0, 0.05)'};
+          border-radius: 4px;
+        }
+
+        .comments-scrollable::-webkit-scrollbar-thumb {
+          background: ${isDarkMode ? 'rgba(148, 163, 184, 0.3)' : 'rgba(0, 0, 0, 0.2)'};
+          border-radius: 4px;
+        }
+
+        .comments-scrollable::-webkit-scrollbar-thumb:hover {
+          background: ${isDarkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(0, 0, 0, 0.3)'};
+        }
+
+        .nav-button {
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          border-radius: 6px;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          color: white;
+          font-size: 16px;
+          font-weight: 600;
+        }
+
+        .nav-button:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.25);
+          transform: scale(1.05);
+        }
+
+        .nav-button:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+      `}</style>
+
+      {/* Header with navigation */}
       <div
-        ref={panelRef}
         style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: '480px',
-          maxWidth: '90vw',
-          background: isDarkMode ? '#0f172a' : 'var(--theme-bg-surface)',
-          backdropFilter: isDarkMode ? 'blur(30px)' : 'blur(20px)',
+          position: 'relative',
+          background: isDarkMode
+            ? 'linear-gradient(135deg, #1e40af 0%, #7c3aed 100%)'
+            : 'linear-gradient(135deg, var(--theme-primary-500) 0%, var(--theme-primary-700) 100%)',
+          padding: '12px 16px',
+          color: 'white',
           boxShadow: isDarkMode
-            ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
-            : 'var(--theme-shadow-2xl)',
-          border: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.1)' : 'var(--theme-border-light)'}`,
-          zIndex: 9999,
-          display: 'flex',
-          flexDirection: 'column',
-          animation: 'slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+            ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+            : '0 2px 8px rgba(0, 0, 0, 0.1)',
+          borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'}`,
         }}
-        onClick={(e) => e.stopPropagation()}
       >
-        <style>{`
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-            }
-            to {
-              opacity: 1;
-            }
-          }
+        {/* Top row: Navigation and close */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          {/* Navigation buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              className="nav-button"
+              onClick={handlePrevious}
+              disabled={!hasPrevious}
+              title="Previous highlight"
+            >
+              ‹
+            </button>
+            <span style={{ fontSize: '13px', fontWeight: '500', minWidth: '60px', textAlign: 'center' }}>
+              {totalHighlights > 0 ? `${currentIndex + 1} / ${totalHighlights}` : '—'}
+            </span>
+            <button
+              className="nav-button"
+              onClick={handleNext}
+              disabled={!hasNext}
+              title="Next highlight"
+            >
+              ›
+            </button>
+          </div>
 
-          @keyframes slideInRight {
-            from {
-              transform: translateX(100%);
-            }
-            to {
-              transform: translateX(0);
-            }
-          }
-
-          .comment-item {
-            animation: fadeIn 0.3s ease-out;
-          }
-
-          /* Custom scrollbar for comment list */
-          .comments-scrollable::-webkit-scrollbar {
-            width: 8px;
-          }
-
-          .comments-scrollable::-webkit-scrollbar-track {
-            background: ${isDarkMode ? 'rgba(15, 23, 42, 0.5)' : 'rgba(0, 0, 0, 0.05)'};
-            border-radius: 4px;
-          }
-
-          .comments-scrollable::-webkit-scrollbar-thumb {
-            background: ${isDarkMode ? 'rgba(148, 163, 184, 0.3)' : 'rgba(0, 0, 0, 0.2)'};
-            border-radius: 4px;
-          }
-
-          .comments-scrollable::-webkit-scrollbar-thumb:hover {
-            background: ${isDarkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(0, 0, 0, 0.3)'};
-          }
-        `}</style>
-
-        {/* Dark Mode Compatible Gradient Header - Compact Design */}
-        <div
-          style={{
-            position: 'relative',
-            background: isDarkMode
-              ? 'linear-gradient(135deg, #1e40af 0%, #7c3aed 100%)'
-              : 'linear-gradient(135deg, var(--theme-primary-500) 0%, var(--theme-primary-700) 100%)',
-            padding: '16px 20px',
-            paddingRight: '60px',
-            color: 'white',
-            boxShadow: isDarkMode
-              ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-              : '0 2px 8px rgba(0, 0, 0, 0.1)',
-            borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)'}`,
-          }}
-        >
-          {/* Close button - absolute positioned at top right */}
+          {/* Close button */}
           <button
             onClick={onClose}
             title="Close discussion"
             style={{
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
               background: 'rgba(255, 255, 255, 0.15)',
               backdropFilter: 'blur(10px)',
               border: '1px solid rgba(255, 255, 255, 0.25)',
               borderRadius: '6px',
-              width: '36px',
-              height: '36px',
+              width: '32px',
+              height: '32px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
               color: 'white',
-              fontSize: '20px',
+              fontSize: '18px',
               fontWeight: '400',
               lineHeight: '1',
-              zIndex: 1,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
@@ -541,293 +576,290 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           >
             ✕
           </button>
+        </div>
 
-          {/* Title */}
-          <div className="flex items-center mb-3" style={{ gap: '10px' }}>
-            <span style={{ fontSize: '20px' }}>💬</span>
-            <h3
-              style={{
-                fontSize: '17px',
-                fontWeight: '600',
-                margin: 0,
-                letterSpacing: '0.3px',
-              }}
-            >
-              Discussion
-            </h3>
-          </div>
+        {/* Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+          <span style={{ fontSize: '18px' }}>💬</span>
+          <h3
+            style={{
+              fontSize: '15px',
+              fontWeight: '600',
+              margin: 0,
+              letterSpacing: '0.3px',
+            }}
+          >
+            Discussion
+          </h3>
+        </div>
 
-          {/* Highlighted text preview - Enhanced for dark mode */}
+        {/* Highlighted text preview */}
+        <div
+          style={{
+            padding: '8px 10px',
+            borderRadius: '6px',
+            backgroundColor: isDarkMode
+              ? 'rgba(251, 191, 36, 0.12)'
+              : (highlight.color || HIGHLIGHT_COLORS.yellow),
+            color: isDarkMode ? '#f1f5f9' : '#1e293b',
+            fontSize: '12px',
+            lineHeight: '1.5',
+            boxShadow: isDarkMode
+              ? '0 2px 8px rgba(0, 0, 0, 0.2)'
+              : '0 1px 4px rgba(0, 0, 0, 0.1)',
+            maxHeight: '60px',
+            overflow: 'auto',
+            border: isDarkMode ? '1px solid rgba(251, 191, 36, 0.25)' : 'none',
+            fontWeight: '500',
+          }}
+        >
+          "{highlight.highlightedText}"
+        </div>
+
+        <div
+          style={{
+            fontSize: '11px',
+            marginTop: '8px',
+            opacity: 0.95,
+            fontWeight: '400',
+          }}
+        >
+          Highlighted by {highlight.createdByName} • {formatTimestamp(highlight.createdAt)}
+        </div>
+      </div>
+
+      {/* Comments list - Dark mode compatible */}
+      <div
+        className="comments-scrollable"
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '20px 24px',
+          backgroundColor: isDarkMode ? '#1e293b' : 'var(--theme-bg-base)',
+        }}
+      >
+        {comments.length === 0 ? (
           <div
             style={{
-              padding: '10px 12px',
-              borderRadius: '8px',
-              backgroundColor: isDarkMode
-                ? 'rgba(251, 191, 36, 0.12)'  // Semi-transparent yellow for dark mode
-                : (highlight.color || HIGHLIGHT_COLORS.yellow),
-              color: isDarkMode ? '#f1f5f9' : '#1e293b',
+              textAlign: 'center',
+              padding: '60px 24px',
+              color: isDarkMode ? '#94a3b8' : 'var(--theme-text-secondary)',
+            }}
+          >
+            <div style={{ fontSize: '56px', marginBottom: '16px', opacity: isDarkMode ? 0.6 : 1 }}>💭</div>
+            <div style={{
+              fontSize: '15px',
+              fontWeight: '600',
+              color: isDarkMode ? '#cbd5e1' : 'inherit',
+              marginBottom: '6px'
+            }}>
+              No comments yet
+            </div>
+            <div style={{
               fontSize: '13px',
-              lineHeight: '1.5',
+              color: isDarkMode ? '#94a3b8' : 'inherit',
+              opacity: 0.9
+            }}>
+              Be the first to share your thoughts!
+            </div>
+          </div>
+        ) : (
+          <div>{rootComments.map((comment) => renderComment(comment))}</div>
+        )}
+      </div>
+
+      {/* Comment input - Dark mode compatible */}
+      <div
+        style={{
+          borderTop: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'var(--theme-border-light)'}`,
+          padding: '24px',
+          backgroundColor: isDarkMode ? '#0f172a' : 'var(--theme-bg-surface)',
+          boxShadow: isDarkMode
+            ? '0 -4px 16px rgba(0, 0, 0, 0.3)'
+            : '0 -4px 12px rgba(0, 0, 0, 0.05)',
+          position: 'relative',
+        }}
+      >
+        {replyToId && (
+          <div
+            style={{
+              marginBottom: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px 14px',
+              backgroundColor: isDarkMode
+                ? 'rgba(59, 130, 246, 0.15)'
+                : 'var(--theme-primary-100)',
+              borderRadius: '8px',
+              fontSize: '13px',
+              color: isDarkMode ? '#93c5fd' : 'var(--theme-primary-700)',
+              border: isDarkMode ? '1px solid rgba(59, 130, 246, 0.3)' : 'none',
+            }}
+          >
+            <span style={{ fontWeight: '500' }}>↩ Replying to comment</span>
+            <button
+              onClick={() => setReplyToId(null)}
+              style={{
+                marginLeft: 'auto',
+                background: 'none',
+                border: 'none',
+                color: isDarkMode ? '#93c5fd' : 'var(--theme-primary-700)',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '13px',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Mention autocomplete - Dark mode compatible */}
+        {showMentions && filteredMembers.length > 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '100%',
+              left: '24px',
+              right: '24px',
+              marginBottom: '10px',
+              backgroundColor: isDarkMode ? '#1e293b' : 'var(--theme-bg-surface)',
+              border: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'var(--theme-border-light)'}`,
+              borderRadius: '10px',
               boxShadow: isDarkMode
-                ? '0 2px 8px rgba(0, 0, 0, 0.2)'
-                : '0 1px 4px rgba(0, 0, 0, 0.1)',
-              maxHeight: '70px',
-              overflow: 'auto',
-              border: isDarkMode ? '1px solid rgba(251, 191, 36, 0.25)' : 'none',
+                ? '0 20px 25px -5px rgba(0, 0, 0, 0.4)'
+                : 'var(--theme-shadow-lg)',
+              maxHeight: '180px',
+              overflowY: 'auto',
+            }}
+          >
+            {filteredMembers.map((member) => (
+              <button
+                key={member.id}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  textAlign: 'left',
+                  fontSize: '14px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  transition: 'background-color 0.15s ease',
+                  color: isDarkMode ? '#e2e8f0' : 'var(--theme-text-primary)',
+                  fontWeight: '500',
+                }}
+                onClick={() => handleMentionSelect(member.name)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode
+                    ? 'rgba(59, 130, 246, 0.15)'
+                    : 'var(--theme-primary-50)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <div
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    background: `linear-gradient(135deg, ${getUserColor(member.id)} 0%, ${getUserColor(member.id)}dd 100%)`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '11px',
+                    fontWeight: '600',
+                  }}
+                >
+                  {member.name.charAt(0).toUpperCase()}
+                </div>
+                {member.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <textarea
+          ref={textareaRef}
+          value={commentText}
+          onChange={handleTextChange}
+          placeholder="Add a comment... (use @ to mention)"
+          style={{
+            width: '100%',
+            padding: '14px 16px',
+            border: `2px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'var(--theme-border-light)'}`,
+            borderRadius: '10px',
+            fontSize: '14px',
+            resize: 'none',
+            minHeight: '52px',
+            maxHeight: '140px',
+            outline: 'none',
+            transition: 'all 0.2s ease',
+            backgroundColor: isDarkMode ? '#1e293b' : 'var(--theme-bg-surface)',
+            color: isDarkMode ? '#f1f5f9' : 'var(--theme-text-primary)',
+            fontFamily: 'inherit',
+            lineHeight: '1.5',
+          }}
+          rows={1}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit();
+            }
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = isDarkMode ? '#3b82f6' : 'var(--theme-primary-500)';
+            e.currentTarget.style.boxShadow = isDarkMode
+              ? '0 0 0 3px rgba(59, 130, 246, 0.1)'
+              : '0 0 0 3px rgba(20, 184, 166, 0.1)';
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'var(--theme-border-light)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        />
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '8px',
+            marginTop: '12px',
+          }}
+        >
+          <button
+            onClick={() => {
+              setCommentText('');
+              setReplyToId(null);
+            }}
+            className="button-secondary"
+            style={{
+              padding: '8px 16px',
+              fontSize: '13px',
               fontWeight: '500',
             }}
           >
-            "{highlight.highlightedText}"
-          </div>
-
-          <div
+            Clear
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={!commentText.trim()}
+            className="button-primary"
             style={{
-              fontSize: '12px',
-              marginTop: '10px',
-              opacity: 0.95,
-              fontWeight: '400',
+              padding: '8px 20px',
+              fontSize: '13px',
+              fontWeight: '600',
             }}
           >
-            Highlighted by {highlight.createdByName} • {formatTimestamp(highlight.createdAt)}
-          </div>
-        </div>
-
-        {/* Comments list - Dark mode compatible */}
-        <div
-          className="comments-scrollable"
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '20px 24px',
-            backgroundColor: isDarkMode ? '#1e293b' : 'var(--theme-bg-base)',
-          }}
-        >
-          {comments.length === 0 ? (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: '60px 24px',
-                color: isDarkMode ? '#94a3b8' : 'var(--theme-text-secondary)',
-              }}
-            >
-              <div style={{ fontSize: '56px', marginBottom: '16px', opacity: isDarkMode ? 0.6 : 1 }}>💭</div>
-              <div style={{
-                fontSize: '15px',
-                fontWeight: '600',
-                color: isDarkMode ? '#cbd5e1' : 'inherit',
-                marginBottom: '6px'
-              }}>
-                No comments yet
-              </div>
-              <div style={{
-                fontSize: '13px',
-                color: isDarkMode ? '#94a3b8' : 'inherit',
-                opacity: 0.9
-              }}>
-                Be the first to share your thoughts!
-              </div>
-            </div>
-          ) : (
-            <div>{rootComments.map((comment) => renderComment(comment))}</div>
-          )}
-        </div>
-
-        {/* Comment input - Dark mode compatible */}
-        <div
-          style={{
-            borderTop: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'var(--theme-border-light)'}`,
-            padding: '24px',
-            backgroundColor: isDarkMode ? '#0f172a' : 'var(--theme-bg-surface)',
-            boxShadow: isDarkMode
-              ? '0 -4px 16px rgba(0, 0, 0, 0.3)'
-              : '0 -4px 12px rgba(0, 0, 0, 0.05)',
-            position: 'relative',
-          }}
-        >
-          {replyToId && (
-            <div
-              style={{
-                marginBottom: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '10px 14px',
-                backgroundColor: isDarkMode
-                  ? 'rgba(59, 130, 246, 0.15)'
-                  : 'var(--theme-primary-100)',
-                borderRadius: '8px',
-                fontSize: '13px',
-                color: isDarkMode ? '#93c5fd' : 'var(--theme-primary-700)',
-                border: isDarkMode ? '1px solid rgba(59, 130, 246, 0.3)' : 'none',
-              }}
-            >
-              <span style={{ fontWeight: '500' }}>↩ Replying to comment</span>
-              <button
-                onClick={() => setReplyToId(null)}
-                style={{
-                  marginLeft: 'auto',
-                  background: 'none',
-                  border: 'none',
-                  color: isDarkMode ? '#93c5fd' : 'var(--theme-primary-700)',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-
-          {/* Mention autocomplete - Dark mode compatible */}
-          {showMentions && filteredMembers.length > 0 && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '100%',
-                left: '24px',
-                right: '24px',
-                marginBottom: '10px',
-                backgroundColor: isDarkMode ? '#1e293b' : 'var(--theme-bg-surface)',
-                border: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'var(--theme-border-light)'}`,
-                borderRadius: '10px',
-                boxShadow: isDarkMode
-                  ? '0 20px 25px -5px rgba(0, 0, 0, 0.4)'
-                  : 'var(--theme-shadow-lg)',
-                maxHeight: '180px',
-                overflowY: 'auto',
-              }}
-            >
-              {filteredMembers.map((member) => (
-                <button
-                  key={member.id}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    transition: 'background-color 0.15s ease',
-                    color: isDarkMode ? '#e2e8f0' : 'var(--theme-text-primary)',
-                    fontWeight: '500',
-                  }}
-                  onClick={() => handleMentionSelect(member.name)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = isDarkMode
-                      ? 'rgba(59, 130, 246, 0.15)'
-                      : 'var(--theme-primary-50)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      background: `linear-gradient(135deg, ${getUserColor(member.id)} 0%, ${getUserColor(member.id)}dd 100%)`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      fontSize: '11px',
-                      fontWeight: '600',
-                    }}
-                  >
-                    {member.name.charAt(0).toUpperCase()}
-                  </div>
-                  {member.name}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <textarea
-            ref={textareaRef}
-            value={commentText}
-            onChange={handleTextChange}
-            placeholder="Add a comment... (use @ to mention)"
-            style={{
-              width: '100%',
-              padding: '14px 16px',
-              border: `2px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'var(--theme-border-light)'}`,
-              borderRadius: '10px',
-              fontSize: '14px',
-              resize: 'none',
-              minHeight: '52px',
-              maxHeight: '140px',
-              outline: 'none',
-              transition: 'all 0.2s ease',
-              backgroundColor: isDarkMode ? '#1e293b' : 'var(--theme-bg-surface)',
-              color: isDarkMode ? '#f1f5f9' : 'var(--theme-text-primary)',
-              fontFamily: 'inherit',
-              lineHeight: '1.5',
-            }}
-            rows={1}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit();
-              }
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = isDarkMode ? '#3b82f6' : 'var(--theme-primary-500)';
-              e.currentTarget.style.boxShadow = isDarkMode
-                ? '0 0 0 3px rgba(59, 130, 246, 0.1)'
-                : '0 0 0 3px rgba(20, 184, 166, 0.1)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = isDarkMode ? 'rgba(148, 163, 184, 0.2)' : 'var(--theme-border-light)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          />
-
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '8px',
-              marginTop: '12px',
-            }}
-          >
-            <button
-              onClick={() => {
-                setCommentText('');
-                setReplyToId(null);
-              }}
-              className="button-secondary"
-              style={{
-                padding: '8px 16px',
-                fontSize: '13px',
-                fontWeight: '500',
-              }}
-            >
-              Clear
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={!commentText.trim()}
-              className="button-primary"
-              style={{
-                padding: '8px 20px',
-                fontSize: '13px',
-                fontWeight: '600',
-              }}
-            >
-              Post Comment
-            </button>
-          </div>
+            Post Comment
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
-
-  // Use React Portal to render at document body level
-  return ReactDOM.createPortal(panelElement, document.body);
 };

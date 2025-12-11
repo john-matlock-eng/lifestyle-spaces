@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
@@ -78,11 +78,11 @@ export const JournalViewPage: React.FC = () => {
   const { customization } = useEllieCustomizationContext()
 
   // Handler to open highlight and load its comments
-  const handleHighlightClick = (highlight: Highlight) => {
+  const handleHighlightClick = useCallback((highlight: Highlight) => {
     setSelectedHighlight(highlight)
     // Fetch comments for this highlight
     fetchComments(highlight.id)
-  }
+  }, [fetchComments])
 
   useEffect(() => {
     if (spaceId && journalId) {
@@ -141,7 +141,7 @@ export const JournalViewPage: React.FC = () => {
         setPendingHighlightId(null)
       }
     }
-  }, [pendingHighlightId, highlights])
+  }, [pendingHighlightId, highlights, handleHighlightClick])
 
   const handleEdit = () => {
     if (spaceId && journalId) {
@@ -265,8 +265,15 @@ ${content}
   const highlightCommentCount = Object.values(comments).reduce((sum, arr) => sum + arr.length, 0)
   const totalComments = highlightCommentCount + journalCommentCount
 
+  // Handler for navigating between highlights
+  const handleNavigateHighlight = (highlight: Highlight) => {
+    setSelectedHighlight(highlight)
+    fetchComments(highlight.id)
+  }
+
   return (
-    <div className={`journal-view-container compact density-${density} has-sticky-actions`}>
+    <div className={`journal-view-page-wrapper ${selectedHighlight ? 'with-comment-panel' : ''}`}>
+    <div className={`journal-view-container compact density-${density} has-sticky-actions ${selectedHighlight ? 'shifted' : ''}`}>
       <button onClick={handleBack} className="button-secondary" style={{ marginBottom: '12px' }}>
         ← Back
       </button>
@@ -763,19 +770,6 @@ ${content}
         />
       )}
 
-      {/* Comment Thread - Renders as sliding panel with its own backdrop */}
-      {selectedHighlight && (
-        <CommentThread
-          highlight={selectedHighlight}
-          comments={comments[selectedHighlight.id] || []}
-          spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
-          currentUserId={user?.userId || ''}
-          onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
-          onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
-          onClose={() => setSelectedHighlight(null)}
-        />
-      )}
-
       {/* Journal Comment Panel (expanded Conversations view) */}
       {spaceId && journalId && (
         <JournalCommentPanel
@@ -800,8 +794,26 @@ ${content}
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
         showPerchControl={true}
-        
+
       />
+    </div>
+
+    {/* Comment Thread Panel - Inline side panel */}
+    {selectedHighlight && (
+      <div className="comment-thread-side-panel">
+        <CommentThread
+          highlight={selectedHighlight}
+          comments={comments[selectedHighlight.id] || []}
+          spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
+          currentUserId={user?.userId || ''}
+          onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
+          onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
+          onClose={() => setSelectedHighlight(null)}
+          allHighlights={highlights}
+          onNavigateHighlight={handleNavigateHighlight}
+        />
+      </div>
+    )}
     </div>
   )
 }

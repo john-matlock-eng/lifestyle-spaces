@@ -1278,3 +1278,127 @@
     max-height: 500px;
   }
 }
+
+/* =================================
+   Journal View Page with Side Panel Layout
+   ================================= */
+
+/* Wrapper for the entire journal view page */
+.journal-view-page-wrapper {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  gap: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When comment panel is open */
+.journal-view-page-wrapper.with-comment-panel {
+  gap: 24px;
+}
+
+/* Main content container - shifts left when panel is open */
+.journal-view-container.shifted {
+  max-width: calc(100% - 420px - 24px);
+  margin: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Comment thread side panel */
+.comment-thread-side-panel {
+  width: 420px;
+  min-width: 420px;
+  max-width: 420px;
+  height: calc(100vh - 48px);
+  position: sticky;
+  top: 24px;
+  flex-shrink: 0;
+  animation: slideInPanel 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInPanel {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive adjustments for side panel layout */
+@media (max-width: 1200px) {
+  .journal-view-container.shifted {
+    max-width: calc(100% - 380px - 20px);
+  }
+
+  .comment-thread-side-panel {
+    width: 380px;
+    min-width: 380px;
+    max-width: 380px;
+  }
+
+  .journal-view-page-wrapper.with-comment-panel {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .journal-view-container.shifted {
+    max-width: calc(100% - 350px - 16px);
+  }
+
+  .comment-thread-side-panel {
+    width: 350px;
+    min-width: 350px;
+    max-width: 350px;
+  }
+
+  .journal-view-page-wrapper.with-comment-panel {
+    gap: 16px;
+  }
+}
+
+/* For tablets and smaller - stack vertically or use overlay */
+@media (max-width: 900px) {
+  .journal-view-page-wrapper {
+    flex-direction: column;
+  }
+
+  .journal-view-page-wrapper.with-comment-panel {
+    gap: 0;
+  }
+
+  .journal-view-container.shifted {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .comment-thread-side-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 420px;
+    min-width: unset;
+    height: 100vh;
+    z-index: 9999;
+    animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .dark .comment-thread-side-panel {
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+  }
+
+  @keyframes slideInFromRight {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+}
