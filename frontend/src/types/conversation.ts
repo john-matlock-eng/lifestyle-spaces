@@ -76,7 +76,8 @@ export interface GetThreadsOptions {
   offset?: number;
   sort?: 'recent' | 'unread' | 'replies';
   type?: 'highlight' | 'journal_discussion';
-  filter?: 'all' | 'participated';
+  filter?: 'all' | 'participated' | 'unread';
+  timeFilter?: 'today' | 'week' | 'month';
   search?: string;
 }
 

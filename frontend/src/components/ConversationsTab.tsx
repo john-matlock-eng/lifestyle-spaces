@@ -23,6 +23,9 @@ import {
   X,
   RefreshCw,
   ChevronRight,
+  Inbox,
+  Clock,
+  Filter,
 } from 'lucide-react';
 import { conversationService } from '../services/conversationService';
 import type { ConversationThread, GetThreadsOptions, GroupedJournalConversations } from '../types/conversation';
@@ -144,7 +147,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<GetThreadsOptions['sort']>('recent');
   const [filterType, setFilterType] = useState<GetThreadsOptions['type']>(undefined);
-  const [filterParticipation, setFilterParticipation] = useState<'all' | 'participated'>('all');
+  const [filterParticipation, setFilterParticipation] = useState<'all' | 'participated' | 'unread'>('all');
+  const [timeFilter, setTimeFilter] = useState<GetThreadsOptions['timeFilter']>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
@@ -181,6 +185,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           sort: sortBy,
           type: filterType,
           filter: filterParticipation,
+          timeFilter,
           search: searchQuery || undefined,
           limit: PAGE_SIZE,
           offset,
@@ -204,13 +209,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         setLoadingMore(false);
       }
     },
-    [spaceId, sortBy, filterType, filterParticipation, searchQuery, threads.length]
+    [spaceId, sortBy, filterType, filterParticipation, timeFilter, searchQuery, threads.length]
   );
 
   // Initial fetch and refetch on filter/sort changes
   useEffect(() => {
     fetchThreads(false);
-  }, [spaceId, sortBy, filterType, filterParticipation, searchQuery]);
+  }, [spaceId, sortBy, filterType, filterParticipation, timeFilter, searchQuery]);
 
   // Polling for updates
   useEffect(() => {
@@ -344,6 +349,46 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     setSearchQuery('');
   };
 
+  const clearAllFilters = () => {
+    setSearchInput('');
+    setSearchQuery('');
+    setFilterType(undefined);
+    setFilterParticipation('all');
+    setTimeFilter(undefined);
+    setSortBy('recent');
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = Boolean(
+    searchQuery || filterType || filterParticipation !== 'all' || timeFilter
+  );
+
+  // Get filter label for display
+  const getTimeFilterLabel = (tf: typeof timeFilter): string => {
+    switch (tf) {
+      case 'today': return 'Today';
+      case 'week': return 'This week';
+      case 'month': return 'This month';
+      default: return '';
+    }
+  };
+
+  const getParticipationLabel = (fp: typeof filterParticipation): string => {
+    switch (fp) {
+      case 'participated': return 'My threads';
+      case 'unread': return 'Unread only';
+      default: return '';
+    }
+  };
+
+  const getTypeLabel = (ft: typeof filterType): string => {
+    switch (ft) {
+      case 'highlight': return 'Highlights';
+      case 'journal_discussion': return 'Discussions';
+      default: return '';
+    }
+  };
+
   if (loading && threads.length === 0) {
     return (
       <div className="conversations-tab">
@@ -415,7 +460,95 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         </div>
       </div>
 
-      {/* Search and Filters */}
+      {/* Quick Filter Pills */}
+      <div className="conversations-quick-filters">
+        <button
+          className={`quick-filter-pill ${filterParticipation === 'unread' ? 'quick-filter-pill--active' : ''}`}
+          onClick={() => setFilterParticipation(filterParticipation === 'unread' ? 'all' : 'unread')}
+        >
+          <Inbox size={14} />
+          Unread
+          {totalUnread > 0 && <span className="quick-filter-count">{totalUnread}</span>}
+        </button>
+        <button
+          className={`quick-filter-pill ${sortBy === 'replies' ? 'quick-filter-pill--active' : ''}`}
+          onClick={() => setSortBy(sortBy === 'replies' ? 'recent' : 'replies')}
+        >
+          <Reply size={14} />
+          Replies to me
+          {threadsWithReplies > 0 && <span className="quick-filter-count">{threadsWithReplies}</span>}
+        </button>
+        <button
+          className={`quick-filter-pill ${filterParticipation === 'participated' ? 'quick-filter-pill--active' : ''}`}
+          onClick={() => setFilterParticipation(filterParticipation === 'participated' ? 'all' : 'participated')}
+        >
+          <User size={14} />
+          My threads
+        </button>
+        <div className="quick-filter-divider" />
+        <button
+          className={`quick-filter-pill ${timeFilter === 'today' ? 'quick-filter-pill--active' : ''}`}
+          onClick={() => setTimeFilter(timeFilter === 'today' ? undefined : 'today')}
+        >
+          <Clock size={14} />
+          Today
+        </button>
+        <button
+          className={`quick-filter-pill ${timeFilter === 'week' ? 'quick-filter-pill--active' : ''}`}
+          onClick={() => setTimeFilter(timeFilter === 'week' ? undefined : 'week')}
+        >
+          This week
+        </button>
+        <button
+          className={`quick-filter-pill ${timeFilter === 'month' ? 'quick-filter-pill--active' : ''}`}
+          onClick={() => setTimeFilter(timeFilter === 'month' ? undefined : 'month')}
+        >
+          This month
+        </button>
+      </div>
+
+      {/* Active Filter Chips */}
+      {hasActiveFilters && (
+        <div className="conversations-active-filters">
+          {filterParticipation !== 'all' && (
+            <span className="active-filter-chip">
+              {getParticipationLabel(filterParticipation)}
+              <button onClick={() => setFilterParticipation('all')} className="chip-remove">
+                <X size={12} />
+              </button>
+            </span>
+          )}
+          {filterType && (
+            <span className="active-filter-chip">
+              {getTypeLabel(filterType)}
+              <button onClick={() => setFilterType(undefined)} className="chip-remove">
+                <X size={12} />
+              </button>
+            </span>
+          )}
+          {timeFilter && (
+            <span className="active-filter-chip">
+              {getTimeFilterLabel(timeFilter)}
+              <button onClick={() => setTimeFilter(undefined)} className="chip-remove">
+                <X size={12} />
+              </button>
+            </span>
+          )}
+          {searchQuery && (
+            <span className="active-filter-chip">
+              Search: "{searchQuery}"
+              <button onClick={clearSearch} className="chip-remove">
+                <X size={12} />
+              </button>
+            </span>
+          )}
+          <button className="clear-all-filters" onClick={clearAllFilters}>
+            Clear all
+          </button>
+        </div>
+      )}
+
+      {/* Search and Advanced Filters */}
       <div className="conversations-controls">
         <div className="conversations-search">
           <Search size={16} className="conversations-search-icon" />
@@ -447,14 +580,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             <option value="journal_discussion">Discussions</option>
           </select>
           <select
-            value={filterParticipation}
-            onChange={(e) => setFilterParticipation(e.target.value as 'all' | 'participated')}
-            className="conversations-filter-select"
-          >
-            <option value="all">All threads</option>
-            <option value="participated">My threads</option>
-          </select>
-          <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as GetThreadsOptions['sort'])}
             className="conversations-sort-select"
@@ -469,17 +594,30 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       {/* Threads List */}
       {threads.length === 0 ? (
         <div className="conversations-empty">
-          <MessageSquare size={48} strokeWidth={1} />
-          {searchQuery || filterType || filterParticipation !== 'all' ? (
+          {/* Inbox Zero state - when unread filter is on and all caught up */}
+          {filterParticipation === 'unread' && totalUnread === 0 ? (
             <>
+              <div className="inbox-zero-icon">
+                <Check size={32} />
+              </div>
+              <h3>Inbox Zero!</h3>
+              <p>You're all caught up. No unread conversations.</p>
+              <button className="conversations-empty-btn" onClick={() => setFilterParticipation('all')}>
+                View all conversations
+              </button>
+            </>
+          ) : hasActiveFilters ? (
+            <>
+              <Filter size={48} strokeWidth={1} />
               <h3>No matching conversations</h3>
               <p>Try adjusting your filters or search query.</p>
-              <button className="conversations-empty-btn" onClick={clearSearch}>
-                Clear filters
+              <button className="conversations-empty-btn" onClick={clearAllFilters}>
+                Clear all filters
               </button>
             </>
           ) : (
             <>
+              <MessageSquare size={48} strokeWidth={1} />
               <h3>No conversations yet</h3>
               <p>
                 Start a conversation by highlighting text in a journal and adding a comment, or

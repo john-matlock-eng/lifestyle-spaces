@@ -309,7 +309,8 @@ class ConversationService:
         offset: int = 0,
         sort_by: str = "recent",
         filter_type: Optional[str] = None,  # "highlight", "journal_discussion", or None for all
-        filter_participation: Optional[str] = None,  # "participated" or None for all
+        filter_participation: Optional[str] = None,  # "participated", "unread", or None for all
+        time_filter: Optional[str] = None,  # "today", "week", "month", or None for all
         search: Optional[str] = None,
     ) -> ThreadsResponse:
         """
@@ -322,12 +323,29 @@ class ConversationService:
             offset: Skip this many threads (for pagination)
             sort_by: "recent", "unread", "replies" (threads with replies to user)
             filter_type: Filter by thread type
-            filter_participation: Filter by user participation ("participated")
+            filter_participation: Filter by participation ("participated") or unread ("unread")
+            time_filter: Filter by time period ("today", "week", "month")
             search: Search query for highlight text, journal title, or comment text
 
         Returns:
             ThreadsResponse with thread-level data
         """
+        # Calculate time filter cutoff
+        time_cutoff: Optional[str] = None
+        if time_filter:
+            from datetime import timedelta
+            now = datetime.now(timezone.utc)
+            if time_filter == "today":
+                cutoff = now - timedelta(days=1)
+            elif time_filter == "week":
+                cutoff = now - timedelta(days=7)
+            elif time_filter == "month":
+                cutoff = now - timedelta(days=30)
+            else:
+                cutoff = None
+            if cutoff:
+                time_cutoff = cutoff.isoformat()
+
         journals = self._get_journals_for_space(space_id)
 
         threads: List[ConversationThread] = []
@@ -355,6 +373,12 @@ class ConversationService:
                         # Apply participation filter
                         if filter_participation == "participated" and not thread.user_participated:
                             continue
+                        # Apply unread filter
+                        if filter_participation == "unread" and not thread.is_unread:
+                            continue
+                        # Apply time filter
+                        if time_cutoff and thread.last_activity < time_cutoff:
+                            continue
                         # Apply search filter
                         if search_lower:
                             searchable = " ".join([
@@ -378,6 +402,12 @@ class ConversationService:
                 if thread:
                     # Apply participation filter
                     if filter_participation == "participated" and not thread.user_participated:
+                        continue
+                    # Apply unread filter
+                    if filter_participation == "unread" and not thread.is_unread:
+                        continue
+                    # Apply time filter
+                    if time_cutoff and thread.last_activity < time_cutoff:
                         continue
                     # Apply search filter
                     if search_lower:

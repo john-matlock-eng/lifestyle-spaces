@@ -54,8 +54,13 @@ async def get_conversation_threads(
     ),
     filter: Optional[str] = Query(
         default=None,
-        pattern="^(participated)$",
-        description="Filter by participation: 'participated' for threads you've been in",
+        pattern="^(participated|unread)$",
+        description="Filter: 'participated' for threads you've been in, 'unread' for unread only",
+    ),
+    time_filter: Optional[str] = Query(
+        default=None,
+        pattern="^(today|week|month)$",
+        description="Filter by time: 'today', 'week', or 'month'",
     ),
     search: Optional[str] = Query(
         default=None,
@@ -94,6 +99,7 @@ async def get_conversation_threads(
         sort_by=sort,
         filter_type=type,
         filter_participation=filter,
+        time_filter=time_filter,
         search=search,
     )
 
