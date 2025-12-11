@@ -82,6 +82,17 @@ export const JournalViewPage: React.FC = () => {
     setSelectedHighlight(highlight)
     // Fetch comments for this highlight
     fetchComments(highlight.id)
+
+    // Scroll to the highlight element to ensure it's visible
+    setTimeout(() => {
+      const highlightElement = document.querySelector(`mark[data-highlight-id="${highlight.id}"]`)
+      if (highlightElement) {
+        highlightElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        })
+      }
+    }, 100)
   }, [fetchComments])
 
   useEffect(() => {
@@ -265,11 +276,23 @@ ${content}
   const highlightCommentCount = Object.values(comments).reduce((sum, arr) => sum + arr.length, 0)
   const totalComments = highlightCommentCount + journalCommentCount
 
-  // Handler for navigating between highlights
-  const handleNavigateHighlight = (highlight: Highlight) => {
+  // Handler for navigating between highlights - scrolls to the highlight in the document
+  const handleNavigateHighlight = useCallback((highlight: Highlight) => {
     setSelectedHighlight(highlight)
     fetchComments(highlight.id)
-  }
+
+    // Scroll to the highlight element in the document after a short delay
+    // to allow for any re-renders
+    setTimeout(() => {
+      const highlightElement = document.querySelector(`mark[data-highlight-id="${highlight.id}"]`)
+      if (highlightElement) {
+        highlightElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        })
+      }
+    }, 100)
+  }, [fetchComments])
 
   return (
     <div className={`journal-view-page-wrapper ${selectedHighlight ? 'with-comment-panel' : ''}`}>

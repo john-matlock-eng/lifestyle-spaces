@@ -1304,16 +1304,18 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Comment thread side panel */
+/* Comment thread side panel - Fixed on right side */
 .comment-thread-side-panel {
   width: 420px;
   min-width: 420px;
   max-width: 420px;
   height: calc(100vh - 48px);
-  position: sticky;
+  position: fixed;
   top: 24px;
+  right: 24px;
   flex-shrink: 0;
   animation: slideInPanel 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
 }
 
 @keyframes slideInPanel {
@@ -1330,13 +1332,14 @@
 /* Responsive adjustments for side panel layout */
 @media (max-width: 1200px) {
   .journal-view-container.shifted {
-    max-width: calc(100% - 380px - 20px);
+    max-width: calc(100% - 380px - 40px);
   }
 
   .comment-thread-side-panel {
     width: 380px;
     min-width: 380px;
     max-width: 380px;
+    right: 20px;
   }
 
   .journal-view-page-wrapper.with-comment-panel {
@@ -1346,13 +1349,14 @@
 
 @media (max-width: 1024px) {
   .journal-view-container.shifted {
-    max-width: calc(100% - 350px - 16px);
+    max-width: calc(100% - 350px - 32px);
   }
 
   .comment-thread-side-panel {
     width: 350px;
     min-width: 350px;
     max-width: 350px;
+    right: 16px;
   }
 
   .journal-view-page-wrapper.with-comment-panel {
