@@ -215,7 +215,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   // Initial fetch and refetch on filter/sort changes
   useEffect(() => {
     fetchThreads(false);
-  }, [spaceId, sortBy, filterType, filterParticipation, timeFilter, searchQuery]);
+  }, [spaceId, sortBy, filterType, filterParticipation, timeFilter, searchQuery, fetchThreads]);
 
   // Polling for updates
   useEffect(() => {
@@ -242,7 +242,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         clearTimeout(pollTimeoutRef.current);
       }
     };
-  }, [spaceId, totalUnread, threadsWithReplies]);
+  }, [spaceId, totalUnread, threadsWithReplies, fetchThreads]);
 
   // Infinite scroll
   useEffect(() => {
