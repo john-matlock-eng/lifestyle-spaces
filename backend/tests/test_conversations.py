@@ -2035,6 +2035,7 @@ class TestConversationThreadsAPI:
                 sort="unread",
                 type="highlight",
                 filter="participated",
+                time_filter=None,
                 search="test query",
                 current_user={"sub": "user-123"},
             )
@@ -2048,5 +2049,6 @@ class TestConversationThreadsAPI:
                 sort_by="unread",
                 filter_type="highlight",
                 filter_participation="participated",
+                time_filter=None,
                 search="test query",
             )
