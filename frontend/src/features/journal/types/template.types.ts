@@ -47,6 +47,30 @@ export interface TableColumn {
   width?: string
 }
 
+// Moment blocks types for "The Daily Lens" template
+export interface MomentSubField {
+  id: string
+  label: string
+  placeholder: string
+  hint?: string
+  optional?: boolean
+}
+
+export interface MomentBlocksConfig {
+  minMoments: number
+  maxMoments: number
+  defaultMoments: number
+  textareaRows: number
+  subFields: MomentSubField[]
+}
+
+export interface MomentBlock {
+  id: string
+  scene: string
+  reaction: string
+  takeaway: string
+}
+
 export interface TemplateSection {
   id: string
   title: string
@@ -61,6 +85,12 @@ export interface TemplateSection {
     max?: number
     labels?: Record<string, string>
     columns?: TableColumn[]
+    // Moment blocks config
+    minMoments?: number
+    maxMoments?: number
+    defaultMoments?: number
+    textareaRows?: number
+    subFields?: MomentSubField[]
   }
 
   // Ellie guidance fields
@@ -74,6 +104,7 @@ export interface TemplateSection {
       wordCount?: Record<number, EllieGuidance>  // Word count milestones
       timeSpent?: Record<number, EllieGuidance>  // Time spent milestones (seconds)
       itemCount?: Record<number, EllieGuidance>  // Item count milestones (for lists/Q&A)
+      momentCount?: Record<number, EllieGuidance>  // Moment count milestones (for moment_blocks)
     }
   }
 }
@@ -107,5 +138,5 @@ export interface TemplateListResponse {
 }
 
 export interface TemplateData {
-  [sectionId: string]: string | QAPair[] | ListItem[] | TableRow[] | number
+  [sectionId: string]: string | QAPair[] | ListItem[] | TableRow[] | MomentBlock[] | number
 }

@@ -29,7 +29,7 @@ class TestInvitationAPIFixes:
             "sub": "user123",
             "email": "test@example.com",
             "username": "testuser",
-            "full_name": "Test User"
+            "full_name": "Test User",
         }
 
         # Override auth dependency
@@ -47,7 +47,7 @@ class TestInvitationAPIFixes:
         """Test that GET /api/invitations/pending returns {invitations: [...]} format."""
         from app.models.invitation import Invitation, InvitationStatus
 
-        with patch('app.api.routes.invitations.InvitationService') as mock_service:
+        with patch("app.api.routes.invitations.InvitationService") as mock_service:
             # Create mock invitations
             mock_invitation = Invitation(
                 invitation_id="inv123",
@@ -56,7 +56,7 @@ class TestInvitationAPIFixes:
                 inviter_user_id="user456",
                 status=InvitationStatus.PENDING,
                 created_at=datetime.now(timezone.utc),
-                expires_at=datetime.now(timezone.utc) + timedelta(days=7)
+                expires_at=datetime.now(timezone.utc) + timedelta(days=7),
             )
 
             # Mock service to return list of invitations
@@ -76,7 +76,7 @@ class TestInvitationAPIFixes:
 
     def test_get_pending_invitations_empty_list(self):
         """Test that empty results return {invitations: []} not []."""
-        with patch('app.api.routes.invitations.InvitationService') as mock_service:
+        with patch("app.api.routes.invitations.InvitationService") as mock_service:
             # Mock service to return empty list
             mock_instance = Mock()
             mock_instance.get_pending_invitations_for_user.return_value = []
@@ -96,9 +96,9 @@ class TestInvitationAPIFixes:
         """Test that POST /api/invitations/{id}/accept accepts empty body {}."""
         from app.models.invitation import Invitation, InvitationStatus
 
-        with patch('app.api.routes.invitations.InvitationService') as mock_service, \
-             patch('app.api.routes.invitations.SpaceService') as mock_space_service:
-
+        with patch("app.api.routes.invitations.InvitationService") as mock_service, patch(
+            "app.api.routes.invitations.SpaceService"
+        ) as mock_space_service:
             # Mock accepted invitation
             mock_invitation = Invitation(
                 invitation_id="inv123",
@@ -107,7 +107,7 @@ class TestInvitationAPIFixes:
                 inviter_user_id="user456",
                 status=InvitationStatus.ACCEPTED,
                 created_at=datetime.now(timezone.utc),
-                expires_at=datetime.now(timezone.utc) + timedelta(days=7)
+                expires_at=datetime.now(timezone.utc) + timedelta(days=7),
             )
 
             mock_instance = Mock()
@@ -120,10 +120,7 @@ class TestInvitationAPIFixes:
             mock_space_service.return_value = mock_space_instance
 
             # CRITICAL: Send empty body {} not {invitation_code: "..."}
-            response = self.client.post(
-                "/api/invitations/inv123/accept",
-                json={}
-            )
+            response = self.client.post("/api/invitations/inv123/accept", json={})
 
             assert response.status_code == 200
             data = response.json()
@@ -133,15 +130,17 @@ class TestInvitationAPIFixes:
             mock_instance.accept_invitation.assert_called_once()
             # Check if invitation_id was passed (either as positional or keyword arg)
             call_args, call_kwargs = mock_instance.accept_invitation.call_args
-            assert call_kwargs.get("invitation_id") == "inv123" or (call_args and call_args[0] == "inv123")
+            assert call_kwargs.get("invitation_id") == "inv123" or (
+                call_args and call_args[0] == "inv123"
+            )
 
     def test_accept_invitation_without_code_in_body(self):
         """Test that invitation_code is NOT required in request body."""
         from app.models.invitation import Invitation, InvitationStatus
 
-        with patch('app.api.routes.invitations.InvitationService') as mock_service, \
-             patch('app.api.routes.invitations.SpaceService') as mock_space_service:
-
+        with patch("app.api.routes.invitations.InvitationService") as mock_service, patch(
+            "app.api.routes.invitations.SpaceService"
+        ) as mock_space_service:
             mock_invitation = Invitation(
                 invitation_id="inv123",
                 space_id="space123",
@@ -149,7 +148,7 @@ class TestInvitationAPIFixes:
                 inviter_user_id="user456",
                 status=InvitationStatus.ACCEPTED,
                 created_at=datetime.now(timezone.utc),
-                expires_at=datetime.now(timezone.utc) + timedelta(days=7)
+                expires_at=datetime.now(timezone.utc) + timedelta(days=7),
             )
 
             mock_instance = Mock()
@@ -161,10 +160,7 @@ class TestInvitationAPIFixes:
             mock_space_service.return_value = mock_space_instance
 
             # Should work with completely empty body
-            response = self.client.post(
-                "/api/invitations/inv456/accept",
-                json={}
-            )
+            response = self.client.post("/api/invitations/inv456/accept", json={})
 
             # Should not return 422 (validation error)
             assert response.status_code != 422, "Empty body should be accepted"
@@ -173,9 +169,9 @@ class TestInvitationAPIFixes:
     # Issue 3: GET /api/spaces/{spaceId}/invitations
     def test_get_space_invitations_admin_only(self):
         """Test GET /api/spaces/{spaceId}/invitations returns invitations for admins."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service, \
-             patch('app.api.routes.invitations.InvitationService') as mock_invitation_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service, patch(
+            "app.api.routes.invitations.InvitationService"
+        ) as mock_invitation_service:
             # Mock space service - user is admin
             mock_space_instance = Mock()
             mock_space_instance.get_space_member_role.return_value = "admin"
@@ -185,18 +181,10 @@ class TestInvitationAPIFixes:
             mock_invitation_instance = Mock()
             mock_invitation_instance.list_space_invitations.return_value = {
                 "invitations": [
-                    {
-                        "id": "inv1",
-                        "invitee_email": "user1@example.com",
-                        "status": "pending"
-                    },
-                    {
-                        "id": "inv2",
-                        "invitee_email": "user2@example.com",
-                        "status": "pending"
-                    }
+                    {"id": "inv1", "invitee_email": "user1@example.com", "status": "pending"},
+                    {"id": "inv2", "invitee_email": "user2@example.com", "status": "pending"},
                 ],
-                "total": 2
+                "total": 2,
             }
             mock_invitation_service.return_value = mock_invitation_instance
 
@@ -212,8 +200,7 @@ class TestInvitationAPIFixes:
 
     def test_get_space_invitations_non_admin_forbidden(self):
         """Test that non-admins cannot access space invitations."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service:
             # Mock space service - user is NOT admin
             mock_space_instance = Mock()
             mock_space_instance.get_space_member_role.return_value = "member"
@@ -226,8 +213,7 @@ class TestInvitationAPIFixes:
 
     def test_get_space_invitations_space_not_found(self):
         """Test 404 when space doesn't exist."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service:
             mock_space_instance = Mock()
             mock_space_instance.get_space_member_role.return_value = None
             mock_space_service.return_value = mock_space_instance
@@ -239,9 +225,9 @@ class TestInvitationAPIFixes:
     # Issue 4: POST /api/spaces/{spaceId}/invitations/bulk
     def test_create_bulk_invitations_success(self):
         """Test creating multiple invitations at once."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service, \
-             patch('app.api.routes.invitations.InvitationService') as mock_invitation_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service, patch(
+            "app.api.routes.invitations.InvitationService"
+        ) as mock_invitation_service:
             # Mock space service
             mock_space_instance = Mock()
             mock_space_instance.get_space.return_value = {"id": "space123", "name": "Test Space"}
@@ -256,12 +242,9 @@ class TestInvitationAPIFixes:
                 email = invitation_data.invitee_email
                 if email == "existing@example.com":
                     from app.services.exceptions import InvitationAlreadyExistsError
+
                     raise InvitationAlreadyExistsError("Already invited")
-                return {
-                    "id": f"inv_{email}",
-                    "invitee_email": email,
-                    "status": "pending"
-                }
+                return {"id": f"inv_{email}", "invitee_email": email, "status": "pending"}
 
             mock_invitation_instance.create_invitation.side_effect = mock_create
             mock_invitation_service.return_value = mock_invitation_instance
@@ -269,14 +252,10 @@ class TestInvitationAPIFixes:
             response = self.client.post(
                 "/api/spaces/space123/invitations/bulk",
                 json={
-                    "emails": [
-                        "user1@example.com",
-                        "user2@example.com",
-                        "existing@example.com"
-                    ],
+                    "emails": ["user1@example.com", "user2@example.com", "existing@example.com"],
                     "role": "member",
-                    "message": "Join us!"
-                }
+                    "message": "Join us!",
+                },
             )
 
             assert response.status_code == 200
@@ -297,19 +276,14 @@ class TestInvitationAPIFixes:
 
     def test_create_bulk_invitations_empty_list(self):
         """Test bulk invitation with empty email list."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service:
             mock_space_instance = Mock()
             mock_space_instance.get_space.return_value = {"id": "space123", "name": "Test Space"}
             mock_space_instance.can_edit_space.return_value = True
             mock_space_service.return_value = mock_space_instance
 
             response = self.client.post(
-                "/api/spaces/space123/invitations/bulk",
-                json={
-                    "emails": [],
-                    "role": "member"
-                }
+                "/api/spaces/space123/invitations/bulk", json={"emails": [], "role": "member"}
             )
 
             # Should return 400 for empty email list
@@ -317,8 +291,7 @@ class TestInvitationAPIFixes:
 
     def test_create_bulk_invitations_invalid_emails(self):
         """Test bulk invitation with invalid email formats."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service:
             mock_space_instance = Mock()
             mock_space_instance.get_space.return_value = {"id": "space123", "name": "Test Space"}
             mock_space_instance.can_edit_space.return_value = True
@@ -326,10 +299,7 @@ class TestInvitationAPIFixes:
 
             response = self.client.post(
                 "/api/spaces/space123/invitations/bulk",
-                json={
-                    "emails": ["invalid-email", "notanemail"],
-                    "role": "member"
-                }
+                json={"emails": ["invalid-email", "notanemail"], "role": "member"},
             )
 
             # Invalid emails should be caught and returned in failed list
@@ -341,8 +311,7 @@ class TestInvitationAPIFixes:
 
     def test_create_bulk_invitations_unauthorized(self):
         """Test bulk invitation by non-admin user."""
-        with patch('app.api.routes.invitations.SpaceService') as mock_space_service:
-
+        with patch("app.api.routes.invitations.SpaceService") as mock_space_service:
             # User does not have edit permission
             mock_space_instance = Mock()
             mock_space_instance.get_space.return_value = {"id": "space123", "name": "Test Space"}
@@ -351,10 +320,7 @@ class TestInvitationAPIFixes:
 
             response = self.client.post(
                 "/api/spaces/space123/invitations/bulk",
-                json={
-                    "emails": ["user@example.com"],
-                    "role": "member"
-                }
+                json={"emails": ["user@example.com"], "role": "member"},
             )
 
             # Should return 403 Forbidden

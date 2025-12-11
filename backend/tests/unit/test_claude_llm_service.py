@@ -11,9 +11,7 @@ from app.services.exceptions import ExternalServiceError
 @pytest.fixture
 def mock_secret_response():
     """Mock AWS Secrets Manager response"""
-    return {
-        "SecretString": json.dumps({"api_key": "test-api-key-12345"})
-    }
+    return {"SecretString": json.dumps({"api_key": "test-api-key-12345"})}
 
 
 @pytest.fixture
@@ -37,8 +35,11 @@ def mock_anthropic_message():
 class TestClaudeLLMService:
     """Test cases for ClaudeLLMService"""
 
-    @patch.dict('os.environ', {'CLAUDE_API_KEY_SECRET_ARN': 'arn:aws:secretsmanager:us-east-1:123456789:secret:test'})
-    @patch('boto3.session.Session')
+    @patch.dict(
+        "os.environ",
+        {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123456789:secret:test"},
+    )
+    @patch("boto3.session.Session")
     def test_get_secret_success(self, mock_session, mock_secret_response):
         """Test successful retrieval of secret from AWS Secrets Manager"""
         # Setup mock
@@ -52,7 +53,7 @@ class TestClaudeLLMService:
         # Assert
         assert service.api_key == "test-api-key-12345"
 
-    @patch.dict('os.environ', {}, clear=True)
+    @patch.dict("os.environ", {}, clear=True)
     def test_get_secret_no_env_var(self):
         """Test error when CLAUDE_API_KEY_SECRET_ARN is not set"""
         with pytest.raises(ExternalServiceError) as exc_info:
@@ -61,8 +62,11 @@ class TestClaudeLLMService:
 
         assert "environment variable not set" in str(exc_info.value)
 
-    @patch.dict('os.environ', {'CLAUDE_API_KEY_SECRET_ARN': 'arn:aws:secretsmanager:us-east-1:123456789:secret:test'})
-    @patch('boto3.session.Session')
+    @patch.dict(
+        "os.environ",
+        {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123456789:secret:test"},
+    )
+    @patch("boto3.session.Session")
     def test_get_secret_placeholder(self, mock_session):
         """Test error when secret contains placeholder value"""
         # Setup mock with placeholder
@@ -79,15 +83,14 @@ class TestClaudeLLMService:
 
         assert "not configured" in str(exc_info.value)
 
-    @patch.dict('os.environ', {'CLAUDE_API_KEY_SECRET_ARN': 'arn:aws:secretsmanager:us-east-1:123456789:secret:test'})
-    @patch('boto3.session.Session')
-    @patch('app.services.claude_llm.Anthropic')
+    @patch.dict(
+        "os.environ",
+        {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123456789:secret:test"},
+    )
+    @patch("boto3.session.Session")
+    @patch("app.services.claude_llm.Anthropic")
     def test_generate_response_success(
-        self,
-        mock_anthropic,
-        mock_session,
-        mock_secret_response,
-        mock_anthropic_message
+        self, mock_anthropic, mock_session, mock_secret_response, mock_anthropic_message
     ):
         """Test successful LLM response generation"""
         # Setup mocks
@@ -105,7 +108,7 @@ class TestClaudeLLMService:
             prompt="What is the meaning of life?",
             system_prompt="You are a helpful assistant.",
             max_tokens=500,
-            temperature=0.7
+            temperature=0.7,
         )
 
         # Assertions
@@ -133,9 +136,12 @@ class TestClaudeLLMService:
 
         assert "not initialized" in str(exc_info.value)
 
-    @patch.dict('os.environ', {'CLAUDE_API_KEY_SECRET_ARN': 'arn:aws:secretsmanager:us-east-1:123456789:secret:test'})
-    @patch('boto3.session.Session')
-    @patch('app.services.claude_llm.Anthropic')
+    @patch.dict(
+        "os.environ",
+        {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123456789:secret:test"},
+    )
+    @patch("boto3.session.Session")
+    @patch("app.services.claude_llm.Anthropic")
     def test_generate_response_api_error(self, mock_anthropic, mock_session, mock_secret_response):
         """Test handling of API errors"""
         # Setup mocks
@@ -154,15 +160,14 @@ class TestClaudeLLMService:
 
         assert "Failed to generate" in str(exc_info.value)
 
-    @patch.dict('os.environ', {'CLAUDE_API_KEY_SECRET_ARN': 'arn:aws:secretsmanager:us-east-1:123456789:secret:test'})
-    @patch('boto3.session.Session')
-    @patch('app.services.claude_llm.Anthropic')
+    @patch.dict(
+        "os.environ",
+        {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123456789:secret:test"},
+    )
+    @patch("boto3.session.Session")
+    @patch("app.services.claude_llm.Anthropic")
     def test_generate_journal_insights(
-        self,
-        mock_anthropic,
-        mock_session,
-        mock_secret_response,
-        mock_anthropic_message
+        self, mock_anthropic, mock_session, mock_secret_response, mock_anthropic_message
     ):
         """Test journal insights generation"""
         # Setup mocks
@@ -179,7 +184,7 @@ class TestClaudeLLMService:
         result = service.generate_journal_insights(
             journal_content="Today was a great day!",
             journal_title="A Great Day",
-            emotions=["happy", "grateful"]
+            emotions=["happy", "grateful"],
         )
 
         # Assertions
@@ -195,11 +200,12 @@ class TestClaudeLLMService:
         assert "grateful" in prompt_text
         assert "Today was a great day!" in prompt_text
 
-    @patch('app.services.claude_llm.ClaudeLLMService')
+    @patch("app.services.claude_llm.ClaudeLLMService")
     def test_get_claude_service_singleton(self, mock_service_class):
         """Test that get_claude_service returns a singleton"""
         # Clear any existing instance
         import app.services.claude_llm as module
+
         module._claude_service = None
 
         # Get service twice

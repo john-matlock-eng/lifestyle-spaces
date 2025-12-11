@@ -14,15 +14,19 @@ import { HighlightableText } from '../components/HighlightableText'
 import { TipTapViewer } from '../components/TipTapViewer'
 import { MultiSectionTipTapViewer } from '../components/MultiSectionTipTapViewer'
 import { CommentThread } from '../components/CommentThread'
+import { JournalCommentThread } from '../components/JournalCommentThread'
+import { JournalCommentPanel } from '../components/JournalCommentPanel'
 import { PresenceAvatars } from '../components/PresenceAvatars'
 import { ConnectionStatus } from '../components/ConnectionStatus'
 import { useHighlightsRealtime } from '../hooks/useHighlightsRealtime'
+import { useJournalComments } from '../hooks/useJournalComments'
 import type { Highlight } from '../types/highlight.types'
 import { ListSectionDisplay } from '../components/sections/ListSectionDisplay'
 import { QASectionDisplay } from '../components/sections/QASectionDisplay'
 import { CheckboxSectionDisplay } from '../components/sections/CheckboxSectionDisplay'
 import { ScaleSectionDisplay } from '../components/sections/ScaleSectionDisplay'
 import { TableSectionDisplay } from '../components/sections/TableSectionDisplay'
+import { MomentBlocksSectionDisplay } from '../components/sections/MomentBlocksSectionDisplay'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -45,6 +49,7 @@ export const JournalViewPage: React.FC = () => {
   const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
   const [pendingHighlightId, setPendingHighlightId] = useState<string | null>(null)
+  const [showJournalCommentPanel, setShowJournalCommentPanel] = useState(false)
 
   // Highlights and comments real-time feature
   const {
@@ -62,6 +67,9 @@ export const JournalViewPage: React.FC = () => {
     fetchComments,
     reconnect
   } = useHighlightsRealtime(spaceId || '', journalId || '')
+
+  // Journal-level comments (Conversations feature) - get count for stats display
+  const { commentCount: journalCommentCount } = useJournalComments(spaceId || '', journalId || '')
 
   // Ellie companion - just use mood state, SmartEllie manages position
   const [mood, setMood] = useState<'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'>('happy')
@@ -107,11 +115,18 @@ export const JournalViewPage: React.FC = () => {
     }
   }, [journal])
 
-  // Handle URL params for deep linking to highlights/comments from activity feed
+  // Handle URL params for deep linking to highlights/comments from activity feed or conversations
   useEffect(() => {
     const highlightId = searchParams.get('highlightId')
+    const openJournalComments = searchParams.get('openJournalComments')
+
     if (highlightId) {
       setPendingHighlightId(highlightId)
+      // Clear the URL params after capturing them
+      setSearchParams({}, { replace: true })
+    } else if (openJournalComments === 'true') {
+      // Open the journal-level discussion panel
+      setShowJournalCommentPanel(true)
       // Clear the URL params after capturing them
       setSearchParams({}, { replace: true })
     }
@@ -247,7 +262,8 @@ ${content}
   const isAuthor = user?.userId === journal.userId
   const canEdit = isAuthor
   const highlightCount = highlights.length
-  const totalComments = Object.values(comments).reduce((sum, arr) => sum + arr.length, 0)
+  const highlightCommentCount = Object.values(comments).reduce((sum, arr) => sum + arr.length, 0)
+  const totalComments = highlightCommentCount + journalCommentCount
 
   return (
     <div className={`journal-view-container compact density-${density} has-sticky-actions`}>
@@ -378,11 +394,18 @@ ${content}
           <span className="journal-stat-value">{highlightCount}</span>
           <span className="journal-stat-label">{highlightCount === 1 ? 'highlight' : 'highlights'}</span>
         </div>
-        <div className="journal-stat-item">
+        <div className="journal-stat-item" title={`${highlightCommentCount} on highlights, ${journalCommentCount} in discussion`}>
           <span>💬</span>
           <span className="journal-stat-value">{totalComments}</span>
           <span className="journal-stat-label">{totalComments === 1 ? 'comment' : 'comments'}</span>
         </div>
+        {journalCommentCount > 0 && (
+          <div className="journal-stat-item" style={{ cursor: 'pointer' }} onClick={() => setShowJournalCommentPanel(true)}>
+            <span>🗨️</span>
+            <span className="journal-stat-value">{journalCommentCount}</span>
+            <span className="journal-stat-label">discussion</span>
+          </div>
+        )}
       </div>
 
       {/* Presence and Connection Status */}
@@ -479,6 +502,18 @@ ${content}
                           <TableSectionDisplay
                             value={section.content}
                             config={template?.sections.find(s => s.id === section.id)?.config}
+                          />
+                        ) : section.type === 'moment_blocks' ? (
+                          <MomentBlocksSectionDisplay
+                            value={section.content}
+                            sectionId={section.id}
+                            journalEntryId={journalId || ''}
+                            spaceId={spaceId || ''}
+                            highlights={highlights}
+                            onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                            onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
+                            onHighlightDelete={deleteHighlight}
                           />
                         ) : (
                           // Fallback to markdown paragraph rendering
@@ -614,6 +649,20 @@ ${content}
                       config={template?.sections.find(s => s.id === section.id)?.config}
                       className="scale-view-section"
                     />
+                  ) : section.type === 'moment_blocks' ? (
+                    // Render Moment Blocks section with highlighting support
+                    <MomentBlocksSectionDisplay
+                      value={section.content}
+                      sectionId={section.id}
+                      journalEntryId={journalId || ''}
+                      spaceId={spaceId || ''}
+                      highlights={highlights}
+                      onHighlightCreate={(selection, color) => createHighlight(selection, color)}
+                      onHighlightClick={handleHighlightClick}
+                      onHighlightUpdate={updateHighlight}
+                      onHighlightDelete={deleteHighlight}
+                      className="moment-blocks-display-compact"
+                    />
                   ) : (
                     // Render other section types with highlighting
                     <HighlightableText
@@ -648,6 +697,18 @@ ${content}
           />
         )}
       </div>
+
+      {/* Journal Comments Thread (Conversations) */}
+      {spaceId && journalId && (
+        <JournalCommentThread
+          spaceId={spaceId}
+          journalId={journalId}
+          journalTitle={journal.title}
+          currentUserId={user?.userId || ''}
+          spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
+          onOpenPanel={() => setShowJournalCommentPanel(true)}
+        />
+      )}
 
       {/* Sticky Action Bar */}
       <div className="journal-actions-sticky">
@@ -712,6 +773,19 @@ ${content}
           onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
           onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
           onClose={() => setSelectedHighlight(null)}
+        />
+      )}
+
+      {/* Journal Comment Panel (expanded Conversations view) */}
+      {spaceId && journalId && (
+        <JournalCommentPanel
+          spaceId={spaceId}
+          journalId={journalId}
+          journalTitle={journal.title}
+          currentUserId={user?.userId || ''}
+          spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
+          isOpen={showJournalCommentPanel}
+          onClose={() => setShowJournalCommentPanel(false)}
         />
       )}
 

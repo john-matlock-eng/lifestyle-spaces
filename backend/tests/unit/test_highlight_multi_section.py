@@ -36,7 +36,7 @@ class TestHighlightModelSectionId:
             createdBy="user-123",
             createdByName="Test User",
             createdAt="2024-01-01T00:00:00Z",
-            updatedAt="2024-01-01T00:00:00Z"
+            updatedAt="2024-01-01T00:00:00Z",
         )
 
         assert highlight.section_id == "raw_thoughts"
@@ -52,7 +52,7 @@ class TestHighlightModelSectionId:
             createdBy="user-123",
             createdByName="Test User",
             createdAt="2024-01-01T00:00:00Z",
-            updatedAt="2024-01-01T00:00:00Z"
+            updatedAt="2024-01-01T00:00:00Z",
         )
 
         assert highlight.section_id is None
@@ -67,7 +67,7 @@ class TestCreateHighlightRequest:
             sectionId="action_plan",
             highlightedText="Test text",
             textRange=TextRange(startOffset=0, endOffset=10),
-            color="blue"
+            color="blue",
         )
 
         assert request.section_id == "action_plan"
@@ -75,8 +75,7 @@ class TestCreateHighlightRequest:
     def test_create_request_without_section_id(self):
         """Test highlight creation request without sectionId."""
         request = CreateHighlightRequest(
-            highlightedText="Test text",
-            textRange=TextRange(startOffset=0, endOffset=10)
+            highlightedText="Test text", textRange=TextRange(startOffset=0, endOffset=10)
         )
 
         assert request.section_id is None
@@ -97,7 +96,7 @@ class TestHighlightDBHelpers:
             createdBy="user-123",
             createdByName="Test User",
             createdAt="2024-01-01T00:00:00Z",
-            updatedAt="2024-01-01T00:00:00Z"
+            updatedAt="2024-01-01T00:00:00Z",
         )
 
         db_item = highlight_to_db_item(highlight)
@@ -118,7 +117,7 @@ class TestHighlightDBHelpers:
             createdBy="user-123",
             createdByName="Test User",
             createdAt="2024-01-01T00:00:00Z",
-            updatedAt="2024-01-01T00:00:00Z"
+            updatedAt="2024-01-01T00:00:00Z",
         )
 
         db_item = highlight_to_db_item(highlight)
@@ -140,7 +139,7 @@ class TestHighlightDBHelpers:
             "createdByName": "Test User",
             "createdAt": "2024-01-01T00:00:00Z",
             "updatedAt": "2024-01-01T00:00:00Z",
-            "commentCount": 0
+            "commentCount": 0,
         }
 
         highlight = db_item_to_highlight(db_item)
@@ -161,7 +160,7 @@ class TestHighlightDBHelpers:
             "createdByName": "Test User",
             "createdAt": "2024-01-01T00:00:00Z",
             "updatedAt": "2024-01-01T00:00:00Z",
-            "commentCount": 0
+            "commentCount": 0,
         }
 
         highlight = db_item_to_highlight(db_item)
@@ -191,14 +190,14 @@ class TestExtractHighlightsFromTipTap:
                                         "color": "yellow",
                                         "authorId": "user-456",
                                         "authorName": "Test User",
-                                        "createdAt": "2024-01-01T00:00:00Z"
-                                    }
+                                        "createdAt": "2024-01-01T00:00:00Z",
+                                    },
                                 }
-                            ]
+                            ],
                         }
-                    ]
+                    ],
                 }
-            ]
+            ],
         }
 
         highlights = extract_highlights_from_tiptap(tiptap_doc, section_id="raw_thoughts")
@@ -226,14 +225,14 @@ class TestExtractHighlightsFromTipTap:
                                         "color": "yellow",
                                         "authorId": "user-456",
                                         "authorName": "Test User",
-                                        "createdAt": "2024-01-01T00:00:00Z"
-                                    }
+                                        "createdAt": "2024-01-01T00:00:00Z",
+                                    },
                                 }
-                            ]
+                            ],
                         }
-                    ]
+                    ],
                 }
-            ]
+            ],
         }
 
         highlights = extract_highlights_from_tiptap(tiptap_doc)
@@ -261,14 +260,14 @@ class TestExtractHighlightsFromTipTap:
                                         "color": "yellow",
                                         "authorId": "user-456",
                                         "authorName": "Test User",
-                                        "createdAt": "2024-01-01T00:00:00Z"
-                                    }
+                                        "createdAt": "2024-01-01T00:00:00Z",
+                                    },
                                 }
-                            ]
+                            ],
                         }
-                    ]
+                    ],
                 }
-            ]
+            ],
         }
 
         highlights = extract_highlights_from_tiptap(tiptap_doc, section_id="from_param")
@@ -298,14 +297,14 @@ class TestExtractHighlightsFromMultiSection:
                                         "id": "hl-1",
                                         "authorId": "user-1",
                                         "authorName": "User",
-                                        "createdAt": "2024-01-01T00:00:00Z"
-                                    }
+                                        "createdAt": "2024-01-01T00:00:00Z",
+                                    },
                                 }
-                            ]
+                            ],
                         }
-                    ]
+                    ],
                 }
-            ]
+            ],
         }
 
         highlights = extract_highlights_from_multi_section_tiptap(content_tiptap)
@@ -333,14 +332,14 @@ class TestExtractHighlightsFromMultiSection:
                                             "id": "hl-1",
                                             "authorId": "user-1",
                                             "authorName": "User",
-                                            "createdAt": "2024-01-01T00:00:00Z"
-                                        }
+                                            "createdAt": "2024-01-01T00:00:00Z",
+                                        },
                                     }
-                                ]
+                                ],
                             }
-                        ]
+                        ],
                     }
-                ]
+                ],
             },
             "action_plan": {
                 "type": "doc",
@@ -358,15 +357,15 @@ class TestExtractHighlightsFromMultiSection:
                                             "id": "hl-2",
                                             "authorId": "user-1",
                                             "authorName": "User",
-                                            "createdAt": "2024-01-01T00:00:00Z"
-                                        }
+                                            "createdAt": "2024-01-01T00:00:00Z",
+                                        },
                                     }
-                                ]
+                                ],
                             }
-                        ]
+                        ],
                     }
-                ]
-            }
+                ],
+            },
         }
 
         highlights = extract_highlights_from_multi_section_tiptap(content_tiptap)
@@ -386,11 +385,8 @@ class TestExtractHighlightsFromMultiSection:
             "section1": {
                 "type": "doc",
                 "content": [
-                    {
-                        "type": "paragraph",
-                        "content": [{"type": "text", "text": "No highlights"}]
-                    }
-                ]
+                    {"type": "paragraph", "content": [{"type": "text", "text": "No highlights"}]}
+                ],
             }
         }
 
@@ -404,11 +400,8 @@ class TestExtractHighlightsFromMultiSection:
             "section1": {
                 "type": "doc",
                 "content": [
-                    {
-                        "type": "paragraph",
-                        "content": [{"type": "text", "text": "No highlights"}]
-                    }
-                ]
+                    {"type": "paragraph", "content": [{"type": "text", "text": "No highlights"}]}
+                ],
             },
             "section2": {
                 "type": "doc",
@@ -426,15 +419,15 @@ class TestExtractHighlightsFromMultiSection:
                                             "id": "hl-1",
                                             "authorId": "user-1",
                                             "authorName": "User",
-                                            "createdAt": "2024-01-01T00:00:00Z"
-                                        }
+                                            "createdAt": "2024-01-01T00:00:00Z",
+                                        },
                                     }
-                                ]
+                                ],
                             }
-                        ]
+                        ],
                     }
-                ]
-            }
+                ],
+            },
         }
 
         highlights = extract_highlights_from_multi_section_tiptap(content_tiptap)

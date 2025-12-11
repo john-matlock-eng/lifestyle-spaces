@@ -196,6 +196,25 @@ export function useEllieJournalGuide(
           }
         }
       }
+
+      // Check moment count milestones (for moment_blocks sections)
+      if (progress.itemCount !== undefined && section.ellie.encouragement.momentCount) {
+        const momentCountMilestones = section.ellie.encouragement.momentCount
+        const milestones = Object.keys(momentCountMilestones)
+          .map(Number)
+          .sort((a, b) => b - a)
+
+        for (const milestone of milestones) {
+          if (progress.itemCount >= milestone) {
+            const guidance = momentCountMilestones[milestone]
+            const key = `section-${sectionId}-momentcount-${milestone}`
+            if (guidance && !appliedGuidanceRef.current.has(key)) {
+              applyGuidance(guidance, key)
+              break
+            }
+          }
+        }
+      }
     },
     [template, applyGuidance]
   )

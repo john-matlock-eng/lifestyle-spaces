@@ -12,7 +12,7 @@ class TestJournalParser:
 
     def test_parse_complete_journal(self):
         """Test parsing a complete journal with all metadata."""
-        content = '''<!--
+        content = """<!--
 @template: daily-journal
 @version: 1.0
 @created: 2024-01-15T10:30:00Z
@@ -27,7 +27,7 @@ class TestJournalParser:
 
 <!-- section:reflection @title:"Reflection" @type:prose -->
 Today was productive.
-<!-- /section:reflection -->'''
+<!-- /section:reflection -->"""
 
         parsed = JournalParser.parse(content)
 
@@ -53,7 +53,7 @@ Today was productive.
 
     def test_extract_searchable_metadata(self):
         """Test metadata extraction for database indexing."""
-        content = '''<!--
+        content = """<!--
 @template: daily-journal
 @version: 1.0
 @metadata: {"title":"Test Journal","mood":"happy","rating":5}
@@ -61,7 +61,7 @@ Today was productive.
 
 <!-- section:test @title:"Test Section" -->
 Content
-<!-- /section:test -->'''
+<!-- /section:test -->"""
 
         metadata = JournalParser.extract_searchable_metadata(content)
 
@@ -75,10 +75,10 @@ Content
 
     def test_extract_searchable_metadata_with_emotions(self):
         """Test extraction of emotions list."""
-        content = '''<!--
+        content = """<!--
 @metadata: {"emotions":["happy","excited","grateful"]}
 -->
-Content'''
+Content"""
 
         metadata = JournalParser.extract_searchable_metadata(content)
 
@@ -88,7 +88,7 @@ Content'''
 
     def test_extract_clean_markdown(self):
         """Test extraction of clean markdown without metadata."""
-        content = '''<!--
+        content = """<!--
 @template: daily-journal
 @version: 1.0
 -->
@@ -100,7 +100,7 @@ Content'''
 
 Regular paragraph here.
 
-Another paragraph.'''
+Another paragraph."""
 
         clean = JournalParser.extract_clean_markdown(content)
 
@@ -117,25 +117,25 @@ Another paragraph.'''
 
     def test_extract_clean_markdown_reduces_newlines(self):
         """Test that excessive newlines are reduced."""
-        content = '''Content 1
+        content = """Content 1
 
 
 
-Content 2'''
+Content 2"""
 
         clean = JournalParser.extract_clean_markdown(content)
 
         # Should reduce multiple newlines to two
-        assert '\n\n\n' not in clean
-        assert 'Content 1\n\nContent 2' in clean
+        assert "\n\n\n" not in clean
+        assert "Content 1\n\nContent 2" in clean
 
     def test_parse_malformed_json(self):
         """Test graceful handling of malformed JSON metadata."""
-        content = '''<!--
+        content = """<!--
 @template: test-template
 @metadata: {broken json here}
 -->
-Content'''
+Content"""
 
         parsed = JournalParser.parse(content)
 
@@ -171,8 +171,8 @@ Content'''
 
     def test_parse_unclosed_section(self):
         """Test handling of unclosed sections."""
-        content = '''<!-- section:test @title:"Test Section" -->
-This is content without a closing tag'''
+        content = """<!-- section:test @title:"Test Section" -->
+This is content without a closing tag"""
 
         parsed = JournalParser.parse(content)
 
@@ -182,11 +182,11 @@ This is content without a closing tag'''
 
     def test_parse_section_with_whitespace(self):
         """Test that whitespace in sections is preserved."""
-        content = '''<!-- section:code @title:"Code" -->
+        content = """<!-- section:code @title:"Code" -->
     function test() {
       return true;
     }
-<!-- /section:code -->'''
+<!-- /section:code -->"""
 
         parsed = JournalParser.parse(content)
 
@@ -197,7 +197,7 @@ This is content without a closing tag'''
 
     def test_parse_multiple_sections(self):
         """Test parsing multiple sections."""
-        content = '''<!--
+        content = """<!--
 @template: test
 -->
 
@@ -211,7 +211,7 @@ Content 2
 
 <!-- section:section3 @title:"Section 3" -->
 Content 3
-<!-- /section:section3 -->'''
+<!-- /section:section3 -->"""
 
         parsed = JournalParser.parse(content)
 
@@ -225,9 +225,9 @@ Content 3
 
     def test_parse_attributes_quoted(self):
         """Test parsing quoted attributes."""
-        content = '''<!-- section:test @title:"My Title" @type:prose @required:true -->
+        content = """<!-- section:test @title:"My Title" @type:prose @required:true -->
 Content
-<!-- /section:test -->'''
+<!-- /section:test -->"""
 
         parsed = JournalParser.parse(content)
 
@@ -237,9 +237,9 @@ Content
 
     def test_parse_attributes_mixed(self):
         """Test parsing mixed quoted and unquoted attributes."""
-        content = '''<!-- section:test @title:"My Title" @type:prose @limit:100 -->
+        content = """<!-- section:test @title:"My Title" @type:prose @limit:100 -->
 Content
-<!-- /section:test -->'''
+<!-- /section:test -->"""
 
         parsed = JournalParser.parse(content)
 
@@ -249,12 +249,12 @@ Content
 
     def test_parse_no_sections(self):
         """Test parsing journal with metadata but no sections."""
-        content = '''<!--
+        content = """<!--
 @template: simple
 @metadata: {"title":"Simple Journal"}
 -->
 
-Just some plain content here.'''
+Just some plain content here."""
 
         parsed = JournalParser.parse(content)
 
@@ -275,9 +275,9 @@ Just some plain content here.'''
 
     def test_section_id_as_title_fallback(self):
         """Test that section ID can be extracted even without title."""
-        content = '''<!-- section:mysection @type:prose -->
+        content = """<!-- section:mysection @type:prose -->
 Content
-<!-- /section:mysection -->'''
+<!-- /section:mysection -->"""
 
         parsed = JournalParser.parse(content)
 

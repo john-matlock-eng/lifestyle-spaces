@@ -40,17 +40,17 @@ class TestTemplatesAPI:
                     name="Daily Log",
                     description="Track your daily activities",
                     version=1,
-                    sections=[]
+                    sections=[],
                 ),
                 Template(
                     id="gratitude",
                     name="Gratitude Journal",
                     description="Practice gratitude",
                     version=1,
-                    sections=[]
-                )
+                    sections=[],
+                ),
             ],
-            total=2
+            total=2,
         )
         mock_template_service.list_templates.return_value = templates
 
@@ -91,9 +91,9 @@ class TestTemplatesAPI:
                     id="section-1",
                     title="Morning Reflection",
                     type="paragraph",
-                    placeholder="Write about your morning..."
+                    placeholder="Write about your morning...",
                 )
-            ]
+            ],
         )
         mock_template_service.get_template.return_value = template
 
@@ -110,7 +110,9 @@ class TestTemplatesAPI:
     def test_get_template_not_found(self, client, mock_template_service):
         """Test getting a template that doesn't exist."""
         # Mock service to raise TemplateNotFoundError
-        mock_template_service.get_template.side_effect = TemplateNotFoundError("Template 'nonexistent' not found")
+        mock_template_service.get_template.side_effect = TemplateNotFoundError(
+            "Template 'nonexistent' not found"
+        )
 
         # Make request
         response = client.get("/api/templates/nonexistent")
@@ -189,11 +191,17 @@ class TestWeeklyGratitudeReflectionAPI:
         assert "weekly_gratitude_reflection" in template_ids
 
         # Get the template from the list
-        weekly_template = next(t for t in data["templates"] if t["id"] == "weekly_gratitude_reflection")
+        weekly_template = next(
+            t for t in data["templates"] if t["id"] == "weekly_gratitude_reflection"
+        )
 
         # Verify it's positioned after daily gratitude
-        gratitude_daily_idx = next(i for i, t in enumerate(data["templates"]) if t["id"] == "gratitude_daily")
-        weekly_idx = next(i for i, t in enumerate(data["templates"]) if t["id"] == "weekly_gratitude_reflection")
+        gratitude_daily_idx = next(
+            i for i, t in enumerate(data["templates"]) if t["id"] == "gratitude_daily"
+        )
+        weekly_idx = next(
+            i for i, t in enumerate(data["templates"]) if t["id"] == "weekly_gratitude_reflection"
+        )
 
         # Weekly should come after daily gratitude
         assert weekly_idx == gratitude_daily_idx + 1

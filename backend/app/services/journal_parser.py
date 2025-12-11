@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 @dataclass
 class ParsedSection:
     """Represents a parsed journal section."""
+
     content: str
     title: Optional[str] = None
     type: Optional[str] = None
@@ -22,6 +23,7 @@ class ParsedSection:
 @dataclass
 class ParsedJournal:
     """Represents a fully parsed journal with embedded metadata."""
+
     template: Optional[str] = None
     template_version: Optional[str] = None
     created: Optional[str] = None
@@ -34,9 +36,9 @@ class JournalParser:
     """Parse and extract metadata from journal content with embedded templates."""
 
     # Regex patterns for parsing
-    METADATA_LINE = re.compile(r'^@(\w+):\s*(.+)')
-    SECTION_START = re.compile(r'^<!--\s*section:(\w+)(.*?)-->')
-    SECTION_END = re.compile(r'^<!--\s*/section:(\w+)\s*-->')
+    METADATA_LINE = re.compile(r"^@(\w+):\s*(.+)")
+    SECTION_START = re.compile(r"^<!--\s*section:(\w+)(.*?)-->")
+    SECTION_END = re.compile(r"^<!--\s*/section:(\w+)\s*-->")
     ATTRIBUTE_PATTERN = re.compile(r'@(\w+):"([^"]+)"|@(\w+):(\S+)')
 
     @classmethod
@@ -53,7 +55,7 @@ class JournalParser:
         if not content:
             return ParsedJournal(raw_content=content)
 
-        lines = content.split('\n')
+        lines = content.split("\n")
         result = ParsedJournal(raw_content=content)
 
         in_metadata = False
@@ -65,12 +67,12 @@ class JournalParser:
             stripped = line.strip()
 
             # Start of metadata block
-            if stripped == '<!--':
+            if stripped == "<!--":
                 in_metadata = True
                 continue
 
             # End of metadata block
-            if stripped == '-->' and in_metadata:
+            if stripped == "-->" and in_metadata:
                 in_metadata = False
                 continue
 
@@ -79,17 +81,17 @@ class JournalParser:
                 match = cls.METADATA_LINE.match(stripped)
                 if match:
                     key, value = match.groups()
-                    if key == 'metadata':
+                    if key == "metadata":
                         try:
                             result.metadata = json.loads(value)
                         except json.JSONDecodeError as e:
                             # Log error but continue parsing
                             print(f"Failed to parse metadata JSON: {value}, error: {e}")
-                    elif key == 'template':
+                    elif key == "template":
                         result.template = value
-                    elif key == 'version':
+                    elif key == "version":
                         result.template_version = value
-                    elif key == 'created':
+                    elif key == "created":
                         result.created = value
                 continue
 
@@ -99,8 +101,7 @@ class JournalParser:
                 # Save previous section if exists
                 if current_section:
                     result.sections[current_section] = ParsedSection(
-                        content='\n'.join(section_content),
-                        **section_attrs
+                        content="\n".join(section_content), **section_attrs
                     )
 
                 current_section = section_match.group(1)
@@ -113,8 +114,7 @@ class JournalParser:
             end_match = cls.SECTION_END.match(stripped)
             if end_match and current_section == end_match.group(1):
                 result.sections[current_section] = ParsedSection(
-                    content='\n'.join(section_content),
-                    **section_attrs
+                    content="\n".join(section_content), **section_attrs
                 )
                 current_section = None
                 section_content = []
@@ -128,8 +128,7 @@ class JournalParser:
         # Handle unclosed section
         if current_section:
             result.sections[current_section] = ParsedSection(
-                content='\n'.join(section_content),
-                **section_attrs
+                content="\n".join(section_content), **section_attrs
             )
 
         return result
@@ -164,15 +163,15 @@ class JournalParser:
         extra_attrs = {}
 
         for key, value in all_attrs.items():
-            if key == 'title':
-                result['title'] = value
-            elif key == 'type':
-                result['type'] = value
+            if key == "title":
+                result["title"] = value
+            elif key == "type":
+                result["type"] = value
             else:
                 extra_attrs[key] = value
 
         if extra_attrs:
-            result['attributes'] = extra_attrs
+            result["attributes"] = extra_attrs
 
         return result
 
@@ -194,20 +193,20 @@ class JournalParser:
 
         # Combine metadata from different sources
         searchable = {
-            'template': parsed.template,
-            'template_version': parsed.template_version,
-            'created_from_template': parsed.created,
-            'has_sections': bool(parsed.sections),
-            'section_count': len(parsed.sections),
-            'section_ids': list(parsed.sections.keys()),
+            "template": parsed.template,
+            "template_version": parsed.template_version,
+            "created_from_template": parsed.created,
+            "has_sections": bool(parsed.sections),
+            "section_count": len(parsed.sections),
+            "section_ids": list(parsed.sections.keys()),
         }
 
         # Add any custom metadata fields from embedded metadata
         for key, value in parsed.metadata.items():
             if isinstance(value, (str, int, float, bool)):
                 searchable[key] = value
-            elif key == 'emotions' and isinstance(value, list):
-                searchable['emotions'] = value
+            elif key == "emotions" and isinstance(value, list):
+                searchable["emotions"] = value
             elif isinstance(value, list):
                 # Handle other list types
                 searchable[key] = value
@@ -231,14 +230,14 @@ class JournalParser:
         lines = []
         in_metadata = False
 
-        for line in content.split('\n'):
+        for line in content.split("\n"):
             stripped = line.strip()
 
             # Skip metadata blocks
-            if stripped == '<!--':
+            if stripped == "<!--":
                 in_metadata = True
                 continue
-            if stripped == '-->' and in_metadata:
+            if stripped == "-->" and in_metadata:
                 in_metadata = False
                 continue
             if in_metadata:
@@ -249,10 +248,10 @@ class JournalParser:
                 continue
 
             # Keep regular content
-            if not stripped.startswith('<!--'):
+            if not stripped.startswith("<!--"):
                 lines.append(line)
 
         # Clean up extra newlines
-        result = '\n'.join(lines)
-        result = re.sub(r'\n{3,}', '\n\n', result)
+        result = "\n".join(lines)
+        result = re.sub(r"\n{3,}", "\n\n", result)
         return result.strip()

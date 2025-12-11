@@ -184,9 +184,7 @@ async def sync_highlight_comment_count(
         return {"success": True, "comment_count": comment_count}
 
     except Exception as e:
-        logger.error(
-            f"[TIPTAP_SYNC] Failed to sync comment count: {e}", exc_info=True
-        )
+        logger.error(f"[TIPTAP_SYNC] Failed to sync comment count: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to sync comment count: {str(e)}",
@@ -251,9 +249,7 @@ async def delete_highlight_from_tiptap(
         return None
 
     except Exception as e:
-        logger.error(
-            f"[TIPTAP_DELETE] Failed to delete highlight: {e}", exc_info=True
-        )
+        logger.error(f"[TIPTAP_DELETE] Failed to delete highlight: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete highlight: {str(e)}",

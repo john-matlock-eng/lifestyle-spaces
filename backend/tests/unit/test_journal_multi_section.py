@@ -29,12 +29,9 @@ class TestJournalTipTapValidation:
             "contentTiptap": {
                 "type": "doc",
                 "content": [
-                    {
-                        "type": "paragraph",
-                        "content": [{"type": "text", "text": "Hello world"}]
-                    }
-                ]
-            }
+                    {"type": "paragraph", "content": [{"type": "text", "text": "Hello world"}]}
+                ],
+            },
         }
 
         journal = JournalBase(**journal_data)
@@ -51,15 +48,15 @@ class TestJournalTipTapValidation:
                     "type": "doc",
                     "content": [
                         {"type": "paragraph", "content": [{"type": "text", "text": "Section 1"}]}
-                    ]
+                    ],
                 },
                 "action_plan": {
                     "type": "doc",
                     "content": [
                         {"type": "paragraph", "content": [{"type": "text", "text": "Section 2"}]}
-                    ]
-                }
-            }
+                    ],
+                },
+            },
         }
 
         journal = JournalBase(**journal_data)
@@ -69,11 +66,7 @@ class TestJournalTipTapValidation:
 
     def test_null_content_tiptap_valid(self):
         """Test that null contentTiptap is valid."""
-        journal_data = {
-            "title": "Test Journal",
-            "content": "Test content",
-            "contentTiptap": None
-        }
+        journal_data = {"title": "Test Journal", "content": "Test content", "contentTiptap": None}
 
         journal = JournalBase(**journal_data)
         assert journal.content_tiptap is None
@@ -86,7 +79,7 @@ class TestJournalTipTapValidation:
             "contentTiptap": {
                 "type": "doc"
                 # Missing 'content' field
-            }
+            },
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -100,12 +93,9 @@ class TestJournalTipTapValidation:
             "title": "Test Journal",
             "content": "Test content",
             "contentTiptap": {
-                "section1": {
-                    "type": "doc",
-                    "content": []
-                },
-                "section2": "invalid"  # Should be a dict
-            }
+                "section1": {"type": "doc", "content": []},
+                "section2": "invalid",  # Should be a dict
+            },
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -123,7 +113,7 @@ class TestJournalTipTapValidation:
                     "content": []
                     # Missing 'type' field
                 }
-            }
+            },
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -141,7 +131,7 @@ class TestJournalTipTapValidation:
                     "type": "doc"
                     # Missing 'content' field
                 }
-            }
+            },
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -154,7 +144,7 @@ class TestJournalTipTapValidation:
         journal_data = {
             "title": "Test Journal",
             "content": "Test content",
-            "contentTiptap": "invalid string"
+            "contentTiptap": "invalid string",
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -174,12 +164,9 @@ class TestJournalEntryHelperMethods:
             user_id="user-789",
             title="Test",
             content="Content",
-            content_tiptap={
-                "type": "doc",
-                "content": []
-            },
+            content_tiptap={"type": "doc", "content": []},
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         assert journal.is_multi_section_tiptap() is False
@@ -194,10 +181,10 @@ class TestJournalEntryHelperMethods:
             content="Content",
             content_tiptap={
                 "section1": {"type": "doc", "content": []},
-                "section2": {"type": "doc", "content": []}
+                "section2": {"type": "doc", "content": []},
             },
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         assert journal.is_multi_section_tiptap() is True
@@ -212,7 +199,7 @@ class TestJournalEntryHelperMethods:
             content="Content",
             content_tiptap=None,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         assert journal.is_multi_section_tiptap() is False
@@ -228,7 +215,7 @@ class TestJournalEntryHelperMethods:
             content="Content",
             content_tiptap=tiptap_doc,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         result = journal.get_section_tiptap("content")
@@ -244,7 +231,7 @@ class TestJournalEntryHelperMethods:
             content="Content",
             content_tiptap={"type": "doc", "content": []},
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         result = journal.get_section_tiptap("other_section")
@@ -261,12 +248,9 @@ class TestJournalEntryHelperMethods:
             user_id="user-789",
             title="Test",
             content="Content",
-            content_tiptap={
-                "section1": section1_doc,
-                "section2": section2_doc
-            },
+            content_tiptap={"section1": section1_doc, "section2": section2_doc},
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         assert journal.get_section_tiptap("section1") == section1_doc
@@ -283,7 +267,7 @@ class TestJournalEntryHelperMethods:
             content="Content",
             content_tiptap=None,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         assert journal.get_section_tiptap("any_section") is None
@@ -298,7 +282,7 @@ class TestJournalEntryHelperMethods:
             content="Content",
             content_tiptap={"type": "doc", "content": []},
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         section_ids = journal.get_all_section_ids()
@@ -315,10 +299,10 @@ class TestJournalEntryHelperMethods:
             content_tiptap={
                 "raw_thoughts": {"type": "doc", "content": []},
                 "action_plan": {"type": "doc", "content": []},
-                "reflections": {"type": "doc", "content": []}
+                "reflections": {"type": "doc", "content": []},
             },
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         section_ids = journal.get_all_section_ids()
@@ -334,7 +318,7 @@ class TestJournalEntryHelperMethods:
             content="Content",
             content_tiptap=None,
             created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            updated_at=datetime.utcnow(),
         )
 
         section_ids = journal.get_all_section_ids()
@@ -350,10 +334,7 @@ class TestJournalCreateWithTipTap:
             "spaceId": "space-123",
             "title": "Test Journal",
             "content": "Test content",
-            "contentTiptap": {
-                "type": "doc",
-                "content": [{"type": "paragraph"}]
-            }
+            "contentTiptap": {"type": "doc", "content": [{"type": "paragraph"}]},
         }
 
         journal = JournalCreate(**journal_data)
@@ -368,8 +349,8 @@ class TestJournalCreateWithTipTap:
             "content": "Test content",
             "contentTiptap": {
                 "section1": {"type": "doc", "content": []},
-                "section2": {"type": "doc", "content": []}
-            }
+                "section2": {"type": "doc", "content": []},
+            },
         }
 
         journal = JournalCreate(**journal_data)

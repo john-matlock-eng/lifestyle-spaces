@@ -31,10 +31,7 @@ class HighlightService:
     def is_space_member(self, space_id: str, user_id: str) -> bool:
         """Check if user is a member of the space."""
         try:
-            item = self.db.get_item(
-                pk=f'SPACE#{space_id}',
-                sk=f'MEMBER#{user_id}'
-            )
+            item = self.db.get_item(pk=f"SPACE#{space_id}", sk=f"MEMBER#{user_id}")
             return item is not None
         except Exception:
             return False
@@ -42,15 +39,12 @@ class HighlightService:
     def _get_journal_title(self, space_id: str, journal_entry_id: str) -> str:
         """Get the title of a journal entry."""
         try:
-            item = self.db.get_item(
-                pk=f"SPACE#{space_id}",
-                sk=f"JOURNAL#{journal_entry_id}"
-            )
+            item = self.db.get_item(pk=f"SPACE#{space_id}", sk=f"JOURNAL#{journal_entry_id}")
             if item:
-                return item.get('title', 'Untitled')
+                return item.get("title", "Untitled")
         except Exception as e:
             logger.warning(f"Failed to get journal title for {journal_entry_id}: {e}")
-        return 'Untitled'
+        return "Untitled"
 
     async def create_highlight(
         self,
@@ -103,6 +97,7 @@ class HighlightService:
         # Record activity
         try:
             from app.services.activity import get_activity_service
+
             activity_service = get_activity_service()
             journal_title = self._get_journal_title(space_id, journal_entry_id)
             activity_service.record_activity(
@@ -111,11 +106,13 @@ class HighlightService:
                 user_id=user_id,
                 user_name=user_name,
                 metadata={
-                    'highlight_id': highlight_id,
-                    'journal_id': journal_entry_id,
-                    'journal_title': journal_title,
-                    'highlighted_text': request.highlighted_text[:100] if len(request.highlighted_text) > 100 else request.highlighted_text
-                }
+                    "highlight_id": highlight_id,
+                    "journal_id": journal_entry_id,
+                    "journal_title": journal_title,
+                    "highlighted_text": request.highlighted_text[:100]
+                    if len(request.highlighted_text) > 100
+                    else request.highlighted_text,
+                },
             )
         except Exception as e:
             logger.warning(f"Failed to record highlight created activity: {e}")
@@ -127,10 +124,7 @@ class HighlightService:
     ) -> List[HighlightModel]:
         """Get all highlights for a specific journal entry."""
         # Query using GSI1 (JOURNAL#{journal_entry_id})
-        items = self.db.query(
-            pk=f"JOURNAL#{journal_entry_id}",
-            index_name="GSI1"
-        )
+        items = self.db.query(pk=f"JOURNAL#{journal_entry_id}", index_name="GSI1")
 
         highlights = []
         for item in items:
@@ -141,10 +135,7 @@ class HighlightService:
 
     async def get_highlight(self, space_id: str, highlight_id: str) -> Optional[HighlightModel]:
         """Get a specific highlight by ID."""
-        item = self.db.get_item(
-            pk=f"SPACE#{space_id}",
-            sk=f"HIGHLIGHT#{highlight_id}"
-        )
+        item = self.db.get_item(pk=f"SPACE#{space_id}", sk=f"HIGHLIGHT#{highlight_id}")
 
         if not item:
             return None
@@ -164,14 +155,12 @@ class HighlightService:
         journal_title = self._get_journal_title(space_id, journal_entry_id)
 
         # Delete the highlight
-        self.db.delete_item(
-            pk=f"SPACE#{space_id}",
-            sk=f"HIGHLIGHT#{highlight_id}"
-        )
+        self.db.delete_item(pk=f"SPACE#{space_id}", sk=f"HIGHLIGHT#{highlight_id}")
 
         # Record activity
         try:
             from app.services.activity import get_activity_service
+
             activity_service = get_activity_service()
             activity_service.record_activity(
                 space_id=space_id,
@@ -179,11 +168,13 @@ class HighlightService:
                 user_id=user_id,
                 user_name=activity_service._get_user_display_name(user_id),
                 metadata={
-                    'highlight_id': highlight_id,
-                    'journal_id': journal_entry_id,
-                    'journal_title': journal_title,
-                    'highlighted_text': highlighted_text[:100] if len(highlighted_text) > 100 else highlighted_text
-                }
+                    "highlight_id": highlight_id,
+                    "journal_id": journal_entry_id,
+                    "journal_title": journal_title,
+                    "highlighted_text": highlighted_text[:100]
+                    if len(highlighted_text) > 100
+                    else highlighted_text,
+                },
             )
         except Exception as e:
             logger.warning(f"Failed to record highlight deleted activity: {e}")
@@ -213,7 +204,7 @@ class HighlightService:
                 "highlightedText": request.highlighted_text,
                 "textRange": request.text_range.dict(by_alias=True),
                 "updatedAt": now,
-            }
+            },
         )
 
         # Update the model and return
@@ -229,7 +220,7 @@ class HighlightService:
             self.db.update_item(
                 pk=f"SPACE#{space_id}",
                 sk=f"HIGHLIGHT#{highlight_id}",
-                updates={"commentCount": highlight.comment_count + 1}
+                updates={"commentCount": highlight.comment_count + 1},
             )
 
     async def decrement_comment_count(self, space_id: str, highlight_id: str) -> None:
@@ -239,7 +230,7 @@ class HighlightService:
             self.db.update_item(
                 pk=f"SPACE#{space_id}",
                 sk=f"HIGHLIGHT#{highlight_id}",
-                updates={"commentCount": max(0, highlight.comment_count - 1)}
+                updates={"commentCount": max(0, highlight.comment_count - 1)},
             )
 
     def _item_to_highlight(self, item: dict) -> HighlightModel:
@@ -320,12 +311,17 @@ class CommentService:
         # Record activity
         try:
             from app.services.activity import get_activity_service
+
             activity_service = get_activity_service()
 
             # Get highlight and journal info for metadata
             highlight = await self.highlight_service.get_highlight(space_id, highlight_id)
-            journal_id = highlight.journal_entry_id if highlight else ''
-            journal_title = self.highlight_service._get_journal_title(space_id, journal_id) if journal_id else 'Untitled'
+            journal_id = highlight.journal_entry_id if highlight else ""
+            journal_title = (
+                self.highlight_service._get_journal_title(space_id, journal_id)
+                if journal_id
+                else "Untitled"
+            )
 
             activity_service.record_activity(
                 space_id=space_id,
@@ -333,12 +329,12 @@ class CommentService:
                 user_id=user_id,
                 user_name=user_name,
                 metadata={
-                    'comment_id': comment_id,
-                    'highlight_id': highlight_id,
-                    'journal_id': journal_id,
-                    'journal_title': journal_title,
-                    'comment_text': request.text[:100] if len(request.text) > 100 else request.text
-                }
+                    "comment_id": comment_id,
+                    "highlight_id": highlight_id,
+                    "journal_id": journal_id,
+                    "journal_title": journal_title,
+                    "comment_text": request.text[:100] if len(request.text) > 100 else request.text,
+                },
             )
         except Exception as e:
             logger.warning(f"Failed to record comment created activity: {e}")
@@ -350,10 +346,7 @@ class CommentService:
     ) -> List[CommentModel]:
         """Get all comments for a specific highlight."""
         # Query using GSI1 (HIGHLIGHT#{highlight_id})
-        items = self.db.query(
-            pk=f"HIGHLIGHT#{highlight_id}",
-            index_name="GSI1"
-        )
+        items = self.db.query(pk=f"HIGHLIGHT#{highlight_id}", index_name="GSI1")
 
         comments = []
         for item in items:
@@ -369,10 +362,7 @@ class CommentService:
     ) -> Optional[CommentModel]:
         """Update a comment. Only the author can update."""
         # First verify ownership
-        item = self.db.get_item(
-            pk=f"SPACE#{space_id}",
-            sk=f"COMMENT#{comment_id}"
-        )
+        item = self.db.get_item(pk=f"SPACE#{space_id}", sk=f"COMMENT#{comment_id}")
 
         if not item:
             return None
@@ -390,7 +380,7 @@ class CommentService:
                 "text": new_text,
                 "updatedAt": now,
                 "isEdited": True,
-            }
+            },
         )
 
         comment.text = new_text
@@ -401,10 +391,7 @@ class CommentService:
     async def delete_comment(self, space_id: str, comment_id: str, user_id: str) -> bool:
         """Delete a comment. Only the author can delete."""
         # First verify ownership and get highlight_id
-        item = self.db.get_item(
-            pk=f"SPACE#{space_id}",
-            sk=f"COMMENT#{comment_id}"
-        )
+        item = self.db.get_item(pk=f"SPACE#{space_id}", sk=f"COMMENT#{comment_id}")
 
         if not item:
             return False
@@ -414,10 +401,7 @@ class CommentService:
             return False
 
         # Delete the comment
-        self.db.delete_item(
-            pk=f"SPACE#{space_id}",
-            sk=f"COMMENT#{comment_id}"
-        )
+        self.db.delete_item(pk=f"SPACE#{space_id}", sk=f"COMMENT#{comment_id}")
 
         # Decrement comment count on highlight
         await self.highlight_service.decrement_comment_count(space_id, comment.highlight_id)

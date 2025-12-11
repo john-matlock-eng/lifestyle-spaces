@@ -8,47 +8,50 @@ from pydantic import BaseModel, Field, field_validator, ConfigDict, field_serial
 
 class SpaceBase(BaseModel):
     """Base space model."""
+
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
     calendar_url: Optional[str] = Field(None, alias="calendarUrl")
     is_public: bool = Field(False, alias="isPublic")
-    
+
     model_config = ConfigDict(populate_by_name=True)
 
 
 class Space(BaseModel):
     """Represents a space for internal service use."""
+
     space_id: str
     name: str
     owner_id: str
-    members: List[str] = [] # List of user_ids
+    members: List[str] = []  # List of user_ids
 
 
 class SpaceCreate(SpaceBase):
     """Space creation model."""
+
     type: str = Field(default="workspace")
     metadata: Optional[Dict[str, Any]] = None
 
-    @field_validator('name')
+    @field_validator("name")
     @classmethod
     def validate_name(cls, v: str) -> str:
         v = v.strip()
         if not v:
-            raise ValueError('Space name is required')
+            raise ValueError("Space name is required")
         return v
 
-    @field_validator('description')
+    @field_validator("description")
     @classmethod
     def validate_description(cls, v: Optional[str]) -> Optional[str]:
         if v:
             return v.strip()
         return v
 
-    @field_validator('calendar_url')
+    @field_validator("calendar_url")
     @classmethod
     def validate_calendar_url(cls, v: Optional[str]) -> Optional[str]:
         """Validate calendar URL for security (production-ready)."""
-        if v is None or v.strip() == '':
+        if v is None or v.strip() == "":
             return None
 
         v = v.strip()
@@ -56,26 +59,25 @@ class SpaceCreate(SpaceBase):
         # Validate URL format
         try:
             from urllib.parse import urlparse
+
             parsed = urlparse(v)
 
             # Must be HTTPS for security (no HTTP allowed in production)
-            if parsed.scheme != 'https':
-                raise ValueError('Calendar URL must use HTTPS protocol for security')
+            if parsed.scheme != "https":
+                raise ValueError("Calendar URL must use HTTPS protocol for security")
 
             # Must have a valid domain
             if not parsed.netloc:
-                raise ValueError('Calendar URL must have a valid domain')
+                raise ValueError("Calendar URL must have a valid domain")
 
             # Only allow Google Calendar domains for security
-            allowed_domains = [
-                'calendar.google.com',
-                'www.google.com'
-            ]
+            allowed_domains = ["calendar.google.com", "www.google.com"]
 
             # Check if domain matches allowed domains
             domain = parsed.netloc.lower()
-            if not any(domain == allowed or domain.endswith(f'.{allowed}')
-                      for allowed in allowed_domains):
+            if not any(
+                domain == allowed or domain.endswith(f".{allowed}") for allowed in allowed_domains
+            ):
                 raise ValueError(
                     f'Calendar URL must be from an allowed domain: {", ".join(allowed_domains)}'
                 )
@@ -86,11 +88,12 @@ class SpaceCreate(SpaceBase):
             # Re-raise validation errors
             raise e
         except Exception:
-            raise ValueError('Invalid calendar URL format')
+            raise ValueError("Invalid calendar URL format")
 
 
 class SpaceUpdate(BaseModel):
     """Space update model."""
+
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
     calendar_url: Optional[str] = Field(None, alias="calendarUrl")
@@ -99,27 +102,27 @@ class SpaceUpdate(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    @field_validator('name')
+    @field_validator("name")
     @classmethod
     def validate_name(cls, v: Optional[str]) -> Optional[str]:
         if v:
             v = v.strip()
             if not v:
-                raise ValueError('Space name cannot be empty')
+                raise ValueError("Space name cannot be empty")
         return v
 
-    @field_validator('description')
+    @field_validator("description")
     @classmethod
     def validate_description(cls, v: Optional[str]) -> Optional[str]:
         if v:
             return v.strip()
         return v
 
-    @field_validator('calendar_url')
+    @field_validator("calendar_url")
     @classmethod
     def validate_calendar_url(cls, v: Optional[str]) -> Optional[str]:
         """Validate calendar URL for security (production-ready)."""
-        if v is None or v.strip() == '':
+        if v is None or v.strip() == "":
             return None
 
         v = v.strip()
@@ -127,26 +130,25 @@ class SpaceUpdate(BaseModel):
         # Validate URL format
         try:
             from urllib.parse import urlparse
+
             parsed = urlparse(v)
 
             # Must be HTTPS for security (no HTTP allowed in production)
-            if parsed.scheme != 'https':
-                raise ValueError('Calendar URL must use HTTPS protocol for security')
+            if parsed.scheme != "https":
+                raise ValueError("Calendar URL must use HTTPS protocol for security")
 
             # Must have a valid domain
             if not parsed.netloc:
-                raise ValueError('Calendar URL must have a valid domain')
+                raise ValueError("Calendar URL must have a valid domain")
 
             # Only allow Google Calendar domains for security
-            allowed_domains = [
-                'calendar.google.com',
-                'www.google.com'
-            ]
+            allowed_domains = ["calendar.google.com", "www.google.com"]
 
             # Check if domain matches allowed domains
             domain = parsed.netloc.lower()
-            if not any(domain == allowed or domain.endswith(f'.{allowed}')
-                      for allowed in allowed_domains):
+            if not any(
+                domain == allowed or domain.endswith(f".{allowed}") for allowed in allowed_domains
+            ):
                 raise ValueError(
                     f'Calendar URL must be from an allowed domain: {", ".join(allowed_domains)}'
                 )
@@ -157,11 +159,12 @@ class SpaceUpdate(BaseModel):
             # Re-raise validation errors
             raise e
         except Exception:
-            raise ValueError('Invalid calendar URL format')
+            raise ValueError("Invalid calendar URL format")
 
 
 class SpaceResponse(BaseModel):
     """Space response model."""
+
     id: str = Field(..., alias="spaceId")
     name: str
     description: Optional[str] = None
@@ -174,12 +177,12 @@ class SpaceResponse(BaseModel):
     is_public: bool = Field(False, alias="isPublic")
     is_owner: Optional[bool] = Field(False, alias="isOwner")
     invite_code: Optional[str] = Field(None, alias="inviteCode")
-    
-    @field_serializer('created_at', 'updated_at')
+
+    @field_serializer("created_at", "updated_at")
     def serialize_datetime(self, dt: datetime) -> str:
         """Serialize datetime fields to ISO format."""
         return dt.isoformat() if dt else None
-    
+
     model_config = ConfigDict(
         populate_by_name=True,
         by_alias=True,
@@ -193,31 +196,29 @@ class SpaceResponse(BaseModel):
                 "updatedAt": "2024-01-01T00:00:00Z",
                 "memberCount": 5,
                 "isPublic": False,
-                "isOwner": True
+                "isOwner": True,
             }
-        }
+        },
     )
 
 
 class SpaceMember(BaseModel):
     """Space member model."""
+
     user_id: str = Field(..., alias="userId")
     username: Optional[str] = None
     email: Optional[str] = None
     display_name: Optional[str] = Field(None, alias="displayName")
     role: str
     joined_at: datetime = Field(..., alias="joinedAt")
-    
-    @field_serializer('joined_at')
+
+    @field_serializer("joined_at")
     def serialize_datetime(self, dt: datetime) -> str:
         """Serialize datetime fields to ISO format."""
         return dt.isoformat() if dt else None
-    
-    model_config = ConfigDict(
-        populate_by_name=True,
-        by_alias=True
-    )
-    
+
+    model_config = ConfigDict(populate_by_name=True, by_alias=True)
+
     @field_validator("role")
     @classmethod
     def validate_role(cls, v: str) -> str:
@@ -229,25 +230,21 @@ class SpaceMember(BaseModel):
 
 class SpaceListResponse(BaseModel):
     """Space list response model."""
+
     spaces: List[SpaceResponse]
     total: int
     page: Optional[int] = Field(1)
     page_size: Optional[int] = Field(20, alias="pageSize")
     has_more: Optional[bool] = Field(False, alias="hasMore")
-    
-    model_config = ConfigDict(
-        populate_by_name=True,
-        by_alias=True
-    )
+
+    model_config = ConfigDict(populate_by_name=True, by_alias=True)
 
 
 class MembersListResponse(BaseModel):
     """Members list response model."""
+
     members: List[SpaceMember]
     total: int
     has_more: bool = Field(False, alias="hasMore")
-    
-    model_config = ConfigDict(
-        populate_by_name=True,
-        by_alias=True
-    )
+
+    model_config = ConfigDict(populate_by_name=True, by_alias=True)

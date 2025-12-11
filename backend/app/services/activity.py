@@ -31,22 +31,20 @@ class ActivityService:
             User's display name or fallback
         """
         try:
-            response = self.table.get_item(
-                Key={'PK': f'USER#{user_id}', 'SK': 'PROFILE'}
-            )
-            if 'Item' in response:
-                item = response['Item']
+            response = self.table.get_item(Key={"PK": f"USER#{user_id}", "SK": "PROFILE"})
+            if "Item" in response:
+                item = response["Item"]
                 return (
-                    item.get('preferred_name') or
-                    item.get('display_name') or
-                    item.get('full_name') or
-                    item.get('username') or
-                    f'User {user_id[:8]}'
+                    item.get("preferred_name")
+                    or item.get("display_name")
+                    or item.get("full_name")
+                    or item.get("username")
+                    or f"User {user_id[:8]}"
                 )
         except Exception as e:
             logger.warning(f"Failed to get user display name for {user_id}: {e}")
 
-        return f'User {user_id[:8]}'
+        return f"User {user_id[:8]}"
 
     def record_activity(
         self,
@@ -54,7 +52,7 @@ class ActivityService:
         activity_type: ActivityType,
         user_id: str,
         user_name: str,
-        metadata: Dict[str, Any]
+        metadata: Dict[str, Any],
     ) -> ActivityModel:
         """
         Record a new activity in the space.
@@ -70,7 +68,7 @@ class ActivityService:
             The created activity model
         """
         activity_id = str(uuid.uuid4())
-        timestamp = datetime.utcnow().isoformat() + 'Z'
+        timestamp = datetime.utcnow().isoformat() + "Z"
 
         activity = ActivityModel(
             activity_id=activity_id,
@@ -79,33 +77,30 @@ class ActivityService:
             user_id=user_id,
             user_name=user_name,
             timestamp=timestamp,
-            metadata=metadata
+            metadata=metadata,
         )
 
         # Store in DynamoDB
         # PK=SPACE#{space_id}, SK=ACTIVITY#{timestamp}#{activity_id}
         item = {
-            'PK': f'SPACE#{space_id}',
-            'SK': f'ACTIVITY#{timestamp}#{activity_id}',
-            'EntityType': 'Activity',
-            'ActivityId': activity_id,
-            'SpaceId': space_id,
-            'ActivityType': activity_type.value,
-            'UserId': user_id,
-            'UserName': user_name,
-            'Timestamp': timestamp,
-            'Metadata': metadata,
-            'TTL': self._calculate_ttl(timestamp)  # Optional: auto-delete old activities
+            "PK": f"SPACE#{space_id}",
+            "SK": f"ACTIVITY#{timestamp}#{activity_id}",
+            "EntityType": "Activity",
+            "ActivityId": activity_id,
+            "SpaceId": space_id,
+            "ActivityType": activity_type.value,
+            "UserId": user_id,
+            "UserName": user_name,
+            "Timestamp": timestamp,
+            "Metadata": metadata,
+            "TTL": self._calculate_ttl(timestamp),  # Optional: auto-delete old activities
         }
 
         self.table.put_item(Item=item)
         return activity
 
     def get_space_activities(
-        self,
-        space_id: str,
-        limit: int = 50,
-        next_token: Optional[str] = None
+        self, space_id: str, limit: int = 50, next_token: Optional[str] = None
     ) -> tuple[List[ActivityResponse], Optional[str]]:
         """
         Get recent activities for a space.
@@ -119,32 +114,34 @@ class ActivityService:
             Tuple of (list of activities, next_token for pagination)
         """
         query_params = {
-            'KeyConditionExpression': Key('PK').eq(f'SPACE#{space_id}') &
-                                     Key('SK').begins_with('ACTIVITY#'),
-            'ScanIndexForward': False,  # Sort descending (newest first)
-            'Limit': limit
+            "KeyConditionExpression": Key("PK").eq(f"SPACE#{space_id}")
+            & Key("SK").begins_with("ACTIVITY#"),
+            "ScanIndexForward": False,  # Sort descending (newest first)
+            "Limit": limit,
         }
 
         if next_token:
-            query_params['ExclusiveStartKey'] = self._decode_token(next_token)
+            query_params["ExclusiveStartKey"] = self._decode_token(next_token)
 
         response = self.table.query(**query_params)
-        items = response.get('Items', [])
+        items = response.get("Items", [])
 
         activities = []
         for item in items:
-            activities.append(ActivityResponse(
-                activity_id=item['ActivityId'],
-                space_id=item['SpaceId'],
-                activity_type=item['ActivityType'],
-                user_id=item['UserId'],
-                user_name=item['UserName'],
-                timestamp=item['Timestamp'],
-                metadata=item.get('Metadata', {})
-            ))
+            activities.append(
+                ActivityResponse(
+                    activity_id=item["ActivityId"],
+                    space_id=item["SpaceId"],
+                    activity_type=item["ActivityType"],
+                    user_id=item["UserId"],
+                    user_name=item["UserName"],
+                    timestamp=item["Timestamp"],
+                    metadata=item.get("Metadata", {}),
+                )
+            )
 
         # Handle pagination
-        last_evaluated_key = response.get('LastEvaluatedKey')
+        last_evaluated_key = response.get("LastEvaluatedKey")
         new_next_token = self._encode_token(last_evaluated_key) if last_evaluated_key else None
 
         return activities, new_next_token
@@ -160,7 +157,7 @@ class ActivityService:
         Returns:
             Unix timestamp for TTL
         """
-        dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+        dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
         ttl = int(dt.timestamp()) + (days * 24 * 60 * 60)
         return ttl
 
@@ -170,6 +167,7 @@ class ActivityService:
             return None
         import base64
         import json
+
         # Encode the full key as base64 JSON
         token_json = json.dumps(last_key)
         return base64.b64encode(token_json.encode()).decode()
@@ -178,6 +176,7 @@ class ActivityService:
         """Decode pagination token back to DynamoDB key."""
         import base64
         import json
+
         try:
             decoded = base64.b64decode(token.encode()).decode()
             return json.loads(decoded)

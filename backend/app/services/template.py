@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class TemplateNotFoundError(Exception):
     """Raised when a template is not found."""
+
     pass
 
 
@@ -44,14 +45,14 @@ class TemplateService:
             return
 
         try:
-            with open(registry_path, 'r', encoding='utf-8') as f:
+            with open(registry_path, "r", encoding="utf-8") as f:
                 template_files = json.load(f)
 
             for template_file in template_files:
                 template_path = self.template_dir / template_file
                 if template_path.exists():
                     try:
-                        with open(template_path, 'r', encoding='utf-8') as f:
+                        with open(template_path, "r", encoding="utf-8") as f:
                             template_data = json.load(f)
                             template = Template(**template_data)
                             self._template_cache[template.id] = template
@@ -74,10 +75,7 @@ class TemplateService:
             TemplateListResponse with all templates
         """
         templates = list(self._template_cache.values())
-        return TemplateListResponse(
-            templates=templates,
-            total=len(templates)
-        )
+        return TemplateListResponse(templates=templates, total=len(templates))
 
     def get_template(self, template_id: str) -> Template:
         """
@@ -98,11 +96,7 @@ class TemplateService:
 
         return template
 
-    def validate_template_data(
-        self,
-        template_id: str,
-        template_data: Dict[str, Any]
-    ) -> bool:
+    def validate_template_data(self, template_id: str, template_data: Dict[str, Any]) -> bool:
         """
         Validate template data against a template's structure.
 

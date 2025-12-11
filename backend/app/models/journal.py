@@ -29,16 +29,19 @@ class JournalBase(BaseModel):
     - content_tiptap: TipTap JSON format with embedded highlights (optional)
       Can be either single document or section mapping
     """
+
     title: str = Field(..., min_length=1, max_length=200)
     content: str = Field(...)  # Contains markdown with embedded template metadata
-    content_tiptap: Optional[Dict[str, Any]] = Field(None, alias="contentTiptap")  # TipTap JSON format
+    content_tiptap: Optional[Dict[str, Any]] = Field(
+        None, alias="contentTiptap"
+    )  # TipTap JSON format
     tags: List[str] = Field(default_factory=list)
     emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
     is_pinned: bool = Field(default=False, alias="isPinned")
 
     model_config = ConfigDict(populate_by_name=True)
 
-    @field_validator('content_tiptap')
+    @field_validator("content_tiptap")
     @classmethod
     def validate_content_tiptap(cls, v: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """
@@ -55,9 +58,9 @@ class JournalBase(BaseModel):
             raise ValueError("contentTiptap must be a dictionary")
 
         # Check if it's single TipTap document format
-        if v.get('type') == 'doc':
+        if v.get("type") == "doc":
             # Validate it has content field
-            if 'content' not in v:
+            if "content" not in v:
                 raise ValueError("Single TipTap document must have 'content' field")
             return v
 
@@ -66,10 +69,14 @@ class JournalBase(BaseModel):
         for section_id, doc in v.items():
             if not isinstance(doc, dict):
                 raise ValueError(f"Section '{section_id}' must contain a TipTap document object")
-            if doc.get('type') != 'doc':
-                raise ValueError(f"Section '{section_id}' must be a valid TipTap document with type='doc'")
-            if 'content' not in doc:
-                raise ValueError(f"Section '{section_id}' TipTap document must have 'content' field")
+            if doc.get("type") != "doc":
+                raise ValueError(
+                    f"Section '{section_id}' must be a valid TipTap document with type='doc'"
+                )
+            if "content" not in doc:
+                raise ValueError(
+                    f"Section '{section_id}' TipTap document must have 'content' field"
+                )
 
         return v
 
@@ -81,6 +88,7 @@ class JournalCreateRequest(JournalBase):
     NOTE: content contains serialized template data via JournalContentManager.
     templateId is kept for tracking which template was used, but templateData is removed.
     """
+
     template_id: Optional[str] = Field(None, alias="templateId")
     # REMOVED: template_data field - data is embedded in content
 
@@ -93,30 +101,31 @@ class JournalCreate(JournalBase):
 
     NOTE: content contains serialized template data via JournalContentManager.
     """
+
     space_id: str = Field(..., alias="spaceId")
     template_id: Optional[str] = Field(None, alias="templateId")
     # REMOVED: template_data field - data is embedded in content
 
     model_config = ConfigDict(populate_by_name=True)
 
-    @field_validator('title')
+    @field_validator("title")
     @classmethod
     def validate_title(cls, v: str) -> str:
         v = v.strip()
         if not v:
-            raise ValueError('Journal title is required')
+            raise ValueError("Journal title is required")
         if len(v) > 200:
-            raise ValueError('Journal title must be 200 characters or less')
+            raise ValueError("Journal title must be 200 characters or less")
         return v
 
-    @field_validator('content')
+    @field_validator("content")
     @classmethod
     def validate_content(cls, v: str) -> str:
         if not v or not v.strip():
-            raise ValueError('Journal content is required')
+            raise ValueError("Journal content is required")
         return v
 
-    @field_validator('tags')
+    @field_validator("tags")
     @classmethod
     def validate_tags(cls, v: List[str]) -> List[str]:
         # Remove duplicates and empty strings
@@ -133,9 +142,12 @@ class JournalUpdate(BaseModel):
     - content: Markdown format (for backward compatibility)
     - content_tiptap: TipTap JSON format with embedded highlights (optional)
     """
+
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     content: Optional[str] = None  # Contains markdown with embedded template metadata
-    content_tiptap: Optional[Dict[str, Any]] = Field(None, alias="contentTiptap")  # TipTap JSON format
+    content_tiptap: Optional[Dict[str, Any]] = Field(
+        None, alias="contentTiptap"
+    )  # TipTap JSON format
     tags: Optional[List[str]] = None
     emotions: Optional[List[str]] = None  # New field for multiple emotions
     is_pinned: Optional[bool] = Field(None, alias="isPinned")
@@ -144,25 +156,25 @@ class JournalUpdate(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    @field_validator('title')
+    @field_validator("title")
     @classmethod
     def validate_title(cls, v: Optional[str]) -> Optional[str]:
         if v is not None:
             v = v.strip()
             if not v:
-                raise ValueError('Journal title cannot be empty')
+                raise ValueError("Journal title cannot be empty")
             if len(v) > 200:
-                raise ValueError('Journal title must be 200 characters or less')
+                raise ValueError("Journal title must be 200 characters or less")
         return v
 
-    @field_validator('content')
+    @field_validator("content")
     @classmethod
     def validate_content(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and not v.strip():
-            raise ValueError('Journal content cannot be empty')
+            raise ValueError("Journal content cannot be empty")
         return v
 
-    @field_validator('tags')
+    @field_validator("tags")
     @classmethod
     def validate_tags(cls, v: Optional[List[str]]) -> Optional[List[str]]:
         if v is not None:
@@ -182,6 +194,7 @@ class JournalEntry(BaseModel):
     - content_tiptap: TipTap JSON format with embedded highlights (optional)
       Supports both single document and multi-section formats
     """
+
     journal_id: str
     space_id: str
     user_id: str
@@ -208,7 +221,7 @@ class JournalEntry(BaseModel):
         if not self.content_tiptap:
             return False
         # Single format has 'type' field at root
-        return 'type' not in self.content_tiptap
+        return "type" not in self.content_tiptap
 
     def get_section_tiptap(self, section_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -229,7 +242,7 @@ class JournalEntry(BaseModel):
 
         # Single document format (legacy/blank template)
         # Only return for 'content' section for backward compatibility
-        if section_id == 'content':
+        if section_id == "content":
             return self.content_tiptap
 
         return None
@@ -248,7 +261,7 @@ class JournalEntry(BaseModel):
             return list(self.content_tiptap.keys())
         else:
             # Single section, assume 'content'
-            return ['content']
+            return ["content"]
 
 
 class JournalResponse(BaseModel):
@@ -262,12 +275,15 @@ class JournalResponse(BaseModel):
     - content: Markdown format (for backward compatibility)
     - content_tiptap: TipTap JSON format with embedded highlights (optional)
     """
+
     journal_id: str = Field(..., alias="journalId")
     space_id: str = Field(..., alias="spaceId")
     user_id: str = Field(..., alias="userId")
     title: str
     content: str  # Contains markdown with embedded template metadata
-    content_tiptap: Optional[Dict[str, Any]] = Field(None, alias="contentTiptap")  # TipTap JSON format
+    content_tiptap: Optional[Dict[str, Any]] = Field(
+        None, alias="contentTiptap"
+    )  # TipTap JSON format
     template_id: Optional[str] = Field(None, alias="templateId")
     # REMOVED: template_data field - data is embedded in content
     tags: List[str] = Field(default_factory=list)
@@ -278,7 +294,7 @@ class JournalResponse(BaseModel):
     is_pinned: bool = Field(False, alias="isPinned")
     author: Optional[Dict[str, Any]] = None
 
-    @field_serializer('created_at', 'updated_at')
+    @field_serializer("created_at", "updated_at")
     def serialize_datetime(self, dt: datetime) -> str:
         """Serialize datetime fields to ISO format."""
         return dt.isoformat() if dt else None
@@ -292,7 +308,7 @@ class JournalResponse(BaseModel):
                 "spaceId": "space-123",
                 "userId": "user-123",
                 "title": "My Daily Reflection",
-                "content": "<!--\n@template: daily-reflection\n@metadata: {\"emotions\":[\"happy\",\"playful\",\"joyful\"]}\n-->\n\n<!-- section:gratitude @title:\"Gratitude\" -->\n- family\n- health\n<!-- /section:gratitude -->\n\nToday was a great day...",
+                "content": '<!--\n@template: daily-reflection\n@metadata: {"emotions":["happy","playful","joyful"]}\n-->\n\n<!-- section:gratitude @title:"Gratitude" -->\n- family\n- health\n<!-- /section:gratitude -->\n\nToday was a great day...',
                 "templateId": "daily-reflection",
                 "tags": ["daily", "reflection"],
                 "emotions": ["happy", "playful", "joyful"],
@@ -300,25 +316,19 @@ class JournalResponse(BaseModel):
                 "updatedAt": "2024-01-01T00:00:00Z",
                 "wordCount": 25,
                 "isPinned": False,
-                "author": {
-                    "userId": "user-123",
-                    "username": "johndoe",
-                    "displayName": "John Doe"
-                }
+                "author": {"userId": "user-123", "username": "johndoe", "displayName": "John Doe"},
             }
-        }
+        },
     )
 
 
 class JournalListResponse(BaseModel):
     """Journal list response model."""
+
     journals: List[JournalResponse]
     total: int
     page: int = Field(default=1)
     page_size: int = Field(default=20, alias="pageSize")
     has_more: bool = Field(default=False, alias="hasMore")
 
-    model_config = ConfigDict(
-        populate_by_name=True,
-        by_alias=True
-    )
+    model_config = ConfigDict(populate_by_name=True, by_alias=True)

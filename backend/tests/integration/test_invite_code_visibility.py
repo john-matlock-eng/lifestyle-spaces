@@ -26,23 +26,23 @@ class TestInviteCodeVisibility:
         owner_id = "owner-123"
         invite_code = "ABCD1234"
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": owner_id,
                 "email": "owner@example.com",
-                "username": "owner"
+                "username": "owner",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": owner_id,
                     "username": "owner",
-                    "email": "owner@example.com"
+                    "email": "owner@example.com",
                 }
 
-                with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                with patch("app.api.routes.spaces.SpaceService") as mock_service_class:
                     mock_service_instance = Mock()
                     mock_service_class.return_value = mock_service_instance
 
@@ -58,13 +58,12 @@ class TestInviteCodeVisibility:
                         "updated_at": datetime.now(timezone.utc).isoformat(),
                         "member_count": 3,
                         "is_owner": True,
-                        "invite_code": invite_code  # Should be present for owner
+                        "invite_code": invite_code,  # Should be present for owner
                     }
 
                     # Act
                     response = test_client.get(
-                        f"/api/spaces/{space_id}",
-                        headers={"Authorization": "Bearer test-token"}
+                        f"/api/spaces/{space_id}", headers={"Authorization": "Bearer test-token"}
                     )
 
                     # Assert
@@ -82,23 +81,23 @@ class TestInviteCodeVisibility:
         admin_id = "admin-456"
         invite_code = "EFGH5678"
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": admin_id,
                 "email": "admin@example.com",
-                "username": "admin"
+                "username": "admin",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": admin_id,
                     "username": "admin",
-                    "email": "admin@example.com"
+                    "email": "admin@example.com",
                 }
 
-                with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                with patch("app.api.routes.spaces.SpaceService") as mock_service_class:
                     mock_service_instance = Mock()
                     mock_service_class.return_value = mock_service_instance
 
@@ -114,13 +113,12 @@ class TestInviteCodeVisibility:
                         "updated_at": datetime.now(timezone.utc).isoformat(),
                         "member_count": 5,
                         "is_owner": False,
-                        "invite_code": invite_code  # Should be present for admin
+                        "invite_code": invite_code,  # Should be present for admin
                     }
 
                     # Act
                     response = test_client.get(
-                        f"/api/spaces/{space_id}",
-                        headers={"Authorization": "Bearer test-token"}
+                        f"/api/spaces/{space_id}", headers={"Authorization": "Bearer test-token"}
                     )
 
                     # Assert
@@ -137,23 +135,23 @@ class TestInviteCodeVisibility:
         owner_id = "owner-123"
         member_id = "member-789"
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": member_id,
                 "email": "member@example.com",
-                "username": "member"
+                "username": "member",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": member_id,
                     "username": "member",
-                    "email": "member@example.com"
+                    "email": "member@example.com",
                 }
 
-                with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                with patch("app.api.routes.spaces.SpaceService") as mock_service_class:
                     mock_service_instance = Mock()
                     mock_service_class.return_value = mock_service_instance
 
@@ -174,8 +172,7 @@ class TestInviteCodeVisibility:
 
                     # Act
                     response = test_client.get(
-                        f"/api/spaces/{space_id}",
-                        headers={"Authorization": "Bearer test-token"}
+                        f"/api/spaces/{space_id}", headers={"Authorization": "Bearer test-token"}
                     )
 
                     # Assert
@@ -192,23 +189,23 @@ class TestInviteCodeVisibility:
         owner_id = "owner-123"
         viewer_id = "viewer-999"
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": viewer_id,
                 "email": "viewer@example.com",
-                "username": "viewer"
+                "username": "viewer",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": viewer_id,
                     "username": "viewer",
-                    "email": "viewer@example.com"
+                    "email": "viewer@example.com",
                 }
 
-                with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                with patch("app.api.routes.spaces.SpaceService") as mock_service_class:
                     mock_service_instance = Mock()
                     mock_service_class.return_value = mock_service_instance
 
@@ -229,8 +226,7 @@ class TestInviteCodeVisibility:
 
                     # Act
                     response = test_client.get(
-                        f"/api/spaces/{space_id}",
-                        headers={"Authorization": "Bearer test-token"}
+                        f"/api/spaces/{space_id}", headers={"Authorization": "Bearer test-token"}
                     )
 
                     # Assert
@@ -248,23 +244,23 @@ class TestInviteCodeVisibility:
         owner_id = "owner-123"
         viewer_id = "viewer-999"
 
-        with patch('app.core.security.decode_token') as mock_decode:
+        with patch("app.core.security.decode_token") as mock_decode:
             mock_decode.return_value = {
                 "sub": viewer_id,
                 "email": "viewer@example.com",
-                "username": "viewer"
+                "username": "viewer",
             }
 
-            with patch('app.core.dependencies.UserProfileService') as mock_profile_service:
+            with patch("app.core.dependencies.UserProfileService") as mock_profile_service:
                 mock_profile_instance = Mock()
                 mock_profile_service.return_value = mock_profile_instance
                 mock_profile_instance.get_or_create_user_profile.return_value = {
                     "user_id": viewer_id,
                     "username": "viewer",
-                    "email": "viewer@example.com"
+                    "email": "viewer@example.com",
                 }
 
-                with patch('app.api.routes.spaces.SpaceService') as mock_service_class:
+                with patch("app.api.routes.spaces.SpaceService") as mock_service_class:
                     mock_service_instance = Mock()
                     mock_service_class.return_value = mock_service_instance
 
@@ -285,8 +281,7 @@ class TestInviteCodeVisibility:
 
                     # Act
                     response = test_client.get(
-                        f"/api/spaces/{space_id}",
-                        headers={"Authorization": "Bearer test-token"}
+                        f"/api/spaces/{space_id}", headers={"Authorization": "Bearer test-token"}
                     )
 
                     # Assert

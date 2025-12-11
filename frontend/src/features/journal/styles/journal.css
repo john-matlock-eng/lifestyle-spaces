@@ -3,6 +3,45 @@
  * Uses theme CSS variables for consistent theming
  */
 
+/* =================================
+   Highlight Styles (consistent across all sections)
+   ================================= */
+.highlightable-text mark,
+.qa-pair-answer-display mark,
+.list-section-display mark,
+.checkbox-section-display mark,
+.scale-section-display mark,
+.table-section-display mark,
+.moment-block-field-text mark {
+  /* Ensure highlight colors are visible in both light and dark modes */
+  color: #1a1a1a !important;
+  padding: 2px 1px;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  /* Prevent color blending with parent backgrounds */
+  isolation: isolate;
+  mix-blend-mode: normal;
+  background-blend-mode: normal;
+}
+
+/* Add white backdrop to maintain pastel appearance on tinted dark backgrounds */
+.dark .moment-block-field-text mark,
+.dark .qa-pair-answer-display mark {
+  box-shadow: inset 0 0 0 100px rgba(255, 255, 255, 0.2);
+}
+
+/* Ensure highlights maintain good contrast in dark mode */
+.dark .highlightable-text mark,
+.dark .qa-pair-answer-display mark,
+.dark .list-section-display mark,
+.dark .checkbox-section-display mark,
+.dark .scale-section-display mark,
+.dark .table-section-display mark,
+.dark .moment-block-field-text mark {
+  color: #1f2937 !important;
+}
+
 /* Button Styles */
 .button-primary {
   padding: 10px 20px;

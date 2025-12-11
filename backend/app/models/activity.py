@@ -15,6 +15,7 @@ from enum import Enum
 
 class ActivityType(str, Enum):
     """Types of activities that can be tracked."""
+
     # Journal activities
     JOURNAL_CREATED = "journal_created"
     JOURNAL_UPDATED = "journal_updated"
@@ -24,8 +25,11 @@ class ActivityType(str, Enum):
     HIGHLIGHT_CREATED = "highlight_created"
     HIGHLIGHT_DELETED = "highlight_deleted"
 
-    # Comment activities
+    # Comment activities (highlight comments)
     COMMENT_CREATED = "comment_created"
+
+    # Journal comment activities (conversations)
+    JOURNAL_COMMENT_CREATED = "journal_comment_created"
 
     # Member activities
     MEMBER_JOINED = "member_joined"
@@ -58,11 +62,13 @@ class ActivityMetadata(BaseModel):
         - member_id: str
         - member_name: str
     """
-    model_config = ConfigDict(extra='allow')
+
+    model_config = ConfigDict(extra="allow")
 
 
 class ActivityModel(BaseModel):
     """Activity model for tracking space events."""
+
     activity_id: str = Field(alias="activityId")
     space_id: str = Field(alias="spaceId")
     activity_type: ActivityType = Field(alias="activityType")
@@ -76,6 +82,7 @@ class ActivityModel(BaseModel):
 
 class ActivityResponse(BaseModel):
     """Response model for activity feed."""
+
     activity_id: str = Field(alias="activityId")
     space_id: str = Field(alias="spaceId")
     activity_type: str = Field(alias="activityType")
@@ -89,6 +96,7 @@ class ActivityResponse(BaseModel):
 
 class ActivityListResponse(BaseModel):
     """Response model for list of activities."""
+
     activities: list[ActivityResponse]
     next_token: Optional[str] = Field(None, alias="nextToken")
 

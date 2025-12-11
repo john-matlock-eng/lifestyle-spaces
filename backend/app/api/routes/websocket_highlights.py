@@ -19,10 +19,7 @@ router = APIRouter(prefix="/ws", tags=["websocket"])
 
 @router.websocket("/spaces/{space_id}/journals/{journal_entry_id}")
 async def websocket_endpoint(
-    websocket: WebSocket,
-    space_id: str,
-    journal_entry_id: str,
-    token: Optional[str] = Query(None)
+    websocket: WebSocket, space_id: str, journal_entry_id: str, token: Optional[str] = Query(None)
 ):
     """
     WebSocket endpoint for real-time collaboration on journal entries.
@@ -63,7 +60,7 @@ async def websocket_endpoint(
             websocket=websocket,
             journal_entry_id=journal_entry_id,
             user_id=user_id,
-            user_name=user_name
+            user_name=user_name,
         )
 
         # Main message loop
@@ -80,37 +77,21 @@ async def websocket_endpoint(
                     await manager.handle_heartbeat(journal_entry_id, user_id)
 
                 elif message_type == "TYPING_START":
-                    await manager.update_user_state(
-                        journal_entry_id,
-                        user_id,
-                        is_typing=True
-                    )
+                    await manager.update_user_state(journal_entry_id, user_id, is_typing=True)
                     await manager.broadcast_presence_update(
-                        journal_entry_id,
-                        user_id,
-                        user_name,
-                        is_typing=True
+                        journal_entry_id, user_id, user_name, is_typing=True
                     )
 
                 elif message_type == "TYPING_STOP":
-                    await manager.update_user_state(
-                        journal_entry_id,
-                        user_id,
-                        is_typing=False
-                    )
+                    await manager.update_user_state(journal_entry_id, user_id, is_typing=False)
                     await manager.broadcast_presence_update(
-                        journal_entry_id,
-                        user_id,
-                        user_name,
-                        is_typing=False
+                        journal_entry_id, user_id, user_name, is_typing=False
                     )
 
                 elif message_type == "CURSOR_MOVE":
                     cursor_position = message.get("payload", {}).get("position")
                     await manager.update_user_state(
-                        journal_entry_id,
-                        user_id,
-                        cursor_position=cursor_position
+                        journal_entry_id, user_id, cursor_position=cursor_position
                     )
 
                 else:
@@ -129,12 +110,7 @@ async def websocket_endpoint(
         # Clean up connection
         if conn_info:
             manager.disconnect(journal_entry_id, conn_info)
-            await manager.broadcast_presence_update(
-                journal_entry_id,
-                user_id,
-                user_name,
-                left=True
-            )
+            await manager.broadcast_presence_update(journal_entry_id, user_id, user_name, left=True)
 
 
 @router.get("/health")
@@ -143,13 +119,12 @@ async def websocket_health():
     manager = get_websocket_manager()
 
     # Count total active connections
-    total_connections = sum(
-        len(connections)
-        for connections in manager.active_connections.values()
-    )
+    total_connections = sum(len(connections) for connections in manager.active_connections.values())
 
-    return JSONResponse({
-        "status": "healthy",
-        "activeRooms": len(manager.active_connections),
-        "totalConnections": total_connections
-    })
+    return JSONResponse(
+        {
+            "status": "healthy",
+            "activeRooms": len(manager.active_connections),
+            "totalConnections": total_connections,
+        }
+    )

@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 class RefreshTokenRequest(BaseModel):
     """Refresh token request model."""
+
     refresh_token: str
 
 
@@ -37,16 +38,15 @@ async def signup(user: UserCreate):
 
         # Create profile with the actual sign-up data
         profile_data = {
-            'email': user.email,
-            'username': user.username,
-            'display_name': user.username,  # Use username as initial display name
-            'full_name': user.full_name or '',
-            'last_seen': datetime.now(timezone.utc).isoformat()
+            "email": user.email,
+            "username": user.username,
+            "display_name": user.username,  # Use username as initial display name
+            "full_name": user.full_name or "",
+            "last_seen": datetime.now(timezone.utc).isoformat(),
         }
 
         user_profile_service.create_user_profile(
-            user_id=result["user_sub"],
-            profile_data=profile_data
+            user_id=result["user_sub"], profile_data=profile_data
         )
 
         return UserResponse(
@@ -56,20 +56,18 @@ async def signup(user: UserCreate):
             full_name=user.full_name,
             is_active=True,
             created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc)
+            updated_at=datetime.now(timezone.utc),
         )
     except UserAlreadyExistsError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         # Log the actual error for debugging
         import logging
+
         logging.error(f"Sign-up error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to sign up user: {str(e)}"
+            detail=f"Failed to sign up user: {str(e)}",
         )
 
 
@@ -87,19 +85,16 @@ async def signin(login: LoginRequest):
             id_token=result.get("id_token"),  # Include ID token
             refresh_token=result.get("refresh_token"),  # Include refresh token
             token_type="bearer",
-            expires_in=result["expires_in"]
+            expires_in=result["expires_in"],
         )
     except InvalidCredentialsError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     except Exception as e:
         import logging
+
         logging.error(f"Sign-in error: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to sign in: {str(e)}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to sign in: {str(e)}"
         )
 
 
@@ -109,21 +104,17 @@ async def refresh_token(request: RefreshTokenRequest):
     try:
         service = CognitoService()
         result = service.refresh_token(request.refresh_token)
-        
+
         return TokenResponse(
             access_token=result["access_token"],
             token_type="bearer",
-            expires_in=result["expires_in"]
+            expires_in=result["expires_in"],
         )
     except InvalidCredentialsError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to refresh token"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to refresh token"
         )
 
 
@@ -135,12 +126,9 @@ async def signout(current_user: dict = Depends(get_current_user)):
         # For now, we'll just return success
         service = CognitoService()
         # service.sign_out(access_token)
-        
-        return SuccessResponse(
-            message="Successfully signed out"
-        )
+
+        return SuccessResponse(message="Successfully signed out")
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to sign out"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to sign out"
         )
