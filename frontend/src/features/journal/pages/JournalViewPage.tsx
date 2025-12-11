@@ -95,6 +95,24 @@ export const JournalViewPage: React.FC = () => {
     }, 100)
   }, [fetchComments])
 
+  // Handler for navigating between highlights - scrolls to the highlight in the document
+  const handleNavigateHighlight = useCallback((highlight: Highlight) => {
+    setSelectedHighlight(highlight)
+    fetchComments(highlight.id)
+
+    // Scroll to the highlight element in the document after a short delay
+    // to allow for any re-renders
+    setTimeout(() => {
+      const highlightElement = document.querySelector(`mark[data-highlight-id="${highlight.id}"]`)
+      if (highlightElement) {
+        highlightElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        })
+      }
+    }, 100)
+  }, [fetchComments])
+
   useEffect(() => {
     if (spaceId && journalId) {
       loadJournal(spaceId, journalId)
@@ -275,24 +293,6 @@ ${content}
   const highlightCount = highlights.length
   const highlightCommentCount = Object.values(comments).reduce((sum, arr) => sum + arr.length, 0)
   const totalComments = highlightCommentCount + journalCommentCount
-
-  // Handler for navigating between highlights - scrolls to the highlight in the document
-  const handleNavigateHighlight = useCallback((highlight: Highlight) => {
-    setSelectedHighlight(highlight)
-    fetchComments(highlight.id)
-
-    // Scroll to the highlight element in the document after a short delay
-    // to allow for any re-renders
-    setTimeout(() => {
-      const highlightElement = document.querySelector(`mark[data-highlight-id="${highlight.id}"]`)
-      if (highlightElement) {
-        highlightElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        })
-      }
-    }, 100)
-  }, [fetchComments])
 
   return (
     <div className={`journal-view-page-wrapper ${selectedHighlight ? 'with-comment-panel' : ''}`}>
