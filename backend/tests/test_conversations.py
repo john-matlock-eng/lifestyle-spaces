@@ -1419,7 +1419,7 @@ class TestConversationThreads:
     def test_build_highlight_thread_with_read_status(self):
         """Test _build_highlight_thread correctly calculates unread with read_status."""
         from app.services.conversation_service import ConversationService
-        from app.models.read_status import ReadStatusModel
+        from app.models.read_status import ThreadReadStatus
 
         with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
             "app.services.conversation_service.boto3"
@@ -1427,7 +1427,7 @@ class TestConversationThreads:
             mock_db = Mock()
             mock_get_db.return_value = mock_db
 
-            def mock_query(pk, index_name=None):
+            def mock_query(pk, index_name=None, sk_prefix=None):
                 if pk == "HIGHLIGHT#h1":
                     return [
                         {
@@ -1450,12 +1450,14 @@ class TestConversationThreads:
             mock_db.query.side_effect = mock_query
             mock_db.get_item.return_value = {"displayName": "Author"}
 
-            read_status = ReadStatusModel(
+            read_status = ThreadReadStatus(
                 userId="user-123",
                 spaceId="space-456",
+                threadId="h1",
+                threadType="highlight",
                 journalId="journal-789",
-                lastReadHighlightCommentAt="2024-01-12T10:00:00Z",
-                lastReadJournalCommentAt="2024-01-12T10:00:00Z",
+                lastReadAt="2024-01-12T10:00:00Z",
+                lastCommentCount=1,
             )
 
             service = ConversationService()
@@ -1474,7 +1476,7 @@ class TestConversationThreads:
     def test_build_journal_discussion_thread_with_read_status(self):
         """Test _build_journal_discussion_thread correctly calculates unread with read_status."""
         from app.services.conversation_service import ConversationService
-        from app.models.read_status import ReadStatusModel
+        from app.models.read_status import ThreadReadStatus
 
         with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
             "app.services.conversation_service.boto3"
@@ -1483,12 +1485,14 @@ class TestConversationThreads:
             mock_get_db.return_value = mock_db
             mock_db.get_item.return_value = {"displayName": "Author"}
 
-            read_status = ReadStatusModel(
+            read_status = ThreadReadStatus(
                 userId="user-123",
                 spaceId="space-456",
-                journalId="journal-789",
-                lastReadHighlightCommentAt="2024-01-12T10:00:00Z",
-                lastReadJournalCommentAt="2024-01-12T10:00:00Z",
+                threadId="journal-discussion-j1",
+                threadType="journal_discussion",
+                journalId="j1",
+                lastReadAt="2024-01-12T10:00:00Z",
+                lastCommentCount=1,
             )
 
             service = ConversationService()
@@ -1722,7 +1726,14 @@ class TestConversationThreads:
         ):
             mock_db = Mock()
             mock_get_db.return_value = mock_db
-            mock_db.get_item.return_value = None  # No existing read status
+
+            def mock_query(pk, index_name=None, sk_prefix=None):
+                if pk == "JOURNAL#journal-789" and index_name == "GSI1":
+                    return []  # No journal comments
+                return []
+
+            mock_db.query.side_effect = mock_query
+            mock_db.get_item.return_value = None
 
             service = ConversationService()
             result = await service.mark_thread_as_read(
@@ -1734,6 +1745,11 @@ class TestConversationThreads:
 
             assert result is True
             mock_db.put_item.assert_called()
+            # Verify it was called with THREAD_READ pattern
+            call_args = mock_db.put_item.call_args[0][0]
+            assert call_args["PK"] == "USER#user-123"
+            assert call_args["SK"].startswith("THREAD_READ#space-456#")
+            assert call_args["EntityType"] == "ThreadReadStatus"
 
     @pytest.mark.asyncio
     async def test_mark_thread_as_read_highlight(self):
@@ -1745,8 +1761,19 @@ class TestConversationThreads:
         ):
             mock_db = Mock()
             mock_get_db.return_value = mock_db
-            mock_db.query.return_value = [{"journalId": "journal-789"}]
-            mock_db.get_item.return_value = None  # No existing read status
+
+            def mock_get_item(pk, sk):
+                if pk == "SPACE#space-456" and sk == "HIGHLIGHT#highlight-abc":
+                    return {"journalEntryId": "journal-789"}
+                return None
+
+            def mock_query(pk, index_name=None, sk_prefix=None):
+                if pk == "HIGHLIGHT#highlight-abc" and index_name == "GSI1":
+                    return [{"EntityType": "Comment", "text": "test"}]
+                return []
+
+            mock_db.get_item.side_effect = mock_get_item
+            mock_db.query.side_effect = mock_query
 
             service = ConversationService()
             result = await service.mark_thread_as_read(
@@ -1757,6 +1784,10 @@ class TestConversationThreads:
             )
 
             assert result is True
+            mock_db.put_item.assert_called()
+            call_args = mock_db.put_item.call_args[0][0]
+            assert call_args["EntityType"] == "ThreadReadStatus"
+            assert call_args["threadType"] == "highlight"
 
     @pytest.mark.asyncio
     async def test_mark_thread_as_read_highlight_not_found(self):
@@ -1782,7 +1813,7 @@ class TestConversationThreads:
 
     @pytest.mark.asyncio
     async def test_mark_all_as_read(self):
-        """Test mark_all_as_read marks all journals as read."""
+        """Test mark_all_as_read marks all unread threads as read."""
         from app.services.conversation_service import ConversationService
 
         with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
@@ -1796,10 +1827,40 @@ class TestConversationThreads:
             mock_table.query.return_value = {
                 "Items": [
                     {"journal_id": "j1", "title": "Journal 1", "user_id": "author-1"},
-                    {"journal_id": "j2", "title": "Journal 2", "user_id": "author-2"},
                 ]
             }
-            mock_db.get_item.return_value = None  # No existing read statuses
+
+            def mock_get_item(pk, sk):
+                # Highlight lookup for mark_thread_as_read
+                if pk.startswith("SPACE#") and sk.startswith("HIGHLIGHT#"):
+                    return {"journalEntryId": "j1"}
+                return None
+
+            def mock_query(pk, index_name=None, sk_prefix=None):
+                # Return empty for thread read statuses
+                if pk.startswith("USER#") and sk_prefix and "THREAD_READ" in sk_prefix:
+                    return []
+                # Highlights for journal
+                if pk == "JOURNAL#j1" and index_name == "GSI1":
+                    return [
+                        {
+                            "EntityType": "Highlight",
+                            "id": "h1",
+                            "spaceId": "space-456",
+                            "text": "Test highlight",
+                            "createdBy": "author-1",
+                            "createdAt": "2024-01-10T10:00:00Z",
+                        },
+                    ]
+                # Comments for highlight
+                if pk == "HIGHLIGHT#h1" and index_name == "GSI1":
+                    return [
+                        {"EntityType": "Comment", "authorId": "user-456", "authorName": "Other", "text": "test", "createdAt": "2024-01-15T10:00:00Z"}
+                    ]
+                return []
+
+            mock_db.get_item.side_effect = mock_get_item
+            mock_db.query.side_effect = mock_query
 
             service = ConversationService()
             result = await service.mark_all_as_read(
@@ -1807,12 +1868,12 @@ class TestConversationThreads:
                 space_id="space-456",
             )
 
-            assert result == 2  # Two journals marked as read
-            assert mock_db.put_item.call_count == 2
+            assert result == 1  # One unread thread marked as read
+            mock_db.put_item.assert_called()
 
     @pytest.mark.asyncio
     async def test_mark_all_as_read_updates_existing(self):
-        """Test mark_all_as_read updates existing read statuses via put_item (upsert)."""
+        """Test mark_all_as_read updates existing read statuses for unread threads."""
         from app.services.conversation_service import ConversationService
 
         with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
@@ -1828,14 +1889,46 @@ class TestConversationThreads:
                     {"journal_id": "j1", "title": "Journal 1", "user_id": "author-1"},
                 ]
             }
-            # Even with existing data, mark_journal_as_read uses put_item (upsert)
-            mock_db.get_item.return_value = {
-                "userId": "user-123",
-                "spaceId": "space-456",
-                "journalId": "j1",
-                "lastReadHighlightCommentAt": "2024-01-01T00:00:00+00:00",
-                "lastReadJournalCommentAt": "2024-01-01T00:00:00+00:00",
-            }
+
+            def mock_get_item(pk, sk):
+                if pk.startswith("SPACE#") and sk.startswith("HIGHLIGHT#"):
+                    return {"journalEntryId": "j1"}
+                return None
+
+            def mock_query(pk, index_name=None, sk_prefix=None):
+                # Return old read status
+                if pk.startswith("USER#") and sk_prefix and "THREAD_READ" in sk_prefix:
+                    return [
+                        {
+                            "EntityType": "ThreadReadStatus",
+                            "userId": "user-123",
+                            "spaceId": "space-456",
+                            "threadId": "h1",
+                            "threadType": "highlight",
+                            "journalId": "j1",
+                            "lastReadAt": "2024-01-01T00:00:00Z",
+                            "lastCommentCount": 0,
+                        }
+                    ]
+                if pk == "JOURNAL#j1" and index_name == "GSI1":
+                    return [
+                        {
+                            "EntityType": "Highlight",
+                            "id": "h1",
+                            "spaceId": "space-456",
+                            "text": "Test",
+                            "createdBy": "author-1",
+                            "createdAt": "2024-01-10T10:00:00Z",
+                        }
+                    ]
+                if pk == "HIGHLIGHT#h1" and index_name == "GSI1":
+                    return [
+                        {"EntityType": "Comment", "authorId": "user-456", "authorName": "Other", "text": "new comment", "createdAt": "2024-01-15T10:00:00Z"}
+                    ]
+                return []
+
+            mock_db.get_item.side_effect = mock_get_item
+            mock_db.query.side_effect = mock_query
 
             service = ConversationService()
             result = await service.mark_all_as_read(
@@ -1843,8 +1936,7 @@ class TestConversationThreads:
                 space_id="space-456",
             )
 
-            assert result == 1
-            # mark_journal_as_read uses put_item for upsert behavior
+            assert result == 1  # Thread was unread and got marked
             mock_db.put_item.assert_called()
 
     @pytest.mark.asyncio
@@ -1939,7 +2031,7 @@ class TestConversationThreads:
 
     @pytest.mark.asyncio
     async def test_mark_all_as_read_skips_empty_journals(self):
-        """Test mark_all_as_read skips journals without journal_id."""
+        """Test mark_all_as_read skips journals without journal_id or content."""
         from app.services.conversation_service import ConversationService
 
         with patch("app.services.conversation_service.get_db") as mock_get_db, patch(
@@ -1952,11 +2044,38 @@ class TestConversationThreads:
             mock_boto3.resource.return_value.Table.return_value = mock_table
             mock_table.query.return_value = {
                 "Items": [
-                    {"title": "Journal Without ID"},  # No journal_id
-                    {"journal_id": "j1", "title": "Valid Journal"},
+                    {"title": "Journal Without ID"},  # No journal_id - will be skipped
+                    {"journal_id": "j1", "title": "Valid Journal", "user_id": "author-1"},
                 ]
             }
-            mock_db.get_item.return_value = None
+
+            def mock_get_item(pk, sk):
+                if pk.startswith("SPACE#") and sk.startswith("HIGHLIGHT#"):
+                    return {"journalEntryId": "j1"}
+                return None
+
+            def mock_query(pk, index_name=None, sk_prefix=None):
+                if pk.startswith("USER#") and sk_prefix and "THREAD_READ" in sk_prefix:
+                    return []
+                if pk == "JOURNAL#j1" and index_name == "GSI1":
+                    return [
+                        {
+                            "EntityType": "Highlight",
+                            "id": "h1",
+                            "spaceId": "space-456",
+                            "text": "Test",
+                            "createdBy": "author-1",
+                            "createdAt": "2024-01-10T10:00:00Z",
+                        }
+                    ]
+                if pk == "HIGHLIGHT#h1" and index_name == "GSI1":
+                    return [
+                        {"EntityType": "Comment", "authorId": "other", "authorName": "Other", "text": "test", "createdAt": "2024-01-15T10:00:00Z"}
+                    ]
+                return []
+
+            mock_db.get_item.side_effect = mock_get_item
+            mock_db.query.side_effect = mock_query
 
             service = ConversationService()
             result = await service.mark_all_as_read(
@@ -1964,7 +2083,8 @@ class TestConversationThreads:
                 space_id="space-456",
             )
 
-            assert result == 1  # Only the valid journal
+            # Only valid journal with unread content
+            assert result == 1
 
 
 class TestConversationThreadsAPI:

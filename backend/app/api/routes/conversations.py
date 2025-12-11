@@ -119,8 +119,10 @@ async def mark_thread_as_read(
     """
     Mark a specific thread as read.
 
-    For highlight threads, marks highlight comments as read.
-    For journal discussions, marks journal comments as read.
+    For highlight threads, marks that specific highlight's comments as read.
+    For journal discussions, marks that specific journal's discussion as read.
+
+    Each thread is tracked independently (per-thread read status).
     """
     service = get_conversation_service()
 
@@ -139,14 +141,25 @@ async def mark_thread_as_read(
         thread_type=request.thread_type,
     )
 
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Thread '{thread_id}' not found or could not be marked as read",
+        )
+
     # Extract journal_id for response
     if request.thread_type == "journal_discussion":
         journal_id = thread_id.replace("journal-discussion-", "")
     else:
-        journal_id = thread_id  # For highlights, use thread_id as placeholder
+        # For highlights, look up the actual journal_id
+        highlight = service.db.get_item(
+            pk=f"SPACE#{space_id}",
+            sk=f"HIGHLIGHT#{thread_id}"
+        )
+        journal_id = highlight.get("journalEntryId", "") if highlight else ""
 
     return MarkReadResponse(
-        success=success,
+        success=True,
         journalId=journal_id,
         spaceId=space_id,
         threadId=thread_id,
