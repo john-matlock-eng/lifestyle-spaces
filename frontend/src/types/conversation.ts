@@ -80,6 +80,21 @@ export interface GetThreadsOptions {
   search?: string;
 }
 
+/**
+ * A journal with its associated conversation threads grouped together.
+ */
+export interface GroupedJournalConversations {
+  journalId: string;
+  journalTitle: string;
+  journalAuthorId: string;
+  journalAuthorName: string;
+  journalDate: string; // ISO string - most recent activity
+  totalCommentCount: number;
+  totalUnreadCount: number;
+  hasReplyToUser: boolean;
+  threads: ConversationThread[];
+}
+
 // ========== Legacy types (deprecated) ==========
 
 export interface Conversation {

@@ -350,6 +350,14 @@
   min-height: 0;
 }
 
+/* Grouped list - no outer border since cards have their own */
+.conversations-list--grouped {
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  gap: 0;
+}
+
 /* Thread row */
 .thread-row {
   display: flex;

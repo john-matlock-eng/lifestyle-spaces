@@ -2,6 +2,7 @@
  * ConversationsTab Component
  *
  * Displays thread-level conversation data for a space with:
+ * - Grouped view by journal
  * - Search functionality
  * - Filter by type and participation
  * - Sort by recent/unread/replies
@@ -10,22 +11,19 @@
  * - Auto-polling for updates
  */
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MessageSquare,
-  Highlighter,
-  Check,
   CheckCheck,
   Reply,
-  User,
   Search,
   X,
   RefreshCw,
-  ChevronRight,
 } from 'lucide-react';
 import { conversationService } from '../services/conversationService';
-import type { ConversationThread, GetThreadsOptions } from '../types/conversation';
+import type { ConversationThread, GetThreadsOptions, GroupedJournalConversations } from '../types/conversation';
+import { JournalConversationCard, formatTimestamp } from './JournalConversationCard';
 import './ConversationsTab.css';
 
 interface ConversationsTabProps {
@@ -36,56 +34,40 @@ interface ConversationsTabProps {
 const POLL_INTERVAL = 30000; // 30 seconds
 const PAGE_SIZE = 20;
 
-// Format timestamp smartly
-const formatTimestamp = (isoString: string): string => {
-  const now = new Date();
-  // Ensure UTC parsing - append Z if no timezone specified
-  const normalizedString =
-    isoString.endsWith('Z') || isoString.includes('+') || isoString.includes('-', 10)
-      ? isoString
-      : isoString + 'Z';
-  const then = new Date(normalizedString);
-  const diffMs = now.getTime() - then.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
+// Group threads by journal
+const groupThreadsByJournal = (threads: ConversationThread[]): GroupedJournalConversations[] => {
+  const journalMap = new Map<string, GroupedJournalConversations>();
 
-  if (diffMin < 1) return 'now';
-  if (diffMin < 60) return `${diffMin}m`;
-  if (diffHour < 24) return `${diffHour}h`;
-  if (diffDay < 7) return `${diffDay}d`;
+  threads.forEach((thread) => {
+    if (!journalMap.has(thread.journalId)) {
+      journalMap.set(thread.journalId, {
+        journalId: thread.journalId,
+        journalTitle: thread.journalTitle,
+        journalAuthorId: thread.journalAuthorId,
+        journalAuthorName: thread.journalAuthorName,
+        journalDate: thread.lastActivity,
+        totalCommentCount: 0,
+        totalUnreadCount: 0,
+        hasReplyToUser: false,
+        threads: [],
+      });
+    }
 
-  return then.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-};
+    const group = journalMap.get(thread.journalId)!;
+    group.threads.push(thread);
+    group.totalCommentCount += thread.commentCount;
+    group.totalUnreadCount += thread.unreadCount;
+    if (thread.hasReplyToUser) group.hasReplyToUser = true;
+    // Update journalDate to most recent activity
+    if (thread.lastActivity > group.journalDate) {
+      group.journalDate = thread.lastActivity;
+    }
+  });
 
-// Generate consistent color for participant
-const getParticipantColor = (name: string): string => {
-  const colors = [
-    '#14b8a6',
-    '#a855f7',
-    '#ec4899',
-    '#10b981',
-    '#0ea5e9',
-    '#f59e0b',
-    '#0d9488',
-    '#9333ea',
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-};
-
-// Get participation status text
-const getParticipationText = (thread: ConversationThread): string => {
-  if (thread.userStarted && thread.userParticipated) {
-    return 'You started';
-  }
-  if (thread.userParticipated) {
-    return 'You replied';
-  }
-  return '';
+  // Sort groups by most recent activity
+  return Array.from(journalMap.values()).sort((a, b) =>
+    b.journalDate.localeCompare(a.journalDate)
+  );
 };
 
 export const ConversationsTab: React.FC<ConversationsTabProps> = ({
@@ -411,7 +393,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         </div>
       </div>
 
-      {/* Threads List */}
+      {/* Grouped Conversations List */}
       {threads.length === 0 ? (
         <div className="conversations-empty">
           <MessageSquare size={48} strokeWidth={1} />
@@ -440,164 +422,87 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           )}
         </div>
       ) : (
-        <>
-          {/* Results count */}
-          {(searchQuery || filterType || filterParticipation !== 'all') && (
-            <div className="conversations-results-count">
-              {totalCount} {totalCount === 1 ? 'conversation' : 'conversations'} found
-            </div>
-          )}
-
-          <div className="conversations-list" ref={listRef}>
-            {threads.map((thread) => {
-              const isHighlight = thread.threadType === 'highlight';
-              const participationText = getParticipationText(thread);
-
-              return (
-                <div
-                  key={thread.threadId}
-                  className={`thread-row ${thread.isUnread ? 'thread-row--unread' : ''} ${
-                    thread.hasReplyToUser ? 'thread-row--has-reply' : ''
-                  }`}
-                  onClick={() => handleThreadClick(thread)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleThreadClick(thread);
-                    }
-                  }}
-                >
-                  {/* Left: Type icon with indicators */}
-                  <div className="thread-row-icon-area">
-                    <div
-                      className={`thread-row-icon ${
-                        isHighlight ? 'thread-row-icon--highlight' : 'thread-row-icon--discussion'
-                      }`}
-                    >
-                      {isHighlight ? <Highlighter size={16} /> : <MessageSquare size={16} />}
-                    </div>
-                    {thread.isUnread && <span className="thread-unread-dot" />}
-                    {thread.hasReplyToUser && (
-                      <span className="thread-reply-indicator" title="Someone replied to you">
-                        <Reply size={10} />
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Middle: Content */}
-                  <div className="thread-row-content">
-                    {/* Top row: title and time */}
-                    <div className="thread-row-top">
-                      <div className="thread-row-title-area">
-                        {isHighlight && thread.highlightText ? (
-                          <span
-                            className={`thread-row-title ${
-                              thread.isUnread ? 'thread-row-title--unread' : ''
-                            }`}
-                          >
-                            "{thread.highlightText}"
-                          </span>
-                        ) : (
-                          <span
-                            className={`thread-row-title ${
-                              thread.isUnread ? 'thread-row-title--unread' : ''
-                            }`}
-                          >
-                            Journal Discussion
-                          </span>
-                        )}
-                      </div>
-                      <span className="thread-row-time">{formatTimestamp(thread.lastActivity)}</span>
-                    </div>
-
-                    {/* Second row: journal info and participation */}
-                    <div className="thread-row-context">
-                      <span className="thread-row-journal">{thread.journalTitle}</span>
-                      <span className="thread-row-author">by {thread.journalAuthorName}</span>
-                      {participationText && (
-                        <span className="thread-row-participation">
-                          <User size={10} />
-                          {participationText}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Third row: latest comment preview */}
-                    {thread.latestCommentText && (
-                      <div className="thread-row-preview">
-                        <span className="thread-row-preview-author">
-                          {thread.latestCommentAuthor}:
-                        </span>
-                        <span className="thread-row-preview-text">{thread.latestCommentText}</span>
-                      </div>
-                    )}
-
-                    {/* Bottom row: participants and stats */}
-                    <div className="thread-row-bottom">
-                      <div className="thread-row-participants">
-                        {thread.participants.slice(0, 4).map((name, index) => (
-                          <div
-                            key={index}
-                            className="thread-avatar"
-                            style={{ backgroundColor: getParticipantColor(name) }}
-                            title={name}
-                          >
-                            {name.charAt(0).toUpperCase()}
-                          </div>
-                        ))}
-                        {thread.participants.length > 4 && (
-                          <div className="thread-avatar thread-avatar--more">
-                            +{thread.participants.length - 4}
-                          </div>
-                        )}
-                      </div>
-                      <div className="thread-row-stats">
-                        <span className="thread-row-stat">
-                          {thread.commentCount} {thread.commentCount === 1 ? 'comment' : 'comments'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right: Unread count and actions */}
-                  <div className="thread-row-actions">
-                    {thread.isUnread ? (
-                      <>
-                        <span className="thread-unread-count">{thread.unreadCount}</span>
-                        <button
-                          className="thread-mark-read-btn"
-                          onClick={(e) => handleMarkAsRead(e, thread)}
-                          title="Mark as read"
-                        >
-                          <Check size={14} />
-                        </button>
-                      </>
-                    ) : (
-                      <ChevronRight size={18} className="thread-row-chevron" />
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Loading more indicator */}
-            {loadingMore && (
-              <div className="conversations-loading-more">
-                <div className="conversations-loading-spinner conversations-loading-spinner--small" />
-                <span>Loading more...</span>
-              </div>
-            )}
-
-            {/* End of list */}
-            {!hasMore && threads.length > PAGE_SIZE && (
-              <div className="conversations-end">You've seen all conversations</div>
-            )}
-          </div>
-        </>
+        <GroupedConversationsList
+          threads={threads}
+          hasMore={hasMore}
+          loadingMore={loadingMore}
+          listRef={listRef}
+          searchQuery={searchQuery}
+          filterType={filterType}
+          filterParticipation={filterParticipation}
+          totalCount={totalCount}
+          onThreadClick={handleThreadClick}
+          onMarkAsRead={handleMarkAsRead}
+        />
       )}
     </div>
+  );
+};
+
+// Separated component to use useMemo for grouping
+interface GroupedConversationsListProps {
+  threads: ConversationThread[];
+  hasMore: boolean;
+  loadingMore: boolean;
+  listRef: React.RefObject<HTMLDivElement | null>;
+  searchQuery: string;
+  filterType: GetThreadsOptions['type'];
+  filterParticipation: 'all' | 'participated';
+  totalCount: number;
+  onThreadClick: (thread: ConversationThread) => void;
+  onMarkAsRead: (e: React.MouseEvent, thread: ConversationThread) => void;
+}
+
+const GroupedConversationsList: React.FC<GroupedConversationsListProps> = ({
+  threads,
+  hasMore,
+  loadingMore,
+  listRef,
+  searchQuery,
+  filterType,
+  filterParticipation,
+  totalCount,
+  onThreadClick,
+  onMarkAsRead,
+}) => {
+  // Group threads by journal - memoized
+  const groupedConversations = useMemo(() => groupThreadsByJournal(threads), [threads]);
+
+  return (
+    <>
+      {/* Results count */}
+      {(searchQuery || filterType || filterParticipation !== 'all') && (
+        <div className="conversations-results-count">
+          {totalCount} {totalCount === 1 ? 'conversation' : 'conversations'} found
+          {' · '}
+          {groupedConversations.length} {groupedConversations.length === 1 ? 'journal' : 'journals'}
+        </div>
+      )}
+
+      <div className="conversations-list conversations-list--grouped" ref={listRef}>
+        {groupedConversations.map((group) => (
+          <JournalConversationCard
+            key={group.journalId}
+            group={group}
+            onThreadClick={onThreadClick}
+            onMarkThreadRead={onMarkAsRead}
+          />
+        ))}
+
+        {/* Loading more indicator */}
+        {loadingMore && (
+          <div className="conversations-loading-more">
+            <div className="conversations-loading-spinner conversations-loading-spinner--small" />
+            <span>Loading more...</span>
+          </div>
+        )}
+
+        {/* End of list */}
+        {!hasMore && threads.length > PAGE_SIZE && (
+          <div className="conversations-end">You've seen all conversations</div>
+        )}
+      </div>
+    </>
   );
 };
 

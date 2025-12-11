@@ -133,12 +133,29 @@ export const JournalViewPage: React.FC = () => {
   }, [searchParams, setSearchParams])
 
   // Open highlight when highlights are loaded and we have a pending highlight ID
+  // Also scroll to the highlight element and flash it
   useEffect(() => {
     if (pendingHighlightId && highlights.length > 0) {
       const highlight = highlights.find(h => h.id === pendingHighlightId)
       if (highlight) {
+        // Open the comment thread panel
         handleHighlightClick(highlight)
         setPendingHighlightId(null)
+
+        // Scroll to the highlight element after a short delay (to allow render)
+        setTimeout(() => {
+          const highlightElement = document.querySelector(`[data-highlight-id="${highlight.id}"]`) as HTMLElement
+          if (highlightElement) {
+            // Scroll into view
+            highlightElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+            // Add a flash animation
+            highlightElement.classList.add('highlight-flash')
+            setTimeout(() => {
+              highlightElement.classList.remove('highlight-flash')
+            }, 2000)
+          }
+        }, 300)
       }
     }
   }, [pendingHighlightId, highlights])

@@ -76,7 +76,7 @@ export const conversationService = {
   ): Promise<MarkReadResponse> {
     return apiService.post<MarkReadResponse>(
       `/api/spaces/${spaceId}/threads/${threadId}/mark-read`,
-      { threadType }
+      { thread_type: threadType }
     );
   },
 

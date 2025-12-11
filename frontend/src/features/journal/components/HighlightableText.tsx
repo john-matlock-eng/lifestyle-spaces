@@ -393,6 +393,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         parts.push(
           <mark
             key={`h-${highlight.id}-${idx}`}
+            data-highlight-id={highlight.id}
             className="highlight cursor-pointer transition-all hover:opacity-80"
             style={{
               backgroundColor: HIGHLIGHT_COLORS[highlight.color as HighlightColor] || highlight.color || HIGHLIGHT_COLORS.yellow,
@@ -491,6 +492,7 @@ export const HighlightableText: React.FC<HighlightableTextProps> = ({
         parts.push(
           <mark
             key={`h-${highlight.id}-${idx}`}
+            data-highlight-id={highlight.id}
             className="highlight cursor-pointer transition-all hover:opacity-80"
             style={{
               backgroundColor: HIGHLIGHT_COLORS[highlight.color as HighlightColor] || highlight.color || HIGHLIGHT_COLORS.yellow,

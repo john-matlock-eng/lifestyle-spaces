@@ -42,6 +42,34 @@
   color: #1f2937 !important;
 }
 
+/* Highlight flash animation - triggered when navigating to a highlight from Conversations */
+@keyframes highlight-flash {
+  0% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.6);
+    transform: scale(1.02);
+  }
+  25% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.6);
+    transform: scale(1.02);
+  }
+  75% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    transform: scale(1);
+  }
+}
+
+.highlight-flash {
+  animation: highlight-flash 2s ease-out forwards;
+  position: relative;
+  z-index: 10;
+}
+
 /* Button Styles */
 .button-primary {
   padding: 10px 20px;
