@@ -80,6 +80,22 @@ export interface GetThreadsOptions {
   search?: string;
 }
 
+/**
+ * A journal with its conversation threads grouped together.
+ * Used for the grouped card view in ConversationsTab.
+ */
+export interface GroupedJournalConversations {
+  journalId: string;
+  journalTitle: string;
+  journalAuthorId: string;
+  journalAuthorName: string;
+  lastActivity: string; // Most recent activity across all threads
+  totalCommentCount: number;
+  totalUnreadCount: number;
+  hasReplyToUser: boolean;
+  threads: ConversationThread[];
+}
+
 // ========== Legacy types (deprecated) ==========
 
 export interface Conversation {

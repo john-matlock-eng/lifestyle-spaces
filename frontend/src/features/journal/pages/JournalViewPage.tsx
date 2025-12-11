@@ -83,7 +83,7 @@ export const JournalViewPage: React.FC = () => {
     // Fetch comments for this highlight
     fetchComments(highlight.id)
 
-    // Scroll to the highlight element to ensure it's visible
+    // Scroll to the highlight element and flash it to draw attention
     setTimeout(() => {
       const highlightElement = document.querySelector(`mark[data-highlight-id="${highlight.id}"]`)
       if (highlightElement) {
@@ -91,6 +91,12 @@ export const JournalViewPage: React.FC = () => {
           behavior: 'smooth',
           block: 'center',
         })
+
+        // Add flash animation to draw attention
+        highlightElement.classList.add('highlight-flash')
+        setTimeout(() => {
+          highlightElement.classList.remove('highlight-flash')
+        }, 2000) // Remove after animation completes (3 cycles × 0.6s = 1.8s)
       }
     }, 100)
   }, [fetchComments])
@@ -100,8 +106,7 @@ export const JournalViewPage: React.FC = () => {
     setSelectedHighlight(highlight)
     fetchComments(highlight.id)
 
-    // Scroll to the highlight element in the document after a short delay
-    // to allow for any re-renders
+    // Scroll to the highlight element and flash it to draw attention
     setTimeout(() => {
       const highlightElement = document.querySelector(`mark[data-highlight-id="${highlight.id}"]`)
       if (highlightElement) {
@@ -109,6 +114,12 @@ export const JournalViewPage: React.FC = () => {
           behavior: 'smooth',
           block: 'center',
         })
+
+        // Add flash animation to draw attention
+        highlightElement.classList.add('highlight-flash')
+        setTimeout(() => {
+          highlightElement.classList.remove('highlight-flash')
+        }, 2000) // Remove after animation completes (3 cycles × 0.6s = 1.8s)
       }
     }, 100)
   }, [fetchComments])
