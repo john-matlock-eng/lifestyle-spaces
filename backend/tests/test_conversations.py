@@ -2052,3 +2052,46 @@ class TestConversationThreadsAPI:
                 time_filter=None,
                 search="test query",
             )
+
+    @pytest.mark.asyncio
+    async def test_get_threads_with_time_filter(self):
+        """Test GET /threads endpoint with time_filter parameter."""
+        from app.api.routes.conversations import get_conversation_threads
+
+        with patch("app.api.routes.conversations.get_conversation_service") as mock_get_service:
+            mock_service = Mock()
+            mock_get_service.return_value = mock_service
+            mock_service.is_space_member.return_value = True
+            mock_service.get_conversation_threads = AsyncMock(return_value=Mock(
+                threads=[],
+                total_unread=0,
+                threads_with_replies=0,
+                total_count=0,
+                has_more=False,
+                next_token=None,
+            ))
+
+            result = await get_conversation_threads(
+                space_id="space-123",
+                limit=50,
+                offset=0,
+                sort="recent",
+                type=None,
+                filter="unread",
+                time_filter="week",
+                search=None,
+                current_user={"sub": "user-123"},
+            )
+
+            assert result is not None
+            mock_service.get_conversation_threads.assert_called_once_with(
+                space_id="space-123",
+                user_id="user-123",
+                limit=50,
+                offset=0,
+                sort_by="recent",
+                filter_type=None,
+                filter_participation="unread",
+                time_filter="week",
+                search=None,
+            )
