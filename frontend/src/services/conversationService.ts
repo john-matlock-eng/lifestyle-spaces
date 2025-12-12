@@ -22,7 +22,7 @@ export const conversationService = {
     spaceId: string,
     options: GetThreadsOptions = {}
   ): Promise<ThreadsResponse> {
-    const { limit = 50, offset = 0, sort = 'recent', type, filter, search } = options;
+    const { limit = 50, offset = 0, sort = 'recent', type, filter, timeFilter, search } = options;
     const params = new URLSearchParams({
       limit: limit.toString(),
       offset: offset.toString(),
@@ -33,6 +33,9 @@ export const conversationService = {
     }
     if (filter && filter !== 'all') {
       params.append('filter', filter);
+    }
+    if (timeFilter) {
+      params.append('time_filter', timeFilter);
     }
     if (search) {
       params.append('search', search);
@@ -76,7 +79,7 @@ export const conversationService = {
   ): Promise<MarkReadResponse> {
     return apiService.post<MarkReadResponse>(
       `/api/spaces/${spaceId}/threads/${threadId}/mark-read`,
-      { threadType }
+      { thread_type: threadType }  // snake_case for Pydantic backend
     );
   },
 

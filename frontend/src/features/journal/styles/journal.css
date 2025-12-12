@@ -1278,3 +1278,197 @@
     max-height: 500px;
   }
 }
+
+/* =================================
+   Journal View Page with Side Panel Layout
+   ================================= */
+
+/* Wrapper for the entire journal view page */
+.journal-view-page-wrapper {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  gap: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When comment panel is open - add right padding to make room for fixed panel */
+.journal-view-page-wrapper.with-comment-panel {
+  gap: 24px;
+  padding-right: calc(420px + 48px); /* panel width + margins */
+}
+
+/* Main content container - shifts left when panel is open */
+.journal-view-container.shifted {
+  max-width: 900px; /* Comfortable reading width */
+  margin: 0;
+  margin-left: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Comment thread side panel - Fixed on right side */
+.comment-thread-side-panel {
+  width: 420px;
+  min-width: 420px;
+  max-width: 420px;
+  height: calc(100vh - 48px);
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  flex-shrink: 0;
+  animation: slideInPanel 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+}
+
+@keyframes slideInPanel {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive adjustments for side panel layout */
+@media (max-width: 1200px) {
+  .journal-view-container.shifted {
+    max-width: 800px;
+    margin-left: 20px;
+  }
+
+  .comment-thread-side-panel {
+    width: 380px;
+    min-width: 380px;
+    max-width: 380px;
+    right: 20px;
+  }
+
+  .journal-view-page-wrapper.with-comment-panel {
+    gap: 20px;
+    padding-right: calc(380px + 40px);
+  }
+}
+
+@media (max-width: 1024px) {
+  .journal-view-container.shifted {
+    max-width: 100%;
+    margin-left: 16px;
+  }
+
+  .comment-thread-side-panel {
+    width: 350px;
+    min-width: 350px;
+    max-width: 350px;
+    right: 16px;
+  }
+
+  .journal-view-page-wrapper.with-comment-panel {
+    gap: 16px;
+    padding-right: calc(350px + 32px);
+  }
+}
+
+/* For tablets and smaller - stack vertically or use overlay */
+@media (max-width: 900px) {
+  .journal-view-page-wrapper {
+    flex-direction: column;
+  }
+
+  .journal-view-page-wrapper.with-comment-panel {
+    gap: 0;
+    padding-right: 0; /* No padding needed for overlay mode */
+  }
+
+  .journal-view-container.shifted {
+    max-width: 100%;
+    margin: 0 auto;
+    margin-left: 0;
+  }
+
+  .comment-thread-side-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 420px;
+    min-width: unset;
+    height: 100vh;
+    z-index: 9999;
+    animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .dark .comment-thread-side-panel {
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+  }
+
+  @keyframes slideInFromRight {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+}
+
+/* =================================
+   Highlight Flash Animation
+   For deep linking from Conversations tab
+   ================================= */
+@keyframes highlight-flash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+  25% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.6),
+                0 0 20px rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.4),
+                0 0 30px rgba(59, 130, 246, 0.3);
+  }
+  75% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.6),
+                0 0 20px rgba(59, 130, 246, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.highlight-flash {
+  animation: highlight-flash 0.6s ease-in-out 3;
+  border-radius: 2px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Dark mode adjustment for flash */
+.dark .highlight-flash {
+  animation: highlight-flash-dark 0.6s ease-in-out 3;
+}
+
+@keyframes highlight-flash-dark {
+  0% {
+    box-shadow: 0 0 0 0 rgba(96, 165, 250, 0);
+  }
+  25% {
+    box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.5),
+                0 0 20px rgba(96, 165, 250, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(96, 165, 250, 0.3),
+                0 0 30px rgba(96, 165, 250, 0.2);
+  }
+  75% {
+    box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.5),
+                0 0 20px rgba(96, 165, 250, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(96, 165, 250, 0);
+  }
+}

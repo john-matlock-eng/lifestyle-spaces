@@ -1,9 +1,13 @@
 """
 Service layer for Conversations aggregation feature.
 Handles thread-level conversation data across journals in a space.
+
+Per-Thread Read Status:
+- Each thread (highlight or journal discussion) has its own read status
+- Stored as: PK=USER#{user_id}, SK=THREAD_READ#{space_id}#{thread_id}
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Set, Dict
 import logging
 import os
@@ -21,6 +25,10 @@ from app.models.conversation import (
     ConversationsResponse,
 )
 from app.models.read_status import (
+    ThreadReadStatus,
+    thread_read_status_to_db_item,
+    db_item_to_thread_read_status,
+    # Legacy - kept for backwards compatibility
     ReadStatusModel,
     read_status_to_db_item,
     db_item_to_read_status,
@@ -46,6 +54,95 @@ class ConversationService:
             return item is not None
         except Exception:
             return False
+
+    # ========================================================================
+    # PER-THREAD READ STATUS
+    # ========================================================================
+
+    def _get_thread_read_status(
+        self, user_id: str, space_id: str, thread_id: str
+    ) -> Optional[ThreadReadStatus]:
+        """Get user's read status for a specific thread."""
+        try:
+            item = self.db.get_item(
+                pk=f"USER#{user_id}",
+                sk=f"THREAD_READ#{space_id}#{thread_id}"
+            )
+            if item:
+                return db_item_to_thread_read_status(item)
+            return None
+        except Exception as e:
+            logger.warning(f"Failed to get thread read status: {e}")
+            return None
+
+    def _get_all_thread_read_statuses(
+        self, user_id: str, space_id: str
+    ) -> Dict[str, ThreadReadStatus]:
+        """Get all thread read statuses for a user in a space."""
+        try:
+            items = self.db.query(
+                pk=f"USER#{user_id}",
+                sk_prefix=f"THREAD_READ#{space_id}#"
+            )
+
+            statuses = {}
+            for item in items:
+                if item.get("EntityType") == "ThreadReadStatus":
+                    status = db_item_to_thread_read_status(item)
+                    statuses[status.thread_id] = status
+
+            return statuses
+        except Exception as e:
+            logger.warning(f"Failed to get thread read statuses: {e}")
+            return {}
+
+    def _set_thread_read_status(
+        self,
+        user_id: str,
+        space_id: str,
+        thread_id: str,
+        thread_type: str,
+        journal_id: str,
+        comment_count: int = 0,
+    ) -> bool:
+        """Set/update read status for a specific thread."""
+        try:
+            now = datetime.now(timezone.utc).isoformat()
+
+            status = ThreadReadStatus(
+                userId=user_id,
+                spaceId=space_id,
+                threadId=thread_id,
+                threadType=thread_type,
+                journalId=journal_id,
+                lastReadAt=now,
+                lastCommentCount=comment_count,
+            )
+
+            item = thread_read_status_to_db_item(status)
+            self.db.put_item(item)
+
+            logger.info(
+                f"Thread read status saved: user={user_id}, thread={thread_id}, "
+                f"type={thread_type}, comments={comment_count}"
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to set thread read status: {e}")
+            return False
+
+    def _normalize_timestamp(self, ts: Optional[str]) -> str:
+        """Normalize timestamp for consistent comparison."""
+        if not ts:
+            return ""
+        # Ensure timezone suffix for consistent comparison
+        if not ts.endswith('Z') and '+' not in ts and '-' not in ts[10:]:
+            return ts + 'Z'
+        return ts
+
+    # ========================================================================
+    # DATA FETCHING
+    # ========================================================================
 
     def _get_journals_for_space(self, space_id: str) -> List[dict]:
         """Get all journals in a space."""
@@ -109,7 +206,7 @@ class ConversationService:
         highlight: dict,
         journal: dict,
         user_id: str,
-        read_status: Optional[ReadStatusModel],
+        read_status: Optional[ThreadReadStatus],
         user_info_cache: Dict[str, dict],
     ) -> Optional[ConversationThread]:
         """Build a ConversationThread from a highlight and its comments."""
@@ -135,7 +232,7 @@ class ConversationService:
         has_reply_to_user = False
 
         for comment in comments:
-            author_id = comment.get("authorId", comment.get("userId", ""))
+            author_id = comment.get("authorId", comment.get("author", comment.get("userId", "")))
             author_name = comment.get("authorName", "Unknown")
 
             if author_id and author_id not in participant_ids:
@@ -152,14 +249,17 @@ class ConversationService:
         # Latest comment for preview
         latest_comment = comments[-1] if comments else None
 
-        # Determine unread status
-        last_read = read_status.last_read_highlight_comment_at if read_status else None
+        # Determine unread status using per-thread tracking
+        last_read_at = self._normalize_timestamp(
+            read_status.last_read_at if read_status else None
+        )
         unread_count = 0
         is_unread = False
 
-        if last_read:
+        if last_read_at:
             for c in comments:
-                if c.get("createdAt", "") > last_read:
+                comment_time = self._normalize_timestamp(c.get("createdAt", ""))
+                if comment_time > last_read_at:
                     unread_count += 1
                     is_unread = True
         else:
@@ -177,6 +277,13 @@ class ConversationService:
             user_info_cache[journal_author_id] = self._get_user_info(journal_author_id)
         journal_author_info = user_info_cache[journal_author_id]
 
+        # Get latest activity time from comments
+        last_activity = (
+            latest_comment.get("createdAt", "")
+            if latest_comment
+            else highlight.get("createdAt", "")
+        )
+
         return ConversationThread(
             threadId=highlight_id,
             threadType="highlight",
@@ -184,23 +291,23 @@ class ConversationService:
             journalTitle=journal.get("title", "Untitled"),
             journalAuthorId=journal_author_id,
             journalAuthorName=journal_author_info["display_name"],
-            highlightText=highlight.get("text", "")[:100],  # Truncate for preview
+            highlightText=highlight.get("highlightedText", highlight.get("text", ""))[:100],
             highlightColor=highlight.get("color"),
-            lastActivity=highlight.get("updatedAt", highlight.get("createdAt", "")),
+            lastActivity=last_activity,
             createdAt=highlight.get("createdAt", ""),
             commentCount=len(comments),
             participants=participants[:5],
             participantIds=participant_ids[:5],
             userParticipated=user_participated,
             userStarted=user_started,
-            userLastSeen=last_read,
+            userLastSeen=last_read_at if last_read_at else None,
             userLastComment=user_last_comment,
             isUnread=is_unread,
             unreadCount=unread_count,
             hasReplyToUser=has_reply_to_user,
             latestCommentText=latest_comment.get("text", "")[:100] if latest_comment else None,
             latestCommentAuthor=latest_comment.get("authorName") if latest_comment else None,
-            latestCommentAuthorId=latest_comment.get("authorId", latest_comment.get("userId")) if latest_comment else None,
+            latestCommentAuthorId=latest_comment.get("authorId", latest_comment.get("author")) if latest_comment else None,
             latestCommentTime=latest_comment.get("createdAt") if latest_comment else None,
         )
 
@@ -209,7 +316,7 @@ class ConversationService:
         journal: dict,
         comments: List[dict],
         user_id: str,
-        read_status: Optional[ReadStatusModel],
+        read_status: Optional[ThreadReadStatus],
         user_info_cache: Dict[str, dict],
     ) -> Optional[ConversationThread]:
         """Build a ConversationThread for journal-level discussion."""
@@ -217,6 +324,7 @@ class ConversationService:
             return None
 
         journal_id = journal.get("journal_id", "")
+        thread_id = f"journal-discussion-{journal_id}"
 
         # Sort comments by time
         comments = sorted(comments, key=lambda c: c.get("createdAt", ""))
@@ -229,7 +337,7 @@ class ConversationService:
         has_reply_to_user = False
 
         for comment in comments:
-            author_id = comment.get("authorId", comment.get("userId", ""))
+            author_id = comment.get("authorId", comment.get("author", comment.get("userId", "")))
             author_name = comment.get("authorName", "Unknown")
 
             if author_id and author_id not in participant_ids:
@@ -245,14 +353,17 @@ class ConversationService:
         # Latest comment for preview
         latest_comment = comments[-1] if comments else None
 
-        # Determine unread status
-        last_read = read_status.last_read_journal_comment_at if read_status else None
+        # Determine unread status using per-thread tracking
+        last_read_at = self._normalize_timestamp(
+            read_status.last_read_at if read_status else None
+        )
         unread_count = 0
         is_unread = False
 
-        if last_read:
+        if last_read_at:
             for c in comments:
-                if c.get("createdAt", "") > last_read:
+                comment_time = self._normalize_timestamp(c.get("createdAt", ""))
+                if comment_time > last_read_at:
                     unread_count += 1
                     is_unread = True
         else:
@@ -269,13 +380,17 @@ class ConversationService:
         user_started = journal_author_id == user_id
 
         # Last activity is the latest comment time
-        last_activity = latest_comment.get("createdAt", "") if latest_comment else journal.get("createdAt", "")
+        last_activity = (
+            latest_comment.get("createdAt", "")
+            if latest_comment
+            else journal.get("createdAt", "")
+        )
 
         # Created at is the first comment time (when discussion started)
         created_at = comments[0].get("createdAt", "") if comments else journal.get("createdAt", "")
 
         return ConversationThread(
-            threadId=f"journal-discussion-{journal_id}",
+            threadId=thread_id,
             threadType="journal_discussion",
             journalId=journal_id,
             journalTitle=journal.get("title", "Untitled"),
@@ -290,14 +405,14 @@ class ConversationService:
             participantIds=participant_ids[:5],
             userParticipated=user_participated,
             userStarted=user_started,
-            userLastSeen=last_read,
+            userLastSeen=last_read_at if last_read_at else None,
             userLastComment=user_last_comment,
             isUnread=is_unread,
             unreadCount=unread_count,
             hasReplyToUser=has_reply_to_user,
             latestCommentText=latest_comment.get("text", "")[:100] if latest_comment else None,
             latestCommentAuthor=latest_comment.get("authorName") if latest_comment else None,
-            latestCommentAuthorId=latest_comment.get("authorId", latest_comment.get("userId")) if latest_comment else None,
+            latestCommentAuthorId=latest_comment.get("authorId", latest_comment.get("author")) if latest_comment else None,
             latestCommentTime=latest_comment.get("createdAt") if latest_comment else None,
         )
 
@@ -309,7 +424,8 @@ class ConversationService:
         offset: int = 0,
         sort_by: str = "recent",
         filter_type: Optional[str] = None,  # "highlight", "journal_discussion", or None for all
-        filter_participation: Optional[str] = None,  # "participated" or None for all
+        filter_participation: Optional[str] = None,  # "participated", "unread", or None for all
+        time_filter: Optional[str] = None,  # "today", "week", "month", or None for all
         search: Optional[str] = None,
     ) -> ThreadsResponse:
         """
@@ -322,13 +438,32 @@ class ConversationService:
             offset: Skip this many threads (for pagination)
             sort_by: "recent", "unread", "replies" (threads with replies to user)
             filter_type: Filter by thread type
-            filter_participation: Filter by user participation ("participated")
+            filter_participation: Filter by participation ("participated") or unread ("unread")
+            time_filter: Filter by time period ("today", "week", "month")
             search: Search query for highlight text, journal title, or comment text
 
         Returns:
             ThreadsResponse with thread-level data
         """
+        # Calculate time filter cutoff
+        time_cutoff: Optional[str] = None
+        if time_filter:
+            now = datetime.now(timezone.utc)
+            if time_filter == "today":
+                cutoff = now - timedelta(days=1)
+            elif time_filter == "week":
+                cutoff = now - timedelta(days=7)
+            elif time_filter == "month":
+                cutoff = now - timedelta(days=30)
+            else:
+                cutoff = None
+            if cutoff:
+                time_cutoff = cutoff.isoformat()
+
         journals = self._get_journals_for_space(space_id)
+
+        # Get all read statuses for this user/space at once (efficiency)
+        all_read_statuses = self._get_all_thread_read_statuses(user_id, space_id)
 
         threads: List[ConversationThread] = []
         total_unread = 0
@@ -341,19 +476,29 @@ class ConversationService:
             if not journal_id:
                 continue
 
-            # Get read status once per journal
-            read_status = self._get_user_read_status(user_id, space_id, journal_id)
-
             # Build highlight threads
             if filter_type is None or filter_type == "highlight":
                 highlights = self._get_highlights_for_journal(journal_id, space_id)
                 for highlight in highlights:
+                    highlight_id = highlight.get("id", highlight.get("highlightId"))
+                    if not highlight_id:
+                        continue
+
+                    # Get per-thread read status
+                    read_status = all_read_statuses.get(highlight_id)
+
                     thread = self._build_highlight_thread(
                         highlight, journal, user_id, read_status, user_info_cache
                     )
                     if thread:
                         # Apply participation filter
                         if filter_participation == "participated" and not thread.user_participated:
+                            continue
+                        # Apply unread filter
+                        if filter_participation == "unread" and not thread.is_unread:
+                            continue
+                        # Apply time filter
+                        if time_cutoff and thread.last_activity < time_cutoff:
                             continue
                         # Apply search filter
                         if search_lower:
@@ -372,12 +517,23 @@ class ConversationService:
             # Build journal discussion thread
             if filter_type is None or filter_type == "journal_discussion":
                 journal_comments = self._get_journal_comments(journal_id, space_id)
+                thread_id = f"journal-discussion-{journal_id}"
+
+                # Get per-thread read status
+                read_status = all_read_statuses.get(thread_id)
+
                 thread = self._build_journal_discussion_thread(
                     journal, journal_comments, user_id, read_status, user_info_cache
                 )
                 if thread:
                     # Apply participation filter
                     if filter_participation == "participated" and not thread.user_participated:
+                        continue
+                    # Apply unread filter
+                    if filter_participation == "unread" and not thread.is_unread:
+                        continue
+                    # Apply time filter
+                    if time_cutoff and thread.last_activity < time_cutoff:
                         continue
                     # Apply search filter
                     if search_lower:
@@ -395,11 +551,9 @@ class ConversationService:
         # Sort threads
         if sort_by == "unread":
             # Unread first, then by recent
-            threads.sort(key=lambda t: (not t.is_unread, -t.unread_count, t.last_activity), reverse=False)
             threads.sort(key=lambda t: (-t.unread_count, t.last_activity), reverse=True)
         elif sort_by == "replies":
             # Threads with replies to user first
-            threads.sort(key=lambda t: (not t.has_reply_to_user, t.last_activity), reverse=False)
             threads.sort(key=lambda t: (t.has_reply_to_user, t.last_activity), reverse=True)
         else:
             # Default: most recent activity first
@@ -429,70 +583,76 @@ class ConversationService:
         thread_type: str,
     ) -> bool:
         """
-        Mark a specific thread as read.
+        Mark a specific thread as read using per-thread tracking.
 
-        For highlight threads: Updates lastReadHighlightCommentAt for the journal
-        For journal discussions: Updates lastReadJournalCommentAt for the journal
+        Each thread gets its own read status entry:
+        PK=USER#{user_id}, SK=THREAD_READ#{space_id}#{thread_id}
         """
-        from datetime import datetime, timezone
-
-        now = datetime.now(timezone.utc).isoformat()
-
-        # For thread-level marking, we need to find the journal_id
-        # For highlights, thread_id is the highlight_id
-        # For journal discussions, thread_id is "journal-discussion-{journal_id}"
+        journal_id: str = ""
+        comment_count: int = 0
 
         if thread_type == "journal_discussion":
-            # Extract journal_id from thread_id
+            # Extract journal_id from thread_id format: "journal-discussion-{journal_id}"
             journal_id = thread_id.replace("journal-discussion-", "")
-            mark_journal = True
-            mark_highlight = False
+
+            # Get current comment count
+            comments = self._get_journal_comments(journal_id, space_id)
+            comment_count = len(comments)
         else:
-            # For highlights, we need to look up the journal
-            # For now, we'll mark both to ensure proper tracking
-            # In a production system, you'd query to find the specific journal
-            highlight = self.db.query(pk=f"HIGHLIGHT#{thread_id}")
-            if highlight and len(highlight) > 0:
-                journal_id = highlight[0].get("journalId", "")
+            # For highlights, look up the highlight to get its journal_id
+            # Highlights are stored with PK=SPACE#{space_id}, SK=HIGHLIGHT#{highlight_id}
+            highlight = self.db.get_item(
+                pk=f"SPACE#{space_id}",
+                sk=f"HIGHLIGHT#{thread_id}"
+            )
+
+            if highlight:
+                journal_id = highlight.get("journalEntryId", "")
+                # Get current comment count
+                comments = self._get_highlight_comments(thread_id)
+                comment_count = len(comments)
             else:
+                logger.warning(f"Could not find highlight {thread_id} in space {space_id}")
                 return False
-            mark_journal = False
-            mark_highlight = True
 
         if not journal_id:
+            logger.warning(f"No journal_id found for thread {thread_id}")
             return False
 
-        return await self.mark_journal_as_read(
+        return self._set_thread_read_status(
             user_id=user_id,
             space_id=space_id,
+            thread_id=thread_id,
+            thread_type=thread_type,
             journal_id=journal_id,
-            mark_highlight_comments=mark_highlight,
-            mark_journal_comments=mark_journal,
+            comment_count=comment_count,
         )
 
     async def mark_all_as_read(self, user_id: str, space_id: str) -> int:
         """
-        Mark all threads in a space as read.
+        Mark all threads in a space as read using per-thread tracking.
 
         Returns the number of threads marked as read.
         """
-        journals = self._get_journals_for_space(space_id)
+        # Get all threads first
+        response = await self.get_conversation_threads(
+            space_id=space_id,
+            user_id=user_id,
+            limit=1000,  # Get all
+            offset=0,
+        )
+
         marked_count = 0
-
-        for journal in journals:
-            journal_id = journal.get("journal_id")
-            if not journal_id:
-                continue
-
-            # Use the standard mark_journal_as_read to ensure consistent PK/SK patterns
-            await self.mark_journal_as_read(
-                user_id=user_id,
-                space_id=space_id,
-                journal_id=journal_id,
-                mark_highlight_comments=True,
-                mark_journal_comments=True,
-            )
-            marked_count += 1
+        for thread in response.threads:
+            if thread.is_unread:
+                success = await self.mark_thread_as_read(
+                    user_id=user_id,
+                    space_id=space_id,
+                    thread_id=thread.thread_id,
+                    thread_type=thread.thread_type,
+                )
+                if success:
+                    marked_count += 1
 
         return marked_count
 

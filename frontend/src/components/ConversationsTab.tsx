@@ -10,7 +10,7 @@
  * - Auto-polling for updates
  */
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MessageSquare,
@@ -23,9 +23,13 @@ import {
   X,
   RefreshCw,
   ChevronRight,
+  Inbox,
+  Clock,
+  Filter,
 } from 'lucide-react';
 import { conversationService } from '../services/conversationService';
-import type { ConversationThread, GetThreadsOptions } from '../types/conversation';
+import type { ConversationThread, GetThreadsOptions, GroupedJournalConversations } from '../types/conversation';
+import { JournalConversationCard } from './JournalConversationCard';
 import './ConversationsTab.css';
 
 interface ConversationsTabProps {
@@ -88,6 +92,46 @@ const getParticipationText = (thread: ConversationThread): string => {
   return '';
 };
 
+// Group threads by journal for card view
+const groupThreadsByJournal = (threads: ConversationThread[]): GroupedJournalConversations[] => {
+  const journalMap = new Map<string, GroupedJournalConversations>();
+
+  threads.forEach((thread) => {
+    if (!journalMap.has(thread.journalId)) {
+      journalMap.set(thread.journalId, {
+        journalId: thread.journalId,
+        journalTitle: thread.journalTitle,
+        journalAuthorId: thread.journalAuthorId,
+        journalAuthorName: thread.journalAuthorName,
+        lastActivity: thread.lastActivity,
+        totalCommentCount: 0,
+        totalUnreadCount: 0,
+        hasReplyToUser: false,
+        threads: [],
+      });
+    }
+
+    const group = journalMap.get(thread.journalId)!;
+    group.threads.push(thread);
+    group.totalCommentCount += thread.commentCount;
+    group.totalUnreadCount += thread.unreadCount;
+    if (thread.hasReplyToUser) group.hasReplyToUser = true;
+    // Update lastActivity to most recent
+    if (thread.lastActivity > group.lastActivity) {
+      group.lastActivity = thread.lastActivity;
+    }
+  });
+
+  // Sort groups by most recent activity, with unread first
+  return Array.from(journalMap.values()).sort((a, b) => {
+    // Unread journals first
+    if (a.totalUnreadCount > 0 && b.totalUnreadCount === 0) return -1;
+    if (a.totalUnreadCount === 0 && b.totalUnreadCount > 0) return 1;
+    // Then by activity
+    return b.lastActivity.localeCompare(a.lastActivity);
+  });
+};
+
 export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   spaceId,
   onUnreadCountChange,
@@ -103,14 +147,22 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<GetThreadsOptions['sort']>('recent');
   const [filterType, setFilterType] = useState<GetThreadsOptions['type']>(undefined);
-  const [filterParticipation, setFilterParticipation] = useState<'all' | 'participated'>('all');
+  const [filterParticipation, setFilterParticipation] = useState<'all' | 'participated' | 'unread'>('all');
+  const [timeFilter, setTimeFilter] = useState<GetThreadsOptions['timeFilter']>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [viewMode, setViewMode] = useState<'grouped' | 'flat'>('grouped');
 
   const listRef = useRef<HTMLDivElement>(null);
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Memoized grouped conversations
+  const groupedConversations = useMemo(
+    () => groupThreadsByJournal(threads),
+    [threads]
+  );
 
   // Notify parent of unread count changes
   useEffect(() => {
@@ -133,6 +185,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           sort: sortBy,
           type: filterType,
           filter: filterParticipation,
+          timeFilter,
           search: searchQuery || undefined,
           limit: PAGE_SIZE,
           offset,
@@ -156,13 +209,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         setLoadingMore(false);
       }
     },
-    [spaceId, sortBy, filterType, filterParticipation, searchQuery, threads.length]
+    [spaceId, sortBy, filterType, filterParticipation, timeFilter, searchQuery, threads.length]
   );
 
   // Initial fetch and refetch on filter/sort changes
   useEffect(() => {
     fetchThreads(false);
-  }, [spaceId, sortBy, filterType, filterParticipation, searchQuery]);
+  }, [spaceId, sortBy, filterType, filterParticipation, timeFilter, searchQuery, fetchThreads]);
 
   // Polling for updates
   useEffect(() => {
@@ -189,7 +242,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         clearTimeout(pollTimeoutRef.current);
       }
     };
-  }, [spaceId, totalUnread, threadsWithReplies]);
+  }, [spaceId, totalUnread, threadsWithReplies, fetchThreads]);
 
   // Infinite scroll
   useEffect(() => {
@@ -296,6 +349,46 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     setSearchQuery('');
   };
 
+  const clearAllFilters = () => {
+    setSearchInput('');
+    setSearchQuery('');
+    setFilterType(undefined);
+    setFilterParticipation('all');
+    setTimeFilter(undefined);
+    setSortBy('recent');
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = Boolean(
+    searchQuery || filterType || filterParticipation !== 'all' || timeFilter
+  );
+
+  // Get filter label for display
+  const getTimeFilterLabel = (tf: typeof timeFilter): string => {
+    switch (tf) {
+      case 'today': return 'Today';
+      case 'week': return 'This week';
+      case 'month': return 'This month';
+      default: return '';
+    }
+  };
+
+  const getParticipationLabel = (fp: typeof filterParticipation): string => {
+    switch (fp) {
+      case 'participated': return 'My threads';
+      case 'unread': return 'Unread only';
+      default: return '';
+    }
+  };
+
+  const getTypeLabel = (ft: typeof filterType): string => {
+    switch (ft) {
+      case 'highlight': return 'Highlights';
+      case 'journal_discussion': return 'Discussions';
+      default: return '';
+    }
+  };
+
   if (loading && threads.length === 0) {
     return (
       <div className="conversations-tab">
@@ -357,10 +450,105 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           >
             <RefreshCw size={16} className={loading ? 'spinning' : ''} />
           </button>
+          <button
+            className={`conversations-view-toggle ${viewMode === 'grouped' ? 'active' : ''}`}
+            onClick={() => setViewMode(viewMode === 'grouped' ? 'flat' : 'grouped')}
+            title={viewMode === 'grouped' ? 'Switch to flat view' : 'Switch to grouped view'}
+          >
+            {viewMode === 'grouped' ? '📑' : '📋'}
+          </button>
         </div>
       </div>
 
-      {/* Search and Filters */}
+      {/* Quick Filter Pills */}
+      <div className="conversations-quick-filters">
+        <button
+          className={`quick-filter-pill ${filterParticipation === 'unread' ? 'quick-filter-pill--active' : ''}`}
+          onClick={() => setFilterParticipation(filterParticipation === 'unread' ? 'all' : 'unread')}
+        >
+          <Inbox size={14} />
+          Unread
+          {totalUnread > 0 && <span className="quick-filter-count">{totalUnread}</span>}
+        </button>
+        <button
+          className={`quick-filter-pill ${sortBy === 'replies' ? 'quick-filter-pill--active' : ''}`}
+          onClick={() => setSortBy(sortBy === 'replies' ? 'recent' : 'replies')}
+        >
+          <Reply size={14} />
+          Replies to me
+          {threadsWithReplies > 0 && <span className="quick-filter-count">{threadsWithReplies}</span>}
+        </button>
+        <button
+          className={`quick-filter-pill ${filterParticipation === 'participated' ? 'quick-filter-pill--active' : ''}`}
+          onClick={() => setFilterParticipation(filterParticipation === 'participated' ? 'all' : 'participated')}
+        >
+          <User size={14} />
+          My threads
+        </button>
+        <div className="quick-filter-divider" />
+        <button
+          className={`quick-filter-pill ${timeFilter === 'today' ? 'quick-filter-pill--active' : ''}`}
+          onClick={() => setTimeFilter(timeFilter === 'today' ? undefined : 'today')}
+        >
+          <Clock size={14} />
+          Today
+        </button>
+        <button
+          className={`quick-filter-pill ${timeFilter === 'week' ? 'quick-filter-pill--active' : ''}`}
+          onClick={() => setTimeFilter(timeFilter === 'week' ? undefined : 'week')}
+        >
+          This week
+        </button>
+        <button
+          className={`quick-filter-pill ${timeFilter === 'month' ? 'quick-filter-pill--active' : ''}`}
+          onClick={() => setTimeFilter(timeFilter === 'month' ? undefined : 'month')}
+        >
+          This month
+        </button>
+      </div>
+
+      {/* Active Filter Chips */}
+      {hasActiveFilters && (
+        <div className="conversations-active-filters">
+          {filterParticipation !== 'all' && (
+            <span className="active-filter-chip">
+              {getParticipationLabel(filterParticipation)}
+              <button onClick={() => setFilterParticipation('all')} className="chip-remove">
+                <X size={12} />
+              </button>
+            </span>
+          )}
+          {filterType && (
+            <span className="active-filter-chip">
+              {getTypeLabel(filterType)}
+              <button onClick={() => setFilterType(undefined)} className="chip-remove">
+                <X size={12} />
+              </button>
+            </span>
+          )}
+          {timeFilter && (
+            <span className="active-filter-chip">
+              {getTimeFilterLabel(timeFilter)}
+              <button onClick={() => setTimeFilter(undefined)} className="chip-remove">
+                <X size={12} />
+              </button>
+            </span>
+          )}
+          {searchQuery && (
+            <span className="active-filter-chip">
+              Search: "{searchQuery}"
+              <button onClick={clearSearch} className="chip-remove">
+                <X size={12} />
+              </button>
+            </span>
+          )}
+          <button className="clear-all-filters" onClick={clearAllFilters}>
+            Clear all
+          </button>
+        </div>
+      )}
+
+      {/* Search and Advanced Filters */}
       <div className="conversations-controls">
         <div className="conversations-search">
           <Search size={16} className="conversations-search-icon" />
@@ -392,14 +580,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             <option value="journal_discussion">Discussions</option>
           </select>
           <select
-            value={filterParticipation}
-            onChange={(e) => setFilterParticipation(e.target.value as 'all' | 'participated')}
-            className="conversations-filter-select"
-          >
-            <option value="all">All threads</option>
-            <option value="participated">My threads</option>
-          </select>
-          <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as GetThreadsOptions['sort'])}
             className="conversations-sort-select"
@@ -414,17 +594,30 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       {/* Threads List */}
       {threads.length === 0 ? (
         <div className="conversations-empty">
-          <MessageSquare size={48} strokeWidth={1} />
-          {searchQuery || filterType || filterParticipation !== 'all' ? (
+          {/* Inbox Zero state - when unread filter is on and all caught up */}
+          {filterParticipation === 'unread' && totalUnread === 0 ? (
             <>
+              <div className="inbox-zero-icon">
+                <Check size={32} />
+              </div>
+              <h3>Inbox Zero!</h3>
+              <p>You're all caught up. No unread conversations.</p>
+              <button className="conversations-empty-btn" onClick={() => setFilterParticipation('all')}>
+                View all conversations
+              </button>
+            </>
+          ) : hasActiveFilters ? (
+            <>
+              <Filter size={48} strokeWidth={1} />
               <h3>No matching conversations</h3>
               <p>Try adjusting your filters or search query.</p>
-              <button className="conversations-empty-btn" onClick={clearSearch}>
-                Clear filters
+              <button className="conversations-empty-btn" onClick={clearAllFilters}>
+                Clear all filters
               </button>
             </>
           ) : (
             <>
+              <MessageSquare size={48} strokeWidth={1} />
               <h3>No conversations yet</h3>
               <p>
                 Start a conversation by highlighting text in a journal and adding a comment, or
@@ -445,156 +638,185 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           {(searchQuery || filterType || filterParticipation !== 'all') && (
             <div className="conversations-results-count">
               {totalCount} {totalCount === 1 ? 'conversation' : 'conversations'} found
+              {viewMode === 'grouped' && ` in ${groupedConversations.length} ${groupedConversations.length === 1 ? 'journal' : 'journals'}`}
             </div>
           )}
 
-          <div className="conversations-list" ref={listRef}>
-            {threads.map((thread) => {
-              const isHighlight = thread.threadType === 'highlight';
-              const participationText = getParticipationText(thread);
+          {viewMode === 'grouped' ? (
+            /* Grouped view - journals with sub-threads */
+            <div className="conversations-grouped-list" ref={listRef}>
+              {groupedConversations.map((group) => (
+                <JournalConversationCard
+                  key={group.journalId}
+                  group={group}
+                  onThreadClick={handleThreadClick}
+                  onMarkThreadRead={handleMarkAsRead}
+                />
+              ))}
 
-              return (
-                <div
-                  key={thread.threadId}
-                  className={`thread-row ${thread.isUnread ? 'thread-row--unread' : ''} ${
-                    thread.hasReplyToUser ? 'thread-row--has-reply' : ''
-                  }`}
-                  onClick={() => handleThreadClick(thread)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleThreadClick(thread);
-                    }
-                  }}
-                >
-                  {/* Left: Type icon with indicators */}
-                  <div className="thread-row-icon-area">
-                    <div
-                      className={`thread-row-icon ${
-                        isHighlight ? 'thread-row-icon--highlight' : 'thread-row-icon--discussion'
-                      }`}
-                    >
-                      {isHighlight ? <Highlighter size={16} /> : <MessageSquare size={16} />}
-                    </div>
-                    {thread.isUnread && <span className="thread-unread-dot" />}
-                    {thread.hasReplyToUser && (
-                      <span className="thread-reply-indicator" title="Someone replied to you">
-                        <Reply size={10} />
-                      </span>
-                    )}
-                  </div>
+              {/* Loading more indicator */}
+              {loadingMore && (
+                <div className="conversations-loading-more">
+                  <div className="conversations-loading-spinner conversations-loading-spinner--small" />
+                  <span>Loading more...</span>
+                </div>
+              )}
 
-                  {/* Middle: Content */}
-                  <div className="thread-row-content">
-                    {/* Top row: title and time */}
-                    <div className="thread-row-top">
-                      <div className="thread-row-title-area">
-                        {isHighlight && thread.highlightText ? (
-                          <span
-                            className={`thread-row-title ${
-                              thread.isUnread ? 'thread-row-title--unread' : ''
-                            }`}
-                          >
-                            "{thread.highlightText}"
-                          </span>
-                        ) : (
-                          <span
-                            className={`thread-row-title ${
-                              thread.isUnread ? 'thread-row-title--unread' : ''
-                            }`}
-                          >
-                            Journal Discussion
-                          </span>
-                        )}
+              {/* End of list */}
+              {!hasMore && threads.length > PAGE_SIZE && (
+                <div className="conversations-end">You've seen all conversations</div>
+              )}
+            </div>
+          ) : (
+            /* Flat view - original thread rows */
+            <div className="conversations-list" ref={listRef}>
+              {threads.map((thread) => {
+                const isHighlight = thread.threadType === 'highlight';
+                const participationText = getParticipationText(thread);
+
+                return (
+                  <div
+                    key={thread.threadId}
+                    className={`thread-row ${thread.isUnread ? 'thread-row--unread' : ''} ${
+                      thread.hasReplyToUser ? 'thread-row--has-reply' : ''
+                    }`}
+                    onClick={() => handleThreadClick(thread)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleThreadClick(thread);
+                      }
+                    }}
+                  >
+                    {/* Left: Type icon with indicators */}
+                    <div className="thread-row-icon-area">
+                      <div
+                        className={`thread-row-icon ${
+                          isHighlight ? 'thread-row-icon--highlight' : 'thread-row-icon--discussion'
+                        }`}
+                      >
+                        {isHighlight ? <Highlighter size={16} /> : <MessageSquare size={16} />}
                       </div>
-                      <span className="thread-row-time">{formatTimestamp(thread.lastActivity)}</span>
-                    </div>
-
-                    {/* Second row: journal info and participation */}
-                    <div className="thread-row-context">
-                      <span className="thread-row-journal">{thread.journalTitle}</span>
-                      <span className="thread-row-author">by {thread.journalAuthorName}</span>
-                      {participationText && (
-                        <span className="thread-row-participation">
-                          <User size={10} />
-                          {participationText}
+                      {thread.isUnread && <span className="thread-unread-dot" />}
+                      {thread.hasReplyToUser && (
+                        <span className="thread-reply-indicator" title="Someone replied to you">
+                          <Reply size={10} />
                         </span>
                       )}
                     </div>
 
-                    {/* Third row: latest comment preview */}
-                    {thread.latestCommentText && (
-                      <div className="thread-row-preview">
-                        <span className="thread-row-preview-author">
-                          {thread.latestCommentAuthor}:
-                        </span>
-                        <span className="thread-row-preview-text">{thread.latestCommentText}</span>
+                    {/* Middle: Content */}
+                    <div className="thread-row-content">
+                      {/* Top row: title and time */}
+                      <div className="thread-row-top">
+                        <div className="thread-row-title-area">
+                          {isHighlight && thread.highlightText ? (
+                            <span
+                              className={`thread-row-title ${
+                                thread.isUnread ? 'thread-row-title--unread' : ''
+                              }`}
+                            >
+                              "{thread.highlightText}"
+                            </span>
+                          ) : (
+                            <span
+                              className={`thread-row-title ${
+                                thread.isUnread ? 'thread-row-title--unread' : ''
+                              }`}
+                            >
+                              Journal Discussion
+                            </span>
+                          )}
+                        </div>
+                        <span className="thread-row-time">{formatTimestamp(thread.lastActivity)}</span>
                       </div>
-                    )}
 
-                    {/* Bottom row: participants and stats */}
-                    <div className="thread-row-bottom">
-                      <div className="thread-row-participants">
-                        {thread.participants.slice(0, 4).map((name, index) => (
-                          <div
-                            key={index}
-                            className="thread-avatar"
-                            style={{ backgroundColor: getParticipantColor(name) }}
-                            title={name}
-                          >
-                            {name.charAt(0).toUpperCase()}
-                          </div>
-                        ))}
-                        {thread.participants.length > 4 && (
-                          <div className="thread-avatar thread-avatar--more">
-                            +{thread.participants.length - 4}
-                          </div>
+                      {/* Second row: journal info and participation */}
+                      <div className="thread-row-context">
+                        <span className="thread-row-journal">{thread.journalTitle}</span>
+                        <span className="thread-row-author">by {thread.journalAuthorName}</span>
+                        {participationText && (
+                          <span className="thread-row-participation">
+                            <User size={10} />
+                            {participationText}
+                          </span>
                         )}
                       </div>
-                      <div className="thread-row-stats">
-                        <span className="thread-row-stat">
-                          {thread.commentCount} {thread.commentCount === 1 ? 'comment' : 'comments'}
-                        </span>
+
+                      {/* Third row: latest comment preview */}
+                      {thread.latestCommentText && (
+                        <div className="thread-row-preview">
+                          <span className="thread-row-preview-author">
+                            {thread.latestCommentAuthor}:
+                          </span>
+                          <span className="thread-row-preview-text">{thread.latestCommentText}</span>
+                        </div>
+                      )}
+
+                      {/* Bottom row: participants and stats */}
+                      <div className="thread-row-bottom">
+                        <div className="thread-row-participants">
+                          {thread.participants.slice(0, 4).map((name, index) => (
+                            <div
+                              key={index}
+                              className="thread-avatar"
+                              style={{ backgroundColor: getParticipantColor(name) }}
+                              title={name}
+                            >
+                              {name.charAt(0).toUpperCase()}
+                            </div>
+                          ))}
+                          {thread.participants.length > 4 && (
+                            <div className="thread-avatar thread-avatar--more">
+                              +{thread.participants.length - 4}
+                            </div>
+                          )}
+                        </div>
+                        <div className="thread-row-stats">
+                          <span className="thread-row-stat">
+                            {thread.commentCount} {thread.commentCount === 1 ? 'comment' : 'comments'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Right: Unread count and actions */}
-                  <div className="thread-row-actions">
-                    {thread.isUnread ? (
-                      <>
-                        <span className="thread-unread-count">{thread.unreadCount}</span>
-                        <button
-                          className="thread-mark-read-btn"
-                          onClick={(e) => handleMarkAsRead(e, thread)}
-                          title="Mark as read"
-                        >
-                          <Check size={14} />
-                        </button>
-                      </>
-                    ) : (
-                      <ChevronRight size={18} className="thread-row-chevron" />
-                    )}
+                    {/* Right: Unread count and actions */}
+                    <div className="thread-row-actions">
+                      {thread.isUnread ? (
+                        <>
+                          <span className="thread-unread-count">{thread.unreadCount}</span>
+                          <button
+                            className="thread-mark-read-btn"
+                            onClick={(e) => handleMarkAsRead(e, thread)}
+                            title="Mark as read"
+                          >
+                            <Check size={14} />
+                          </button>
+                        </>
+                      ) : (
+                        <ChevronRight size={18} className="thread-row-chevron" />
+                      )}
+                    </div>
                   </div>
+                );
+              })}
+
+              {/* Loading more indicator */}
+              {loadingMore && (
+                <div className="conversations-loading-more">
+                  <div className="conversations-loading-spinner conversations-loading-spinner--small" />
+                  <span>Loading more...</span>
                 </div>
-              );
-            })}
+              )}
 
-            {/* Loading more indicator */}
-            {loadingMore && (
-              <div className="conversations-loading-more">
-                <div className="conversations-loading-spinner conversations-loading-spinner--small" />
-                <span>Loading more...</span>
-              </div>
-            )}
-
-            {/* End of list */}
-            {!hasMore && threads.length > PAGE_SIZE && (
-              <div className="conversations-end">You've seen all conversations</div>
-            )}
-          </div>
+              {/* End of list */}
+              {!hasMore && threads.length > PAGE_SIZE && (
+                <div className="conversations-end">You've seen all conversations</div>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>
