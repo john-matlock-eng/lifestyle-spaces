@@ -712,6 +712,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                       {/* Top row: title and time */}
                       <div className="thread-row-top">
                         <div className="thread-row-title-area">
+                          {/* Mobile unread dot - shown inline with title */}
+                          {thread.isUnread && <span className="thread-row-mobile-unread-dot" />}
                           {isHighlight && thread.highlightText ? (
                             <span
                               className={`thread-row-title ${
@@ -743,6 +745,14 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                             {participationText}
                           </span>
                         )}
+                        {/* Mobile stats - shown inline on context row */}
+                        <span
+                          className={`thread-row-mobile-stats ${
+                            thread.isUnread ? 'thread-row-mobile-stats--unread' : ''
+                          }`}
+                        >
+                          {thread.commentCount} {thread.commentCount === 1 ? 'reply' : 'replies'}
+                        </span>
                       </div>
 
                       {/* Third row: latest comment preview */}
