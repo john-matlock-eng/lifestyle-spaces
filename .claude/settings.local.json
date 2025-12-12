@@ -18,12 +18,20 @@
       "Bash(python -m pytest tests/integration/test_invite_code_visibility.py tests/test_spaces.py -v --tb=short)",
       "Bash(python -m pytest tests/ -k \"not invitation_service\" --tb=short -q)",
       "Bash(python -m pytest tests/ -k \"invite_code or InviteCode\" -v)",
+      "Bash(npm run build:*)",
       "Bash(npm run type-check:*)",
       "Bash(npx tsc:*)",
-      "Bash(node_modules/.bin/tsc:*)",
-      "Bash(npm run build:*)",
       "Bash(npm install)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh.exe pr create --title \"Improve Conversations tab mobile UX\" --body \"$(cat <<''EOF''\n## Summary\n- Replace stacked filter dropdowns with horizontal scrolling filter chips for easier one-handed use\n- Condense thread rows from 4 rows to 2 rows on mobile, showing only essential info (title, journal name, reply count)\n- Add inline unread indicators and left border accents for visual scanning\n\n## Changes\n- **Filter chips**: Horizontal scrollable pills that toggle filters (Unread, Highlights, Discussions, My threads, Replies)\n- **Condensed threads**: Hide participant avatars, comment previews, author name on mobile\n- **Inline indicators**: Unread dot next to title, reply count in context row\n- **Touch optimizations**: 16px font on search (prevents iOS zoom), tap feedback on chips\n\n## Test plan\n- [ ] View Conversations tab on mobile viewport (≤640px)\n- [ ] Verify filter chips scroll horizontally and toggle correctly\n- [ ] Verify thread rows display 2-line condensed format\n- [ ] Verify unread threads show blue left border and dot indicator\n- [ ] Verify desktop layout unchanged (>640px)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\nEOF\n)\")",
+      "Bash(where:*)",
+      "Bash(git fetch:*)",
+      "Bash(git rebase:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []
