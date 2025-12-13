@@ -291,6 +291,182 @@
 }
 
 /* ============================
+   V2 Display Styles - Sub-cards with Accent Bars
+   ============================ */
+
+.moment-block-display-v2 {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.dark .moment-block-display-v2 {
+  background: transparent;
+}
+
+.moment-block-display-v2 .moment-block-display-header {
+  background: transparent;
+  border-bottom: none;
+  padding: 0 0 12px 0;
+}
+
+.moment-block-display-content-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0;
+}
+
+/* Field Sub-cards */
+.moment-field-card {
+  display: flex;
+  background: var(--theme-bg-surface);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--theme-border-light);
+  transition: all 0.2s ease;
+}
+
+.dark .moment-field-card {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(148, 163, 184, 0.1);
+}
+
+.moment-field-card:hover {
+  border-color: var(--theme-border-base);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.dark .moment-field-card:hover {
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Left accent bar */
+.moment-field-card-accent {
+  width: 4px;
+  flex-shrink: 0;
+}
+
+/* Scene - Teal accent */
+.moment-field-scene .moment-field-card-accent {
+  background: linear-gradient(180deg, var(--theme-primary-400) 0%, var(--theme-primary-600) 100%);
+}
+
+/* Reaction - Purple accent */
+.moment-field-reaction .moment-field-card-accent {
+  background: linear-gradient(180deg, #a855f7 0%, #7c3aed 100%);
+}
+
+/* Takeaway - Amber/Gold accent */
+.moment-field-takeaway .moment-field-card-accent {
+  background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.moment-field-card-content {
+  flex: 1;
+  padding: 14px 16px;
+  min-width: 0;
+}
+
+.moment-field-card-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--theme-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.dark .moment-field-card-label {
+  color: var(--theme-text-muted);
+}
+
+.moment-field-card-text {
+  line-height: 1.7;
+  color: var(--theme-text-primary);
+  font-size: 14px;
+}
+
+.dark .moment-field-card-text {
+  color: #e2e8f0;
+}
+
+.moment-field-card-text-wrapper {
+  animation: expandIn 0.2s ease-out;
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+  }
+}
+
+/* Collapse button for Reaction */
+.moment-field-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.moment-field-collapse-btn .moment-field-card-label {
+  margin-bottom: 0;
+  transition: color 0.15s ease;
+}
+
+.moment-field-collapse-btn:hover .moment-field-card-label {
+  color: var(--theme-text-primary);
+}
+
+.dark .moment-field-collapse-btn:hover .moment-field-card-label {
+  color: #e2e8f0;
+}
+
+.moment-field-collapse-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--theme-bg-elevated);
+  color: var(--theme-text-secondary);
+  transition: all 0.15s ease;
+}
+
+.dark .moment-field-collapse-icon {
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--theme-text-muted);
+}
+
+.moment-field-collapse-btn:hover .moment-field-collapse-icon {
+  background: var(--theme-primary-100);
+  color: var(--theme-primary-600);
+}
+
+.dark .moment-field-collapse-btn:hover .moment-field-collapse-icon {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--theme-primary-400);
+}
+
+/* Expanded state - add margin below button */
+.moment-field-collapse-btn[aria-expanded="true"] {
+  margin-bottom: 10px;
+}
+
+/* ============================
    Responsive Styles
    ============================ */
 

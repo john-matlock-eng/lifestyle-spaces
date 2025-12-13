@@ -109,7 +109,6 @@ export const QASectionDisplay: React.FC<QASectionDisplayProps> = ({
                   onHighlightUpdate={onHighlightUpdate}
                   onHighlightDelete={onHighlightDelete}
                   isReadOnly={isReadOnly}
-                  useMarkdown={false}
                 />
               </div>
             )}

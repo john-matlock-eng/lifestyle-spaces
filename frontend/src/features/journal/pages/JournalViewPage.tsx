@@ -50,6 +50,7 @@ export const JournalViewPage: React.FC = () => {
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
   const [pendingHighlightId, setPendingHighlightId] = useState<string | null>(null)
   const [showJournalCommentPanel, setShowJournalCommentPanel] = useState(false)
+  const [commentPanelSnap, setCommentPanelSnap] = useState<'peek' | 'half' | 'full'>('half')
 
   // Highlights and comments real-time feature
   const {
@@ -832,9 +833,9 @@ ${content}
       />
     </div>
 
-    {/* Comment Thread Panel - Inline side panel */}
+    {/* Comment Thread Panel - Inline side panel / Mobile bottom sheet */}
     {selectedHighlight && (
-      <div className="comment-thread-side-panel">
+      <div className="comment-thread-side-panel" data-snap={commentPanelSnap}>
         <CommentThread
           highlight={selectedHighlight}
           comments={comments[selectedHighlight.id] || []}
@@ -845,6 +846,7 @@ ${content}
           onClose={() => setSelectedHighlight(null)}
           allHighlights={highlights}
           onNavigateHighlight={handleNavigateHighlight}
+          onSnapChange={setCommentPanelSnap}
         />
       </div>
     )}

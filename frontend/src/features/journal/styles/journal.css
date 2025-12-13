@@ -1387,31 +1387,69 @@
     margin-left: 0;
   }
 
+  /* Bottom sheet styles for mobile */
   .comment-thread-side-panel {
     position: fixed;
-    top: 0;
+    left: 0;
     right: 0;
     bottom: 0;
+    top: unset;
     width: 100%;
-    max-width: 420px;
+    max-width: 100%;
     min-width: unset;
-    height: 100vh;
+    height: 60vh; /* Default to half snap point */
+    max-height: 90vh;
+    min-height: 200px;
     z-index: 9999;
-    animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    animation: slideInFromBottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.2);
+    border-radius: 20px 20px 0 0;
+    overflow: hidden;
   }
 
   .dark .comment-thread-side-panel {
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.5);
   }
 
-  @keyframes slideInFromRight {
+  /* Snap point states controlled via data attributes */
+  .comment-thread-side-panel[data-snap="peek"] {
+    height: 200px;
+  }
+
+  .comment-thread-side-panel[data-snap="half"] {
+    height: 60vh;
+  }
+
+  .comment-thread-side-panel[data-snap="full"] {
+    height: 90vh;
+  }
+
+  @keyframes slideInFromBottom {
     from {
-      transform: translateX(100%);
+      transform: translateY(100%);
     }
     to {
-      transform: translateX(0);
+      transform: translateY(0);
     }
+  }
+}
+
+/* Mobile-specific: smaller screens get bottom sheet */
+@media (max-width: 640px) {
+  .comment-thread-side-panel {
+    border-radius: 16px 16px 0 0;
+  }
+
+  .comment-thread-side-panel[data-snap="peek"] {
+    height: 180px;
+  }
+
+  .comment-thread-side-panel[data-snap="half"] {
+    height: 55vh;
+  }
+
+  .comment-thread-side-panel[data-snap="full"] {
+    height: 92vh;
   }
 }
 

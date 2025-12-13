@@ -2,10 +2,13 @@
  * TableSectionDisplay - Read-only display component for Table sections
  *
  * Tables display structured data in rows and columns.
+ * Supports markdown rendering in cell content.
  * Currently does NOT support highlighting as table cell text would be fragmented.
  * Future enhancement: Could support highlighting per-cell with compound sectionIds.
  */
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface TableColumn {
   key: string;
@@ -92,9 +95,19 @@ export const TableSectionDisplay: React.FC<TableSectionDisplayProps> = ({
         <tbody>
           {tableRows.map((row, index) => (
             <tr key={(row.id as string) || index}>
-              {columnsToDisplay.map(col => (
-                <td key={col.key}>{row[col.key]}</td>
-              ))}
+              {columnsToDisplay.map(col => {
+                const cellValue = row[col.key];
+                const cellContent = cellValue != null ? String(cellValue) : '';
+                return (
+                  <td key={col.key}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+                      p: ({ children }) => <>{children}</>,
+                    }}>
+                      {cellContent}
+                    </ReactMarkdown>
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

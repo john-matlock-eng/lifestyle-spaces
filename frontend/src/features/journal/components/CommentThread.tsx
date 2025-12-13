@@ -20,9 +20,12 @@
  * Renders inline within the page layout (not as a portal).
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { Highlight, Comment } from '../types/highlight.types';
 import { HIGHLIGHT_COLORS } from '../types/highlight.types';
+
+// Snap point type
+type SnapPoint = 'peek' | 'half' | 'full';
 
 interface CommentThreadProps {
   highlight: Highlight;
@@ -35,6 +38,8 @@ interface CommentThreadProps {
   // Navigation between highlights
   allHighlights?: Highlight[];
   onNavigateHighlight?: (highlight: Highlight) => void;
+  // Callback for snap state changes (used by parent to update wrapper)
+  onSnapChange?: (snap: SnapPoint) => void;
 }
 
 // Generate consistent color for user based on their ID (using theme colors)
@@ -122,6 +127,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   onClose,
   allHighlights = [],
   onNavigateHighlight,
+  onSnapChange,
 }) => {
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
@@ -129,8 +135,115 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   const [mentionSearch, setMentionSearch] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [, setTimestampTick] = useState(0); // Forces re-render to update timestamps
+  const [isMobile, setIsMobile] = useState(false);
+  const [snapPoint, setSnapPoint] = useState<SnapPoint>('half');
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [dragCurrentY, setDragCurrentY] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 900);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Notify parent of snap changes
+  useEffect(() => {
+    if (isMobile && onSnapChange) {
+      onSnapChange(snapPoint);
+    }
+  }, [snapPoint, isMobile, onSnapChange]);
+
+  // Handle drag start
+  const handleDragStart = useCallback((clientY: number) => {
+    if (!isMobile) return;
+    setIsDragging(true);
+    setDragStartY(clientY);
+    setDragCurrentY(clientY);
+  }, [isMobile]);
+
+  // Handle drag move
+  const handleDragMove = useCallback((clientY: number) => {
+    if (!isDragging) return;
+    setDragCurrentY(clientY);
+  }, [isDragging]);
+
+  // Handle drag end - determine snap point
+  const handleDragEnd = useCallback(() => {
+    if (!isDragging) return;
+    setIsDragging(false);
+
+    const dragDistance = dragCurrentY - dragStartY;
+    const threshold = 50; // Minimum drag distance to trigger snap change
+
+    if (Math.abs(dragDistance) < threshold) {
+      // Not enough movement, stay at current snap
+      return;
+    }
+
+    if (dragDistance > 0) {
+      // Dragging down - go to smaller snap point
+      if (snapPoint === 'full') {
+        setSnapPoint('half');
+      } else if (snapPoint === 'half') {
+        setSnapPoint('peek');
+      } else {
+        // At peek and dragging down - close
+        onClose();
+      }
+    } else {
+      // Dragging up - go to larger snap point
+      if (snapPoint === 'peek') {
+        setSnapPoint('half');
+      } else if (snapPoint === 'half') {
+        setSnapPoint('full');
+      }
+    }
+  }, [isDragging, dragStartY, dragCurrentY, snapPoint, onClose]);
+
+  // Touch event handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    handleDragStart(e.touches[0].clientY);
+  }, [handleDragStart]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    handleDragMove(e.touches[0].clientY);
+  }, [handleDragMove]);
+
+  const handleTouchEnd = useCallback(() => {
+    handleDragEnd();
+  }, [handleDragEnd]);
+
+  // Mouse event handlers (for testing on desktop)
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    handleDragStart(e.clientY);
+  }, [handleDragStart]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      handleDragMove(e.clientY);
+    };
+
+    const handleMouseUp = () => {
+      handleDragEnd();
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, handleDragMove, handleDragEnd]);
 
   // Update timestamps every 30 seconds
   useEffect(() => {
@@ -432,15 +545,17 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
     <div
       ref={panelRef}
       className="comment-thread-panel"
+      data-snap={isMobile ? snapPoint : undefined}
       style={{
         width: '100%',
         height: '100%',
         background: isDarkMode ? '#0f172a' : 'var(--theme-bg-surface)',
         border: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.1)' : 'var(--theme-border-light)'}`,
-        borderRadius: '12px',
+        borderRadius: isMobile ? '20px 20px 0 0' : '12px',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        transition: isDragging ? 'none' : 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
       <style>{`
@@ -504,6 +619,37 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
         }
       `}</style>
 
+      {/* Mobile drag handle */}
+      {isMobile && (
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '12px',
+            cursor: 'grab',
+            touchAction: 'none',
+            background: isDarkMode
+              ? 'linear-gradient(135deg, #1e40af 0%, #7c3aed 100%)'
+              : 'linear-gradient(135deg, var(--theme-primary-500) 0%, var(--theme-primary-700) 100%)',
+            borderRadius: '20px 20px 0 0',
+          }}
+        >
+          <div
+            style={{
+              width: '40px',
+              height: '4px',
+              borderRadius: '2px',
+              backgroundColor: 'rgba(255, 255, 255, 0.4)',
+            }}
+          />
+        </div>
+      )}
+
       {/* Header with navigation */}
       <div
         style={{
@@ -511,7 +657,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           background: isDarkMode
             ? 'linear-gradient(135deg, #1e40af 0%, #7c3aed 100%)'
             : 'linear-gradient(135deg, var(--theme-primary-500) 0%, var(--theme-primary-700) 100%)',
-          padding: '12px 16px',
+          padding: isMobile ? '0 16px 12px 16px' : '12px 16px',
           color: 'white',
           boxShadow: isDarkMode
             ? '0 4px 12px rgba(0, 0, 0, 0.3)'
