@@ -1285,24 +1285,26 @@
 
 /* Wrapper for the entire journal view page */
 .journal-view-page-wrapper {
-  display: flex;
+  display: block;
   width: 100%;
   max-width: 100%;
-  gap: 0;
+  overflow-x: hidden; /* Prevent horizontal scroll */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* When comment panel is open - add right padding to make room for fixed panel */
+/* When comment panel is open - no changes needed on wrapper */
 .journal-view-page-wrapper.with-comment-panel {
-  gap: 24px;
-  padding-right: calc(420px + 48px); /* panel width + margins */
+  /* Wrapper stays full width, content is constrained */
 }
 
-/* Main content container - shifts left when panel is open */
+/* Main content container - shrinks and stays left when panel is open */
 .journal-view-container.shifted {
-  max-width: 900px; /* Comfortable reading width */
+  /* Calculate width: viewport - panel width (420px) - panel right margin (24px) - gap (24px) - scrollbar (~17px) */
+  max-width: calc(100vw - 420px - 24px - 40px);
+  width: calc(100vw - 420px - 24px - 40px);
   margin: 0;
-  margin-left: 24px;
+  margin-right: auto; /* Push to left */
+  box-sizing: border-box;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1318,6 +1320,9 @@
   flex-shrink: 0;
   animation: slideInPanel 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
+  background: var(--theme-bg-surface);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 @keyframes slideInPanel {
@@ -1334,8 +1339,8 @@
 /* Responsive adjustments for side panel layout */
 @media (max-width: 1200px) {
   .journal-view-container.shifted {
-    max-width: 800px;
-    margin-left: 20px;
+    max-width: calc(100vw - 380px - 20px - 40px);
+    width: calc(100vw - 380px - 20px - 40px);
   }
 
   .comment-thread-side-panel {
@@ -1344,17 +1349,12 @@
     max-width: 380px;
     right: 20px;
   }
-
-  .journal-view-page-wrapper.with-comment-panel {
-    gap: 20px;
-    padding-right: calc(380px + 40px);
-  }
 }
 
 @media (max-width: 1024px) {
   .journal-view-container.shifted {
-    max-width: 100%;
-    margin-left: 16px;
+    max-width: calc(100vw - 350px - 16px - 32px);
+    width: calc(100vw - 350px - 16px - 32px);
   }
 
   .comment-thread-side-panel {
@@ -1362,11 +1362,8 @@
     min-width: 350px;
     max-width: 350px;
     right: 16px;
-  }
-
-  .journal-view-page-wrapper.with-comment-panel {
-    gap: 16px;
-    padding-right: calc(350px + 32px);
+    top: 16px;
+    height: calc(100vh - 32px);
   }
 }
 
@@ -1405,8 +1402,9 @@
 
   .journal-view-container.shifted {
     max-width: 100%;
+    width: 100%;
     margin: 0 auto;
-    margin-left: 0;
+    padding-right: 24px; /* Reset to default */
   }
 
   .comment-thread-side-panel {
