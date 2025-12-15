@@ -1288,23 +1288,17 @@
   display: block;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden; /* Prevent horizontal scroll */
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* When comment panel is open - no changes needed on wrapper */
+/* When comment panel is open - add right padding to make room for fixed panel */
 .journal-view-page-wrapper.with-comment-panel {
-  /* Wrapper stays full width, content is constrained */
+  padding-right: 444px; /* panel width (420px) + gap (24px) */
 }
 
-/* Main content container - shrinks and stays left when panel is open */
+/* Main content container - no special shift needed, wrapper padding handles it */
 .journal-view-container.shifted {
-  /* Calculate width: viewport - panel width (420px) - panel right margin (24px) - gap (24px) - scrollbar (~17px) */
-  max-width: calc(100vw - 420px - 24px - 40px);
-  width: calc(100vw - 420px - 24px - 40px);
-  margin: 0;
-  margin-right: auto; /* Push to left */
-  box-sizing: border-box;
+  /* Container stays centered within available space via margin: 0 auto from base styles */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1338,9 +1332,8 @@
 
 /* Responsive adjustments for side panel layout */
 @media (max-width: 1200px) {
-  .journal-view-container.shifted {
-    max-width: calc(100vw - 380px - 20px - 40px);
-    width: calc(100vw - 380px - 20px - 40px);
+  .journal-view-page-wrapper.with-comment-panel {
+    padding-right: 400px; /* panel (380px) + gap (20px) */
   }
 
   .comment-thread-side-panel {
@@ -1352,9 +1345,8 @@
 }
 
 @media (max-width: 1024px) {
-  .journal-view-container.shifted {
-    max-width: calc(100vw - 350px - 16px - 32px);
-    width: calc(100vw - 350px - 16px - 32px);
+  .journal-view-page-wrapper.with-comment-panel {
+    padding-right: 366px; /* panel (350px) + gap (16px) */
   }
 
   .comment-thread-side-panel {
@@ -1401,10 +1393,7 @@
   }
 
   .journal-view-container.shifted {
-    max-width: 100%;
-    width: 100%;
-    margin: 0 auto;
-    padding-right: 24px; /* Reset to default */
+    /* No special styling needed on mobile - overlay mode */
   }
 
   .comment-thread-side-panel {
