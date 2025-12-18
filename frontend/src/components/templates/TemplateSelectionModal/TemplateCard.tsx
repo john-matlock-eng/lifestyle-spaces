@@ -49,7 +49,6 @@ export function TemplateCard({
   const isInCooldown = status === 'cooldown'
   const isCompleted = status === 'completed'
   const isInProgress = status === 'in_progress'
-  const isAvailable = status === 'available'
 
   const handleKeyDown = (event: React.KeyboardEvent, callback: () => void) => {
     if (event.key === 'Enter' || event.key === ' ') {

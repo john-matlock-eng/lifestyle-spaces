@@ -516,7 +516,7 @@ export class DependencyResolver {
     template: FrameworkTemplate,
     isUnlocked: boolean,
     blockReasons: UnlockBlockReason[],
-    cooldownResult: CooldownResult
+    _cooldownResult: CooldownResult
   ): string {
     if (isUnlocked) {
       return `Ready to complete "${template.name}".`

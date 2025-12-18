@@ -16,6 +16,7 @@ function TestWrapper({
   children,
   defaultValues = { rating: 5 },
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   children: (props: any) => React.ReactNode
   defaultValues?: Partial<TestFormData>
 }) {

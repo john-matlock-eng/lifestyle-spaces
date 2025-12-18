@@ -2,8 +2,8 @@
  * Tests for RepeatableRatingField Component
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, within, waitFor, fireEvent } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useForm } from 'react-hook-form'
 import { RepeatableRatingField } from '../RepeatableRatingField'
@@ -251,7 +251,8 @@ describe('RepeatableRatingField', () => {
     })
 
     it('updates rating when slider changes', async () => {
-      const user = userEvent.setup()
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _user = userEvent.setup()
 
       render(
         <TestWrapper>

@@ -9,7 +9,7 @@
 
 import Ajv from 'ajv'
 import addFormats from 'ajv-formats'
-import type { Framework, FrameworkTemplate } from '../../types/framework.types'
+import type { Framework } from '../../types/framework.types'
 import frameworkSchema from '../../schemas/framework.schema.json'
 import templateSchema from '../../schemas/template.schema.json'
 import fieldSchema from '../../schemas/field.schema.json'

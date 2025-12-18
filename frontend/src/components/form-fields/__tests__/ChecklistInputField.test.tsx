@@ -2,8 +2,8 @@
  * Tests for ChecklistInputField Component
  */
 
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useForm } from 'react-hook-form'
 import { ChecklistInputField } from '../checklist-input/ChecklistInputField'
@@ -17,6 +17,7 @@ function TestWrapper({
   children,
   defaultValues = { tasks: [] },
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   children: (props: any) => React.ReactNode
   defaultValues?: Partial<TestFormData>
 }) {

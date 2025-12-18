@@ -81,11 +81,9 @@ export function useTemplateForm({
     control,
     handleSubmit,
     formState,
-    trigger,
     reset,
     clearErrors: clearFormErrors,
     setError,
-    getFieldState,
   } = form
 
   // Track draft saving state

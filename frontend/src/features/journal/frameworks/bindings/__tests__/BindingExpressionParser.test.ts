@@ -9,7 +9,6 @@ import {
   parse,
   validate,
   isValidExpression,
-  type ParsedBindingExpression,
 } from '../BindingExpressionParser'
 
 describe('BindingExpressionParser', () => {

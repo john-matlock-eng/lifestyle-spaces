@@ -2,7 +2,7 @@
  * Tests for FractionTrackerField Component
  */
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useForm } from 'react-hook-form'
@@ -18,6 +18,7 @@ function TestWrapper({
   children,
   defaultValues = { progress: { numerator: 0, denominator: 5 } },
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   children: (props: any) => React.ReactNode
   defaultValues?: Partial<TestFormData>
 }) {

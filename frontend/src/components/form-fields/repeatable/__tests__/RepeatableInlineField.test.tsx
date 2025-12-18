@@ -2,8 +2,8 @@
  * Tests for RepeatableInlineField Component
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, within, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useForm } from 'react-hook-form'
 import { RepeatableInlineField } from '../RepeatableInlineField'
@@ -452,7 +452,8 @@ describe('RepeatableInlineField', () => {
 
   describe('disabled state', () => {
     it('disables all controls when disabled', async () => {
-      const user = userEvent.setup()
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _user = userEvent.setup()
 
       render(
         <TestWrapper
@@ -674,8 +675,6 @@ describe('RepeatableInlineField', () => {
 
   describe('validation', () => {
     it('validates minItems', async () => {
-      const validateSpy = vi.fn()
-
       render(
         <TestWrapper>
           {({ register, watch, setValue }) => (

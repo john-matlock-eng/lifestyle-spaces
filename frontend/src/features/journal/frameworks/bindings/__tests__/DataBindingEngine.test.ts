@@ -13,7 +13,7 @@ import {
 } from '../DataBindingEngine'
 import { InMemoryEntryProvider, type EntryProvider } from '../EntryDataResolver'
 import type { JournalEntry } from '../../../types/journal.types'
-import type { FrameworkTemplate, DataBindingMapping } from '../../../types/framework.types'
+import type { FrameworkTemplate } from '../../../types/framework.types'
 
 // Helper to create mock entries
 function createMockEntry(overrides: Partial<JournalEntry> = {}): JournalEntry {
@@ -509,6 +509,7 @@ describe('DataBindingEngine', () => {
           dataBindings: {
             inputs: [
               {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 source: 'unknown' as any,
                 sourcePath: 'path',
                 targetFieldId: 'field',

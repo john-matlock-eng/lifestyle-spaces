@@ -35,7 +35,7 @@ export function FrameworkCard({
   onClick,
   testId,
 }: FrameworkCardProps): JSX.Element {
-  const { framework: fw, summary, templateCount, completedCount, category, isStarted } = framework
+  const { framework: fw, templateCount, completedCount, category, isStarted } = framework
 
   const progressPercent = templateCount > 0 ? Math.round((completedCount / templateCount) * 100) : 0
 

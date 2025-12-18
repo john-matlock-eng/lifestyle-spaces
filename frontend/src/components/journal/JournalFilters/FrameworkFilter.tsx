@@ -85,14 +85,6 @@ export function FrameworkFilter({
     onChange(event.target.value as FrameworkFilterValue)
   }
 
-  // Get display label for current value
-  const getDisplayLabel = (): string => {
-    if (value === 'all') return 'All Entries'
-    if (value === 'standalone') return 'Standalone'
-    const framework = frameworks.find((fw) => fw.id === value)
-    return framework ? `${framework.icon || ''} ${framework.name}`.trim() : value
-  }
-
   return (
     <div className="framework-filter" data-testid={testId}>
       <label

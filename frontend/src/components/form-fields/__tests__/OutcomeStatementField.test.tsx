@@ -2,8 +2,8 @@
  * Tests for OutcomeStatementField Component
  */
 
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useForm } from 'react-hook-form'
 import { OutcomeStatementField } from '../outcome-statement/OutcomeStatementField'
@@ -18,6 +18,7 @@ function TestWrapper({
   children,
   defaultValues = { outcome: { date: '', statement: '' } },
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   children: (props: any) => React.ReactNode
   defaultValues?: Partial<TestFormData>
 }) {

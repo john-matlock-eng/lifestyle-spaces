@@ -8,7 +8,7 @@
  */
 
 import { useMemo } from 'react'
-import { Save, X, FileText, Check } from 'lucide-react'
+import { Save, X, FileText } from 'lucide-react'
 import type { FormActionsProps } from './types'
 import './framework-form.css'
 

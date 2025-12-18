@@ -6,13 +6,13 @@
  * @module framework-form/types
  */
 
-import type { FieldError, FieldValues } from 'react-hook-form'
+import type { FieldError } from 'react-hook-form'
 import type {
   FrameworkTemplate,
   TemplateSection,
   TemplateSubsection,
 } from '@/features/journal/types/framework.types'
-import type { FieldDefinition, FieldBinding } from '@/features/journal/types/field.types'
+import type { FieldDefinition } from '@/features/journal/types/field.types'
 import type { ResolvedBindings, ResolvedBinding } from '@/features/journal/types/data-binding.types'
 
 // ============================================================================

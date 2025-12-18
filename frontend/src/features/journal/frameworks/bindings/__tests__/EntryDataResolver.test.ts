@@ -241,6 +241,7 @@ describe('EntryDataResolver', () => {
     })
 
     it('returns null for unknown scope', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await resolver.getEntry(context, 'template-1', 'unknown' as any)
       expect(result).toBeNull()
     })

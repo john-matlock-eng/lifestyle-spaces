@@ -16,7 +16,7 @@ import {
   type EntryScope,
   type EntryResolutionContext,
 } from './EntryDataResolver'
-import { parse, type ParsedBindingExpression } from './BindingExpressionParser'
+import { parse } from './BindingExpressionParser'
 import { applyTransform, hasTransform } from './transforms'
 
 // ============================================================================
@@ -500,7 +500,7 @@ export class DataBindingEngine {
  * Create a data binding engine with in-memory entries
  */
 export function createBindingEngine(
-  entries: JournalEntry[] = [],
+  _entries: JournalEntry[] = [],
   options?: Omit<DataBindingEngineOptions, 'provider'>
 ): DataBindingEngine {
   return new DataBindingEngine({

@@ -2,8 +2,8 @@
  * Tests for TriggerActionPairField Component
  */
 
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useForm } from 'react-hook-form'
 import { TriggerActionPairField } from '../trigger-action-pair/TriggerActionPairField'
@@ -18,6 +18,7 @@ function TestWrapper({
   children,
   defaultValues = { habit: { trigger: '', action: '' } },
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   children: (props: any) => React.ReactNode
   defaultValues?: Partial<TestFormData>
 }) {

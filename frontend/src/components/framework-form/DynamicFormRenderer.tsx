@@ -9,7 +9,7 @@
 
 import { useMemo, useCallback, useEffect, useRef } from 'react'
 import { FormProvider } from 'react-hook-form'
-import type { FrameworkTemplate } from '@/features/journal/types/framework.types'
+// FrameworkTemplate type is used via DynamicFormRendererProps which references it
 import type { FieldDefinition } from '@/features/journal/types/field.types'
 import { FormSection } from './FormSection'
 import { FormValidation } from './FormValidation'

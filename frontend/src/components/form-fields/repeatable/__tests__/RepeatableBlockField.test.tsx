@@ -2,8 +2,8 @@
  * Tests for RepeatableBlockField Component
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useForm } from 'react-hook-form'
 import { RepeatableBlockField } from '../RepeatableBlockField'
@@ -261,7 +261,8 @@ describe('RepeatableBlockField', () => {
     })
 
     it('does not add item when disabled', async () => {
-      const user = userEvent.setup()
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _user = userEvent.setup()
 
       render(
         <TestWrapper>
@@ -651,7 +652,8 @@ describe('RepeatableBlockField', () => {
 
   describe('disabled state', () => {
     it('disables all controls when disabled', async () => {
-      const user = userEvent.setup()
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _user = userEvent.setup()
 
       render(
         <TestWrapper

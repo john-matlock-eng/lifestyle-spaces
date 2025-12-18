@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TemplateSelectionModal } from './index'
 import { FrameworkSection } from './FrameworkSection'
@@ -750,8 +750,10 @@ describe('TemplateCard', () => {
 describe('FrameworkDetailView', () => {
   const mockOnBack = vi.fn()
   const mockOnSelectTemplate = vi.fn()
-  const mockOnViewEntry = vi.fn()
-  const mockOnEditEntry = vi.fn()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _mockOnViewEntry = vi.fn()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _mockOnEditEntry = vi.fn()
   const mockOnLockedTemplateClick = vi.fn()
 
   beforeEach(() => {
@@ -1229,8 +1231,10 @@ describe('StandaloneSection', () => {
 describe('TemplateSelectionModal', () => {
   const mockOnClose = vi.fn()
   const mockOnSelectTemplate = vi.fn()
-  const mockOnViewEntry = vi.fn()
-  const mockOnEditEntry = vi.fn()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _mockOnViewEntry = vi.fn()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _mockOnEditEntry = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()

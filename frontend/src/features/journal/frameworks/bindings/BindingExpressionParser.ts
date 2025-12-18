@@ -66,6 +66,7 @@ const ARRAY_ACCESS_PATTERN = /^\[(\d+|\*)\]$/
 
 // Splits expression on dots, preserving array notation
 // e.g., "foo.bar[0].baz" -> ["foo", "bar[0]", "baz"]
+// eslint-disable-next-line no-useless-escape
 const SPLIT_PATTERN = /\.(?![^\[]*\])/
 
 // ============================================================================

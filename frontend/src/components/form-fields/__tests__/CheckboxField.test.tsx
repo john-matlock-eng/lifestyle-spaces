@@ -13,16 +13,12 @@ interface TestFormData {
   agree: boolean
 }
 
-interface TestWrapperProps {
-  register: ReturnType<typeof useForm<TestFormData>>['register']
-  errors: ReturnType<typeof useForm<TestFormData>>['formState']['errors']
-}
-
 function TestWrapper({
   children,
   defaultValues = {},
 }: {
-  children: (props: TestWrapperProps) => React.ReactNode
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  children: (props: any) => React.ReactNode
   defaultValues?: Partial<TestFormData>
 }) {
   const {

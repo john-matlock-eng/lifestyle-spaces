@@ -16,11 +16,11 @@ import {
   onRegistryChange,
   renderField,
 } from '../registry'
-import type { BaseFieldProps, FieldType } from '../types'
+import type { BaseFieldProps } from '../types'
 
 // Mock component for testing
-const MockTextField = (props: BaseFieldProps) => null
-const MockSelectField = (props: BaseFieldProps) => null
+const MockTextField = (_props: BaseFieldProps) => null
+const MockSelectField = (_props: BaseFieldProps) => null
 
 describe('registry', () => {
   beforeEach(() => {

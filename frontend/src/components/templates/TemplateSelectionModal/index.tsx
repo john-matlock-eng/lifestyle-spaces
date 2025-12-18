@@ -461,6 +461,7 @@ export { TemplateCard } from './TemplateCard'
 export { TemplateUnlockStatus } from './TemplateUnlockStatus'
 export { LockedTemplateModal } from './LockedTemplateModal'
 export { StandaloneSection } from './StandaloneSection'
+// eslint-disable-next-line react-refresh/only-export-components
 export { getFrequencyLabel, getLifecycleLabel, getStatusLabel, getStatusIcon } from './types'
 
 export default TemplateSelectionModal

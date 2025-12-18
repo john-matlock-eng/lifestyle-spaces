@@ -9,10 +9,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { ChevronDown } from 'lucide-react'
-import type { FieldError } from 'react-hook-form'
-import type { TemplateSubsection } from '@/features/journal/types/framework.types'
 import type { FieldDefinition } from '@/features/journal/types/field.types'
-import type { ResolvedBindings } from '@/features/journal/types/data-binding.types'
 import { FieldRenderer } from './FieldRenderer'
 import type { FormSubsectionProps } from './types'
 import './framework-form.css'

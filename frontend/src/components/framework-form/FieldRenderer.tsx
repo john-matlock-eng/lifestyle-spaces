@@ -11,7 +11,7 @@
 import { useMemo, useCallback, useId } from 'react'
 import type { FieldError } from 'react-hook-form'
 import type { FieldDefinition } from '@/features/journal/types/field.types'
-import type { ResolvedBinding } from '@/features/journal/types/data-binding.types'
+// ResolvedBinding type is used via FieldRendererProps which references it
 import { hasFieldComponent, renderField } from '@/components/form-fields'
 import type { FieldType as FormFieldType } from '@/components/form-fields/types'
 import type { FieldRendererProps, UnknownFieldProps, BindingMode } from './types'
@@ -229,10 +229,10 @@ export function FieldRenderer({
     error,
     isDisabled,
     isReadOnly,
-    isDisplay,
-    bindingMode,
+    _isDisplay: isDisplay,
+    _bindingMode: bindingMode,
     handleChange,
-    handleBlur,
+    _handleBlur: handleBlur,
     testId,
   })
 
@@ -267,16 +267,17 @@ interface BuildFieldPropsParams {
   error?: FieldError
   isDisabled: boolean
   isReadOnly: boolean
-  isDisplay: boolean
-  bindingMode: BindingMode
+  _isDisplay: boolean
+  _bindingMode: BindingMode
   handleChange: (value: unknown) => void
-  handleBlur: () => void
+  _handleBlur: () => void
   testId?: string
 }
 
 /**
  * Build props for the field component based on field type
  */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 function buildFieldProps({
   field,
   fieldId,
@@ -286,12 +287,13 @@ function buildFieldProps({
   error,
   isDisabled,
   isReadOnly,
-  isDisplay,
-  bindingMode,
+  _isDisplay,
+  _bindingMode,
   handleChange,
-  handleBlur,
+  _handleBlur,
   testId,
 }: BuildFieldPropsParams): Record<string, unknown> {
+  /* eslint-enable @typescript-eslint/no-unused-vars */
   const config = field.config as Record<string, unknown> | undefined
 
   // Base props shared by all fields
@@ -448,7 +450,8 @@ function buildFieldProps({
  * Create a mock register function for standalone field usage
  */
 function createMockRegister(fieldPath: string, onChange: (value: unknown) => void) {
-  return (name: string, options?: Record<string, unknown>) => ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  return (_name: string, _options?: Record<string, unknown>) => ({
     name: fieldPath,
     onChange: (e: { target: { value: unknown } }) => onChange(e.target.value),
     onBlur: () => {},
@@ -460,14 +463,16 @@ function createMockRegister(fieldPath: string, onChange: (value: unknown) => voi
  * Create a mock watch function for standalone field usage
  */
 function createMockWatch(currentValue: unknown) {
-  return (name?: string) => currentValue
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  return (_name?: string) => currentValue
 }
 
 /**
  * Create a mock setValue function for standalone field usage
  */
 function createMockSetValue(onChange: (value: unknown) => void) {
-  return (name: string, value: unknown, options?: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  return (_name: string, value: unknown, _options?: Record<string, unknown>) => {
     onChange(value)
   }
 }
