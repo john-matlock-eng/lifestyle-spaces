@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RichTextEditor } from '../components/RichTextEditor'
 import { TemplatePicker } from '../components/TemplatePicker'
 import { EmotionSelector } from '../components/EmotionSelector'
@@ -21,6 +21,7 @@ import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizati
 import { useEllieJournalGuide } from '../hooks/useEllieJournalGuide'
 import type { Template, TemplateData, QAPair, ListItem, TableRow, MomentBlock } from '../types/template.types'
 import type { CustomSection } from '../types/customSection.types'
+import { getFrameworkRegistry } from '../frameworks'
 import { Trash2, Edit2, Bot } from 'lucide-react'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
@@ -33,6 +34,7 @@ import '../styles/ai-assistant-dock.css'
 export const JournalCreatePage: React.FC = () => {
   const navigate = useNavigate()
   const { spaceId } = useParams<{ spaceId: string }>()
+  const [searchParams] = useSearchParams()
   const { createJournal, loading, error } = useJournal()
 
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
@@ -128,6 +130,46 @@ export const JournalCreatePage: React.FC = () => {
       setTemplateData({})
     }
   }
+
+  // Auto-select template from URL query params (e.g., from Framework Dashboard)
+  useEffect(() => {
+    const frameworkId = searchParams.get('framework')
+    const templateId = searchParams.get('template')
+
+    if (frameworkId && templateId && !selectedTemplate) {
+      const registry = getFrameworkRegistry()
+      const framework = registry.get(frameworkId)
+
+      if (framework) {
+        const templateConfig = framework.templates.find(
+          t => (t.templateId || t.id) === templateId
+        )
+
+        if (templateConfig) {
+          // Convert framework template config to Template format
+          const template: Template = {
+            id: templateConfig.templateId || templateConfig.id || '',
+            name: templateConfig.name || 'Untitled Template',
+            description: templateConfig.description || '',
+            icon: templateConfig.icon || framework.icon,
+            color: templateConfig.color || framework.color,
+            version: templateConfig.version || 1,
+            sections: templateConfig.content?.sections?.map((section, index) => ({
+              id: section.id,
+              title: section.title,
+              type: 'paragraph' as const,
+              placeholder: section.description || '',
+              order: index,
+            })) || [],
+            frameworkId: framework.id,
+          }
+
+          handleTemplateSelect(template)
+        }
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run on mount
 
   const handleTemplateDataChange = (sectionId: string, value: string | QAPair[] | ListItem[] | TableRow[] | MomentBlock[] | number) => {
     // Notify Ellie of typing activity

@@ -285,6 +285,14 @@ export const FrameworkDashboardPage: React.FC = () => {
         </div>
       </section>
 
+      {/* About This Framework */}
+      {framework.description && (
+        <section className="fwdash__about">
+          <h2 className="fwdash__section-title">About This Framework</h2>
+          <p className="fwdash__description">{framework.description}</p>
+        </section>
+      )}
+
       {/* Next Action */}
       {progress.nextTemplate && (
         <section className="fwdash__next-action">
@@ -405,14 +413,6 @@ export const FrameworkDashboardPage: React.FC = () => {
           >
             View all entries →
           </Link>
-        </section>
-      )}
-
-      {/* Description */}
-      {framework.description && (
-        <section className="fwdash__section fwdash__about">
-          <h2 className="fwdash__section-title">About This Framework</h2>
-          <p className="fwdash__description">{framework.description}</p>
         </section>
       )}
     </div>
