@@ -10,12 +10,10 @@
  * @module __tests__/integration/data-binding-flow
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import type {
   DataBindingInput,
   DataBindingOutput,
-  DataBindingConfig,
-  BindingValue,
   BindingTransform,
 } from '@/features/journal/types/data-binding.types'
 import type { TemplateField } from '@/features/journal/types/field.types'
@@ -428,11 +426,11 @@ describe('Data Binding Flow Integration', () => {
 
     it('should allow value changes on editable fields', () => {
       const field = weeklyScoreboardFields['tracking-score']
-      let currentValue = 0
+      const originalValue = 0
 
       const attemptChange = (newValue: number): number => {
         if (field.readOnly) {
-          return currentValue
+          return originalValue
         }
         return newValue
       }

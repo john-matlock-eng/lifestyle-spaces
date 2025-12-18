@@ -10,10 +10,7 @@
  * @module __tests__/integration/framework-flow
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { describe, it, expect } from 'vitest'
 import type { Framework, FrameworkTemplate, UserFrameworkProgress } from '@/features/journal/types/framework.types'
 import type { JournalEntry } from '@/features/journal/types/journal.types'
 
@@ -447,7 +444,6 @@ describe('Framework Flow Integration', () => {
       })
 
       // For recurring templates, check completedCycles
-      const weekly = framework.templates.find(t => t.id === 'weekly-scoreboard')!
       const hasQuarterly = progress.completedCycles.some(c => c.templateId === 'quarterly-review-plan')
       expect(hasQuarterly).toBe(true)
     })
@@ -570,7 +566,7 @@ describe('Framework Flow Integration', () => {
     it('should simulate complete framework progression', () => {
       // Step 1: User starts with no progress
       let progress = createUserProgress()
-      let entries: JournalEntry[] = []
+      const entries: JournalEntry[] = []
 
       // Verify initial state
       expect(progress.foundationCompletions).toHaveLength(0)

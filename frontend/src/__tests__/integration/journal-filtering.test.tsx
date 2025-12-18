@@ -10,7 +10,7 @@
  * @module __tests__/integration/journal-filtering
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import type { JournalEntry } from '@/features/journal/types/journal.types'
 
 // ============================================================================

@@ -2,7 +2,7 @@
  * Tests for CheckboxField Component
  */
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useForm } from 'react-hook-form'
@@ -13,11 +13,16 @@ interface TestFormData {
   agree: boolean
 }
 
+interface TestWrapperProps {
+  register: ReturnType<typeof useForm<TestFormData>>['register']
+  errors: ReturnType<typeof useForm<TestFormData>>['formState']['errors']
+}
+
 function TestWrapper({
   children,
   defaultValues = {},
 }: {
-  children: (props: any) => React.ReactNode
+  children: (props: TestWrapperProps) => React.ReactNode
   defaultValues?: Partial<TestFormData>
 }) {
   const {

@@ -22,7 +22,8 @@ interface TestUser {
   password: string
 }
 
-const testUser: TestUser = {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _testUser: TestUser = {
   email: 'test@example.com',
   password: 'TestPassword123!',
 }
@@ -30,7 +31,8 @@ const testUser: TestUser = {
 /**
  * Login helper - assumes auth is already set up
  */
-async function login(page: Page, user: TestUser) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function _login(page: Page, user: TestUser) {
   await page.goto('/login')
   await page.getByLabel('Email').fill(user.email)
   await page.getByLabel('Password').fill(user.password)
@@ -41,7 +43,8 @@ async function login(page: Page, user: TestUser) {
 /**
  * Navigate to journal creation page
  */
-async function navigateToJournalCreation(page: Page) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function _navigateToJournalCreation(page: Page) {
   await page.goto('/journals')
   await page.getByRole('button', { name: /new journal|create/i }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
@@ -50,7 +53,8 @@ async function navigateToJournalCreation(page: Page) {
 /**
  * Wait for form to be ready
  */
-async function waitForFormReady(page: Page) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function _waitForFormReady(page: Page) {
   await expect(page.getByRole('form')).toBeVisible()
   await expect(page.locator('[data-loading]')).toBeHidden()
 }

@@ -775,7 +775,7 @@ describe('DependencyResolver', () => {
       const resolver = new DependencyResolver(framework, { now: NOW })
 
       // Initial state - only charter and reset are available
-      let progress = createProgress({ foundationComplete: false })
+      const progress = createProgress({ foundationComplete: false })
       let entries: JournalEntry[] = []
       let summary = resolver.getUnlockSummary(progress, entries)
 
