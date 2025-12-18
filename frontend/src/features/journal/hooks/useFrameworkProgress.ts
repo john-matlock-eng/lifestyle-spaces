@@ -167,9 +167,19 @@ export function useFrameworkProgress(spaceId: string | undefined) {
     setError(null)
 
     try {
-      // Fetch all journals for this space
-      const response = await journalApi.getSpaceJournals(spaceId, { pageSize: 500 })
-      const journals = response.journals
+      // Fetch journals for this space (paginate if needed)
+      let journals: JournalEntry[] = []
+      let page = 1
+      let hasMore = true
+
+      while (hasMore) {
+        const response = await journalApi.getSpaceJournals(spaceId, { page, pageSize: 100 })
+        journals = [...journals, ...response.journals]
+        hasMore = response.hasMore
+        page++
+        // Safety limit to prevent infinite loops
+        if (page > 10) break
+      }
 
       // Get all frameworks
       const registry = getFrameworkRegistry()
