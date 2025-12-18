@@ -16,8 +16,8 @@ import { FrameworkBadge } from './FrameworkBadge'
 import type { JournalFilterState } from './useJournalFilters'
 
 // Mock the framework registry
-vi.mock('@/features/journal/frameworks', () => ({
-  frameworkRegistry: {
+vi.mock('@/features/journal/frameworks', () => {
+  const mockRegistry = {
     getAll: vi.fn(() => [
       {
         id: 'charter-and-course',
@@ -61,8 +61,12 @@ vi.mock('@/features/journal/frameworks', () => ({
       }
       return undefined
     }),
-  },
-}))
+  }
+  return {
+    frameworkRegistry: mockRegistry,
+    getFrameworkRegistry: vi.fn(() => mockRegistry),
+  }
+})
 
 // ============================================================================
 // TEST HELPERS
