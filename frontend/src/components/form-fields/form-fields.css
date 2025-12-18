@@ -1,0 +1,1528 @@
+/**
+ * Form Fields Styles
+ *
+ * Glassmorphism styling for the dynamic form field system.
+ * Mobile responsive with accessibility considerations.
+ */
+
+/* ============================================================================
+   BASE FIELD STYLES
+   ============================================================================ */
+
+.field-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  width: 100%;
+}
+
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.field-label {
+  color: var(--theme-text-primary, rgba(255, 255, 255, 0.9));
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.field-label-required {
+  color: var(--theme-error-400, #f87171);
+  margin-left: 0.25rem;
+}
+
+.field-description {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.6));
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin-top: 0.125rem;
+}
+
+.field-char-count {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-char-count--warning {
+  color: var(--theme-warning-400, #fbbf24);
+}
+
+.field-char-count--error {
+  color: var(--theme-error-400, #f87171);
+}
+
+.field-error {
+  color: var(--theme-error-400, #f87171);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ============================================================================
+   GLASSMORPHISM INPUT WRAPPER
+   ============================================================================ */
+
+.field-input-wrapper {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field-input-wrapper:hover:not(.field-input-wrapper--disabled) {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.field-input-wrapper:focus-within:not(.field-input-wrapper--disabled) {
+  border-color: var(--theme-primary-500, rgba(99, 102, 241, 0.6));
+  box-shadow: 0 0 0 2px var(--theme-primary-500, rgba(99, 102, 241, 0.2));
+}
+
+.field-input-wrapper--error {
+  border-color: var(--theme-error-400, rgba(239, 68, 68, 0.5));
+}
+
+.field-input-wrapper--error:focus-within {
+  border-color: var(--theme-error-400, rgba(239, 68, 68, 0.6));
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.field-input-wrapper--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field-input-wrapper--readonly {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ============================================================================
+   TEXT INPUT STYLES
+   ============================================================================ */
+
+.field-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.625rem 0.875rem;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-primary, white);
+  font-size: 1rem;
+  line-height: 1.5;
+  outline: none;
+}
+
+.field-input::placeholder {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.4));
+}
+
+.field-input:disabled {
+  cursor: not-allowed;
+}
+
+.field-input[readonly] {
+  cursor: default;
+}
+
+/* Fix autofill styling */
+.field-input:-webkit-autofill,
+.field-input:-webkit-autofill:hover,
+.field-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--theme-text-primary, white);
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ============================================================================
+   TEXTAREA STYLES
+   ============================================================================ */
+
+.field-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.625rem 0.875rem;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-primary, white);
+  font-size: 1rem;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.field-textarea::placeholder {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.4));
+}
+
+.field-textarea:disabled {
+  cursor: not-allowed;
+  resize: none;
+}
+
+.field-textarea--autoresize {
+  resize: none;
+  overflow: hidden;
+}
+
+/* ============================================================================
+   SLIDER STYLES
+   ============================================================================ */
+
+.field-slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.field-slider-label {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.6));
+  font-size: 0.75rem;
+}
+
+.field-slider-value {
+  color: var(--theme-primary-400, #818cf8);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  min-width: 3rem;
+}
+
+.field-slider {
+  width: 100%;
+  height: 44px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.field-slider:focus {
+  outline: none;
+}
+
+/* Track styling - WebKit */
+.field-slider::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.field-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--theme-primary-500, #6366f1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  cursor: pointer;
+  margin-top: -7px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.field-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
+
+.field-slider:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3);
+}
+
+/* Track styling - Firefox */
+.field-slider::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.field-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--theme-primary-500, #6366f1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.field-slider:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ============================================================================
+   SELECT STYLES
+   ============================================================================ */
+
+.field-select-container {
+  position: relative;
+}
+
+.field-select-trigger {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.625rem 2.5rem 0.625rem 0.875rem;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-primary, white);
+  font-size: 1rem;
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+}
+
+.field-select-trigger:disabled {
+  cursor: not-allowed;
+}
+
+.field-select-trigger--placeholder {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.4));
+}
+
+.field-select-icon {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.field-select-icon--open {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.field-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(30, 30, 40, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  max-height: 280px;
+  overflow-y: auto;
+  animation: dropdown-enter 0.15s ease-out;
+}
+
+@keyframes dropdown-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.field-select-search {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.field-select-search-input {
+  width: 100%;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: var(--theme-text-primary, white);
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.field-select-search-input:focus {
+  border-color: var(--theme-primary-500, rgba(99, 102, 241, 0.5));
+}
+
+.field-select-options {
+  padding: 0.25rem 0;
+}
+
+.field-select-option {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-primary, rgba(255, 255, 255, 0.9));
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+}
+
+.field-select-option:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.field-select-option--selected {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--theme-primary-400, #818cf8);
+}
+
+.field-select-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field-select-option-desc {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.75rem;
+}
+
+.field-select-empty {
+  padding: 1rem;
+  text-align: center;
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.875rem;
+}
+
+.field-select-clear {
+  position: absolute;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.field-select-clear:hover {
+  color: var(--theme-text-primary, white);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================================================
+   YES/NO TOGGLE STYLES
+   ============================================================================ */
+
+.field-yesno-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.field-yesno-option {
+  flex: 1;
+  min-height: 44px;
+  padding: 0.625rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--theme-text-secondary, rgba(255, 255, 255, 0.7));
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.field-yesno-option:hover:not(:disabled):not(.field-yesno-option--selected) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.field-yesno-option:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+.field-yesno-option--selected {
+  background: var(--theme-primary-500, rgba(99, 102, 241, 0.2));
+  border-color: var(--theme-primary-500, rgba(99, 102, 241, 0.5));
+  color: var(--theme-primary-400, #818cf8);
+}
+
+.field-yesno-option--yes.field-yesno-option--selected {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+}
+
+.field-yesno-option--no.field-yesno-option--selected {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.field-yesno-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   CHECKBOX STYLES
+   ============================================================================ */
+
+.field-checkbox-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0.5rem 0;
+}
+
+.field-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.field-checkbox-box {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  margin-top: 2px;
+}
+
+.field-checkbox-input:hover + .field-checkbox-box {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.field-checkbox-input:focus + .field-checkbox-box {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+.field-checkbox-input:checked + .field-checkbox-box {
+  background: var(--theme-primary-500, #6366f1);
+  border-color: var(--theme-primary-500, #6366f1);
+}
+
+.field-checkbox-input:disabled + .field-checkbox-box {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field-checkbox-check {
+  color: white;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.15s ease;
+}
+
+.field-checkbox-input:checked + .field-checkbox-box .field-checkbox-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.field-checkbox-label {
+  color: var(--theme-text-primary, rgba(255, 255, 255, 0.9));
+  font-size: 0.875rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.field-checkbox-label--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   DATE INPUT STYLES
+   ============================================================================ */
+
+.field-date-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.625rem 0.875rem;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-primary, white);
+  font-size: 1rem;
+  line-height: 1.5;
+  outline: none;
+}
+
+.field-date-input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.1s ease;
+}
+
+.field-date-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.field-date-input:disabled::-webkit-calendar-picker-indicator {
+  cursor: not-allowed;
+}
+
+/* Date range specific */
+.field-date-range-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.field-date-range-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.field-date-range-field {
+  flex: 1;
+}
+
+@media (max-width: 480px) {
+  .field-date-range-row {
+    flex-direction: column;
+  }
+}
+
+/* ============================================================================
+   DISPLAY FIELD STYLES
+   ============================================================================ */
+
+/* Header field */
+.field-header {
+  margin: 0;
+  color: var(--theme-text-primary, white);
+  font-weight: 600;
+}
+
+.field-header--level-1 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+
+.field-header--level-2 {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  margin-bottom: 0.375rem;
+}
+
+.field-header--level-3 {
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 0.25rem;
+}
+
+/* Static text field */
+.field-static-text {
+  color: var(--theme-text-secondary, rgba(255, 255, 255, 0.8));
+}
+
+.field-static-text--body {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.field-static-text--caption {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.field-static-text--quote {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  font-style: italic;
+  padding-left: 1rem;
+  border-left: 3px solid var(--theme-primary-500, rgba(99, 102, 241, 0.5));
+}
+
+/* Divider field */
+.field-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.15) 20%,
+    rgba(255, 255, 255, 0.15) 80%,
+    transparent
+  );
+  border: none;
+}
+
+.field-divider--small {
+  margin: 0.5rem 0;
+}
+
+.field-divider--medium {
+  margin: 1rem 0;
+}
+
+.field-divider--large {
+  margin: 1.5rem 0;
+}
+
+/* ============================================================================
+   MOBILE RESPONSIVENESS
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .field-input,
+  .field-textarea,
+  .field-select-trigger,
+  .field-date-input {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+
+  .field-yesno-container {
+    flex-direction: column;
+  }
+
+  .field-yesno-option {
+    width: 100%;
+  }
+}
+
+/* ============================================================================
+   REDUCED MOTION
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .field-input-wrapper,
+  .field-yesno-option,
+  .field-checkbox-box,
+  .field-checkbox-check,
+  .field-select-icon,
+  .field-slider::-webkit-slider-thumb {
+    transition: none;
+  }
+
+  .field-select-dropdown {
+    animation: none;
+  }
+}
+
+/* ============================================================================
+   COMPOSITE FIELD STYLES
+   ============================================================================ */
+
+/* Fraction Tracker Field */
+.field-fraction-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.field-fraction-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.field-fraction-input {
+  width: 80px;
+  min-height: 44px;
+  padding: 0.625rem 0.875rem;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-primary, white);
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+}
+
+.field-fraction-input::-webkit-inner-spin-button,
+.field-fraction-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.field-fraction-input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.field-fraction-divider {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 1.5rem;
+  font-weight: 300;
+  padding: 0 0.25rem;
+}
+
+.field-fraction-quick-fill {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.field-fraction-quick-btn {
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--theme-text-secondary, rgba(255, 255, 255, 0.7));
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.field-fraction-quick-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.field-fraction-quick-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Rating With Evidence Field */
+.field-rating-evidence-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field-rating-evidence-rating {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-rating-evidence-prompt {
+  color: var(--theme-text-secondary, rgba(255, 255, 255, 0.7));
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+.field-rating-evidence-connection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+.field-rating-evidence-arrow {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.3));
+}
+
+/* Outcome Statement Field */
+.field-outcome-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-outcome-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.field-outcome-text {
+  color: var(--theme-text-secondary, rgba(255, 255, 255, 0.7));
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+
+.field-outcome-date {
+  flex-shrink: 0;
+}
+
+.field-outcome-statement {
+  flex: 1;
+  min-width: 200px;
+}
+
+@media (max-width: 640px) {
+  .field-outcome-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .field-outcome-text {
+    align-self: flex-start;
+  }
+
+  .field-outcome-statement {
+    min-width: 100%;
+  }
+}
+
+/* Trigger Action Pair Field */
+.field-trigger-action-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.field-trigger-action-pair {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.field-trigger-action-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.field-trigger-action-label {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.6));
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.field-trigger-action-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 2rem;
+  color: var(--theme-primary-400, #818cf8);
+}
+
+@media (max-width: 640px) {
+  .field-trigger-action-pair {
+    flex-direction: column;
+  }
+
+  .field-trigger-action-arrow {
+    padding: 0.5rem 0;
+    transform: rotate(90deg);
+  }
+}
+
+/* Checkbox With Text Field */
+.field-checkbox-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.field-checkbox-text-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.field-checkbox-text-input-wrapper {
+  flex: 1;
+  overflow: hidden;
+  transition: opacity 0.2s ease, max-height 0.2s ease;
+}
+
+.field-checkbox-text-input-wrapper--hidden {
+  opacity: 0;
+  max-height: 0;
+  pointer-events: none;
+}
+
+.field-checkbox-text-input-wrapper--visible {
+  opacity: 1;
+  max-height: 200px;
+}
+
+.field-checkbox-text-hint {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* Checklist Input Field */
+.field-checklist-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-checklist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.field-checklist-item-input {
+  flex: 1;
+}
+
+.field-checklist-item-handle {
+  padding: 0.5rem;
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.4));
+  cursor: grab;
+  touch-action: none;
+}
+
+.field-checklist-item-handle:active {
+  cursor: grabbing;
+}
+
+.field-checklist-item-remove {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.4));
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.field-checklist-item-remove:hover {
+  color: var(--theme-error-400, #f87171);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.field-checklist-add {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: var(--theme-text-secondary, rgba(255, 255, 255, 0.6));
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.field-checklist-add:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--theme-text-primary, white);
+}
+
+.field-checklist-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field-checklist-count {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* Signature Field */
+.field-signature-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.field-signature-framing {
+  color: var(--theme-text-secondary, rgba(255, 255, 255, 0.7));
+  font-size: 0.9375rem;
+  font-style: italic;
+}
+
+.field-signature-input {
+  width: 100%;
+  min-height: 56px;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-primary, white);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-style: italic;
+  line-height: 1.5;
+  outline: none;
+}
+
+.field-signature-input::placeholder {
+  font-style: normal;
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.4));
+}
+
+.field-signature-underline {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3) 10%,
+    rgba(255, 255, 255, 0.3) 90%,
+    transparent
+  );
+  margin-top: -4px;
+}
+
+.field-signature-timestamp {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+/* ============================================================================
+   REPEATABLE BLOCK FIELD STYLES
+   ============================================================================ */
+
+.field-repeatable-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field-repeatable-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.field-repeatable-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  background: var(--theme-glass-bg, rgba(255, 255, 255, 0.1));
+  border: 1px solid var(--theme-glass-border, rgba(255, 255, 255, 0.15));
+  border-radius: 0.5rem;
+  color: var(--theme-text-primary, white);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.field-repeatable-add-btn:hover:not(:disabled) {
+  background: var(--theme-glass-bg-hover, rgba(255, 255, 255, 0.15));
+  border-color: var(--theme-glass-border-hover, rgba(255, 255, 255, 0.25));
+}
+
+.field-repeatable-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field-repeatable-add-btn--header {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.field-repeatable-add-btn--footer {
+  width: 100%;
+  justify-content: center;
+  background: transparent;
+  border-style: dashed;
+}
+
+.field-repeatable-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.field-repeatable-item {
+  background: var(--theme-glass-bg, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--theme-glass-border, rgba(255, 255, 255, 0.1));
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.field-repeatable-item--dragging {
+  opacity: 0.5;
+  border-color: var(--theme-primary-400, #60a5fa);
+}
+
+.field-repeatable-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--theme-glass-bg, rgba(255, 255, 255, 0.03));
+  border-bottom: 1px solid var(--theme-glass-border, rgba(255, 255, 255, 0.08));
+}
+
+.field-repeatable-drag-handle {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.4));
+  cursor: grab;
+  padding: 0.25rem;
+}
+
+.field-repeatable-drag-handle:active {
+  cursor: grabbing;
+}
+
+.field-repeatable-collapse-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--theme-text-primary, white);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+
+.field-repeatable-collapse-btn:hover {
+  color: var(--theme-primary-300, #93c5fd);
+}
+
+.field-repeatable-item-title {
+  flex: 1;
+}
+
+.field-repeatable-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.field-repeatable-reorder-btn,
+.field-repeatable-remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.field-repeatable-reorder-btn:hover:not(:disabled),
+.field-repeatable-remove-btn:hover:not(:disabled) {
+  background: var(--theme-glass-bg, rgba(255, 255, 255, 0.1));
+  border-color: var(--theme-glass-border, rgba(255, 255, 255, 0.15));
+  color: var(--theme-text-primary, white);
+}
+
+.field-repeatable-remove-btn:hover:not(:disabled) {
+  color: var(--theme-error-400, #f87171);
+  border-color: var(--theme-error-400, #f87171);
+}
+
+.field-repeatable-reorder-btn:disabled,
+.field-repeatable-remove-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.field-repeatable-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.field-repeatable-field {
+  /* Field wrapper - inherits from field-container */
+}
+
+.field-repeatable-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  background: var(--theme-glass-bg, rgba(255, 255, 255, 0.03));
+  border: 1px dashed var(--theme-glass-border, rgba(255, 255, 255, 0.15));
+  border-radius: 0.75rem;
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  text-align: center;
+}
+
+.field-repeatable-count {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-repeatable-count-warning {
+  color: var(--theme-warning-400, #fbbf24);
+}
+
+/* ============================================================================
+   REPEATABLE INLINE FIELD STYLES
+   ============================================================================ */
+
+.field-repeatable-inline-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.field-repeatable-inline-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-repeatable-inline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--theme-glass-bg, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--theme-glass-border, rgba(255, 255, 255, 0.08));
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.field-repeatable-inline-item--dragging {
+  opacity: 0.5;
+  border-color: var(--theme-primary-400, #60a5fa);
+}
+
+.field-repeatable-inline-container--row .field-repeatable-inline-item {
+  align-items: center;
+}
+
+.field-repeatable-inline-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.4));
+  cursor: grab;
+  padding: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.field-repeatable-inline-drag-handle:active {
+  cursor: grabbing;
+}
+
+.field-repeatable-inline-fields {
+  display: flex;
+  flex: 1;
+  gap: 0.5rem;
+}
+
+.field-repeatable-inline-container--row .field-repeatable-inline-fields {
+  flex-direction: row;
+  align-items: center;
+}
+
+.field-repeatable-inline-container--compact .field-repeatable-inline-fields {
+  flex-direction: column;
+}
+
+.field-repeatable-inline-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.field-repeatable-inline-field .field-container {
+  gap: 0.25rem;
+}
+
+.field-repeatable-inline-field .field-label {
+  font-size: 0.75rem;
+}
+
+.field-repeatable-inline-remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.field-repeatable-inline-remove-btn:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: var(--theme-error-400, #f87171);
+  color: var(--theme-error-400, #f87171);
+}
+
+.field-repeatable-inline-remove-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.field-repeatable-inline-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.625rem;
+  background: transparent;
+  border: 1px dashed var(--theme-glass-border, rgba(255, 255, 255, 0.2));
+  border-radius: 0.375rem;
+  color: var(--theme-text-secondary, rgba(255, 255, 255, 0.7));
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.field-repeatable-inline-add-btn:hover:not(:disabled) {
+  background: var(--theme-glass-bg, rgba(255, 255, 255, 0.05));
+  border-color: var(--theme-glass-border-hover, rgba(255, 255, 255, 0.3));
+  color: var(--theme-text-primary, white);
+}
+
+.field-repeatable-inline-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field-repeatable-inline-count {
+  color: var(--theme-text-muted, rgba(255, 255, 255, 0.5));
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ============================================================================
+   REPEATABLE RATING FIELD STYLES
+   ============================================================================ */
+
+.field-repeatable-rating-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field-repeatable-rating-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field-repeatable-rating-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--theme-glass-bg, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--theme-glass-border, rgba(255, 255, 255, 0.08));
+  border-radius: 0.75rem;
+}
+
+.field-repeatable-rating-prompt {
+  color: var(--theme-text-primary, white);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.field-repeatable-rating-slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.field-repeatable-rating-slider {
+  width: 100%;
+}
+
+.field-repeatable-rating-evidence {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--theme-glass-border, rgba(255, 255, 255, 0.06));
+}
+
+.field-repeatable-rating-evidence-label {
+  color: var(--theme-text-secondary, rgba(255, 255, 255, 0.7));
+  font-size: 0.75rem;
+}
+
+.field-repeatable-rating-evidence-input {
+  min-height: 60px;
+  resize: vertical;
+}
+
+/* ============================================================================
+   RESPONSIVE STYLES
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .field-repeatable-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .field-repeatable-add-btn--header {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .field-repeatable-item-header {
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .field-repeatable-item-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .field-repeatable-inline-container--row .field-repeatable-inline-fields {
+    flex-direction: column;
+  }
+
+  .field-repeatable-inline-item {
+    flex-wrap: wrap;
+  }
+
+  .field-repeatable-inline-fields {
+    width: 100%;
+  }
+}

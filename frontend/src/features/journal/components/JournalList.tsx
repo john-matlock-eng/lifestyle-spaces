@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { JournalCard } from './JournalCard'
 import { journalApi } from '../services/journalApi'
+import { JournalFilters, useJournalFilters } from '../../../components/journal/JournalFilters'
 import type { JournalEntry } from '../types/journal.types'
 import { getEmotionById } from '../data/emotionData'
 import '../styles/journal.css'
@@ -21,12 +22,21 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [hasMore, setHasMore] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedAuthor, setSelectedAuthor] = useState<string>('all')
-  const [selectedEmotion, setSelectedEmotion] = useState<string>('all')
-  const [selectedTag, setSelectedTag] = useState<string>('all')
-  const [dateFilter, setDateFilter] = useState<string>('all')
   const pageSize = 9
+
+  // Use URL-synced filters hook
+  const {
+    filters,
+    setSearch,
+    setFramework,
+    setDateRange,
+    setAuthor,
+    setEmotion,
+    setTag,
+    clearAll,
+    hasActiveFilters,
+    activeFilterCount,
+  } = useJournalFilters()
 
   const loadJournals = useCallback(async () => {
     setLoading(true)
@@ -76,11 +86,10 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     }
   }
 
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query)
-    // Reset to first page when searching
+  // Reset to first page when filters change
+  useEffect(() => {
     setCurrentPage(1)
-  }, [])
+  }, [filters])
 
   // Extract unique values for filter dropdowns
   const uniqueAuthors = Array.from(
@@ -96,14 +105,14 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
   ).sort()
 
   // Helper function to check if date matches filter
-  const matchesDateFilter = (dateString: string): boolean => {
-    if (dateFilter === 'all') return true
+  const matchesDateFilter = useCallback((dateString: string): boolean => {
+    if (filters.dateRange === 'all') return true
 
     const journalDate = new Date(dateString)
     const now = new Date()
     const dayInMs = 24 * 60 * 60 * 1000
 
-    switch (dateFilter) {
+    switch (filters.dateRange) {
       case 'today':
         return journalDate.toDateString() === now.toDateString()
       case 'week':
@@ -115,45 +124,63 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
       default:
         return true
     }
-  }
+  }, [filters.dateRange])
+
+  // Helper function to check if framework matches filter
+  const matchesFrameworkFilter = useCallback((journal: JournalEntry): boolean => {
+    if (filters.framework === 'all') return true
+    if (filters.framework === 'standalone') {
+      // Show entries without a framework
+      return !journal.frameworkId
+    }
+    // Show entries with specific framework
+    return journal.frameworkId === filters.framework
+  }, [filters.framework])
 
   // Filter journals based on search query and filters
-  const filteredJournals = journals.filter((journal) => {
-    // Search query filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      const titleMatch = journal.title?.toLowerCase().includes(query) || false
-      const contentMatch = journal.content?.toLowerCase().includes(query) || false
-      const tagsMatch = journal.tags?.some((tag) => tag.toLowerCase().includes(query)) || false
-      const authorMatch = journal.author?.displayName?.toLowerCase().includes(query) || false
+  const filteredJournals = useMemo(() => {
+    return journals.filter((journal) => {
+      // Search query filter
+      if (filters.search.trim()) {
+        const query = filters.search.toLowerCase()
+        const titleMatch = journal.title?.toLowerCase().includes(query) || false
+        const contentMatch = journal.content?.toLowerCase().includes(query) || false
+        const tagsMatch = journal.tags?.some((tag) => tag.toLowerCase().includes(query)) || false
+        const authorMatch = journal.author?.displayName?.toLowerCase().includes(query) || false
 
-      if (!titleMatch && !contentMatch && !tagsMatch && !authorMatch) {
+        if (!titleMatch && !contentMatch && !tagsMatch && !authorMatch) {
+          return false
+        }
+      }
+
+      // Framework filter
+      if (!matchesFrameworkFilter(journal)) {
         return false
       }
-    }
 
-    // Author filter
-    if (selectedAuthor !== 'all' && journal.author?.displayName !== selectedAuthor) {
-      return false
-    }
+      // Author filter
+      if (filters.author !== 'all' && journal.author?.displayName !== filters.author) {
+        return false
+      }
 
-    // Emotion filter
-    if (selectedEmotion !== 'all' && !journal.emotions?.includes(selectedEmotion)) {
-      return false
-    }
+      // Emotion filter
+      if (filters.emotion !== 'all' && !journal.emotions?.includes(filters.emotion)) {
+        return false
+      }
 
-    // Tag filter
-    if (selectedTag !== 'all' && !journal.tags?.includes(selectedTag)) {
-      return false
-    }
+      // Tag filter
+      if (filters.tag !== 'all' && !journal.tags?.includes(filters.tag)) {
+        return false
+      }
 
-    // Date filter
-    if (!matchesDateFilter(journal.createdAt)) {
-      return false
-    }
+      // Date filter
+      if (!matchesDateFilter(journal.createdAt)) {
+        return false
+      }
 
-    return true
-  })
+      return true
+    })
+  }, [journals, filters, matchesFrameworkFilter, matchesDateFilter])
 
   if (loading) {
     return (
@@ -172,7 +199,7 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     )
   }
 
-  if (journals.length === 0 && !searchQuery) {
+  if (journals.length === 0 && !hasActiveFilters) {
     return (
       <div className="journal-list-empty">
         <div className="journal-list-empty-icon">📔</div>
@@ -188,16 +215,6 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     <div className="journal-list-container">
       <div className="journal-list-header">
         <h2 className="journal-list-title">Journals</h2>
-        <div className="journal-list-search">
-          <input
-            type="text"
-            placeholder="Search journals..."
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="journal-list-search__input"
-            aria-label="Search journals"
-          />
-        </div>
         <div className="journal-list-actions">
           <button onClick={handleNewJournal} className="button-primary">
             + New Journal
@@ -205,125 +222,98 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
         </div>
       </div>
 
-      {/* Filter Controls */}
-      <div className="journal-list-filters">
-        {/* Author Filter */}
-        {uniqueAuthors.length > 0 && (
-          <div className="journal-filter">
-            <label htmlFor="author-filter" className="journal-filter__label">
-              Author:
-            </label>
-            <select
-              id="author-filter"
-              value={selectedAuthor}
-              onChange={(e) => setSelectedAuthor(e.target.value)}
-              className="journal-filter__select"
-            >
-              <option value="all">All Authors</option>
-              {uniqueAuthors.map((author) => (
-                <option key={author} value={author}>
-                  {author}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+      {/* New Filter Controls with Framework Filter */}
+      <JournalFilters
+        filters={filters}
+        onSearchChange={setSearch}
+        onFrameworkChange={setFramework}
+        onDateRangeChange={setDateRange}
+        onClearAll={clearAll}
+        hasActiveFilters={hasActiveFilters}
+        activeFilterCount={activeFilterCount}
+        testId="journal-list-filters"
+      />
 
-        {/* Date Filter */}
-        <div className="journal-filter">
-          <label htmlFor="date-filter" className="journal-filter__label">
-            Date:
-          </label>
-          <select
-            id="date-filter"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="journal-filter__select"
-          >
-            <option value="all">All Time</option>
-            <option value="today">Today</option>
-            <option value="week">Past Week</option>
-            <option value="month">Past Month</option>
-            <option value="year">Past Year</option>
-          </select>
-        </div>
-
-        {/* Emotion Filter */}
-        {uniqueEmotions.length > 0 && (
-          <div className="journal-filter">
-            <label htmlFor="emotion-filter" className="journal-filter__label">
-              Feeling:
-            </label>
-            <select
-              id="emotion-filter"
-              value={selectedEmotion}
-              onChange={(e) => setSelectedEmotion(e.target.value)}
-              className="journal-filter__select"
-            >
-              <option value="all">All Feelings</option>
-              {uniqueEmotions.map((emotionId) => {
-                const emotion = getEmotionById(emotionId)
-                return (
-                  <option key={emotionId} value={emotionId}>
-                    {emotion?.label || emotionId}
+      {/* Additional Filters (Author, Emotion, Tag) */}
+      {(uniqueAuthors.length > 0 || uniqueEmotions.length > 0 || uniqueTags.length > 0) && (
+        <div className="journal-list-filters" style={{ marginTop: '-8px' }}>
+          {/* Author Filter */}
+          {uniqueAuthors.length > 0 && (
+            <div className="journal-filter">
+              <label htmlFor="author-filter" className="journal-filter__label">
+                Author:
+              </label>
+              <select
+                id="author-filter"
+                value={filters.author}
+                onChange={(e) => setAuthor(e.target.value)}
+                className="journal-filter__select"
+              >
+                <option value="all">All Authors</option>
+                {uniqueAuthors.map((author) => (
+                  <option key={author} value={author}>
+                    {author}
                   </option>
-                )
-              })}
-            </select>
-          </div>
-        )}
+                ))}
+              </select>
+            </div>
+          )}
 
-        {/* Tag Filter */}
-        {uniqueTags.length > 0 && (
-          <div className="journal-filter">
-            <label htmlFor="tag-filter" className="journal-filter__label">
-              Tag:
-            </label>
-            <select
-              id="tag-filter"
-              value={selectedTag}
-              onChange={(e) => setSelectedTag(e.target.value)}
-              className="journal-filter__select"
-            >
-              <option value="all">All Tags</option>
-              {uniqueTags.map((tag) => (
-                <option key={tag} value={tag}>
-                  {tag}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+          {/* Emotion Filter */}
+          {uniqueEmotions.length > 0 && (
+            <div className="journal-filter">
+              <label htmlFor="emotion-filter" className="journal-filter__label">
+                Feeling:
+              </label>
+              <select
+                id="emotion-filter"
+                value={filters.emotion}
+                onChange={(e) => setEmotion(e.target.value)}
+                className="journal-filter__select"
+              >
+                <option value="all">All Feelings</option>
+                {uniqueEmotions.map((emotionId) => {
+                  const emotion = getEmotionById(emotionId)
+                  return (
+                    <option key={emotionId} value={emotionId}>
+                      {emotion?.label || emotionId}
+                    </option>
+                  )
+                })}
+              </select>
+            </div>
+          )}
 
-        {/* Clear Filters Button */}
-        {(selectedAuthor !== 'all' || selectedEmotion !== 'all' || selectedTag !== 'all' || dateFilter !== 'all' || searchQuery) && (
-          <button
-            onClick={() => {
-              setSelectedAuthor('all')
-              setSelectedEmotion('all')
-              setSelectedTag('all')
-              setDateFilter('all')
-              setSearchQuery('')
-            }}
-            className="button-secondary journal-clear-filters"
-          >
-            Clear All Filters
-          </button>
-        )}
-      </div>
+          {/* Tag Filter */}
+          {uniqueTags.length > 0 && (
+            <div className="journal-filter">
+              <label htmlFor="tag-filter" className="journal-filter__label">
+                Tag:
+              </label>
+              <select
+                id="tag-filter"
+                value={filters.tag}
+                onChange={(e) => setTag(e.target.value)}
+                className="journal-filter__select"
+              >
+                <option value="all">All Tags</option>
+                {uniqueTags.map((tag) => (
+                  <option key={tag} value={tag}>
+                    {tag}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+      )}
 
-      {filteredJournals.length === 0 && (searchQuery || selectedAuthor !== 'all' || selectedEmotion !== 'all' || selectedTag !== 'all' || dateFilter !== 'all') ? (
+      {filteredJournals.length === 0 && hasActiveFilters ? (
         <div className="journal-list-empty">
           <div className="journal-list-empty-icon">🔍</div>
           <p className="journal-list-empty-text">No journals match your filters</p>
           <button
-            onClick={() => {
-              setSearchQuery('')
-              setSelectedAuthor('all')
-              setSelectedEmotion('all')
-              setSelectedTag('all')
-              setDateFilter('all')
-            }}
+            onClick={clearAll}
             className="button-secondary"
           >
             Clear All Filters

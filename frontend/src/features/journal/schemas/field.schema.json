@@ -1,0 +1,463 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://lifestyle-spaces.app/schemas/field.schema.json",
+  "title": "FieldDefinition",
+  "description": "Complete field definition within a template",
+  "type": "object",
+  "required": ["id", "type", "label"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for this field within the template",
+      "pattern": "^[a-z0-9_-]+$"
+    },
+    "type": {
+      "type": "string",
+      "description": "The type of field",
+      "enum": [
+        "text",
+        "textarea",
+        "rich_text",
+        "number",
+        "rating",
+        "slider",
+        "select",
+        "multi_select",
+        "checkbox",
+        "checkbox_group",
+        "radio",
+        "date",
+        "time",
+        "datetime",
+        "list",
+        "tags",
+        "emotions",
+        "values",
+        "goals",
+        "repeatable",
+        "section_break",
+        "heading",
+        "paragraph"
+      ]
+    },
+    "label": {
+      "type": "string",
+      "description": "Display label for the field",
+      "minLength": 1
+    },
+    "helpText": {
+      "type": "string",
+      "description": "Help text or description shown below the field"
+    },
+    "placeholder": {
+      "type": "string",
+      "description": "Placeholder text"
+    },
+    "validation": {
+      "$ref": "#/definitions/FieldValidation"
+    },
+    "binding": {
+      "$ref": "#/definitions/FieldBinding"
+    },
+    "config": {
+      "$ref": "#/definitions/FieldConfig"
+    },
+    "showIf": {
+      "type": "string",
+      "description": "Conditional display expression"
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "Whether this field is disabled"
+    },
+    "readOnly": {
+      "type": "boolean",
+      "description": "Whether this field is read-only"
+    },
+    "cssClass": {
+      "type": "string",
+      "description": "Custom CSS class"
+    },
+    "order": {
+      "type": "integer",
+      "description": "Display order within the section",
+      "minimum": 1
+    },
+    "exportable": {
+      "type": "boolean",
+      "description": "Whether this field is exportable in data outputs",
+      "default": true
+    },
+    "outputKey": {
+      "type": "string",
+      "description": "Key for data binding outputs"
+    }
+  },
+  "definitions": {
+    "FieldValidation": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Whether this field is required"
+        },
+        "minLength": {
+          "type": "integer",
+          "description": "Minimum length for text fields",
+          "minimum": 0
+        },
+        "maxLength": {
+          "type": "integer",
+          "description": "Maximum length for text fields",
+          "minimum": 0
+        },
+        "min": {
+          "type": "number",
+          "description": "Minimum value for numeric fields"
+        },
+        "max": {
+          "type": "number",
+          "description": "Maximum value for numeric fields"
+        },
+        "minItems": {
+          "type": "integer",
+          "description": "Minimum items for list/multi-select fields",
+          "minimum": 0
+        },
+        "maxItems": {
+          "type": "integer",
+          "description": "Maximum items for list/multi-select fields",
+          "minimum": 0
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regular expression pattern for text fields"
+        },
+        "errorMessage": {
+          "type": "string",
+          "description": "Custom error message when validation fails"
+        },
+        "customValidator": {
+          "type": "string",
+          "description": "Custom validation function name"
+        }
+      }
+    },
+    "FieldBinding": {
+      "type": "object",
+      "required": ["expression", "mode"],
+      "properties": {
+        "expression": {
+          "type": "string",
+          "description": "Binding expression using dot notation"
+        },
+        "mode": {
+          "type": "string",
+          "description": "How the binding should be applied",
+          "enum": ["prefill", "readonly", "reference"]
+        },
+        "transform": {
+          "type": "string",
+          "description": "Transform to apply to the bound data"
+        },
+        "fallback": {
+          "description": "Fallback value if binding cannot be resolved"
+        }
+      }
+    },
+    "FieldConfig": {
+      "type": "object",
+      "description": "Type-specific configuration for the field",
+      "properties": {
+        "placeholder": {
+          "type": "string"
+        },
+        "defaultValue": {},
+        "rows": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "autoResize": {
+          "type": "boolean"
+        },
+        "showCharCount": {
+          "type": "boolean"
+        },
+        "mask": {
+          "type": "string"
+        },
+        "minHeight": {
+          "type": "integer"
+        },
+        "maxHeight": {
+          "type": "integer"
+        },
+        "toolbarFeatures": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "bold",
+              "italic",
+              "underline",
+              "strike",
+              "heading",
+              "bulletList",
+              "orderedList",
+              "blockquote",
+              "codeBlock",
+              "link",
+              "image",
+              "highlight"
+            ]
+          }
+        },
+        "step": {
+          "type": "number"
+        },
+        "decimals": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "suffix": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "maxRating": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "icon": {
+          "type": "string"
+        },
+        "allowHalf": {
+          "type": "boolean"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "size": {
+          "type": "string",
+          "enum": ["sm", "md", "lg"]
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "showTooltip": {
+          "type": "boolean"
+        },
+        "showTicks": {
+          "type": "boolean"
+        },
+        "rangeLabels": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "string"
+            },
+            "max": {
+              "type": "string"
+            }
+          }
+        },
+        "tickLabels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FieldOption"
+          }
+        },
+        "searchable": {
+          "type": "boolean"
+        },
+        "creatable": {
+          "type": "boolean"
+        },
+        "closeOnSelect": {
+          "type": "boolean"
+        },
+        "groupBy": {
+          "type": "string"
+        },
+        "labelPosition": {
+          "type": "string",
+          "enum": ["left", "right"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "layout": {
+          "type": "string",
+          "enum": ["vertical", "horizontal", "grid"]
+        },
+        "columns": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minDate": {
+          "type": "string"
+        },
+        "maxDate": {
+          "type": "string"
+        },
+        "includeTime": {
+          "type": "boolean"
+        },
+        "timeFormat": {
+          "type": "string",
+          "enum": ["12h", "24h"]
+        },
+        "minuteStep": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "itemPlaceholder": {
+          "type": "string"
+        },
+        "orderable": {
+          "type": "boolean"
+        },
+        "listStyle": {
+          "type": "string",
+          "enum": ["numbered", "bulleted", "none"]
+        },
+        "maxItems": {
+          "type": "integer"
+        },
+        "minItems": {
+          "type": "integer"
+        },
+        "maxTags": {
+          "type": "integer"
+        },
+        "suggestions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowCustom": {
+          "type": "boolean"
+        },
+        "colorScheme": {
+          "type": "string"
+        },
+        "maxSelections": {
+          "type": "integer"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "displayStyle": {
+          "type": "string",
+          "enum": ["grid", "carousel", "dropdown", "chips", "list", "inline", "cards", "compact"]
+        },
+        "sourceEntry": {
+          "type": "string"
+        },
+        "sourcePath": {
+          "type": "string"
+        },
+        "maxDisplay": {
+          "type": "integer"
+        },
+        "selectable": {
+          "type": "boolean"
+        },
+        "showProgress": {
+          "type": "boolean"
+        },
+        "statusFilter": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["active", "completed", "paused"]
+          }
+        },
+        "defaultItems": {
+          "type": "integer"
+        },
+        "addLabel": {
+          "type": "string"
+        },
+        "removeLabel": {
+          "type": "string"
+        },
+        "itemFields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "itemLayout": {
+          "type": "string",
+          "enum": ["vertical", "horizontal", "grid"]
+        },
+        "content": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6
+        },
+        "align": {
+          "type": "string",
+          "enum": ["left", "center", "right"]
+        },
+        "cssClass": {
+          "type": "string"
+        }
+      }
+    },
+    "FieldOption": {
+      "type": "object",
+      "required": ["value", "label"],
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Unique value for this option"
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label for this option"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description or help text"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Optional icon"
+        },
+        "disabled": {
+          "type": "boolean",
+          "description": "Whether this option is disabled"
+        },
+        "order": {
+          "type": "integer",
+          "description": "Display order"
+        }
+      }
+    }
+  }
+}
