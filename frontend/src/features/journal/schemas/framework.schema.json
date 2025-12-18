@@ -1,0 +1,184 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://lifestyle-spaces.app/schemas/framework.schema.json",
+  "title": "Framework",
+  "description": "A structured collection of journal templates designed to work together toward a specific goal",
+  "type": "object",
+  "required": ["id", "name", "tagline", "description", "version", "icon", "color", "categories", "templates", "metadata", "isActive"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the framework",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name for the framework",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "tagline": {
+      "type": "string",
+      "description": "Short tagline or subtitle",
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "description": "Full description of the framework's purpose and approach"
+    },
+    "version": {
+      "type": "integer",
+      "description": "Framework version number",
+      "minimum": 1
+    },
+    "icon": {
+      "type": "string",
+      "description": "Icon for the framework (emoji or icon name)"
+    },
+    "color": {
+      "type": "string",
+      "description": "Primary color for theming",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "secondaryColor": {
+      "type": "string",
+      "description": "Secondary color for accents",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "categories": {
+      "type": "array",
+      "description": "Categories within this framework",
+      "items": {
+        "$ref": "#/definitions/FrameworkCategory"
+      },
+      "minItems": 1
+    },
+    "templates": {
+      "type": "array",
+      "description": "Template definitions",
+      "items": {
+        "$ref": "template.schema.json"
+      },
+      "minItems": 1
+    },
+    "metadata": {
+      "$ref": "#/definitions/FrameworkMetadata"
+    },
+    "isActive": {
+      "type": "boolean",
+      "description": "Whether this framework is currently active/available"
+    }
+  },
+  "definitions": {
+    "FrameworkCategory": {
+      "type": "object",
+      "required": ["id", "name", "description", "order"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the category",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name for the category",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of what this category covers"
+        },
+        "order": {
+          "type": "integer",
+          "description": "Display order within the framework",
+          "minimum": 1
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon for the category (emoji or icon name)"
+        },
+        "color": {
+          "type": "string",
+          "description": "Color for visual distinction",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        }
+      }
+    },
+    "FrameworkMetadata": {
+      "type": "object",
+      "required": ["schemaVersion", "createdAt", "updatedAt", "authors", "tags"],
+      "properties": {
+        "schemaVersion": {
+          "type": "string",
+          "description": "Semantic version of the framework definition",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "When this framework was created",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "When this framework was last updated",
+          "format": "date-time"
+        },
+        "authors": {
+          "type": "array",
+          "description": "Author(s) of this framework",
+          "items": {
+            "$ref": "#/definitions/FrameworkAuthor"
+          },
+          "minItems": 1
+        },
+        "license": {
+          "type": "string",
+          "description": "License for the framework content"
+        },
+        "tags": {
+          "type": "array",
+          "description": "Tags for categorization and discovery",
+          "items": {
+            "type": "string"
+          }
+        },
+        "audience": {
+          "type": "string",
+          "description": "Target audience description"
+        },
+        "foundationEstimate": {
+          "type": "string",
+          "description": "Estimated time to complete foundation"
+        },
+        "cadenceDescription": {
+          "type": "string",
+          "description": "Recommended usage cadence description"
+        }
+      }
+    },
+    "FrameworkAuthor": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Author's unique identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Author's display name"
+        },
+        "email": {
+          "type": "string",
+          "description": "Author's email",
+          "format": "email"
+        },
+        "url": {
+          "type": "string",
+          "description": "Author's website or profile URL",
+          "format": "uri"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,371 @@
+/**
+ * FrameworkProgressCard Styles
+ * Uses theme CSS variables for consistent theming
+ */
+
+.framework-progress-card {
+  background: var(--theme-bg-surface);
+  border: 1px solid var(--theme-border-light);
+  border-radius: 12px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.framework-progress-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--framework-color, var(--theme-primary-600));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.framework-progress-card:hover {
+  border-color: var(--framework-color, var(--theme-primary-500));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.framework-progress-card:hover::before {
+  opacity: 1;
+}
+
+/* New framework state */
+.framework-progress-card--new {
+  border-style: dashed;
+  background: var(--theme-bg-hover);
+}
+
+/* Attention needed state */
+.framework-progress-card--attention {
+  border-color: var(--theme-warning-500, #f59e0b);
+}
+
+.framework-progress-card--attention::before {
+  background: var(--theme-warning-500, #f59e0b);
+  opacity: 1;
+}
+
+/* Header */
+.framework-progress-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.framework-progress-card__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.framework-progress-card__title-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.framework-progress-card__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--theme-text-primary);
+  line-height: 1.3;
+}
+
+.framework-progress-card__tagline {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.8125rem;
+  color: var(--theme-text-secondary);
+  line-height: 1.4;
+}
+
+.framework-progress-card__attention-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--theme-warning-500, #f59e0b);
+  color: white;
+  font-weight: 700;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Progress Section */
+.framework-progress-card__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.framework-progress-card__foundation {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.framework-progress-card__progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.framework-progress-card__progress-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--theme-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.framework-progress-card__progress-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--theme-text-primary);
+}
+
+.framework-progress-card__progress-bar {
+  height: 6px;
+  background: var(--theme-border-light);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.framework-progress-card__progress-fill {
+  height: 100%;
+  background: var(--framework-color, var(--theme-primary-600));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.framework-progress-card__complete-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--theme-success-600, #059669);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+/* Streaks */
+.framework-progress-card__streaks {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.framework-progress-card__streak {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--theme-bg-hover);
+  border-radius: 6px;
+}
+
+.framework-progress-card__streak-icon {
+  font-size: 0.875rem;
+}
+
+.framework-progress-card__streak-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--theme-text-primary);
+}
+
+.framework-progress-card__streak-label {
+  font-size: 0.6875rem;
+  color: var(--theme-text-secondary);
+}
+
+/* Stats Grid */
+.framework-progress-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--theme-bg-hover);
+  border-radius: 8px;
+}
+
+.framework-progress-card__stat {
+  text-align: center;
+}
+
+.framework-progress-card__stat-value {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--theme-text-primary);
+  line-height: 1.2;
+}
+
+.framework-progress-card__stat-label {
+  display: block;
+  font-size: 0.6875rem;
+  color: var(--theme-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  margin-top: 0.125rem;
+}
+
+/* Next Action */
+.framework-progress-card__next {
+  padding: 0.75rem;
+  background: var(--theme-bg-hover);
+  border-radius: 8px;
+  border-left: 3px solid var(--framework-color, var(--theme-primary-600));
+}
+
+.framework-progress-card__next--overdue {
+  background: var(--theme-warning-50, rgba(245, 158, 11, 0.1));
+  border-left-color: var(--theme-warning-500, #f59e0b);
+}
+
+.framework-progress-card__next-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.framework-progress-card__next-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--theme-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.framework-progress-card__next--overdue .framework-progress-card__next-label {
+  color: var(--theme-warning-600, #d97706);
+}
+
+.framework-progress-card__next-frequency {
+  font-size: 0.625rem;
+  padding: 0.125rem 0.375rem;
+  background: var(--theme-bg-surface);
+  border-radius: 4px;
+  color: var(--theme-text-secondary);
+}
+
+.framework-progress-card__next-template {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.framework-progress-card__next-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--theme-text-primary);
+}
+
+/* Activity */
+.framework-progress-card__activity {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--theme-text-muted);
+}
+
+.framework-progress-card__activity-label {
+  font-weight: 400;
+}
+
+.framework-progress-card__activity-time {
+  font-weight: 500;
+}
+
+/* Actions */
+.framework-progress-card__actions {
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.framework-progress-card__action {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.framework-progress-card__action--primary {
+  background: var(--framework-color, var(--theme-primary-600));
+  color: white;
+}
+
+.framework-progress-card__action--primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.framework-progress-card__action--secondary {
+  background: var(--theme-bg-hover);
+  color: var(--theme-text-primary);
+}
+
+.framework-progress-card__action--secondary:hover {
+  background: var(--theme-border-light);
+}
+
+.framework-progress-card__action--warning {
+  background: var(--theme-warning-500, #f59e0b);
+  color: white;
+}
+
+.framework-progress-card__action--warning:hover {
+  opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .framework-progress-card {
+    padding: 1rem;
+  }
+
+  .framework-progress-card__icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+
+  .framework-progress-card__title {
+    font-size: 1rem;
+  }
+
+  .framework-progress-card__stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.25rem;
+    padding: 0.5rem;
+  }
+
+  .framework-progress-card__stat-value {
+    font-size: 1rem;
+  }
+
+  .framework-progress-card__streaks {
+    gap: 0.5rem;
+  }
+}

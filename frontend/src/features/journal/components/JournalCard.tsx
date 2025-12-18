@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../stores/authStore'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
+import { FrameworkBadge } from '../../../components/journal/JournalFilters/FrameworkBadge'
 import type { JournalEntry } from '../types/journal.types'
 import '../styles/journal.css'
 
@@ -194,6 +195,14 @@ export const JournalCard: React.FC<JournalCardProps> = ({ journal, onDelete }) =
       <p className="journal-card-excerpt">{getJournalPreview(journal.content)}</p>
 
       <div className="journal-card-meta">
+        {/* Framework Badge */}
+        <FrameworkBadge
+          frameworkId={journal.frameworkId}
+          templateId={journal.templateId}
+          compact
+          testId={`journal-card-${journal.journalId}-framework`}
+        />
+
         {journal.author && (
           <div className="journal-card-author">
             <span>👤</span>

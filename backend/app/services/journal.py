@@ -167,6 +167,7 @@ class JournalService:
             "title": data.title.strip(),
             "content": data.content,
             "template_id": data.template_id,
+            "framework_id": data.framework_id,
             # REMOVED: template_data - data is embedded in content
             "tags": data.tags,
             "emotions": data.emotions or [],
@@ -203,6 +204,7 @@ class JournalService:
                     if len(data.content) > 100
                     else data.content,
                     "template_id": data.template_id,
+                    "framework_id": data.framework_id,
                 },
             )
         except Exception as e:
@@ -216,6 +218,7 @@ class JournalService:
             "title": data.title.strip(),
             "content": data.content,
             "template_id": data.template_id,
+            "framework_id": data.framework_id,
             # REMOVED: template_data - data is embedded in content
             "tags": data.tags,
             "emotions": data.emotions or [],
@@ -279,6 +282,7 @@ class JournalService:
             "content": journal["content"],
             "content_tiptap": journal.get("content_tiptap"),
             "template_id": journal.get("template_id"),
+            "framework_id": journal.get("framework_id"),
             # REMOVED: template_data - data is embedded in content
             "tags": journal.get("tags", []),
             "emotions": journal.get("emotions", []),
@@ -356,6 +360,10 @@ class JournalService:
             update_expr += ", template_id = :template_id"
             expr_values[":template_id"] = data.template_id
 
+        if data.framework_id is not None:
+            update_expr += ", framework_id = :framework_id"
+            expr_values[":framework_id"] = data.framework_id
+
         if data.content_tiptap is not None:
             update_expr += ", content_tiptap = :content_tiptap"
             expr_values[":content_tiptap"] = data.content_tiptap
@@ -407,6 +415,7 @@ class JournalService:
             "title": updated_journal["title"],
             "content": updated_journal["content"],
             "template_id": updated_journal.get("template_id"),
+            "framework_id": updated_journal.get("framework_id"),
             # REMOVED: template_data - data is embedded in content
             "tags": updated_journal.get("tags", []),
             "emotions": updated_journal.get("emotions", []),
@@ -556,6 +565,7 @@ class JournalService:
                     "content": journal["content"],
                     "content_tiptap": journal.get("content_tiptap"),
                     "template_id": journal.get("template_id"),
+                    "framework_id": journal.get("framework_id"),
                     # REMOVED: template_data - data is embedded in content
                     "tags": journal.get("tags", []),
                     "emotions": journal.get("emotions", []),
@@ -629,6 +639,7 @@ class JournalService:
                     "content": journal["content"],
                     "content_tiptap": journal.get("content_tiptap"),
                     "template_id": journal.get("template_id"),
+                    "framework_id": journal.get("framework_id"),
                     # REMOVED: template_data - data is embedded in content
                     "tags": journal.get("tags", []),
                     "emotions": journal.get("emotions", []),

@@ -1,0 +1,1594 @@
+{
+  "$schema": "./framework.schema.json",
+  "id": "charter-and-course",
+  "name": "Charter & Course",
+  "tagline": "Define your direction, navigate your journey",
+  "description": "Charter & Course is a structured approach to intentional living. Start by creating your personal 'charter' - a clear articulation of your identity, values, practices, and impact. Then use regular 'course corrections' through weekly scoreboards and quarterly reviews to stay aligned with what matters most.\n\nThis framework helps you:\n- Clarify who you are at your best\n- Define the code you live by\n- Build consistent reflection habits\n- Track progress against meaningful outcomes\n- Adjust course when life throws curveballs",
+  "version": 2,
+  "icon": "\ud83e\udded",
+  "color": "#6366f1",
+  "secondaryColor": "#818cf8",
+  "isActive": true,
+
+  "metadata": {
+    "schemaVersion": "1.0.0",
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2025-01-15T00:00:00Z",
+    "authors": [
+      {
+        "id": "lifestyle-spaces",
+        "name": "Lifestyle Spaces Team"
+      }
+    ],
+    "license": "MIT",
+    "tags": ["life-planning", "identity", "values", "reflection", "accountability", "quarterly-planning"],
+    "audience": "Anyone seeking intentional living, personal accountability, and structured self-improvement",
+    "foundationEstimate": "60-90 minutes for Personal Charter",
+    "cadenceDescription": "Weekly scoreboards (15-20 min), quarterly reviews (45-60 min), reset as needed"
+  },
+
+  "categories": [
+    {
+      "id": "foundation",
+      "name": "Foundation",
+      "description": "One-time templates to establish your personal charter",
+      "order": 1,
+      "icon": "\ud83c\udfdb\ufe0f",
+      "color": "#6366f1"
+    },
+    {
+      "id": "weekly",
+      "name": "Weekly Practice",
+      "description": "Weekly scoreboard and accountability tracking",
+      "order": 2,
+      "icon": "\ud83d\udcca",
+      "color": "#10b981"
+    },
+    {
+      "id": "quarterly",
+      "name": "Quarterly Review",
+      "description": "Quarterly deep dives, planning, and charter renewal",
+      "order": 3,
+      "icon": "\ud83c\udfaf",
+      "color": "#ef4444"
+    },
+    {
+      "id": "special",
+      "name": "Special",
+      "description": "As-needed templates for course corrections",
+      "order": 4,
+      "icon": "\ud83d\udd04",
+      "color": "#f59e0b"
+    }
+  ],
+
+  "templates": [
+    {
+      "id": "personal-charter",
+      "name": "Personal Charter: The Architect of My Life",
+      "description": "Define your core identity, code, practices, and impact. This is your foundational document for intentional living.",
+      "guidance": "Take your time with this exercise. Be honest and specific. This charter becomes the standard against which you measure yourself.",
+      "categoryId": "foundation",
+      "lifecycle": "foundation",
+      "frequency": "once",
+      "order": 1,
+      "icon": "\ud83d\udcdc",
+      "color": "#6366f1",
+      "prerequisites": [],
+      "unlockedMessage": "Begin your journey by defining who you are at your best.",
+      "ui": {
+        "layout": "single-column",
+        "showProgress": true,
+        "collapsibleSections": true,
+        "defaultCollapsed": false,
+        "estimatedMinutes": 60,
+        "introText": "Your Personal Charter is the foundation of intentional living. It defines who you are, what you stand for, how you practice, and the impact you want to have."
+      },
+      "content": {
+        "sections": [
+          {
+            "id": "core-identity",
+            "title": "1. Core Identity",
+            "description": "Who I am at my best.",
+            "icon": "\ud83d\udc8e",
+            "order": 1,
+            "required": true,
+            "fields": ["identity-intro", "trait-dependable", "trait-forthright", "trait-generous", "trait-disciplined"]
+          },
+          {
+            "id": "the-code",
+            "title": "2. The Code: Morals & Convictions",
+            "description": "The principles I live by.",
+            "icon": "\u2696\ufe0f",
+            "order": 2,
+            "required": true,
+            "fields": ["code-intro", "principle-radical-responsibility", "principle-integrity-dark", "principle-valuing-restraint", "principle-faith-alignment", "principle-service-connection"]
+          },
+          {
+            "id": "the-practice",
+            "title": "3. The Practice: Habits & Routines",
+            "description": "How I build the foundation.",
+            "icon": "\ud83c\udfcb\ufe0f",
+            "order": 3,
+            "required": true,
+            "fields": ["practice-intro", "practice-physical-sovereignty", "practice-mental-clarity", "practice-sustainable-pacing"]
+          },
+          {
+            "id": "the-impact",
+            "title": "4. The Impact",
+            "description": "How I show up for others.",
+            "icon": "\ud83c\udf1f",
+            "order": 4,
+            "required": true,
+            "fields": ["impact-intro", "impact-for-her", "impact-for-family", "impact-for-world"]
+          },
+          {
+            "id": "the-vow",
+            "title": "5. The Vow",
+            "description": "Your commitment statement.",
+            "icon": "\u2728",
+            "order": 5,
+            "required": true,
+            "fields": ["vow-statement", "vow-signature"]
+          }
+        ],
+        "fields": {
+          "identity-intro": {
+            "id": "identity-intro",
+            "type": "paragraph",
+            "label": "About Core Identity",
+            "config": {
+              "content": "These are the traits that define you when you're operating at your highest level. Be specific and honest about who you aspire to be consistently."
+            }
+          },
+          "trait-dependable": {
+            "id": "trait-dependable",
+            "type": "textarea",
+            "label": "Dependable",
+            "helpText": "How do you show up reliably for yourself and others?",
+            "placeholder": "I am the anchor. My word is iron. I do not overpromise...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "I am the anchor. My word is iron. I do not overpromise. If I commit, I show up: on time and fully present. I do not flake, ghost, or make promises I cannot keep."
+            },
+            "exportable": true,
+            "outputKey": "trait-dependable"
+          },
+          "trait-forthright": {
+            "id": "trait-forthright",
+            "type": "textarea",
+            "label": "Forthright",
+            "helpText": "How do you speak truth with courage and care?",
+            "placeholder": "I speak truth with courage and care...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "I speak truth with courage and care. I do not avoid difficult conversations or hide behind insight. I own my feelings, mistakes, and desires without excuses or performance."
+            },
+            "exportable": true,
+            "outputKey": "trait-forthright"
+          },
+          "trait-generous": {
+            "id": "trait-generous",
+            "type": "textarea",
+            "label": "Generous",
+            "helpText": "How do you serve those you love?",
+            "placeholder": "I serve those I love not to earn affection...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "I serve those I love not to earn affection, but because service is my language. I seek unseen needs and meet them quietly, without keeping score."
+            },
+            "exportable": true,
+            "outputKey": "trait-generous"
+          },
+          "trait-disciplined": {
+            "id": "trait-disciplined",
+            "type": "textarea",
+            "label": "Disciplined",
+            "helpText": "How do you lead yourself?",
+            "placeholder": "I lead myself. I do not bargain with impulses...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "I lead myself. I do not bargain with impulses; I train them. I choose what is right over what is easy, especially when no one is watching."
+            },
+            "exportable": true,
+            "outputKey": "trait-disciplined"
+          },
+          "code-intro": {
+            "id": "code-intro",
+            "type": "paragraph",
+            "label": "About The Code",
+            "config": {
+              "content": "These are the non-negotiable principles that guide your decisions and actions. They form the moral foundation of your life."
+            }
+          },
+          "principle-radical-responsibility": {
+            "id": "principle-radical-responsibility",
+            "type": "textarea",
+            "label": "Radical Responsibility",
+            "helpText": "How do you own your emotional state and choices?",
+            "placeholder": "I own my emotional state...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "I own my emotional state. I do not make others responsible for my happiness, pain, or choices. I choose my path with eyes open and accept the cost without complaint or victimhood."
+            },
+            "exportable": true,
+            "outputKey": "principle-radical-responsibility"
+          },
+          "principle-integrity-dark": {
+            "id": "principle-integrity-dark",
+            "type": "textarea",
+            "label": "Integrity in the Dark",
+            "helpText": "How is your character defined in private?",
+            "placeholder": "My character is defined in private...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "My character is defined in private. I uphold excellence and morality without needing an audience or applause."
+            },
+            "exportable": true,
+            "outputKey": "principle-integrity-dark"
+          },
+          "principle-valuing-restraint": {
+            "id": "principle-valuing-restraint",
+            "type": "textarea",
+            "label": "Valuing Restraint",
+            "helpText": "How do you practice self-control as strength?",
+            "placeholder": "Ability is not entitlement...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "Ability is not entitlement. Just because I can have something does not mean I should. I practice self-control as strength, not punishment. I delay gratification to build freedom, focus, and long-term power."
+            },
+            "exportable": true,
+            "outputKey": "principle-valuing-restraint"
+          },
+          "principle-faith-alignment": {
+            "id": "principle-faith-alignment",
+            "type": "textarea",
+            "label": "Faith & Alignment",
+            "helpText": "How do you live under a higher purpose?",
+            "placeholder": "I live under a higher purpose...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "I live under a higher purpose. I align my actions with spiritual convictions and aim to be a vessel of grace, patience, steadiness, and courage in a chaotic world."
+            },
+            "exportable": true,
+            "outputKey": "principle-faith-alignment"
+          },
+          "principle-service-connection": {
+            "id": "principle-service-connection",
+            "type": "textarea",
+            "label": "Service & Connection",
+            "helpText": "How do you prioritize people over convenience?",
+            "placeholder": "I prioritize people over convenience...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "I prioritize people over convenience. I build true connections through shared understanding and goals, creating and cherishing memories rather than just passing time."
+            },
+            "exportable": true,
+            "outputKey": "principle-service-connection"
+          },
+          "practice-intro": {
+            "id": "practice-intro",
+            "type": "paragraph",
+            "label": "About The Practice",
+            "config": {
+              "content": "These are the daily and weekly habits that build the foundation for your identity. They are the guardrails that keep you on course."
+            }
+          },
+          "practice-physical-sovereignty": {
+            "id": "practice-physical-sovereignty",
+            "type": "textarea",
+            "label": "Physical Sovereignty",
+            "helpText": "How do you honor your body?",
+            "placeholder": "I honor my body through training, recovery, and mindful fueling...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "I honor my body through training, recovery, and mindful fueling. I show up to the gym not for vanity, but to build resilience and energy. My routine is the guardrail that keeps me from failing when things get difficult."
+            },
+            "exportable": true,
+            "outputKey": "practice-physical-sovereignty"
+          },
+          "practice-mental-clarity": {
+            "id": "practice-mental-clarity",
+            "type": "textarea",
+            "label": "Mental Clarity",
+            "helpText": "How do you tell the truth to yourself?",
+            "placeholder": "I journal to tell the truth to myself...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "I journal to tell the truth to myself. I confront my patterns on the page, so I do not spill them onto those I love over and over."
+            },
+            "exportable": true,
+            "outputKey": "practice-mental-clarity"
+          },
+          "practice-sustainable-pacing": {
+            "id": "practice-sustainable-pacing",
+            "type": "textarea",
+            "label": "Sustainable Pacing",
+            "helpText": "How do you value consistency over intensity?",
+            "placeholder": "I value consistency over intensity...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "I value consistency over intensity. I build routines durable enough to survive bad days. Some days will be 'unimpressive,' but I keep the rhythm because routine is often the medicine that keeps me steady."
+            },
+            "exportable": true,
+            "outputKey": "practice-sustainable-pacing"
+          },
+          "impact-intro": {
+            "id": "impact-intro",
+            "type": "paragraph",
+            "label": "About The Impact",
+            "config": {
+              "content": "This defines how you show up for the key people and spheres in your life."
+            }
+          },
+          "impact-for-her": {
+            "id": "impact-for-her",
+            "type": "textarea",
+            "label": "For Her",
+            "helpText": "How do you show up for your partner?",
+            "placeholder": "I am a safe harbor...",
+            "validation": {
+              "required": false,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "I am a safe harbor... consistent, emotionally regulated, and authentic. I offer support without strings and respect the reality of her life. I want her to respect me not only for what I do for her, but for who I am on my own."
+            },
+            "exportable": true,
+            "outputKey": "impact-for-her"
+          },
+          "impact-for-family": {
+            "id": "impact-for-family",
+            "type": "textarea",
+            "label": "For Family",
+            "helpText": "How do you show up for your family?",
+            "placeholder": "I am a source of stability...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "I am a source of stability. I navigate chaos with a level head. I accept that I cannot control others' decisions or fix outcomes. I speak up, clearly, then release outcomes. They own their consequences, but I refuse to be resigned to inaction."
+            },
+            "exportable": true,
+            "outputKey": "impact-for-family"
+          },
+          "impact-for-world": {
+            "id": "impact-for-world",
+            "type": "textarea",
+            "label": "For the World",
+            "helpText": "How do you engage with the world?",
+            "placeholder": "I live fully by engaging deeply, not superficially...",
+            "validation": {
+              "required": true,
+              "minLength": 50
+            },
+            "config": {
+              "rows": 4,
+              "defaultValue": "I live fully by engaging deeply, not superficially. I bring humor, depth, and authentic presence to every room. I leave rooms better than I found them... more alive, hopeful, and steady."
+            },
+            "exportable": true,
+            "outputKey": "impact-for-world"
+          },
+          "vow-statement": {
+            "id": "vow-statement",
+            "type": "textarea",
+            "label": "Your Vow",
+            "helpText": "Write your commitment statement. This is your promise to yourself.",
+            "placeholder": "I refuse to be a passenger in my own life...",
+            "validation": {
+              "required": true,
+              "minLength": 100
+            },
+            "config": {
+              "rows": 6,
+              "defaultValue": "I refuse to be a passenger in my own life. I choose Radical Responsibility. I will be steady under pressure, clean in conscience, and strong in restraint. I will build routines that survive my worst days, tell the truth before defending myself, and serve from strength. I am building a life, spirituality, and legacy I am proud to stand behind."
+            },
+            "exportable": true,
+            "outputKey": "vow-statement"
+          },
+          "vow-signature": {
+            "id": "vow-signature",
+            "type": "text",
+            "label": "Signed",
+            "helpText": "Sign your charter with your name",
+            "placeholder": "Your name",
+            "validation": {
+              "required": true
+            },
+            "exportable": true,
+            "outputKey": "vow-signature"
+          }
+        }
+      },
+      "dataBindings": {
+        "inputs": [],
+        "outputs": [
+          "trait-dependable",
+          "trait-forthright",
+          "trait-generous",
+          "trait-disciplined",
+          "principle-radical-responsibility",
+          "principle-integrity-dark",
+          "principle-valuing-restraint",
+          "principle-faith-alignment",
+          "principle-service-connection",
+          "practice-physical-sovereignty",
+          "practice-mental-clarity",
+          "practice-sustainable-pacing",
+          "impact-for-her",
+          "impact-for-family",
+          "impact-for-world",
+          "vow-statement"
+        ]
+      },
+      "version": 1
+    },
+    {
+      "id": "quarterly-review-plan",
+      "name": "Quarterly Snapshot",
+      "description": "Comprehensive quarterly review and planning session. Evaluate your charter alignment, capture wins, identify patterns, and plan the next quarter.",
+      "guidance": "Set aside 45-60 minutes for this deep dive. Be honest about where you thrived and where you drifted. This is your chance to recalibrate.",
+      "categoryId": "quarterly",
+      "lifecycle": "recurring",
+      "frequency": "quarterly",
+      "order": 1,
+      "icon": "\ud83d\udcca",
+      "color": "#ef4444",
+      "prerequisites": ["personal-charter"],
+      "cooldownDays": 80,
+      "lockedMessage": "Complete your Personal Charter first.",
+      "unlockedMessage": "Time for your quarterly deep dive!",
+      "ui": {
+        "layout": "single-column",
+        "showProgress": true,
+        "collapsibleSections": true,
+        "defaultCollapsed": false,
+        "estimatedMinutes": 45,
+        "introText": "This quarterly snapshot helps you evaluate alignment with your charter, capture wins, identify patterns, and plan the next 90 days."
+      },
+      "content": {
+        "sections": [
+          {
+            "id": "quarter-meta",
+            "title": "Quarterly Snapshot",
+            "description": "Basic quarter information",
+            "icon": "\ud83d\udcc5",
+            "order": 1,
+            "required": true,
+            "fields": ["quarter-select", "quarter-dates", "quarter-theme"]
+          },
+          {
+            "id": "high-level-review",
+            "title": "1. High-Level Review",
+            "description": "Big picture reflection on the quarter",
+            "icon": "\ud83d\udd0d",
+            "order": 2,
+            "required": true,
+            "fields": ["proud-of", "cost-more", "changed-in-me", "lesson-forward"]
+          },
+          {
+            "id": "charter-alignment",
+            "title": "2. Charter Alignment Scorecard",
+            "description": "Rate each area (1 = Off Track, 5 = Strong). Add one sentence of evidence.",
+            "icon": "\ud83c\udfaf",
+            "order": 3,
+            "required": true,
+            "subsections": [
+              {
+                "id": "core-identity-scores",
+                "title": "Core Identity",
+                "fields": ["score-dependable", "score-forthright", "score-generous", "score-disciplined"],
+                "order": 1
+              },
+              {
+                "id": "the-code-scores",
+                "title": "The Code",
+                "fields": ["score-radical-responsibility", "score-integrity-dark", "score-valuing-restraint", "score-faith-alignment", "score-service-connection"],
+                "order": 2
+              },
+              {
+                "id": "the-practice-scores",
+                "title": "The Practice",
+                "fields": ["score-physical-sovereignty", "score-mental-clarity", "score-sustainable-pacing"],
+                "order": 3
+              }
+            ]
+          },
+          {
+            "id": "wins-receipts",
+            "title": "3. Wins & Receipts",
+            "description": "Document your victories this quarter",
+            "icon": "\ud83c\udfc6",
+            "order": 4,
+            "required": true,
+            "fields": ["top-wins", "integrity-receipts"]
+          },
+          {
+            "id": "friction-patterns",
+            "title": "4. Friction & Patterns",
+            "description": "Identify where you struggled and why",
+            "icon": "\u26a0\ufe0f",
+            "order": 5,
+            "required": true,
+            "fields": ["where-drifted", "recurring-triggers", "default-coping", "better-response"]
+          },
+          {
+            "id": "relationships-impact",
+            "title": "5. Relationships & Impact",
+            "description": "Evaluate how you showed up for others",
+            "icon": "\ud83d\udc65",
+            "order": 6,
+            "required": true,
+            "subsections": [
+              {
+                "id": "for-her-review",
+                "title": "For Her",
+                "fields": ["her-showed-well", "her-improve", "her-promise"],
+                "order": 1
+              },
+              {
+                "id": "for-family-review",
+                "title": "For Family",
+                "fields": ["family-spoke-up", "family-boundaries", "family-change"],
+                "order": 2
+              },
+              {
+                "id": "for-world-review",
+                "title": "For the World",
+                "fields": ["world-engaged-deeply", "world-superficial", "world-leave-better"],
+                "order": 3
+              }
+            ]
+          },
+          {
+            "id": "health-energy-systems",
+            "title": "6. Health, Energy, and Systems",
+            "description": "Audit your energy and habits",
+            "icon": "\u26a1",
+            "order": 7,
+            "required": true,
+            "fields": ["energy-raised", "energy-drained", "habits-keep", "habits-start", "habits-stop", "mvd-movement", "mvd-truth-journal", "mvd-connection"]
+          },
+          {
+            "id": "the-plan",
+            "title": "7. The Next Quarter Plan",
+            "description": "Define outcomes and systems for next quarter",
+            "icon": "\ud83d\ude80",
+            "order": 8,
+            "required": true,
+            "fields": ["focus-areas", "constraint", "upgrade"]
+          },
+          {
+            "id": "vow-renewal",
+            "title": "8. The Vow (Renewal)",
+            "description": "Renew your commitment for the next quarter",
+            "icon": "\u2728",
+            "order": 9,
+            "required": true,
+            "fields": ["quarterly-vow", "quarterly-signature"]
+          }
+        ],
+        "fields": {
+          "quarter-select": {
+            "id": "quarter-select",
+            "type": "select",
+            "label": "Quarter",
+            "validation": { "required": true },
+            "config": {
+              "options": [
+                { "value": "Q1", "label": "Q1 (Jan-Mar)" },
+                { "value": "Q2", "label": "Q2 (Apr-Jun)" },
+                { "value": "Q3", "label": "Q3 (Jul-Sep)" },
+                { "value": "Q4", "label": "Q4 (Oct-Dec)" }
+              ]
+            },
+            "exportable": true,
+            "outputKey": "quarter-label"
+          },
+          "quarter-dates": {
+            "id": "quarter-dates",
+            "type": "text",
+            "label": "Dates",
+            "placeholder": "e.g., January 1 - March 31, 2025",
+            "validation": { "required": true },
+            "exportable": true,
+            "outputKey": "quarter-dates"
+          },
+          "quarter-theme": {
+            "id": "quarter-theme",
+            "type": "text",
+            "label": "Theme / Focus Word",
+            "helpText": "One word or phrase that captures this quarter's focus",
+            "placeholder": "e.g., Foundation, Discipline, Growth",
+            "validation": { "required": true },
+            "exportable": true,
+            "outputKey": "quarter-theme"
+          },
+          "proud-of": {
+            "id": "proud-of",
+            "type": "textarea",
+            "label": "What I'm proud of this quarter",
+            "placeholder": "Reflect on your accomplishments and growth...",
+            "validation": { "required": true, "minLength": 50 },
+            "config": { "rows": 4 }
+          },
+          "cost-more": {
+            "id": "cost-more",
+            "type": "textarea",
+            "label": "What hurt or cost more than expected",
+            "placeholder": "Be honest about the challenges and prices paid...",
+            "validation": { "required": true, "minLength": 50 },
+            "config": { "rows": 4 }
+          },
+          "changed-in-me": {
+            "id": "changed-in-me",
+            "type": "textarea",
+            "label": "What changed in me (beliefs, standards, identity)",
+            "placeholder": "How have you evolved this quarter?",
+            "validation": { "required": true, "minLength": 50 },
+            "config": { "rows": 4 }
+          },
+          "lesson-forward": {
+            "id": "lesson-forward",
+            "type": "textarea",
+            "label": "The most important lesson I'm taking forward",
+            "placeholder": "What wisdom will you carry into next quarter?",
+            "validation": { "required": true, "minLength": 30 },
+            "config": { "rows": 3 }
+          },
+          "score-dependable": {
+            "id": "score-dependable",
+            "type": "slider",
+            "label": "Dependable",
+            "helpText": "Add evidence for your rating",
+            "validation": { "required": true },
+            "config": {
+              "min": 1,
+              "max": 5,
+              "step": 1,
+              "showTicks": true,
+              "tickLabels": { "1": "Off Track", "3": "Mixed", "5": "Strong" },
+              "defaultValue": 3
+            }
+          },
+          "score-forthright": {
+            "id": "score-forthright",
+            "type": "slider",
+            "label": "Forthright",
+            "validation": { "required": true },
+            "config": {
+              "min": 1, "max": 5, "step": 1, "showTicks": true,
+              "tickLabels": { "1": "Off Track", "3": "Mixed", "5": "Strong" },
+              "defaultValue": 3
+            }
+          },
+          "score-generous": {
+            "id": "score-generous",
+            "type": "slider",
+            "label": "Generous (Clean giving)",
+            "validation": { "required": true },
+            "config": {
+              "min": 1, "max": 5, "step": 1, "showTicks": true,
+              "tickLabels": { "1": "Off Track", "3": "Mixed", "5": "Strong" },
+              "defaultValue": 3
+            }
+          },
+          "score-disciplined": {
+            "id": "score-disciplined",
+            "type": "slider",
+            "label": "Disciplined",
+            "validation": { "required": true },
+            "config": {
+              "min": 1, "max": 5, "step": 1, "showTicks": true,
+              "tickLabels": { "1": "Off Track", "3": "Mixed", "5": "Strong" },
+              "defaultValue": 3
+            }
+          },
+          "score-radical-responsibility": {
+            "id": "score-radical-responsibility",
+            "type": "slider",
+            "label": "Radical Responsibility",
+            "validation": { "required": true },
+            "config": {
+              "min": 1, "max": 5, "step": 1, "showTicks": true,
+              "tickLabels": { "1": "Off Track", "3": "Mixed", "5": "Strong" },
+              "defaultValue": 3
+            }
+          },
+          "score-integrity-dark": {
+            "id": "score-integrity-dark",
+            "type": "slider",
+            "label": "Integrity in the Dark",
+            "validation": { "required": true },
+            "config": {
+              "min": 1, "max": 5, "step": 1, "showTicks": true,
+              "tickLabels": { "1": "Off Track", "3": "Mixed", "5": "Strong" },
+              "defaultValue": 3
+            }
+          },
+          "score-valuing-restraint": {
+            "id": "score-valuing-restraint",
+            "type": "slider",
+            "label": "Valuing Restraint",
+            "validation": { "required": true },
+            "config": {
+              "min": 1, "max": 5, "step": 1, "showTicks": true,
+              "tickLabels": { "1": "Off Track", "3": "Mixed", "5": "Strong" },
+              "defaultValue": 3
+            }
+          },
+          "score-faith-alignment": {
+            "id": "score-faith-alignment",
+            "type": "slider",
+            "label": "Faith & Alignment",
+            "validation": { "required": true },
+            "config": {
+              "min": 1, "max": 5, "step": 1, "showTicks": true,
+              "tickLabels": { "1": "Off Track", "3": "Mixed", "5": "Strong" },
+              "defaultValue": 3
+            }
+          },
+          "score-service-connection": {
+            "id": "score-service-connection",
+            "type": "slider",
+            "label": "Service & Connection",
+            "validation": { "required": true },
+            "config": {
+              "min": 1, "max": 5, "step": 1, "showTicks": true,
+              "tickLabels": { "1": "Off Track", "3": "Mixed", "5": "Strong" },
+              "defaultValue": 3
+            }
+          },
+          "score-physical-sovereignty": {
+            "id": "score-physical-sovereignty",
+            "type": "slider",
+            "label": "Physical Sovereignty",
+            "validation": { "required": true },
+            "config": {
+              "min": 1, "max": 5, "step": 1, "showTicks": true,
+              "tickLabels": { "1": "Off Track", "3": "Mixed", "5": "Strong" },
+              "defaultValue": 3
+            }
+          },
+          "score-mental-clarity": {
+            "id": "score-mental-clarity",
+            "type": "slider",
+            "label": "Mental Clarity (Truth)",
+            "validation": { "required": true },
+            "config": {
+              "min": 1, "max": 5, "step": 1, "showTicks": true,
+              "tickLabels": { "1": "Off Track", "3": "Mixed", "5": "Strong" },
+              "defaultValue": 3
+            }
+          },
+          "score-sustainable-pacing": {
+            "id": "score-sustainable-pacing",
+            "type": "slider",
+            "label": "Sustainable Pacing",
+            "validation": { "required": true },
+            "config": {
+              "min": 1, "max": 5, "step": 1, "showTicks": true,
+              "tickLabels": { "1": "Off Track", "3": "Mixed", "5": "Strong" },
+              "defaultValue": 3
+            }
+          },
+          "top-wins": {
+            "id": "top-wins",
+            "type": "list",
+            "label": "Top 5 Wins",
+            "helpText": "List your biggest wins this quarter",
+            "validation": { "required": true, "minItems": 3, "maxItems": 5 },
+            "config": {
+              "itemPlaceholder": "Add a win...",
+              "listStyle": "numbered",
+              "minItems": 3,
+              "maxItems": 5
+            },
+            "exportable": true,
+            "outputKey": "top-wins"
+          },
+          "integrity-receipts": {
+            "id": "integrity-receipts",
+            "type": "textarea",
+            "label": "\"Integrity in the Dark\" Receipts",
+            "helpText": "Private choices you're proud of that no one else saw",
+            "placeholder": "Document the times you did the right thing when no one was watching...",
+            "validation": { "required": true, "minLength": 50 },
+            "config": { "rows": 4 }
+          },
+          "where-drifted": {
+            "id": "where-drifted",
+            "type": "textarea",
+            "label": "Where I drifted (be specific)",
+            "placeholder": "Honestly assess where you strayed from your charter...",
+            "validation": { "required": true, "minLength": 50 },
+            "config": { "rows": 4 }
+          },
+          "recurring-triggers": {
+            "id": "recurring-triggers",
+            "type": "textarea",
+            "label": "My recurring triggers (what set me off)",
+            "placeholder": "What situations, people, or circumstances triggered you?",
+            "validation": { "required": true, "minLength": 30 },
+            "config": { "rows": 3 }
+          },
+          "default-coping": {
+            "id": "default-coping",
+            "type": "textarea",
+            "label": "My default coping pattern (what I did when stressed)",
+            "placeholder": "How did you typically respond to stress?",
+            "validation": { "required": true, "minLength": 30 },
+            "config": { "rows": 3 }
+          },
+          "better-response": {
+            "id": "better-response",
+            "type": "textarea",
+            "label": "The better response I want next time",
+            "placeholder": "What would the best version of you do instead?",
+            "validation": { "required": true, "minLength": 30 },
+            "config": { "rows": 3 }
+          },
+          "her-showed-well": {
+            "id": "her-showed-well",
+            "type": "textarea",
+            "label": "How I showed up well",
+            "placeholder": "Ways you were a good partner...",
+            "validation": { "required": false },
+            "config": { "rows": 2 }
+          },
+          "her-improve": {
+            "id": "her-improve",
+            "type": "textarea",
+            "label": "Where I want to improve",
+            "placeholder": "Areas for growth in this relationship...",
+            "validation": { "required": false },
+            "config": { "rows": 2 }
+          },
+          "her-promise": {
+            "id": "her-promise",
+            "type": "textarea",
+            "label": "One promise to myself (not dependent on outcomes)",
+            "placeholder": "A commitment about how you'll show up...",
+            "validation": { "required": false },
+            "config": { "rows": 2 }
+          },
+          "family-spoke-up": {
+            "id": "family-spoke-up",
+            "type": "textarea",
+            "label": "Where I spoke up clearly",
+            "placeholder": "Times you communicated well with family...",
+            "validation": { "required": true },
+            "config": { "rows": 2 }
+          },
+          "family-boundaries": {
+            "id": "family-boundaries",
+            "type": "textarea",
+            "label": "Where I held boundaries / released outcomes",
+            "placeholder": "Times you maintained healthy boundaries...",
+            "validation": { "required": true },
+            "config": { "rows": 2 }
+          },
+          "family-change": {
+            "id": "family-change",
+            "type": "textarea",
+            "label": "One change for next quarter",
+            "placeholder": "What will you do differently?",
+            "validation": { "required": true },
+            "config": { "rows": 2 }
+          },
+          "world-engaged-deeply": {
+            "id": "world-engaged-deeply",
+            "type": "textarea",
+            "label": "Where I engaged deeply",
+            "placeholder": "Times you brought your full presence...",
+            "validation": { "required": true },
+            "config": { "rows": 2 }
+          },
+          "world-superficial": {
+            "id": "world-superficial",
+            "type": "textarea",
+            "label": "Where I was superficial/checked out",
+            "placeholder": "Times you didn't fully show up...",
+            "validation": { "required": true },
+            "config": { "rows": 2 }
+          },
+          "world-leave-better": {
+            "id": "world-leave-better",
+            "type": "textarea",
+            "label": "One way I'll leave rooms better next quarter",
+            "placeholder": "How will you increase your positive impact?",
+            "validation": { "required": true },
+            "config": { "rows": 2 }
+          },
+          "energy-raised": {
+            "id": "energy-raised",
+            "type": "textarea",
+            "label": "What reliably raised my energy",
+            "placeholder": "Activities, people, or practices that energized you...",
+            "validation": { "required": true },
+            "config": { "rows": 2 }
+          },
+          "energy-drained": {
+            "id": "energy-drained",
+            "type": "textarea",
+            "label": "What reliably drained it",
+            "placeholder": "Activities, people, or practices that drained you...",
+            "validation": { "required": true },
+            "config": { "rows": 2 }
+          },
+          "habits-keep": {
+            "id": "habits-keep",
+            "type": "list",
+            "label": "Habits to Keep",
+            "config": {
+              "itemPlaceholder": "Add a habit to keep...",
+              "listStyle": "bulleted",
+              "maxItems": 5
+            }
+          },
+          "habits-start": {
+            "id": "habits-start",
+            "type": "list",
+            "label": "Habits to Start",
+            "config": {
+              "itemPlaceholder": "Add a habit to start...",
+              "listStyle": "bulleted",
+              "maxItems": 5
+            }
+          },
+          "habits-stop": {
+            "id": "habits-stop",
+            "type": "list",
+            "label": "Habits to Stop",
+            "config": {
+              "itemPlaceholder": "Add a habit to stop...",
+              "listStyle": "bulleted",
+              "maxItems": 5
+            }
+          },
+          "mvd-movement": {
+            "id": "mvd-movement",
+            "type": "text",
+            "label": "Movement (Minimum Viable Day)",
+            "helpText": "What's the minimum movement you'll do on your worst days?",
+            "placeholder": "e.g., 10 pushups, 15-min walk"
+          },
+          "mvd-truth-journal": {
+            "id": "mvd-truth-journal",
+            "type": "text",
+            "label": "Truth Journal (Minimum Viable Day)",
+            "helpText": "What's the minimum journaling you'll do on your worst days?",
+            "placeholder": "e.g., 3 sentences, 5 minutes"
+          },
+          "mvd-connection": {
+            "id": "mvd-connection",
+            "type": "text",
+            "label": "Connection (Minimum Viable Day)",
+            "helpText": "What's the minimum connection you'll maintain on your worst days?",
+            "placeholder": "e.g., One text, one call"
+          },
+          "focus-areas": {
+            "id": "focus-areas",
+            "type": "repeatable",
+            "label": "Focus Areas for Next Quarter",
+            "helpText": "Define 2-3 key focus areas with outcomes and lead measures",
+            "validation": { "required": true },
+            "config": {
+              "minItems": 2,
+              "maxItems": 3,
+              "defaultItems": 2,
+              "addLabel": "Add Focus Area",
+              "removeLabel": "Remove",
+              "itemFields": ["focus-area-name", "focus-area-outcome", "focus-area-lead-measures"],
+              "orderable": true,
+              "itemLayout": "vertical"
+            },
+            "exportable": true,
+            "outputKey": "focus-areas"
+          },
+          "focus-area-name": {
+            "id": "focus-area-name",
+            "type": "text",
+            "label": "Area Name",
+            "placeholder": "e.g., Health, Career, Relationships",
+            "validation": { "required": true }
+          },
+          "focus-area-outcome": {
+            "id": "focus-area-outcome",
+            "type": "textarea",
+            "label": "Outcome (Result I want by end of quarter)",
+            "placeholder": "Specific, measurable outcome...",
+            "validation": { "required": true },
+            "config": { "rows": 2 }
+          },
+          "focus-area-lead-measures": {
+            "id": "focus-area-lead-measures",
+            "type": "list",
+            "label": "Lead Measures / Weekly Actions",
+            "helpText": "The habits and actions that make this outcome inevitable",
+            "config": {
+              "itemPlaceholder": "Add a weekly action...",
+              "listStyle": "bulleted",
+              "minItems": 1,
+              "maxItems": 5
+            }
+          },
+          "constraint": {
+            "id": "constraint",
+            "type": "textarea",
+            "label": "One Constraint (What I will NOT do)",
+            "helpText": "What will you intentionally avoid this quarter?",
+            "placeholder": "e.g., I will not check email before 9am...",
+            "validation": { "required": true },
+            "config": { "rows": 2 },
+            "exportable": true,
+            "outputKey": "constraint"
+          },
+          "upgrade": {
+            "id": "upgrade",
+            "type": "textarea",
+            "label": "One Upgrade (Small change, big leverage)",
+            "helpText": "One small change that will have outsized impact",
+            "placeholder": "e.g., Morning routine starts with 10 min meditation...",
+            "validation": { "required": true },
+            "config": { "rows": 2 },
+            "exportable": true,
+            "outputKey": "upgrade"
+          },
+          "quarterly-vow": {
+            "id": "quarterly-vow",
+            "type": "textarea",
+            "label": "Quarterly Vow",
+            "helpText": "Write a short, present-tense vow for the next quarter",
+            "placeholder": "This quarter, I will... I will stay steady under pressure, clean in conscience, and strong in restraint...",
+            "validation": { "required": true, "minLength": 100 },
+            "config": { "rows": 4 }
+          },
+          "quarterly-signature": {
+            "id": "quarterly-signature",
+            "type": "text",
+            "label": "Signed",
+            "validation": { "required": true }
+          }
+        }
+      },
+      "dataBindings": {
+        "inputs": [
+          {
+            "id": "charter-traits",
+            "source": "framework_entry",
+            "sourcePath": "personal-charter.values",
+            "targetFieldId": "charter-alignment",
+            "description": "Pull charter traits for alignment scoring",
+            "required": false
+          }
+        ],
+        "outputs": [
+          "quarter-select",
+          "quarter-theme",
+          "focus-areas",
+          "constraint",
+          "upgrade",
+          "top-wins"
+        ]
+      },
+      "version": 1
+    },
+    {
+      "id": "weekly-scoreboard",
+      "name": "Weekly Scoreboard",
+      "description": "Track your lead measures against quarterly focus areas. Quick weekly check on whether you're executing the plan.",
+      "guidance": "This should take 15-20 minutes. Focus on the lead measures from your quarterly plan. Be honest about what you did and didn't do.",
+      "categoryId": "weekly",
+      "lifecycle": "recurring",
+      "frequency": "weekly",
+      "order": 1,
+      "icon": "\ud83d\udcca",
+      "color": "#10b981",
+      "prerequisites": ["quarterly-review-plan"],
+      "cooldownDays": 5,
+      "lockedMessage": "Complete a Quarterly Review first to set your focus areas.",
+      "unlockedMessage": "Track your weekly progress against your quarterly goals!",
+      "ui": {
+        "layout": "single-column",
+        "showProgress": true,
+        "collapsibleSections": true,
+        "defaultCollapsed": false,
+        "estimatedMinutes": 15,
+        "introText": "Quick weekly check on your lead measures and focus areas."
+      },
+      "content": {
+        "sections": [
+          {
+            "id": "week-context",
+            "title": "Week Context",
+            "description": "Context pulled from your quarterly plan",
+            "icon": "\ud83d\udcc5",
+            "order": 1,
+            "required": true,
+            "fields": ["current-quarter", "week-number", "week-dates"]
+          },
+          {
+            "id": "focus-area-tracking",
+            "title": "Focus Area Tracking",
+            "description": "Score yourself on each lead measure",
+            "icon": "\ud83c\udfaf",
+            "order": 2,
+            "required": true,
+            "fields": ["focus-area-scores"]
+          },
+          {
+            "id": "weekly-wins",
+            "title": "Wins This Week",
+            "description": "What went well?",
+            "icon": "\ud83c\udfc6",
+            "order": 3,
+            "required": true,
+            "fields": ["week-wins", "integrity-moment"]
+          },
+          {
+            "id": "weekly-friction",
+            "title": "Friction & Adjustments",
+            "description": "What got in the way? What will you adjust?",
+            "icon": "\ud83d\udd27",
+            "order": 4,
+            "required": true,
+            "fields": ["week-friction", "next-week-focus"]
+          },
+          {
+            "id": "charter-pulse",
+            "title": "Charter Pulse Check",
+            "description": "Quick alignment check with your charter",
+            "icon": "\ud83d\udc93",
+            "order": 5,
+            "required": false,
+            "fields": ["charter-alignment-quick", "one-thing-better"]
+          }
+        ],
+        "fields": {
+          "current-quarter": {
+            "id": "current-quarter",
+            "type": "text",
+            "label": "Current Quarter",
+            "readOnly": true,
+            "binding": {
+              "expression": "quarterly-review-plan.quarter-label",
+              "mode": "readonly",
+              "fallback": "Q1"
+            }
+          },
+          "week-number": {
+            "id": "week-number",
+            "type": "number",
+            "label": "Week Number",
+            "helpText": "Which week of the quarter is this? (1-13)",
+            "placeholder": "1-13",
+            "validation": { "required": true, "min": 1, "max": 13 },
+            "config": { "min": 1, "max": 13, "step": 1 }
+          },
+          "week-dates": {
+            "id": "week-dates",
+            "type": "text",
+            "label": "Week Dates",
+            "placeholder": "e.g., Jan 6-12, 2025",
+            "validation": { "required": true }
+          },
+          "focus-area-scores": {
+            "id": "focus-area-scores",
+            "type": "repeatable",
+            "label": "Focus Area Lead Measure Tracking",
+            "helpText": "For each focus area, score how well you executed the lead measures this week",
+            "validation": { "required": true },
+            "config": {
+              "minItems": 1,
+              "maxItems": 3,
+              "defaultItems": 2,
+              "addLabel": "Add Focus Area",
+              "itemFields": ["tracking-area-name", "tracking-measures-done", "tracking-score", "tracking-notes"],
+              "orderable": false,
+              "itemLayout": "vertical"
+            },
+            "binding": {
+              "expression": "quarterly-review-plan.focus-areas[*].focus-area-name",
+              "mode": "prefill"
+            }
+          },
+          "tracking-area-name": {
+            "id": "tracking-area-name",
+            "type": "text",
+            "label": "Focus Area",
+            "validation": { "required": true },
+            "binding": {
+              "expression": "quarterly-review-plan.focus-areas[*].focus-area-name",
+              "mode": "prefill"
+            }
+          },
+          "tracking-measures-done": {
+            "id": "tracking-measures-done",
+            "type": "checkbox_group",
+            "label": "Lead Measures Completed",
+            "helpText": "Check off the lead measures you completed this week",
+            "config": {
+              "options": [],
+              "layout": "vertical"
+            },
+            "binding": {
+              "expression": "quarterly-review-plan.focus-areas[*].focus-area-lead-measures",
+              "mode": "prefill",
+              "transform": "toOptions"
+            }
+          },
+          "tracking-score": {
+            "id": "tracking-score",
+            "type": "slider",
+            "label": "Execution Score",
+            "helpText": "How well did you execute on this focus area?",
+            "validation": { "required": true },
+            "config": {
+              "min": 1,
+              "max": 5,
+              "step": 1,
+              "showTicks": true,
+              "tickLabels": { "1": "Poor", "3": "OK", "5": "Excellent" },
+              "defaultValue": 3
+            }
+          },
+          "tracking-notes": {
+            "id": "tracking-notes",
+            "type": "textarea",
+            "label": "Notes",
+            "placeholder": "Any context or adjustments needed?",
+            "config": { "rows": 2 }
+          },
+          "week-wins": {
+            "id": "week-wins",
+            "type": "list",
+            "label": "Wins This Week",
+            "helpText": "What went well? What are you proud of?",
+            "validation": { "required": true, "minItems": 1 },
+            "config": {
+              "itemPlaceholder": "Add a win...",
+              "listStyle": "bulleted",
+              "minItems": 1,
+              "maxItems": 5
+            }
+          },
+          "integrity-moment": {
+            "id": "integrity-moment",
+            "type": "textarea",
+            "label": "Integrity in the Dark Moment",
+            "helpText": "One moment you did the right thing when no one was watching",
+            "placeholder": "Describe a private choice you're proud of...",
+            "config": { "rows": 2 }
+          },
+          "week-friction": {
+            "id": "week-friction",
+            "type": "textarea",
+            "label": "What got in the way?",
+            "helpText": "Obstacles, distractions, or challenges this week",
+            "placeholder": "Be honest about what held you back...",
+            "validation": { "required": true },
+            "config": { "rows": 3 }
+          },
+          "next-week-focus": {
+            "id": "next-week-focus",
+            "type": "textarea",
+            "label": "Next Week Focus",
+            "helpText": "What's the ONE thing you'll focus on next week?",
+            "placeholder": "Your primary focus for next week...",
+            "validation": { "required": true },
+            "config": { "rows": 2 }
+          },
+          "charter-alignment-quick": {
+            "id": "charter-alignment-quick",
+            "type": "slider",
+            "label": "Charter Alignment (Quick Pulse)",
+            "helpText": "How aligned were you with your charter this week?",
+            "config": {
+              "min": 1,
+              "max": 5,
+              "step": 1,
+              "showTicks": true,
+              "tickLabels": { "1": "Off Track", "3": "Mixed", "5": "Strong" },
+              "defaultValue": 3
+            }
+          },
+          "one-thing-better": {
+            "id": "one-thing-better",
+            "type": "textarea",
+            "label": "One Thing to Do Better",
+            "helpText": "If you could improve one thing about this week, what would it be?",
+            "placeholder": "One specific improvement...",
+            "config": { "rows": 2 }
+          }
+        }
+      },
+      "dataBindings": {
+        "inputs": [
+          {
+            "id": "pull-quarter-label",
+            "source": "framework_entry",
+            "sourcePath": "quarterly-review-plan.quarter-label",
+            "targetFieldId": "current-quarter",
+            "transform": "latest",
+            "fallback": "Current Quarter",
+            "required": false,
+            "description": "Pull current quarter label from latest quarterly review"
+          },
+          {
+            "id": "pull-focus-area-names",
+            "source": "framework_entry",
+            "sourcePath": "quarterly-review-plan.focus-areas[*].focus-area-name",
+            "targetFieldId": "focus-area-names",
+            "transform": "latest",
+            "required": false,
+            "description": "Pull focus area names from quarterly plan"
+          },
+          {
+            "id": "pull-lead-measures",
+            "source": "framework_entry",
+            "sourcePath": "quarterly-review-plan.focus-areas[*].focus-area-lead-measures",
+            "targetFieldId": "tracking-items",
+            "transform": "latest",
+            "required": false,
+            "description": "Pull lead measures for tracking"
+          }
+        ],
+        "outputs": [
+          "week-number",
+          "tracking-score",
+          "week-wins"
+        ]
+      },
+      "version": 1
+    },
+    {
+      "id": "reset-protocol",
+      "name": "Reset Protocol",
+      "description": "Use this when you've fallen off track and need to recalibrate. A structured way to acknowledge the slip, understand it, and get back on course.",
+      "guidance": "This is not about self-punishment. It's about honest assessment and recommitment. Be compassionate but truthful with yourself.",
+      "categoryId": "special",
+      "lifecycle": "special",
+      "frequency": "as_needed",
+      "order": 1,
+      "icon": "\ud83d\udd04",
+      "color": "#f59e0b",
+      "prerequisites": ["personal-charter"],
+      "lockedMessage": "Complete your Personal Charter first.",
+      "unlockedMessage": "Use this protocol when you need to get back on track.",
+      "ui": {
+        "layout": "single-column",
+        "showProgress": true,
+        "collapsibleSections": false,
+        "estimatedMinutes": 20,
+        "introText": "This protocol helps you acknowledge where you've drifted, understand why, and recommit to your charter. This is not punishment - it's recalibration."
+      },
+      "content": {
+        "sections": [
+          {
+            "id": "acknowledge",
+            "title": "1. Acknowledge",
+            "description": "Name what happened without judgment",
+            "icon": "\ud83d\udc41\ufe0f",
+            "order": 1,
+            "required": true,
+            "fields": ["what-happened", "how-long", "who-affected"]
+          },
+          {
+            "id": "understand",
+            "title": "2. Understand",
+            "description": "Dig into the why",
+            "icon": "\ud83e\udde0",
+            "order": 2,
+            "required": true,
+            "fields": ["trigger-event", "internal-state", "pattern-recognition", "unmet-need"]
+          },
+          {
+            "id": "recalibrate",
+            "title": "3. Recalibrate",
+            "description": "Adjust and recommit",
+            "icon": "\ud83c\udfaf",
+            "order": 3,
+            "required": true,
+            "fields": ["charter-reminder", "immediate-action", "system-adjustment", "accountability"]
+          },
+          {
+            "id": "recommit",
+            "title": "4. Recommit",
+            "description": "Renew your vow",
+            "icon": "\u2728",
+            "order": 4,
+            "required": true,
+            "fields": ["self-compassion", "reset-vow"]
+          }
+        ],
+        "fields": {
+          "what-happened": {
+            "id": "what-happened",
+            "type": "textarea",
+            "label": "What happened?",
+            "helpText": "Describe the drift or slip factually, without excuses or excessive self-criticism",
+            "placeholder": "I...",
+            "validation": { "required": true, "minLength": 30 },
+            "config": { "rows": 4 }
+          },
+          "how-long": {
+            "id": "how-long",
+            "type": "text",
+            "label": "How long has this been going on?",
+            "placeholder": "e.g., 3 days, 2 weeks, since last month",
+            "validation": { "required": true }
+          },
+          "who-affected": {
+            "id": "who-affected",
+            "type": "textarea",
+            "label": "Who was affected? (including yourself)",
+            "placeholder": "List the people impacted by this drift...",
+            "validation": { "required": true },
+            "config": { "rows": 2 }
+          },
+          "trigger-event": {
+            "id": "trigger-event",
+            "type": "textarea",
+            "label": "What triggered this?",
+            "helpText": "Was there a specific event, situation, or circumstance?",
+            "placeholder": "The trigger was...",
+            "validation": { "required": true },
+            "config": { "rows": 3 }
+          },
+          "internal-state": {
+            "id": "internal-state",
+            "type": "textarea",
+            "label": "What was your internal state?",
+            "helpText": "Tired? Stressed? Lonely? Resentful? Overwhelmed?",
+            "placeholder": "I was feeling...",
+            "validation": { "required": true },
+            "config": { "rows": 3 }
+          },
+          "pattern-recognition": {
+            "id": "pattern-recognition",
+            "type": "textarea",
+            "label": "Is this a recurring pattern?",
+            "helpText": "Have you done this before? Under similar circumstances?",
+            "placeholder": "This pattern shows up when...",
+            "validation": { "required": true },
+            "config": { "rows": 3 }
+          },
+          "unmet-need": {
+            "id": "unmet-need",
+            "type": "textarea",
+            "label": "What need were you trying to meet?",
+            "helpText": "What were you seeking? Comfort? Control? Connection? Escape?",
+            "placeholder": "I was trying to...",
+            "validation": { "required": true },
+            "config": { "rows": 3 }
+          },
+          "charter-reminder": {
+            "id": "charter-reminder",
+            "type": "textarea",
+            "label": "Which part of your charter did you drift from?",
+            "helpText": "Reference the specific identity trait, principle, or practice",
+            "placeholder": "I drifted from my commitment to...",
+            "validation": { "required": true },
+            "config": { "rows": 3 },
+            "binding": {
+              "expression": "personal-charter.vow-statement",
+              "mode": "reference"
+            }
+          },
+          "immediate-action": {
+            "id": "immediate-action",
+            "type": "textarea",
+            "label": "What's ONE thing you can do right now?",
+            "helpText": "A small, immediate action to start getting back on track",
+            "placeholder": "Right now, I will...",
+            "validation": { "required": true },
+            "config": { "rows": 2 }
+          },
+          "system-adjustment": {
+            "id": "system-adjustment",
+            "type": "textarea",
+            "label": "What system or routine needs adjustment?",
+            "helpText": "What could you change to make this less likely to happen again?",
+            "placeholder": "I need to adjust...",
+            "validation": { "required": true },
+            "config": { "rows": 3 }
+          },
+          "accountability": {
+            "id": "accountability",
+            "type": "textarea",
+            "label": "Who will you tell? How will you stay accountable?",
+            "helpText": "Accountability multiplies commitment",
+            "placeholder": "I will tell... and check in by...",
+            "validation": { "required": true },
+            "config": { "rows": 2 }
+          },
+          "self-compassion": {
+            "id": "self-compassion",
+            "type": "textarea",
+            "label": "Self-Compassion Statement",
+            "helpText": "Write something kind but honest to yourself. You're human.",
+            "placeholder": "I acknowledge that... and I'm choosing to...",
+            "validation": { "required": true },
+            "config": { "rows": 3 }
+          },
+          "reset-vow": {
+            "id": "reset-vow",
+            "type": "textarea",
+            "label": "Reset Vow",
+            "helpText": "A short, present-tense recommitment",
+            "placeholder": "Today, I choose to... I will not let this define me. I am getting back on course.",
+            "validation": { "required": true, "minLength": 50 },
+            "config": { "rows": 4 }
+          }
+        }
+      },
+      "dataBindings": {
+        "inputs": [
+          {
+            "id": "pull-charter-vow",
+            "source": "framework_entry",
+            "sourcePath": "personal-charter.vow-statement",
+            "targetFieldId": "charter-reminder",
+            "transform": "latest",
+            "required": false,
+            "description": "Pull vow statement for reference during reset"
+          }
+        ],
+        "outputs": []
+      },
+      "version": 1
+    }
+  ]
+}

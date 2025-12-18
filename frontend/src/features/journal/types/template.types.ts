@@ -118,6 +118,18 @@ export interface Template {
   icon?: string
   color?: string
 
+  /**
+   * Framework ID if this template belongs to a framework
+   * Templates can exist independently or as part of a framework
+   */
+  frameworkId?: string
+
+  /**
+   * Framework name for display purposes
+   * Denormalized for convenience in UI rendering
+   */
+  frameworkName?: string
+
   // Template-level Ellie guidance
   ellie?: {
     onSelect?: EllieGuidance       // When template is selected

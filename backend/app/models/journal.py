@@ -90,6 +90,7 @@ class JournalCreateRequest(JournalBase):
     """
 
     template_id: Optional[str] = Field(None, alias="templateId")
+    framework_id: Optional[str] = Field(None, alias="frameworkId")
     # REMOVED: template_data field - data is embedded in content
 
     model_config = ConfigDict(populate_by_name=True)
@@ -104,6 +105,7 @@ class JournalCreate(JournalBase):
 
     space_id: str = Field(..., alias="spaceId")
     template_id: Optional[str] = Field(None, alias="templateId")
+    framework_id: Optional[str] = Field(None, alias="frameworkId")
     # REMOVED: template_data field - data is embedded in content
 
     model_config = ConfigDict(populate_by_name=True)
@@ -152,6 +154,7 @@ class JournalUpdate(BaseModel):
     emotions: Optional[List[str]] = None  # New field for multiple emotions
     is_pinned: Optional[bool] = Field(None, alias="isPinned")
     template_id: Optional[str] = Field(None, alias="templateId")
+    framework_id: Optional[str] = Field(None, alias="frameworkId")
     # REMOVED: template_data field - data is embedded in content
 
     model_config = ConfigDict(populate_by_name=True)
@@ -202,6 +205,7 @@ class JournalEntry(BaseModel):
     content: str  # Contains markdown with embedded template metadata
     content_tiptap: Optional[Dict[str, Any]] = None  # TipTap JSON format
     template_id: Optional[str] = None  # For tracking which template was used
+    framework_id: Optional[str] = None  # For tracking which framework this belongs to
     # REMOVED: template_data field - data is embedded in content
     tags: List[str] = Field(default_factory=list)
     emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions
@@ -285,6 +289,7 @@ class JournalResponse(BaseModel):
         None, alias="contentTiptap"
     )  # TipTap JSON format
     template_id: Optional[str] = Field(None, alias="templateId")
+    framework_id: Optional[str] = Field(None, alias="frameworkId")
     # REMOVED: template_data field - data is embedded in content
     tags: List[str] = Field(default_factory=list)
     emotions: List[str] = Field(default_factory=list)  # New field for multiple emotions

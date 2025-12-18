@@ -13,11 +13,12 @@ import { regenerateInviteCode, updateSpace } from '../services/spaces';
 import { conversationService } from '../services/conversationService';
 import { ElliePerch } from '../components/ellie';
 import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationContext';
+import { FrameworksTab } from '../components/frameworks';
 import type { SpaceMemberRole, SpaceMember } from '../types';
 import './SpaceDetail.css';
 
 // Valid tab names - defined outside component to avoid recreating on every render
-const VALID_TABS = ['content', 'journals', 'conversations', 'members', 'settings', 'schedules'] as const;
+const VALID_TABS = ['content', 'journals', 'frameworks', 'conversations', 'members', 'settings', 'schedules'] as const;
 type TabName = typeof VALID_TABS[number];
 
 export const SpaceDetail: React.FC = () => {
@@ -503,6 +504,18 @@ export const SpaceDetail: React.FC = () => {
           <button
             type="button"
             role="tab"
+            aria-selected={activeTab === 'frameworks'}
+            aria-controls="frameworks-panel"
+            id="frameworks-tab"
+            onClick={() => handleTabClick('frameworks')}
+            onKeyDown={(e) => handleTabKeyDown(e, 'frameworks')}
+            className={`tab ${activeTab === 'frameworks' ? 'tab--active' : ''}`}
+          >
+            Frameworks
+          </button>
+          <button
+            type="button"
+            role="tab"
             aria-selected={activeTab === 'conversations'}
             aria-controls="conversations-panel"
             id="conversations-tab"
@@ -585,6 +598,17 @@ export const SpaceDetail: React.FC = () => {
             className="tab-panel"
           >
             <JournalList spaceId={spaceId} />
+          </div>
+        )}
+
+        {activeTab === 'frameworks' && spaceId && (
+          <div
+            role="tabpanel"
+            id="frameworks-panel"
+            aria-labelledby="frameworks-tab"
+            className="tab-panel"
+          >
+            <FrameworksTab spaceId={spaceId} />
           </div>
         )}
 
@@ -903,9 +927,11 @@ export const SpaceDetail: React.FC = () => {
         thoughtText={
           activeTab === 'journals'
             ? "Check out your journals! 📖"
-            : activeTab === 'members'
-              ? `${members.length} ${members.length === 1 ? 'member' : 'members'} in this space! 👥`
-              : `Welcome to ${currentSpace.name}! 🏠`
+            : activeTab === 'frameworks'
+              ? "Track your progress! 🎯"
+              : activeTab === 'members'
+                ? `${members.length} ${members.length === 1 ? 'member' : 'members'} in this space! 👥`
+                : `Welcome to ${currentSpace.name}! 🏠`
         }
         size="md"
         onClick={() => setMood(mood === 'playful' ? 'happy' : 'playful')}

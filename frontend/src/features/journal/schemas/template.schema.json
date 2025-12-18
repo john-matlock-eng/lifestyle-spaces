@@ -1,0 +1,360 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://lifestyle-spaces.app/schemas/template.schema.json",
+  "title": "FrameworkTemplate",
+  "description": "Complete template definition within a framework",
+  "type": "object",
+  "required": ["id", "name", "description", "categoryId", "lifecycle", "frequency", "order", "prerequisites", "content"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for this template",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description"
+    },
+    "guidance": {
+      "type": "string",
+      "description": "Detailed guidance for completing this template"
+    },
+    "categoryId": {
+      "type": "string",
+      "description": "Category this template belongs to"
+    },
+    "lifecycle": {
+      "type": "string",
+      "description": "Lifecycle phase of this template",
+      "enum": ["foundation", "recurring", "milestone", "special"]
+    },
+    "frequency": {
+      "type": "string",
+      "description": "How often this template should be used",
+      "enum": ["once", "daily", "weekly", "monthly", "quarterly", "yearly", "as_needed"]
+    },
+    "order": {
+      "type": "integer",
+      "description": "Display order within its category",
+      "minimum": 1
+    },
+    "icon": {
+      "type": "string",
+      "description": "Icon for the template"
+    },
+    "color": {
+      "type": "string",
+      "description": "Color for visual distinction",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "prerequisites": {
+      "type": "array",
+      "description": "Template IDs that must be completed before this one is unlocked",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cooldownDays": {
+      "type": "integer",
+      "description": "Minimum number of days since last use before suggesting again",
+      "minimum": 0
+    },
+    "unlockConditions": {
+      "type": "array",
+      "description": "Custom unlock conditions beyond prerequisites",
+      "items": {
+        "$ref": "#/definitions/UnlockCondition"
+      }
+    },
+    "lockedMessage": {
+      "type": "string",
+      "description": "Guidance text shown when template is locked"
+    },
+    "unlockedMessage": {
+      "type": "string",
+      "description": "Guidance text shown when template becomes available"
+    },
+    "ui": {
+      "$ref": "#/definitions/TemplateUIConfig"
+    },
+    "dataBindings": {
+      "$ref": "#/definitions/TemplateDataBindings"
+    },
+    "content": {
+      "$ref": "#/definitions/TemplateContent"
+    },
+    "version": {
+      "type": "integer",
+      "description": "Version of this template",
+      "minimum": 1,
+      "default": 1
+    }
+  },
+  "definitions": {
+    "UnlockCondition": {
+      "type": "object",
+      "required": ["type", "description"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Type of condition to evaluate",
+          "enum": ["template_count", "days_elapsed", "streak", "field_value", "custom"]
+        },
+        "templateId": {
+          "type": "string",
+          "description": "Template ID to count completions for"
+        },
+        "fieldId": {
+          "type": "string",
+          "description": "Field ID to check value for"
+        },
+        "fieldValue": {
+          "description": "Expected field value or comparison"
+        },
+        "minCount": {
+          "type": "integer",
+          "description": "Minimum count required",
+          "minimum": 0
+        },
+        "minDays": {
+          "type": "integer",
+          "description": "Minimum days required",
+          "minimum": 0
+        },
+        "customId": {
+          "type": "string",
+          "description": "Custom condition identifier for complex logic"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the condition"
+        }
+      }
+    },
+    "TemplateUIConfig": {
+      "type": "object",
+      "required": ["layout"],
+      "properties": {
+        "layout": {
+          "type": "string",
+          "description": "Layout mode for the template",
+          "enum": ["single-column", "two-column", "wizard", "tabbed"]
+        },
+        "showProgress": {
+          "type": "boolean",
+          "description": "Whether to show a progress indicator"
+        },
+        "collapsibleSections": {
+          "type": "boolean",
+          "description": "Whether sections are collapsible"
+        },
+        "defaultCollapsed": {
+          "type": "boolean",
+          "description": "Default collapsed state for sections"
+        },
+        "cssClass": {
+          "type": "string",
+          "description": "Custom CSS class for styling"
+        },
+        "estimatedMinutes": {
+          "type": "integer",
+          "description": "Estimated completion time in minutes",
+          "minimum": 1
+        },
+        "introText": {
+          "type": "string",
+          "description": "Guidance text shown at the top"
+        },
+        "outroText": {
+          "type": "string",
+          "description": "Guidance text shown at the bottom"
+        }
+      }
+    },
+    "TemplateDataBindings": {
+      "type": "object",
+      "required": ["inputs", "outputs"],
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "description": "Bindings that pull data from other sources",
+          "items": {
+            "$ref": "#/definitions/DataBindingMapping"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "description": "Fields that are exposed for other templates to reference",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "DataBindingMapping": {
+      "type": "object",
+      "required": ["id", "source", "sourcePath", "targetFieldId"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this binding"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the data",
+          "enum": ["framework_entry", "user_profile", "computed", "static"]
+        },
+        "sourcePath": {
+          "type": "string",
+          "description": "Path to the source data using dot notation"
+        },
+        "targetFieldId": {
+          "type": "string",
+          "description": "Target field ID in the current template"
+        },
+        "transform": {
+          "type": "string",
+          "description": "Transform function to apply to the source data"
+        },
+        "transformArgs": {
+          "type": "object",
+          "description": "Arguments for the transform function"
+        },
+        "fallback": {
+          "description": "Fallback value if source is not available"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this binding is required"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of this binding"
+        }
+      }
+    },
+    "TemplateContent": {
+      "type": "object",
+      "required": ["sections", "fields"],
+      "properties": {
+        "sections": {
+          "type": "array",
+          "description": "Sections in this template",
+          "items": {
+            "$ref": "#/definitions/TemplateSection"
+          },
+          "minItems": 1
+        },
+        "fields": {
+          "type": "object",
+          "description": "All field definitions keyed by field ID",
+          "additionalProperties": {
+            "$ref": "field.schema.json"
+          }
+        }
+      }
+    },
+    "TemplateSection": {
+      "type": "object",
+      "required": ["id", "title", "order"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this section"
+        },
+        "title": {
+          "type": "string",
+          "description": "Display title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description or guidance text"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon for the section"
+        },
+        "fields": {
+          "type": "array",
+          "description": "Field IDs contained in this section",
+          "items": {
+            "type": "string"
+          }
+        },
+        "subsections": {
+          "type": "array",
+          "description": "Subsections within this section",
+          "items": {
+            "$ref": "#/definitions/TemplateSubsection"
+          }
+        },
+        "order": {
+          "type": "integer",
+          "description": "Display order",
+          "minimum": 1
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this section is required"
+        },
+        "collapsible": {
+          "type": "boolean",
+          "description": "Whether this section is collapsible"
+        },
+        "defaultCollapsed": {
+          "type": "boolean",
+          "description": "Default collapsed state"
+        },
+        "showIf": {
+          "type": "string",
+          "description": "Conditional display expression"
+        }
+      }
+    },
+    "TemplateSubsection": {
+      "type": "object",
+      "required": ["id", "title", "fields", "order"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this subsection"
+        },
+        "title": {
+          "type": "string",
+          "description": "Display title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description or guidance text"
+        },
+        "fields": {
+          "type": "array",
+          "description": "Field IDs contained in this subsection",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "order": {
+          "type": "integer",
+          "description": "Display order",
+          "minimum": 1
+        },
+        "collapsible": {
+          "type": "boolean",
+          "description": "Whether this subsection is collapsible"
+        },
+        "defaultCollapsed": {
+          "type": "boolean",
+          "description": "Default collapsed state"
+        }
+      }
+    }
+  }
+}

@@ -1,3 +1,5 @@
+import type { TemplateFrequency } from './framework.types'
+
 /**
  * Journal entry author information
  */
@@ -27,6 +29,19 @@ export interface JournalEntry {
   wordCount: number
   isPinned: boolean
   author?: JournalAuthor
+
+  /**
+   * Framework ID if this journal was created as part of a framework
+   * Used for tracking progress and organizing framework-related entries
+   */
+  frameworkId?: string
+
+  /**
+   * The frequency context in which this journal was created
+   * e.g., 'daily' for a daily check-in, 'weekly' for a weekly review
+   * Helps with progress tracking and cycle completion
+   */
+  templateFrequency?: TemplateFrequency
 }
 
 /**
@@ -52,6 +67,10 @@ export interface CreateJournalRequest {
   emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
   templateId?: string  // For identifying which template was used
+  /** Framework ID if creating as part of a framework */
+  frameworkId?: string
+  /** Template frequency for framework progress tracking */
+  templateFrequency?: TemplateFrequency
 }
 
 /**
@@ -66,6 +85,10 @@ export interface UpdateJournalRequest {
   emotions?: string[]  // New field for multiple emotion IDs
   isPinned?: boolean
   templateId?: string  // For identifying which template was used
+  /** Framework ID if updating as part of a framework */
+  frameworkId?: string
+  /** Template frequency for framework progress tracking */
+  templateFrequency?: TemplateFrequency
 }
 
 /**

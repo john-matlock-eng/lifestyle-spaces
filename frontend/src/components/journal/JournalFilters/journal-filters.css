@@ -1,0 +1,313 @@
+/**
+ * Journal Filters Styles
+ *
+ * Glassmorphism styling for filter components.
+ */
+
+/* ============================================================================
+   FRAMEWORK FILTER
+   ============================================================================ */
+
+.framework-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.framework-filter__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--theme-text-secondary);
+  white-space: nowrap;
+}
+
+.framework-filter__select {
+  min-width: 180px;
+  padding: 6px 32px 6px 12px;
+  border: 1px solid var(--theme-border-light);
+  border-radius: 6px;
+  background-color: var(--theme-bg-surface);
+  color: var(--theme-text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.framework-filter__select:hover:not(:disabled) {
+  border-color: var(--theme-primary-500);
+}
+
+.framework-filter__select:focus {
+  outline: none;
+  border-color: var(--theme-primary-500);
+  box-shadow: 0 0 0 2px var(--theme-primary-100);
+}
+
+.framework-filter__select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.framework-filter__select option {
+  padding: 8px 12px;
+}
+
+.framework-filter__select option:disabled {
+  color: var(--theme-text-tertiary);
+  font-size: 0.75rem;
+}
+
+/* ============================================================================
+   JOURNAL FILTERS CONTAINER
+   ============================================================================ */
+
+.journal-filters-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  background-color: var(--theme-bg-elevated);
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.journal-filters-search {
+  flex: 1;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+.journal-filters-search__wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.journal-filters-search__icon {
+  position: absolute;
+  left: 12px;
+  color: var(--theme-text-tertiary);
+  pointer-events: none;
+  font-size: 0.875rem;
+}
+
+.journal-filters-search__input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border: 1px solid var(--theme-border-light);
+  border-radius: 6px;
+  background-color: var(--theme-bg-surface);
+  color: var(--theme-text-primary);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.journal-filters-search__input:focus {
+  outline: none;
+  border-color: var(--theme-primary-500);
+  box-shadow: 0 0 0 2px var(--theme-primary-100);
+}
+
+.journal-filters-search__input::placeholder {
+  color: var(--theme-text-tertiary);
+}
+
+.journal-filters-search__clear {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--theme-text-tertiary);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 1rem;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.journal-filters-search__clear:hover {
+  color: var(--theme-text-secondary);
+  background-color: var(--theme-bg-hover);
+}
+
+/* Date Range Filter */
+.date-range-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-range-filter__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--theme-text-secondary);
+  white-space: nowrap;
+}
+
+.date-range-filter__select {
+  min-width: 140px;
+  padding: 6px 32px 6px 12px;
+  border: 1px solid var(--theme-border-light);
+  border-radius: 6px;
+  background-color: var(--theme-bg-surface);
+  color: var(--theme-text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.date-range-filter__select:hover:not(:disabled) {
+  border-color: var(--theme-primary-500);
+}
+
+.date-range-filter__select:focus {
+  outline: none;
+  border-color: var(--theme-primary-500);
+  box-shadow: 0 0 0 2px var(--theme-primary-100);
+}
+
+/* Clear All Filters Button */
+.journal-filters-clear {
+  margin-left: auto;
+  padding: 6px 12px;
+  background-color: transparent;
+  color: var(--theme-text-secondary);
+  border: 1px solid var(--theme-border-light);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.journal-filters-clear:hover {
+  background-color: var(--theme-bg-hover);
+  border-color: var(--theme-primary-500);
+  color: var(--theme-text-primary);
+}
+
+/* Active Filter Indicator */
+.journal-filters-active-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: var(--theme-primary-100);
+  color: var(--theme-primary-700);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* ============================================================================
+   FRAMEWORK BADGE (for JournalCard)
+   ============================================================================ */
+
+.journal-card-framework-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background-color: var(--theme-primary-50);
+  border: 1px solid var(--theme-primary-200);
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--theme-primary-700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.journal-card-framework-badge__icon {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+}
+
+.journal-card-framework-badge__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.journal-card-framework-badge__template {
+  color: var(--theme-text-secondary);
+  font-weight: 400;
+}
+
+.journal-card-framework-badge--standalone {
+  background-color: var(--theme-bg-elevated);
+  border-color: var(--theme-border-light);
+  color: var(--theme-text-secondary);
+}
+
+/* ============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .journal-filters-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .journal-filters-search {
+    max-width: 100%;
+  }
+
+  .framework-filter,
+  .date-range-filter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .framework-filter__select,
+  .date-range-filter__select {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .journal-filters-clear {
+    margin-left: 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  .journal-card-framework-badge {
+    max-width: 150px;
+  }
+}
+
+/* ============================================================================
+   DARK MODE ADJUSTMENTS
+   ============================================================================ */
+
+.dark .framework-filter__select,
+.dark .date-range-filter__select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E");
+}
+
+.dark .journal-card-framework-badge {
+  background-color: var(--theme-primary-900);
+  border-color: var(--theme-primary-700);
+  color: var(--theme-primary-200);
+}
+
+.dark .journal-card-framework-badge--standalone {
+  background-color: var(--theme-bg-elevated);
+  border-color: var(--theme-border-medium);
+  color: var(--theme-text-tertiary);
+}

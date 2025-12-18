@@ -53,7 +53,9 @@ export const journalApi = {
       tags: data.tags || [],
       emotions: data.emotions,
       isPinned: data.isPinned || false,
-      templateId: data.templateId
+      templateId: data.templateId,
+      frameworkId: data.frameworkId,
+      templateFrequency: data.templateFrequency
       // NO templateData field - it's embedded in content!
     })
 
