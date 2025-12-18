@@ -435,6 +435,7 @@ export const JournalCreatePage: React.FC = () => {
           <TemplatePicker
             onSelectTemplate={handleTemplateSelect}
             selectedTemplateId={selectedTemplate?.id}
+            spaceId={spaceId}
           />
           <div className="template-picker-actions">
             <button

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { getTemplates } from '../services/templateApi'
+import { journalApi } from '../services/journalApi'
 import { getFrameworkRegistry } from '../frameworks/definitions'
 import type { Template } from '../types/template.types'
 import type { Framework } from '../types/framework.types'
@@ -8,6 +9,7 @@ import '../styles/template-picker.css'
 interface TemplatePickerProps {
   onSelectTemplate: (template: Template | null) => void
   selectedTemplateId?: string
+  spaceId?: string
 }
 
 /**
@@ -16,17 +18,42 @@ interface TemplatePickerProps {
  */
 export const TemplatePicker: React.FC<TemplatePickerProps> = ({
   onSelectTemplate,
-  selectedTemplateId
+  selectedTemplateId,
+  spaceId
 }) => {
   const [templates, setTemplates] = useState<Template[]>([])
   const [frameworks, setFrameworks] = useState<Framework[]>([])
   const [selectedFramework, setSelectedFramework] = useState<Framework | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [completedTemplateIds, setCompletedTemplateIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     loadTemplates()
   }, [])
+
+  // Load completed templates when a framework is selected
+  useEffect(() => {
+    if (selectedFramework && spaceId) {
+      loadCompletedTemplates(selectedFramework.id)
+    }
+  }, [selectedFramework, spaceId])
+
+  const loadCompletedTemplates = async (frameworkId: string) => {
+    if (!spaceId) return
+    try {
+      const response = await journalApi.getSpaceJournals(spaceId, { pageSize: 100 })
+      const completedIds = new Set<string>()
+      for (const journal of response.journals) {
+        if (journal.frameworkId === frameworkId && journal.templateId) {
+          completedIds.add(journal.templateId)
+        }
+      }
+      setCompletedTemplateIds(completedIds)
+    } catch (err) {
+      console.error('Failed to load completed templates:', err)
+    }
+  }
 
   const loadTemplates = async () => {
     setLoading(true)
@@ -116,19 +143,42 @@ export const TemplatePicker: React.FC<TemplatePickerProps> = ({
     const renderTemplateCard = (templateConfig: Framework['templates'][0], isStarting: boolean = false) => {
       const templateId = templateConfig.templateId || templateConfig.id
       const hasPrerequisites = templateConfig.prerequisites && templateConfig.prerequisites.length > 0
-      const isLocked = hasPrerequisites // For now, show as locked if has prerequisites (TODO: check actual completion)
+      // Check if all prerequisites are completed
+      const prerequisitesMet = !hasPrerequisites || templateConfig.prerequisites!.every(
+        prereqId => completedTemplateIds.has(prereqId)
+      )
+      const isCompleted = templateId ? completedTemplateIds.has(templateId) : false
+      const isLocked = hasPrerequisites && !prerequisitesMet
+
+      // Show "Start Here" only if not completed and is the starting template
+      const showStartHere = isStarting && !isCompleted
 
       return (
         <button
           key={templateId}
           onClick={() => !isLocked && handleSelectFrameworkTemplate(selectedFramework, templateConfig)}
-          className={`template-card ${selectedTemplateId === templateId ? 'selected' : ''} ${isStarting ? 'template-card--starting' : ''} ${isLocked ? 'template-card--locked' : ''}`}
+          className={`template-card ${selectedTemplateId === templateId ? 'selected' : ''} ${showStartHere ? 'template-card--starting' : ''} ${isLocked ? 'template-card--locked' : ''} ${isCompleted ? 'template-card--completed' : ''}`}
           data-template-color={templateConfig.color || selectedFramework.color || ''}
-          aria-label={`${templateConfig.name} template${isLocked ? ' (locked)' : ''}`}
+          aria-label={`${templateConfig.name} template${isLocked ? ' (locked)' : ''}${isCompleted ? ' (completed)' : ''}`}
           disabled={isLocked}
           style={isLocked ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
         >
-          {isStarting && (
+          {isCompleted && (
+            <div style={{
+              position: 'absolute',
+              top: '-8px',
+              right: '-8px',
+              background: 'var(--color-success, #10b981)',
+              color: 'white',
+              padding: '2px 8px',
+              borderRadius: '12px',
+              fontSize: '0.7rem',
+              fontWeight: 600
+            }}>
+              ✓ Done
+            </div>
+          )}
+          {showStartHere && (
             <div style={{
               position: 'absolute',
               top: '-8px',
