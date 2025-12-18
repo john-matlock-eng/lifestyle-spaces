@@ -67,7 +67,7 @@ export function SelectField<TFieldValues extends FieldValues = FieldValues>({
   renderValue,
   clearable = false,
   emptyMessage = 'No options available',
-}: SelectFieldProps<TFieldValues>): JSX.Element {
+}: SelectFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

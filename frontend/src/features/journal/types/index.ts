@@ -24,10 +24,8 @@ export type {
 // ============================================================================
 
 export type {
-  JournalTemplate,
+  Template,
   TemplateSection,
-  TemplatePrompt,
-  TemplatePromptInput,
 } from './template.types'
 
 // ============================================================================
@@ -206,7 +204,7 @@ export type {
 export type {
   Highlight,
   CreateHighlightRequest,
-  HighlightListResponse,
+  GetHighlightsResponse,
 } from './highlight.types'
 
 // ============================================================================
@@ -215,9 +213,9 @@ export type {
 
 export type {
   JournalComment,
-  CreateCommentRequest,
-  UpdateCommentRequest,
-  CommentListResponse,
+  CreateJournalCommentRequest,
+  UpdateJournalCommentRequest,
+  JournalCommentListResponse,
 } from './journalComment.types'
 
 // ============================================================================
@@ -226,6 +224,5 @@ export type {
 
 export type {
   CustomSection,
-  CreateCustomSectionRequest,
-  UpdateCustomSectionRequest,
+  NewCustomSection,
 } from './customSection.types'

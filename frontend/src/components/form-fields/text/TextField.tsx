@@ -52,7 +52,7 @@ export function TextField<TFieldValues extends FieldValues = FieldValues>({
   patternMessage,
   inputType = 'text',
   autoComplete,
-}: TextFieldProps<TFieldValues>): JSX.Element {
+}: TextFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

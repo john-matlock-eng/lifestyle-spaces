@@ -91,14 +91,6 @@ function addDays(date: Date, days: number): Date {
   return result
 }
 
-/**
- * Format a date as ISO string (date only)
- * @internal Reserved for future use
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _formatDate(date: Date): string {
-  return date.toISOString().split('T')[0]
-}
 
 // ============================================================================
 // COOLDOWN MANAGER CLASS

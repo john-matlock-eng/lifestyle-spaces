@@ -44,7 +44,7 @@ export function CheckboxField<TFieldValues extends FieldValues = FieldValues>({
   register,
   checkboxLabel,
   defaultChecked = false,
-}: CheckboxFieldProps<TFieldValues>): JSX.Element {
+}: CheckboxFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

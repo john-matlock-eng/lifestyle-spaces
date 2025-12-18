@@ -54,7 +54,7 @@ export function ChecklistInputField<TFieldValues extends FieldValues = FieldValu
   reorderable = false,
   addButtonLabel = 'Add item',
   defaultValue = [],
-}: ChecklistInputFieldProps<TFieldValues>): JSX.Element {
+}: ChecklistInputFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

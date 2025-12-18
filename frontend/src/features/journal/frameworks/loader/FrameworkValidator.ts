@@ -305,8 +305,10 @@ export class FrameworkValidator {
     // Check duplicate template IDs
     const templateIds = new Map<string, number>()
     for (const template of framework.templates) {
-      const count = (templateIds.get(template.id) || 0) + 1
-      templateIds.set(template.id, count)
+      const id = template.templateId || template.id || ''
+      if (!id) continue
+      const count = (templateIds.get(id) || 0) + 1
+      templateIds.set(id, count)
     }
     for (const [id, count] of templateIds) {
       if (count > 1) {
@@ -332,7 +334,9 @@ export class FrameworkValidator {
     // Build adjacency list
     const graph = new Map<string, string[]>()
     for (const template of framework.templates) {
-      graph.set(template.id, template.prerequisites || [])
+      const templateId = template.templateId || template.id || ''
+      if (!templateId) continue
+      graph.set(templateId, template.prerequisites || [])
     }
 
     // Detect cycles using DFS
@@ -373,8 +377,10 @@ export class FrameworkValidator {
     }
 
     for (const template of framework.templates) {
-      if (!visited.has(template.id)) {
-        detectCycle(template.id)
+      const templateId = template.templateId || template.id || ''
+      if (!templateId) continue
+      if (!visited.has(templateId)) {
+        detectCycle(templateId)
       }
     }
 

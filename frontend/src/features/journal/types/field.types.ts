@@ -50,6 +50,8 @@ export type FieldType =
 export interface FieldValidation {
   /** Whether this field is required */
   required?: boolean
+  /** Custom message for required validation */
+  requiredMessage?: string
   /** Minimum length for text fields */
   minLength?: number
   /** Maximum length for text fields */
@@ -64,10 +66,14 @@ export interface FieldValidation {
   maxItems?: number
   /** Regular expression pattern for text fields */
   pattern?: string
+  /** Custom message for pattern validation */
+  patternMessage?: string
   /** Custom error message when validation fails */
   errorMessage?: string
   /** Custom validation function name (for complex validation) */
   customValidator?: string
+  /** Custom validation function */
+  custom?: (value: unknown, allValues: Record<string, unknown>) => boolean | string
 }
 
 // ============================================================================
@@ -526,7 +532,7 @@ export interface BaseFieldProps {
 /**
  * Props for text field component
  */
-export interface TextFieldProps extends BaseFieldProps {
+export interface TextFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'text' | 'textarea'; config?: TextFieldConfig }
   value: string
   onChange: (value: string) => void
@@ -535,7 +541,7 @@ export interface TextFieldProps extends BaseFieldProps {
 /**
  * Props for rich text field component
  */
-export interface RichTextFieldProps extends BaseFieldProps {
+export interface RichTextFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'rich_text'; config?: RichTextFieldConfig }
   value: string
   onChange: (value: string) => void
@@ -544,7 +550,7 @@ export interface RichTextFieldProps extends BaseFieldProps {
 /**
  * Props for number field component
  */
-export interface NumberFieldProps extends BaseFieldProps {
+export interface NumberFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'number'; config?: NumberFieldConfig }
   value: number | null
   onChange: (value: number | null) => void
@@ -553,7 +559,7 @@ export interface NumberFieldProps extends BaseFieldProps {
 /**
  * Props for rating field component
  */
-export interface RatingFieldProps extends BaseFieldProps {
+export interface RatingFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'rating'; config?: RatingFieldConfig }
   value: number
   onChange: (value: number) => void
@@ -562,7 +568,7 @@ export interface RatingFieldProps extends BaseFieldProps {
 /**
  * Props for slider field component
  */
-export interface SliderFieldProps extends BaseFieldProps {
+export interface SliderFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'slider'; config?: SliderFieldConfig }
   value: number
   onChange: (value: number) => void
@@ -571,7 +577,7 @@ export interface SliderFieldProps extends BaseFieldProps {
 /**
  * Props for select field component
  */
-export interface SelectFieldProps extends BaseFieldProps {
+export interface SelectFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'select'; config?: SelectFieldConfig }
   value: string | null
   onChange: (value: string | null) => void
@@ -580,7 +586,7 @@ export interface SelectFieldProps extends BaseFieldProps {
 /**
  * Props for multi-select field component
  */
-export interface MultiSelectFieldProps extends BaseFieldProps {
+export interface MultiSelectFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'multi_select'; config?: SelectFieldConfig }
   value: string[]
   onChange: (value: string[]) => void
@@ -589,7 +595,7 @@ export interface MultiSelectFieldProps extends BaseFieldProps {
 /**
  * Props for checkbox field component
  */
-export interface CheckboxFieldProps extends BaseFieldProps {
+export interface CheckboxFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'checkbox'; config?: CheckboxFieldConfig }
   value: boolean
   onChange: (value: boolean) => void
@@ -598,7 +604,7 @@ export interface CheckboxFieldProps extends BaseFieldProps {
 /**
  * Props for checkbox group field component
  */
-export interface CheckboxGroupFieldProps extends BaseFieldProps {
+export interface CheckboxGroupFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'checkbox_group'; config?: CheckboxGroupFieldConfig }
   value: string[]
   onChange: (value: string[]) => void
@@ -607,7 +613,7 @@ export interface CheckboxGroupFieldProps extends BaseFieldProps {
 /**
  * Props for radio field component
  */
-export interface RadioFieldProps extends BaseFieldProps {
+export interface RadioFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'radio'; config?: RadioFieldConfig }
   value: string | null
   onChange: (value: string | null) => void
@@ -616,7 +622,7 @@ export interface RadioFieldProps extends BaseFieldProps {
 /**
  * Props for date/time field component
  */
-export interface DateTimeFieldProps extends BaseFieldProps {
+export interface DateTimeFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'date' | 'time' | 'datetime'; config?: DateTimeFieldConfig }
   value: string | null
   onChange: (value: string | null) => void
@@ -625,7 +631,7 @@ export interface DateTimeFieldProps extends BaseFieldProps {
 /**
  * Props for list field component
  */
-export interface ListFieldProps extends BaseFieldProps {
+export interface ListFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'list'; config?: ListFieldConfig }
   value: string[]
   onChange: (value: string[]) => void
@@ -634,7 +640,7 @@ export interface ListFieldProps extends BaseFieldProps {
 /**
  * Props for tags field component
  */
-export interface TagsFieldProps extends BaseFieldProps {
+export interface TagsFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'tags'; config?: TagsFieldConfig }
   value: string[]
   onChange: (value: string[]) => void
@@ -643,7 +649,7 @@ export interface TagsFieldProps extends BaseFieldProps {
 /**
  * Props for emotion field component
  */
-export interface EmotionFieldProps extends BaseFieldProps {
+export interface EmotionFieldProps extends Omit<BaseFieldProps, 'field' | 'value' | 'onChange'> {
   field: FieldDefinition & { type: 'emotions'; config?: EmotionFieldConfig }
   value: string[]
   onChange: (value: string[]) => void

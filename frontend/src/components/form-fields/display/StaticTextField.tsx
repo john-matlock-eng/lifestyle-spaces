@@ -25,7 +25,7 @@ export function StaticTextField({
   variant = 'body',
   className = '',
   testId,
-}: StaticTextFieldProps): JSX.Element {
+}: StaticTextFieldProps) {
   const variantClass = `field-static-text--${variant}`
 
   return (

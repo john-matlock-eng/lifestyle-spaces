@@ -33,7 +33,7 @@ export function FrameworkSection({
   frameworks,
   onFrameworkClick,
   testIdPrefix,
-}: FrameworkSectionProps): JSX.Element {
+}: FrameworkSectionProps) {
   const baseTestId = testIdPrefix ? `${testIdPrefix}-framework-section` : 'framework-section'
 
   return (

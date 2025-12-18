@@ -20,7 +20,7 @@ function groupTemplatesByLifecycle(
 ): Record<string, TemplateWithStatus[]> {
   return templates.reduce(
     (groups, template) => {
-      const lifecycle = template.template.lifecycle
+      const lifecycle = template.template.lifecycle || 'recurring'
       if (!groups[lifecycle]) {
         groups[lifecycle] = []
       }
@@ -94,7 +94,7 @@ export function FrameworkDetailView({
   onEditEntry,
   onLockedTemplateClick,
   testIdPrefix,
-}: FrameworkDetailViewProps): JSX.Element {
+}: FrameworkDetailViewProps) {
   const baseTestId = testIdPrefix ? `${testIdPrefix}-detail` : 'framework-detail'
 
   const groupedTemplates = groupTemplatesByLifecycle(templates)
@@ -110,7 +110,8 @@ export function FrameworkDetailView({
     } else if (templateWithStatus.status === 'in_progress' && templateWithStatus.entryId) {
       onEditEntry?.(templateWithStatus.entryId)
     } else {
-      onSelectTemplate(templateWithStatus.template.id)
+      const templateId = templateWithStatus.template.templateId || templateWithStatus.template.id || ''
+      onSelectTemplate(templateId)
     }
   }
 

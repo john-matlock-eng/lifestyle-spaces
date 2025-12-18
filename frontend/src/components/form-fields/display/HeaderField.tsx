@@ -25,7 +25,7 @@ export function HeaderField({
   level = 2,
   className = '',
   testId,
-}: HeaderFieldProps): JSX.Element {
+}: HeaderFieldProps) {
   const Tag = `h${level}` as 'h1' | 'h2' | 'h3'
   const levelClass = `field-header--level-${level}`
 

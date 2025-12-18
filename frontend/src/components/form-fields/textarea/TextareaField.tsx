@@ -52,7 +52,7 @@ export function TextareaField<TFieldValues extends FieldValues = FieldValues>({
   rows = 3,
   autoResize = false,
   maxHeight,
-}: TextareaFieldProps<TFieldValues>): JSX.Element {
+}: TextareaFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

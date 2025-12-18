@@ -71,7 +71,7 @@ export function DateRangeField<TFieldValues extends FieldValues = FieldValues>({
   maxDate,
   startError,
   endError,
-}: DateRangeFieldProps<TFieldValues>): JSX.Element {
+}: DateRangeFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`
@@ -130,7 +130,7 @@ export function DateRangeField<TFieldValues extends FieldValues = FieldValues>({
     rules.validate = {
       beforeEnd: (value: string) => {
         if (!value || !endValue) return true
-        return value <= endValue || 'Start date must be before or equal to end date'
+        return value <= String(endValue) || 'Start date must be before or equal to end date'
       },
     }
 
@@ -156,7 +156,7 @@ export function DateRangeField<TFieldValues extends FieldValues = FieldValues>({
     rules.validate = {
       afterStart: (value: string) => {
         if (!value || !startValue) return true
-        return value >= startValue || 'End date must be after or equal to start date'
+        return value >= String(startValue) || 'End date must be after or equal to start date'
       },
     }
 

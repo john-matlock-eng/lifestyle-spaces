@@ -59,7 +59,7 @@ export function FrameworkBadge({
   frequencyContext,
   compact = false,
   testId = 'framework-badge',
-}: FrameworkBadgeProps): JSX.Element | null {
+}: FrameworkBadgeProps) {
   // Get framework and template info from registry
   const { framework, template } = useMemo(() => {
     if (!frameworkId) {

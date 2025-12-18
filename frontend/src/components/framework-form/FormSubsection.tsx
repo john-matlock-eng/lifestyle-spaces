@@ -9,7 +9,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { ChevronDown } from 'lucide-react'
-import type { FieldDefinition } from '@/features/journal/types/field.types'
+import type { FieldDefinition } from '@/features/journal/types'
 import { FieldRenderer } from './FieldRenderer'
 import type { FormSubsectionProps } from './types'
 import './framework-form.css'
@@ -40,7 +40,7 @@ export function FormSubsection({
   onFieldChange,
   onFieldBlur,
   testIdPrefix,
-}: FormSubsectionProps): JSX.Element {
+}: FormSubsectionProps) {
   const testId = testIdPrefix ? `${testIdPrefix}-subsection-${subsection.id}` : undefined
 
   // Manage collapsed state
@@ -49,21 +49,21 @@ export function FormSubsection({
   // Toggle collapse
   const toggleCollapse = useCallback(() => {
     if (subsection.collapsible) {
-      setIsCollapsed((prev) => !prev)
+      setIsCollapsed((prev: boolean) => !prev)
     }
   }, [subsection.collapsible])
 
   // Get fields for this subsection
   const subsectionFields = useMemo(() => {
     return subsection.fields
-      .map((fieldId) => fields[fieldId])
-      .filter((field): field is FieldDefinition => field !== undefined)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .map((fieldId: string) => fields[fieldId])
+      .filter((field: FieldDefinition | undefined): field is FieldDefinition => field !== undefined)
+      .sort((a: FieldDefinition, b: FieldDefinition) => (a.order ?? 0) - (b.order ?? 0))
   }, [subsection.fields, fields])
 
   // Check if subsection has any errors
   const hasErrors = useMemo(() => {
-    return subsectionFields.some((field) => errors[field.id])
+    return subsectionFields.some((field: FieldDefinition) => errors[field.id])
   }, [subsectionFields, errors])
 
   // Handle field change

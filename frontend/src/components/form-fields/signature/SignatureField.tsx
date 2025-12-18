@@ -60,7 +60,7 @@ export function SignatureField<TFieldValues extends FieldValues = FieldValues>({
   signatureMaxLength = 100,
   showTimestamp = true,
   defaultValue = { signature: '', timestamp: '' },
-}: SignatureFieldProps<TFieldValues>): JSX.Element {
+}: SignatureFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

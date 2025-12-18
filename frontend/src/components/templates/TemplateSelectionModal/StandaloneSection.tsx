@@ -22,7 +22,7 @@ function StandaloneCard({
   template: StandaloneTemplate
   onClick: () => void
   testId?: string
-}): JSX.Element {
+}) {
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
@@ -120,7 +120,7 @@ export function StandaloneSection({
   templates,
   onTemplateClick,
   testIdPrefix,
-}: StandaloneSectionProps): JSX.Element {
+}: StandaloneSectionProps) {
   const baseTestId = testIdPrefix ? `${testIdPrefix}-standalone-section` : 'standalone-section'
 
   return (

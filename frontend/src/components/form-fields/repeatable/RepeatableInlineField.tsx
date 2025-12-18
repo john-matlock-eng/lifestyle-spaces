@@ -69,7 +69,7 @@ export function RepeatableInlineField<TFieldValues extends FieldValues = FieldVa
   layout = 'row',
   addButtonLabel = 'Add',
   defaultValue = { items: [] },
-}: RepeatableInlineFieldProps<TFieldValues>): JSX.Element {
+}: RepeatableInlineFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`
@@ -277,7 +277,7 @@ export function RepeatableInlineField<TFieldValues extends FieldValues = FieldVa
 
             <div className="field-repeatable-inline-fields">
               {fields.map((fieldDef) => {
-                const fieldValue = item[fieldDef.key]
+                const fieldValue = (item as Record<string, unknown>)[fieldDef.key]
                 const fieldName = `${name}.items.${index}.${fieldDef.key}` as any
 
                 return (

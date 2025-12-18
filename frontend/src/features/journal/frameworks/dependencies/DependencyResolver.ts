@@ -117,7 +117,11 @@ export class DependencyResolver {
     this.graph = buildGraph(framework)
     this.cooldownManager = new CooldownManager(options)
     this.options = options
-    this.templateMap = new Map(framework.templates.map((t) => [t.id, t]))
+    this.templateMap = new Map(
+      framework.templates
+        .filter((t) => t.templateId || t.id)
+        .map((t) => [t.templateId || t.id || '', t as FrameworkTemplate])
+    )
   }
 
   /**
@@ -378,7 +382,7 @@ export class DependencyResolver {
         (t) => t.lifecycle === 'foundation'
       )
       const incompleteFoundations = foundationTemplates.filter(
-        (t) => !hasEntry(t.id, entries)
+        (t) => !hasEntry(t.templateId || t.id || '', entries)
       )
 
       if (incompleteFoundations.length > 0) {
@@ -557,7 +561,9 @@ export class DependencyResolver {
     const results = new Map<string, UnlockEvaluation>()
 
     for (const template of this.framework.templates) {
-      results.set(template.id, this.evaluateUnlock(template.id, progress, entries))
+      const templateId = template.templateId || template.id || ''
+      if (!templateId) continue
+      results.set(templateId, this.evaluateUnlock(templateId, progress, entries))
     }
 
     return results
@@ -638,28 +644,30 @@ export class DependencyResolver {
       }
       // If none are unlocked, return the first in order
       const foundationTemplates = this.framework.templates
-        .filter((t) => summary.incompleteFoundations.includes(t.id))
+        .filter((t) => summary.incompleteFoundations.includes(t.templateId || t.id || ''))
         .sort((a, b) => a.order - b.order)
-      return foundationTemplates[0]?.id || null
+      const firstFoundation = foundationTemplates[0]
+      return firstFoundation ? (firstFoundation.templateId || firstFoundation.id || null) : null
     }
 
     // Priority 2: Recurring templates that are unlocked
     const recurringUnlocked = this.framework.templates
       .filter(
-        (t) => t.lifecycle === 'recurring' && summary.unlockedTemplates.includes(t.id)
+        (t) => t.lifecycle === 'recurring' && summary.unlockedTemplates.includes(t.templateId || t.id || '')
       )
       .sort((a, b) => a.order - b.order)
 
     if (recurringUnlocked.length > 0) {
-      return recurringUnlocked[0].id
+      return recurringUnlocked[0].templateId || recurringUnlocked[0].id || null
     }
 
     // Priority 3: Any unlocked template
     if (summary.unlockedTemplates.length > 0) {
       const unlocked = this.framework.templates
-        .filter((t) => summary.unlockedTemplates.includes(t.id))
+        .filter((t) => summary.unlockedTemplates.includes(t.templateId || t.id || ''))
         .sort((a, b) => a.order - b.order)
-      return unlocked[0]?.id || null
+      const firstUnlocked = unlocked[0]
+      return firstUnlocked ? (firstUnlocked.templateId || firstUnlocked.id || null) : null
     }
 
     return null

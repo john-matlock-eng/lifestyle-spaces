@@ -56,7 +56,7 @@ export function SliderField<TFieldValues extends FieldValues = FieldValues>({
   showValue = true,
   formatValue,
   defaultValue,
-}: SliderFieldProps<TFieldValues>): JSX.Element {
+}: SliderFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

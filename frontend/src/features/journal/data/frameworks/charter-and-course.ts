@@ -47,6 +47,22 @@ This framework helps you:
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 
+  metadata: {
+    schemaVersion: '1.0.0',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    authors: [
+      {
+        id: 'lifestyle-spaces',
+        name: 'Lifestyle Spaces Team',
+      },
+    ],
+    tags: ['life-planning', 'goals', 'values', 'reflection', 'habits'],
+    audience: 'Anyone seeking to live with greater intention and purpose',
+    foundationEstimate: '2-3 weeks',
+    cadenceDescription: 'Daily check-ins (5 min), weekly reviews (15-20 min), monthly deep dives (30-45 min)',
+  },
+
   categories: [
     {
       id: 'foundation',

@@ -52,7 +52,8 @@ function buildTemplatesWithStatus(
   summary: FrameworkSummary | null
 ): TemplateWithStatus[] {
   return framework.templates.map((template) => {
-    const progress = summary?.templateProgress?.find((p) => p.templateId === template.id)
+    const templateId = template.templateId || template.id || ''
+    const progress = summary?.templateProgress?.find((p) => p.templateId === templateId)
 
     let status: TemplateWithStatus['status'] = 'available'
     if (progress) {
@@ -64,7 +65,7 @@ function buildTemplatesWithStatus(
     }
 
     // Check unlock status from summary
-    const unlockStatus = summary?.unlockStatuses?.find((u) => u.templateId === template.id)
+    const unlockStatus = summary?.unlockStatuses?.find((u) => u.templateId === templateId)
     if (unlockStatus && !unlockStatus.isUnlocked) {
       if (unlockStatus.cooldownEndsAt && new Date(unlockStatus.cooldownEndsAt) > new Date()) {
         status = 'cooldown'
@@ -79,7 +80,13 @@ function buildTemplatesWithStatus(
       unlockEvaluation: unlockStatus
         ? {
             isUnlocked: unlockStatus.isUnlocked,
-            blockedReasons: unlockStatus.blockedReasons || [],
+            blockReasons: [],
+            blockedReasons: (unlockStatus.blockedReasons || []).map((r) =>
+              typeof r === 'string' ? { reason: r } : r
+            ),
+            missingPrerequisites: [],
+            progressPercent: unlockStatus.isUnlocked ? 100 : 0,
+            statusMessage: unlockStatus.isUnlocked ? 'Available' : 'Locked',
           }
         : undefined,
       lastCompletedAt: progress?.completedAt,
@@ -106,8 +113,8 @@ function filterFrameworks(
       framework.description.toLowerCase().includes(lowerQuery) ||
       framework.templates.some(
         (t) =>
-          t.name.toLowerCase().includes(lowerQuery) ||
-          t.description.toLowerCase().includes(lowerQuery)
+          t.name?.toLowerCase().includes(lowerQuery) ||
+          t.description?.toLowerCase().includes(lowerQuery)
       )
   )
 }
@@ -151,7 +158,7 @@ export function TemplateSelectionModal({
   initialSearchQuery = '',
   initialFrameworkId,
   testId = 'template-selection-modal',
-}: TemplateSelectionModalProps): JSX.Element | null {
+}: TemplateSelectionModalProps) {
   // View state
   const [view, setView] = useState<ModalView>(initialFrameworkId ? 'framework-detail' : 'list')
   const [selectedFrameworkId, setSelectedFrameworkId] = useState<string | null>(

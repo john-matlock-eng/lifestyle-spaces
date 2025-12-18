@@ -68,7 +68,7 @@ export function RepeatableRatingField<TFieldValues extends FieldValues = FieldVa
   evidenceMaxLength = 300,
   showEvidence = true,
   defaultValue,
-}: RepeatableRatingFieldProps<TFieldValues>): JSX.Element {
+}: RepeatableRatingFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

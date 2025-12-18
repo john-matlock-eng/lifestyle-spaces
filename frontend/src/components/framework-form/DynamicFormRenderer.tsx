@@ -10,7 +10,7 @@
 import { useMemo, useCallback, useEffect, useRef } from 'react'
 import { FormProvider } from 'react-hook-form'
 // FrameworkTemplate type is used via DynamicFormRendererProps which references it
-import type { FieldDefinition } from '@/features/journal/types/field.types'
+// FieldDefinition type is used indirectly through fieldsMap
 import { FormSection } from './FormSection'
 import { FormValidation } from './FormValidation'
 import { FormActions } from './FormActions'
@@ -48,7 +48,7 @@ export function DynamicFormRenderer({
   autoSaveDelay = 2000,
   testId,
   className,
-}: DynamicFormRendererProps): JSX.Element {
+}: DynamicFormRendererProps) {
   const formRef = useRef<HTMLFormElement>(null)
 
   // Initialize form with template
@@ -63,15 +63,9 @@ export function DynamicFormRenderer({
     validationMode: 'onBlur',
   })
 
-  // Build fields lookup map
+  // Build fields lookup map (content.fields is already a Record)
   const fieldsMap = useMemo(() => {
-    const map: Record<string, FieldDefinition> = {}
-    if (template.content?.fields) {
-      for (const field of template.content.fields) {
-        map[field.id] = field
-      }
-    }
-    return map
+    return template.content?.fields ?? {}
   }, [template.content?.fields])
 
   // Sort sections by order

@@ -68,7 +68,7 @@ export function FrameworkFilter({
   frameworks: externalFrameworks,
   testId = 'framework-filter',
   disabled = false,
-}: FrameworkFilterProps): JSX.Element {
+}: FrameworkFilterProps) {
   // Get frameworks from registry or use provided
   const frameworks = useMemo(() => {
     if (externalFrameworks) {

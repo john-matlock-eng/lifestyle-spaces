@@ -249,6 +249,12 @@ export interface TemplateContent {
   sections: TemplateSection[]
   /** All field definitions (keyed by field ID) */
   fields: Record<string, import('./field.types').FieldDefinition>
+  /** Guidance text shown at top of form */
+  guidance?: string
+  /** Label for submit button */
+  submitLabel?: string
+  /** Estimated time to complete in minutes */
+  estimatedMinutes?: number
 }
 
 // ============================================================================
@@ -333,6 +339,10 @@ export interface FrameworkTemplate {
   lockedMessage?: string
   /** Guidance text shown when template becomes available */
   unlockedMessage?: string
+  /** Template ID (optional, defaults to id) */
+  templateId?: string
+  /** Whether this is a foundation (one-time setup) template */
+  isFoundation?: boolean
   /** UI configuration */
   ui?: TemplateUIConfig
   /** Data bindings configuration */
@@ -369,12 +379,20 @@ export interface Framework {
   secondaryColor?: string
   /** Categories within this framework */
   categories: FrameworkCategory[]
-  /** Template definitions */
-  templates: FrameworkTemplate[]
+  /** Template configurations (references to templates) */
+  templates: FrameworkTemplateConfig[]
   /** Framework metadata */
   metadata: FrameworkMetadata
   /** Whether this framework is currently active/available */
   isActive: boolean
+  /** Estimated time to complete foundation templates */
+  foundationEstimate?: string
+  /** Description of the cadence/frequency of templates */
+  cadenceDescription?: string
+  /** When the framework was created */
+  createdAt?: string
+  /** When the framework was last updated */
+  updatedAt?: string
 }
 
 // ============================================================================
@@ -386,8 +404,16 @@ export interface Framework {
  * @deprecated Use FrameworkTemplate instead
  */
 export interface FrameworkTemplateConfig {
-  /** Reference to the template ID */
-  templateId: string
+  /** Reference to the template ID (use either id or templateId) */
+  templateId?: string
+  /** Template identifier (use either id or templateId) */
+  id?: string
+  /** Display name */
+  name?: string
+  /** Short description */
+  description?: string
+  /** Lifecycle phase */
+  lifecycle?: TemplateLifecycle
   /** Category this template belongs to */
   categoryId: string
   /** How often this template should be used */
@@ -395,7 +421,7 @@ export interface FrameworkTemplateConfig {
   /** Display order within its category */
   order: number
   /** Whether this is a foundation (one-time setup) template */
-  isFoundation: boolean
+  isFoundation?: boolean
   /** Template IDs that must be completed before this one is unlocked */
   prerequisites: string[]
   /** Minimum number of days since last use before suggesting again */
@@ -406,6 +432,16 @@ export interface FrameworkTemplateConfig {
   lockedMessage?: string
   /** Guidance text shown when template becomes available */
   unlockedMessage?: string
+  /** Detailed guidance for completing this template */
+  guidance?: string
+  /** Icon for the template */
+  icon?: string
+  /** Color for visual distinction */
+  color?: string
+  /** Template content (sections and fields) */
+  content?: TemplateContent
+  /** Version of this template */
+  version?: number
 }
 
 // ============================================================================
@@ -501,11 +537,27 @@ export interface UserFrameworkProgress {
 /**
  * Result of evaluating whether a template should be unlocked
  */
+/**
+ * Blocked reason detail object
+ */
+export interface BlockedReasonDetail {
+  /** Type of block reason */
+  reason: string
+  /** Additional details about the block */
+  details?: {
+    templateId?: string
+    templateName?: string
+    [key: string]: unknown
+  }
+}
+
 export interface UnlockEvaluation {
   /** Whether the template is unlocked */
   isUnlocked: boolean
   /** If locked, the detailed reasons why */
   blockReasons: UnlockBlockReason[]
+  /** Blocked reasons with details for UI display */
+  blockedReasons?: BlockedReasonDetail[]
   /** Prerequisites that are still incomplete */
   missingPrerequisites: string[]
   /** Percentage progress toward unlock (0-100) */
@@ -526,12 +578,31 @@ export interface UnlockEvaluation {
 export interface FrameworkSummary {
   /** The framework */
   framework: Framework
+  /** Framework ID (convenience property) */
+  frameworkId?: string
   /** User's progress (null if not started) */
   progress: UserFrameworkProgress | null
   /** Number of foundation templates completed */
   foundationsCompleted: number
   /** Total number of foundation templates */
   foundationsTotal: number
+  /** Count of completed templates */
+  completedTemplates?: number
+  /** Progress for each template */
+  templateProgress?: Array<{
+    templateId: string
+    lastCompletedAt?: string
+    completedAt?: string
+    entryId?: string
+    status?: string
+  }>
+  /** Unlock status for each template */
+  unlockStatuses?: Array<{
+    templateId: string
+    isUnlocked: boolean
+    blockedReasons?: Array<string | BlockedReasonDetail>
+    cooldownEndsAt?: string
+  }>
   /** Next recommended template to complete */
   nextRecommendedTemplateId?: string
   /** Templates that are currently unlocked and available */

@@ -21,7 +21,7 @@ export function DividerField({
   className = '',
   spacing = 'medium',
   testId,
-}: DividerFieldProps): JSX.Element {
+}: DividerFieldProps) {
   const spacingClass = `field-divider--${spacing}`
 
   return (

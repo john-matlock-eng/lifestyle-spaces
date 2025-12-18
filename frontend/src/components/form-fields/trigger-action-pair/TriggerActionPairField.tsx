@@ -53,7 +53,7 @@ export function TriggerActionPairField<TFieldValues extends FieldValues = FieldV
   triggerMaxLength = 150,
   actionMaxLength = 150,
   defaultValue = { trigger: '', action: '' },
-}: TriggerActionPairFieldProps<TFieldValues>): JSX.Element {
+}: TriggerActionPairFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

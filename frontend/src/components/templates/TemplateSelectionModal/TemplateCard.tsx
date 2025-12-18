@@ -42,7 +42,7 @@ export function TemplateCard({
   onView,
   onEdit,
   testId,
-}: TemplateCardProps): JSX.Element {
+}: TemplateCardProps) {
   const { template, status, unlockEvaluation, cooldownEndsAt, entryId } = templateWithStatus
 
   const isLocked = status === 'locked'
@@ -101,10 +101,10 @@ export function TemplateCard({
 
           {/* Lifecycle Badge */}
           <span
-            className={`template-card__lifecycle template-card__lifecycle--${template.lifecycle}`}
+            className={`template-card__lifecycle template-card__lifecycle--${template.lifecycle || 'recurring'}`}
             data-testid={testId ? `${testId}-lifecycle` : undefined}
           >
-            {getLifecycleLabel(template.lifecycle)}
+            {getLifecycleLabel(template.lifecycle || 'recurring')}
           </span>
         </div>
 

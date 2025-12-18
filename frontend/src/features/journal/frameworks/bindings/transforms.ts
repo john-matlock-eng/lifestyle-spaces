@@ -522,8 +522,8 @@ export const BUILT_IN_TRANSFORMS: Record<string, TransformDefinition> = {
   toString: {
     fn: toString,
     description: 'Convert to string',
-    inputType: 'any',
-    outputType: 'string',
+    inputType: 'any' as const,
+    outputType: 'string' as const,
   },
   toBoolean: {
     fn: toBoolean,

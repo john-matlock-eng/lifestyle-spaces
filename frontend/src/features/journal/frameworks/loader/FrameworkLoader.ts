@@ -6,7 +6,7 @@
  * @module FrameworkLoader
  */
 
-import type { Framework, FrameworkTemplate, FrameworkCategory } from '../../types/framework.types'
+import type { Framework, FrameworkTemplateConfig, FrameworkCategory } from '../../types/framework.types'
 import { validateFramework, type ValidationResult } from './FrameworkValidator'
 
 // ============================================================================
@@ -213,7 +213,7 @@ export class FrameworkLoader {
   /**
    * Normalize templates
    */
-  private normalizeTemplates(templates: FrameworkTemplate[]): FrameworkTemplate[] {
+  private normalizeTemplates(templates: FrameworkTemplateConfig[]): FrameworkTemplateConfig[] {
     return [...templates]
       .sort((a, b) => {
         // Sort by category first, then by order
@@ -271,7 +271,8 @@ export class FrameworkLoader {
       })),
       templates: framework.templates.map((t) => ({
         ...t,
-        id: prefixId(t.id),
+        id: t.id ? prefixId(t.id) : undefined,
+        templateId: t.templateId ? prefixId(t.templateId) : undefined,
         categoryId: prefixId(t.categoryId),
         prerequisites: t.prerequisites.map(prefixId),
         unlockConditions: t.unlockConditions?.map((cond) => ({

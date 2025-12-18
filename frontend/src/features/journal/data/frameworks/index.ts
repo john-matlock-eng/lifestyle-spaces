@@ -132,7 +132,7 @@ export function getFrameworkTemplateIds(frameworkId: string): string[] {
   const framework = getFrameworkById(frameworkId)
   if (!framework) return []
 
-  return framework.templates.map((t) => t.templateId)
+  return framework.templates.map((t) => t.templateId || t.id || '').filter(Boolean) as string[]
 }
 
 /**
@@ -148,7 +148,8 @@ export function getFoundationTemplateIds(frameworkId: string): string[] {
   return framework.templates
     .filter((t) => t.isFoundation)
     .sort((a, b) => a.order - b.order)
-    .map((t) => t.templateId)
+    .map((t) => t.templateId || t.id || '')
+    .filter(Boolean) as string[]
 }
 
 // Re-export the framework for direct access if needed

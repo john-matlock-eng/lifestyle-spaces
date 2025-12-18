@@ -55,7 +55,7 @@ export function RatingWithEvidenceField<TFieldValues extends FieldValues = Field
   evidencePlaceholder = 'Describe the evidence...',
   evidenceMaxLength = 500,
   defaultValue = { rating: 5, evidence: '' },
-}: RatingWithEvidenceFieldProps<TFieldValues>): JSX.Element {
+}: RatingWithEvidenceFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

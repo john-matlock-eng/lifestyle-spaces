@@ -72,7 +72,7 @@ export function DateField<TFieldValues extends FieldValues = FieldValues>({
   minDate,
   maxDate,
   defaultValue,
-}: DateFieldProps<TFieldValues>): JSX.Element {
+}: DateFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

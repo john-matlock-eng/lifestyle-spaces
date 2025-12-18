@@ -11,12 +11,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo, useCallback, useId } from 'react'
 import type { FieldError } from 'react-hook-form'
-import type { FieldDefinition } from '@/features/journal/types/field.types'
+import type { FieldDefinition } from '@/features/journal/types'
 // ResolvedBinding type is used via FieldRendererProps which references it
-import { hasFieldComponent, renderField } from '@/components/form-fields'
-import type { FieldType as FormFieldType } from '@/components/form-fields/types'
-import type { FieldRendererProps, UnknownFieldProps, BindingMode } from './types'
-import { getBindingMode, isDisplayField, getFieldDefaultValue } from './types'
+import { hasFieldComponent, renderField, type FieldType as FormFieldType } from '../form-fields'
+import type { FieldRendererProps, UnknownFieldProps } from './types'
+import { getBindingMode, getFieldDefaultValue } from './types'
 import './framework-form.css'
 
 // ============================================================================
@@ -86,7 +85,7 @@ function getFormFieldType(fieldType: string): FormFieldType | null {
 /**
  * Fallback component for unknown/unsupported field types
  */
-function UnknownField({ field, testId }: UnknownFieldProps): JSX.Element {
+function UnknownField({ field, testId }: UnknownFieldProps) {
   return (
     <div
       className="field-renderer-unknown"
@@ -136,7 +135,7 @@ export function FieldRenderer({
   onChange,
   onBlur,
   testIdPrefix,
-}: FieldRendererProps): JSX.Element | null {
+}: FieldRendererProps) {
   const generatedId = useId()
   const fieldId = field.id || generatedId
   const testId = testIdPrefix ? `${testIdPrefix}-field-${field.id}` : undefined
@@ -199,8 +198,10 @@ export function FieldRenderer({
     [onChange, isDisabled, isReadOnly]
   )
 
-  // Handle blur
-  const handleBlur = useCallback(() => {
+  // Handle blur (trigger validation on field blur)
+  // Note: This is called by the form but not passed to buildFieldProps
+  // as individual fields handle their own blur events
+  useCallback(() => {
     onBlur?.()
   }, [onBlur])
 
@@ -217,9 +218,6 @@ export function FieldRenderer({
     return <UnknownField field={field} testId={testId} />
   }
 
-  // Skip display fields in read-only form mode (they're already shown in the template)
-  const isDisplay = isDisplayField(field)
-
   // Build props for the field component
   const fieldProps = buildFieldProps({
     field,
@@ -230,10 +228,7 @@ export function FieldRenderer({
     error,
     isDisabled,
     isReadOnly,
-    _isDisplay: isDisplay,
-    _bindingMode: bindingMode,
     handleChange,
-    _handleBlur: handleBlur,
     testId,
   })
 
@@ -268,17 +263,13 @@ interface BuildFieldPropsParams {
   error?: FieldError
   isDisabled: boolean
   isReadOnly: boolean
-  _isDisplay: boolean
-  _bindingMode: BindingMode
   handleChange: (value: unknown) => void
-  _handleBlur: () => void
   testId?: string
 }
 
 /**
  * Build props for the field component based on field type
  */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 function buildFieldProps({
   field,
   fieldId,
@@ -288,13 +279,9 @@ function buildFieldProps({
   error,
   isDisabled,
   isReadOnly,
-  _isDisplay,
-  _bindingMode,
   handleChange,
-  _handleBlur,
   testId,
 }: BuildFieldPropsParams): Record<string, unknown> {
-  /* eslint-enable @typescript-eslint/no-unused-vars */
   const config = field.config as Record<string, unknown> | undefined
 
   // Base props shared by all fields
@@ -340,17 +327,19 @@ function buildFieldProps({
         defaultValue: currentValue as string,
       }
 
-    case 'slider':
+    case 'slider': {
+      const sliderConfig = config as { min?: number; max?: number; step?: number; rangeLabels?: { min?: string; max?: string } } | undefined
       return {
         ...baseProps,
-        min: field.validation?.min ?? config?.min ?? 1,
-        max: field.validation?.max ?? config?.max ?? 10,
-        step: config?.step ?? 1,
+        min: field.validation?.min ?? sliderConfig?.min ?? 1,
+        max: field.validation?.max ?? sliderConfig?.max ?? 10,
+        step: sliderConfig?.step ?? 1,
         showValue: true,
-        minLabel: config?.rangeLabels?.min,
-        maxLabel: config?.rangeLabels?.max,
+        minLabel: sliderConfig?.rangeLabels?.min,
+        maxLabel: sliderConfig?.rangeLabels?.max,
         defaultValue: currentValue as number,
       }
+    }
 
     case 'select':
       return {

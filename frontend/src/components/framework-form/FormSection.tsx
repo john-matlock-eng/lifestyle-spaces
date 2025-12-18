@@ -9,7 +9,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { ChevronDown } from 'lucide-react'
-import type { FieldDefinition } from '@/features/journal/types/field.types'
+import type { FieldDefinition } from '@/features/journal/types'
 import { FieldRenderer } from './FieldRenderer'
 import { FormSubsection } from './FormSubsection'
 import type { FormSectionProps } from './types'
@@ -42,7 +42,7 @@ export function FormSection({
   onFieldBlur,
   testIdPrefix,
   defaultCollapsed,
-}: FormSectionProps): JSX.Element | null {
+}: FormSectionProps) {
   const testId = testIdPrefix ? `${testIdPrefix}-section-${section.id}` : undefined
 
   // Manage collapsed state
@@ -53,7 +53,7 @@ export function FormSection({
   // Toggle collapse
   const toggleCollapse = useCallback(() => {
     if (section.collapsible !== false) {
-      setIsCollapsed((prev) => !prev)
+      setIsCollapsed((prev: boolean) => !prev)
     }
   }, [section.collapsible])
 
@@ -63,9 +63,9 @@ export function FormSection({
       return []
     }
     return (section.fields ?? [])
-      .map((fieldId) => fields[fieldId])
-      .filter((field): field is FieldDefinition => field !== undefined)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .map((fieldId: string) => fields[fieldId])
+      .filter((field: FieldDefinition | undefined): field is FieldDefinition => field !== undefined)
+      .sort((a: FieldDefinition, b: FieldDefinition) => (a.order ?? 0) - (b.order ?? 0))
   }, [section.fields, section.subsections, fields])
 
   // Sort subsections by order
@@ -79,7 +79,7 @@ export function FormSection({
   // Check if section has any errors
   const hasErrors = useMemo(() => {
     // Check direct fields
-    const directFieldErrors = sectionFields.some((field) => errors[field.id])
+    const directFieldErrors = sectionFields.some((field: FieldDefinition) => errors[field.id])
     if (directFieldErrors) return true
 
     // Check subsection fields

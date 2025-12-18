@@ -62,7 +62,7 @@ export function LockedTemplateModal({
   onNavigateToTemplate,
   onBackToFramework,
   testId,
-}: LockedTemplateModalProps): JSX.Element | null {
+}: LockedTemplateModalProps) {
   if (!isOpen) return null
 
   const { template: templateData, status, unlockEvaluation, cooldownEndsAt } = template
@@ -178,9 +178,9 @@ export function LockedTemplateModal({
                   <ul className="locked-template-modal__prerequisites">
                     {prerequisiteTemplates.map((prereq, index) => {
                       if (!prereq) return null
-                      const prereqName = 'template' in prereq ? prereq.template.name : prereq.templateName
-                      const prereqId = 'template' in prereq ? prereq.template.id : prereq.templateId
-                      const prereqLifecycle = 'template' in prereq ? prereq.template.lifecycle : undefined
+                      const prereqName = 'template' in prereq && prereq.template ? prereq.template.name : prereq.templateName
+                      const prereqId = 'template' in prereq && prereq.template ? (prereq.template.templateId || prereq.template.id) : prereq.templateId
+                      const prereqLifecycle = 'template' in prereq && prereq.template ? prereq.template.lifecycle : undefined
 
                       return (
                         <li
@@ -229,7 +229,7 @@ export function LockedTemplateModal({
 
           <div className="locked-template-modal__template-meta">
             <span className="locked-template-modal__meta-item">
-              {getLifecycleLabel(templateData.lifecycle)}
+              {getLifecycleLabel(templateData.lifecycle || 'recurring')}
             </span>
             <span className="locked-template-modal__meta-item">
               {getFrequencyLabel(templateData.frequency)}
@@ -260,7 +260,9 @@ export function LockedTemplateModal({
               onClick={() => {
                 const firstPrereq = prerequisiteTemplates[0]
                 if (firstPrereq) {
-                  const prereqId = 'template' in firstPrereq ? firstPrereq.template.id : firstPrereq.templateId
+                  const prereqId = 'template' in firstPrereq && firstPrereq.template
+                    ? (firstPrereq.template.templateId || firstPrereq.template.id)
+                    : firstPrereq.templateId
                   if (prereqId) onNavigateToTemplate(prereqId)
                 }
               }}

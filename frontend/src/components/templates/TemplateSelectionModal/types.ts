@@ -8,7 +8,7 @@
 
 import type {
   Framework,
-  FrameworkTemplate,
+  FrameworkTemplateConfig,
   FrameworkSummary,
   UnlockEvaluation,
   TemplateFrequency,
@@ -47,7 +47,7 @@ export type TemplateStatus =
  * Enhanced template with status information
  */
 export interface TemplateWithStatus {
-  template: FrameworkTemplate
+  template: FrameworkTemplateConfig
   status: TemplateStatus
   unlockEvaluation?: UnlockEvaluation
   lastCompletedAt?: string

@@ -7,7 +7,7 @@
  * @module DependencyGraph
  */
 
-import type { Framework, FrameworkTemplate } from '../../types/framework.types'
+import type { Framework, FrameworkTemplateConfig } from '../../types/framework.types'
 
 // ============================================================================
 // TYPES
@@ -24,7 +24,7 @@ export interface GraphNode {
   /** Direct dependents (templates that depend on this) */
   dependents: Set<string>
   /** Reference to the template */
-  template: FrameworkTemplate
+  template: FrameworkTemplateConfig
 }
 
 /**
@@ -62,8 +62,10 @@ export class DependencyGraph {
   private buildGraph(): void {
     // First pass: create all nodes
     for (const template of this.framework.templates) {
-      this.nodes.set(template.id, {
-        id: template.id,
+      const templateId = template.templateId || template.id || ''
+      if (!templateId) continue
+      this.nodes.set(templateId, {
+        id: templateId,
         dependencies: new Set(template.prerequisites || []),
         dependents: new Set(),
         template,

@@ -51,7 +51,7 @@ export function YesNoField<TFieldValues extends FieldValues = FieldValues>({
   allowNA = false,
   naLabel = 'N/A',
   defaultValue,
-}: YesNoFieldProps<TFieldValues>): JSX.Element {
+}: YesNoFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

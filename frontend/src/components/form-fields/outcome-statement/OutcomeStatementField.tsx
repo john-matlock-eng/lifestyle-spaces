@@ -62,7 +62,7 @@ export function OutcomeStatementField<TFieldValues extends FieldValues = FieldVa
   statementPlaceholder = 'describe your outcome...',
   statementMaxLength = 200,
   defaultValue = { date: '', statement: '' },
-}: OutcomeStatementFieldProps<TFieldValues>): JSX.Element {
+}: OutcomeStatementFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

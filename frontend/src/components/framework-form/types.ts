@@ -6,14 +6,15 @@
  * @module framework-form/types
  */
 
-import type { FieldError } from 'react-hook-form'
+import type { FieldError, UseFormReturn } from 'react-hook-form'
 import type {
   FrameworkTemplate,
-  TemplateSection,
+  FrameworkTemplateSection as TemplateSection,
   TemplateSubsection,
-} from '@/features/journal/types/framework.types'
-import type { FieldDefinition } from '@/features/journal/types/field.types'
-import type { ResolvedBindings, ResolvedBinding } from '@/features/journal/types/data-binding.types'
+  FieldDefinition,
+  ResolvedBindings,
+  ResolvedBinding,
+} from '@/features/journal/types'
 
 // ============================================================================
 // FIELD RENDERER TYPES
@@ -209,14 +210,7 @@ export interface UseTemplateFormReturn {
   /** Form actions */
   actions: TemplateFormActions
   /** React Hook Form methods for advanced usage */
-  formMethods: {
-    register: ReturnType<typeof import('react-hook-form').useForm>['register']
-    watch: ReturnType<typeof import('react-hook-form').useForm>['watch']
-    setValue: ReturnType<typeof import('react-hook-form').useForm>['setValue']
-    control: ReturnType<typeof import('react-hook-form').useForm>['control']
-    handleSubmit: ReturnType<typeof import('react-hook-form').useForm>['handleSubmit']
-    formState: ReturnType<typeof import('react-hook-form').useForm>['formState']
-  }
+  formMethods: UseFormReturn
 }
 
 // ============================================================================

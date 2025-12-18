@@ -80,7 +80,7 @@ export function JournalFilters({
   hasActiveFilters,
   activeFilterCount,
   testId = 'journal-filters',
-}: JournalFiltersProps): JSX.Element {
+}: JournalFiltersProps) {
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onSearchChange(event.target.value)
   }

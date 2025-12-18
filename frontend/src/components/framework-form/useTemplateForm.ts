@@ -9,7 +9,7 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { useForm, type FieldError } from 'react-hook-form'
-import type { FieldDefinition } from '@/features/journal/types/field.types'
+// FieldDefinition is used indirectly through fieldsMap
 import type {
   UseTemplateFormOptions,
   UseTemplateFormReturn,
@@ -50,7 +50,7 @@ export function useTemplateForm({
 
     // Start with field default values
     if (template.content?.fields) {
-      for (const field of template.content.fields) {
+      for (const field of Object.values(template.content.fields)) {
         values[field.id] = getFieldDefaultValue(field)
       }
     }
@@ -75,11 +75,8 @@ export function useTemplateForm({
   })
 
   const {
-    register,
     watch,
     setValue,
-    control,
-    handleSubmit,
     formState,
     reset,
     clearErrors: clearFormErrors,
@@ -93,15 +90,9 @@ export function useTemplateForm({
   // Auto-save timer ref
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Build fields map for validation
+  // Build fields map for validation (content.fields is already a Record)
   const fieldsMap = useMemo(() => {
-    const map: Record<string, FieldDefinition> = {}
-    if (template.content?.fields) {
-      for (const field of template.content.fields) {
-        map[field.id] = field
-      }
-    }
-    return map
+    return template.content?.fields ?? {}
   }, [template.content?.fields])
 
   // Watch all form values
@@ -407,23 +398,10 @@ export function useTemplateForm({
     }
   }, [autoSaveDraft, autoSaveDelay, onSaveDraft, formState.isDirty, values, saveDraft])
 
-  // Form methods for advanced usage
-  const formMethods = useMemo(
-    () => ({
-      register,
-      watch,
-      setValue,
-      control,
-      handleSubmit,
-      formState,
-    }),
-    [register, watch, setValue, control, handleSubmit, formState]
-  )
-
   return {
     state,
     actions,
-    formMethods,
+    formMethods: form,
   }
 }
 

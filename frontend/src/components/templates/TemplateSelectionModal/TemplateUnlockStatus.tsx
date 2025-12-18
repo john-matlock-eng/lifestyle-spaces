@@ -77,7 +77,7 @@ export function TemplateUnlockStatus({
   cooldownEndsAt,
   compact = false,
   testId,
-}: TemplateUnlockStatusProps): JSX.Element {
+}: TemplateUnlockStatusProps) {
   const statusIcon = getStatusIcon(status)
   const statusLabel = getStatusLabel(status)
 

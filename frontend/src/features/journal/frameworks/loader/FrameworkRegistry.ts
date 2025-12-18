@@ -9,7 +9,7 @@
 
 import type {
   Framework,
-  FrameworkTemplate,
+  FrameworkTemplateConfig,
   FrameworkCategory,
   FrameworkFilter,
 } from '../../types/framework.types'
@@ -52,7 +52,7 @@ export class FrameworkRegistry {
   private static instance: FrameworkRegistry | null = null
 
   private frameworks: Map<string, Framework> = new Map()
-  private templateIndex: Map<string, { frameworkId: string; template: FrameworkTemplate }> = new Map()
+  private templateIndex: Map<string, { frameworkId: string; template: FrameworkTemplateConfig }> = new Map()
   private categoryIndex: Map<string, Framework[]> = new Map()
   private listeners: Set<RegistryEventListener> = new Set()
   private initialized = false
@@ -227,7 +227,7 @@ export class FrameworkRegistry {
    * @param templateId - The template ID
    * @returns The template and its framework ID, or undefined
    */
-  getTemplateById(templateId: string): { frameworkId: string; template: FrameworkTemplate } | undefined {
+  getTemplateById(templateId: string): { frameworkId: string; template: FrameworkTemplateConfig } | undefined {
     return this.templateIndex.get(templateId)
   }
 
@@ -238,12 +238,12 @@ export class FrameworkRegistry {
    * @param templateId - The template ID
    * @returns The template or undefined
    */
-  getTemplate(frameworkId: string, templateId: string): FrameworkTemplate | undefined {
+  getTemplate(frameworkId: string, templateId: string): FrameworkTemplateConfig | undefined {
     const framework = this.frameworks.get(frameworkId)
     if (!framework) {
       return undefined
     }
-    return framework.templates.find((t) => t.id === templateId)
+    return framework.templates.find((t) => (t.templateId || t.id) === templateId)
   }
 
   /**
@@ -252,7 +252,7 @@ export class FrameworkRegistry {
    * @param frameworkId - The framework ID
    * @returns Array of templates or empty array
    */
-  getTemplates(frameworkId: string): FrameworkTemplate[] {
+  getTemplates(frameworkId: string): FrameworkTemplateConfig[] {
     const framework = this.frameworks.get(frameworkId)
     return framework?.templates || []
   }
@@ -277,8 +277,8 @@ export class FrameworkRegistry {
    */
   getTemplatesByLifecycle(
     frameworkId: string,
-    lifecycle: FrameworkTemplate['lifecycle']
-  ): FrameworkTemplate[] {
+    lifecycle: FrameworkTemplateConfig['lifecycle']
+  ): FrameworkTemplateConfig[] {
     return this.getTemplates(frameworkId).filter((t) => t.lifecycle === lifecycle)
   }
 
@@ -291,8 +291,8 @@ export class FrameworkRegistry {
    */
   getTemplatesByFrequency(
     frameworkId: string,
-    frequency: FrameworkTemplate['frequency']
-  ): FrameworkTemplate[] {
+    frequency: FrameworkTemplateConfig['frequency']
+  ): FrameworkTemplateConfig[] {
     return this.getTemplates(frameworkId).filter((t) => t.frequency === frequency)
   }
 
@@ -302,7 +302,7 @@ export class FrameworkRegistry {
    * @param frameworkId - The framework ID
    * @returns Array of foundation templates in order
    */
-  getFoundationTemplates(frameworkId: string): FrameworkTemplate[] {
+  getFoundationTemplates(frameworkId: string): FrameworkTemplateConfig[] {
     return this.getTemplatesByLifecycle(frameworkId, 'foundation').sort(
       (a, b) => a.order - b.order
     )
@@ -315,7 +315,7 @@ export class FrameworkRegistry {
    * @param categoryId - The category ID
    * @returns Array of templates in the category
    */
-  getTemplatesByCategory(frameworkId: string, categoryId: string): FrameworkTemplate[] {
+  getTemplatesByCategory(frameworkId: string, categoryId: string): FrameworkTemplateConfig[] {
     return this.getTemplates(frameworkId)
       .filter((t) => t.categoryId === categoryId)
       .sort((a, b) => a.order - b.order)
@@ -366,7 +366,9 @@ export class FrameworkRegistry {
   private indexFramework(framework: Framework): void {
     // Index templates
     for (const template of framework.templates) {
-      this.templateIndex.set(template.id, {
+      const templateId = template.templateId || template.id
+      if (!templateId) continue
+      this.templateIndex.set(templateId, {
         frameworkId: framework.id,
         template,
       })
@@ -386,7 +388,10 @@ export class FrameworkRegistry {
   private removeFromIndex(framework: Framework): void {
     // Remove templates from index
     for (const template of framework.templates) {
-      this.templateIndex.delete(template.id)
+      const templateId = template.templateId || template.id
+      if (templateId) {
+        this.templateIndex.delete(templateId)
+      }
     }
 
     // Remove from tag index
@@ -450,6 +455,6 @@ export function getAllFrameworks(filter?: FrameworkFilter): Framework[] {
 /**
  * Get a template from the global registry
  */
-export function getTemplate(frameworkId: string, templateId: string): FrameworkTemplate | undefined {
+export function getTemplate(frameworkId: string, templateId: string): FrameworkTemplateConfig | undefined {
   return frameworkRegistry.getTemplate(frameworkId, templateId)
 }

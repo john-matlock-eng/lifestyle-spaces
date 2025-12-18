@@ -31,7 +31,7 @@ export function FormValidation({
   showSummary = true,
   onErrorClick,
   testId,
-}: FormValidationProps): JSX.Element | null {
+}: FormValidationProps) {
   // Convert errors to displayable format
   const validationErrors = useMemo((): ValidationError[] => {
     const errorList: ValidationError[] = []

@@ -195,10 +195,10 @@ export function initializeFieldRegistry(): void {
   registerField('date', DateField)
   registerField('date-range', DateRangeField)
 
-  // Display fields
-  registerField('header', HeaderField)
-  registerField('static-text', StaticTextField)
-  registerField('divider', DividerField)
+  // Display fields (cast as any since they have different props than input fields)
+  registerField('header', HeaderField as any)
+  registerField('static-text', StaticTextField as any)
+  registerField('divider', DividerField as any)
 
   // Composite fields
   registerField('fraction-tracker', FractionTrackerField)

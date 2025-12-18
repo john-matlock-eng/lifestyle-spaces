@@ -38,7 +38,7 @@ export function FormActions({
   draftLabel = 'Save Draft',
   showShortcuts = true,
   testId,
-}: FormActionsProps): JSX.Element | null {
+}: FormActionsProps) {
   const { isSubmitting, isSavingDraft, isDirty, isValid, hasUnsavedChanges, lastSaved } = formState
 
   // Determine if actions should be disabled

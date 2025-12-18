@@ -49,7 +49,7 @@ export function FractionTrackerField<TFieldValues extends FieldValues = FieldVal
   maxDenominator = 100,
   showQuickFill = true,
   defaultValue = { numerator: 0, denominator: 1 },
-}: FractionTrackerFieldProps<TFieldValues>): JSX.Element {
+}: FractionTrackerFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

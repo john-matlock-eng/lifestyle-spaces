@@ -52,7 +52,7 @@ export function CheckboxWithTextField<TFieldValues extends FieldValues = FieldVa
   textMaxLength = 200,
   textRequired = false,
   defaultValue = { checked: false, text: '' },
-}: CheckboxWithTextFieldProps<TFieldValues>): JSX.Element {
+}: CheckboxWithTextFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`

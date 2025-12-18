@@ -75,7 +75,7 @@ export function RepeatableBlockField<TFieldValues extends FieldValues = FieldVal
   defaultCollapsed = false,
   addButtonLabel = 'Add Item',
   defaultValue = { items: [] },
-}: RepeatableBlockFieldProps<TFieldValues>): JSX.Element {
+}: RepeatableBlockFieldProps<TFieldValues>) {
   const generatedId = useId()
   const fieldId = id || generatedId
   const errorId = `${fieldId}-error`
@@ -406,7 +406,7 @@ export function RepeatableBlockField<TFieldValues extends FieldValues = FieldVal
               {!isCollapsed && (
                 <div className="field-repeatable-item-content">
                   {fields.map((fieldDef) => {
-                    const fieldValue = item[fieldDef.key]
+                    const fieldValue = (item as Record<string, unknown>)[fieldDef.key]
                     const fieldName = `${name}.items.${index}.${fieldDef.key}` as any
 
                     return (
