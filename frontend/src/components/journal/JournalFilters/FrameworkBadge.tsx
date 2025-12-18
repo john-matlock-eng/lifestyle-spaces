@@ -8,7 +8,7 @@
  */
 
 import { useMemo } from 'react'
-import { frameworkRegistry } from '@/features/journal/frameworks'
+import { getFrameworkRegistry } from '@/features/journal/frameworks'
 import './journal-filters.css'
 
 /**
@@ -66,7 +66,8 @@ export function FrameworkBadge({
       return { framework: null, template: null }
     }
 
-    const fw = frameworkRegistry.get(frameworkId)
+    const registry = getFrameworkRegistry()
+    const fw = registry.get(frameworkId)
     if (!fw) {
       return { framework: null, template: null }
     }
