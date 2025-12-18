@@ -115,6 +115,24 @@ class Settings(BaseSettings):
     cors_allow_methods: List[str] = Field(default=["*"], description="Allowed CORS methods")
     cors_allow_headers: List[str] = Field(default=["*"], description="Allowed CORS headers")
 
+    # Pinecone Vector Store Configuration
+    pinecone_host: str = Field(
+        default="https://journals-5pzznwb.svc.aped-4627-b74a.pinecone.io",
+        description="Pinecone index host URL",
+    )
+    pinecone_secret_name: str = Field(
+        default="lifestyle-spaces/pinecone-api-key",
+        description="AWS Secrets Manager secret name for Pinecone API key",
+    )
+    pinecone_index_name: str = Field(
+        default="journals",
+        description="Pinecone index name",
+    )
+    pinecone_embedding_model: str = Field(
+        default="llama-text-embed-v2",
+        description="Pinecone integrated embedding model",
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env.test" if os.getenv("PYTEST_CURRENT_TEST") else ".env",
         env_file_encoding="utf-8",

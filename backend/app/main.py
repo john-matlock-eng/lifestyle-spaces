@@ -128,6 +128,7 @@ from app.api.routes import (
     activities,
     journal_comments,
     conversations,
+    search,
 )
 
 # Include API routers
@@ -144,3 +145,4 @@ app.include_router(websocket_highlights.router)
 app.include_router(activities.router)
 app.include_router(journal_comments.router)
 app.include_router(conversations.router)
+app.include_router(search.router)
