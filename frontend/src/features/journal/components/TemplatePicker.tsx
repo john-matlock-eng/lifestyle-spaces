@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { getTemplates } from '../services/templateApi'
-import { getAllFrameworks } from '../data/frameworks'
+import { getFrameworkRegistry } from '../frameworks/definitions'
 import type { Template } from '../types/template.types'
 import type { Framework } from '../types/framework.types'
 import '../styles/template-picker.css'
@@ -35,7 +35,7 @@ export const TemplatePicker: React.FC<TemplatePickerProps> = ({
       // Load both frameworks and standalone templates
       const [templateResponse, frameworkList] = await Promise.all([
         getTemplates().catch(() => ({ templates: [] })),
-        Promise.resolve(getAllFrameworks({ isActive: true }))
+        Promise.resolve(getFrameworkRegistry().getAll({ isActive: true }))
       ])
       setTemplates(templateResponse.templates)
       setFrameworks(frameworkList)
