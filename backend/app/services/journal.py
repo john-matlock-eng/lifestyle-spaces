@@ -115,22 +115,25 @@ class JournalService:
                 is_pinned=journal_data.get("is_pinned", False),
             )
 
-            # Run async indexing
+            # Run async indexing synchronously to ensure it completes before Lambda terminates
             indexer = get_journal_indexer()
 
-            # Create a new event loop for the background task if needed
             try:
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
-                    # If we're in an async context, schedule it
-                    asyncio.create_task(indexer.index_journal(journal_entry))
+                    # In async context, need to run in a new thread to avoid blocking
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, indexer.index_journal(journal_entry))
+                        result = future.result(timeout=10)  # 10 second timeout
+                        logger.info(f"[INDEX] Indexed journal {journal_data['journal_id']}: {result.status}")
                 else:
-                    loop.run_until_complete(indexer.index_journal(journal_entry))
+                    result = loop.run_until_complete(indexer.index_journal(journal_entry))
+                    logger.info(f"[INDEX] Indexed journal {journal_data['journal_id']}: {result.status}")
             except RuntimeError:
                 # No event loop, create one
-                asyncio.run(indexer.index_journal(journal_entry))
-
-            logger.info(f"[INDEX] Indexed journal {journal_data['journal_id']}")
+                result = asyncio.run(indexer.index_journal(journal_entry))
+                logger.info(f"[INDEX] Indexed journal {journal_data['journal_id']}: {result.status}")
 
         except Exception as e:
             # Log but don't fail - indexing is not critical
@@ -138,26 +141,29 @@ class JournalService:
 
     def _delete_from_index_background(self, journal_id: str, space_id: str) -> None:
         """
-        Delete a journal from the index in the background.
+        Delete a journal from the index.
 
-        This is fire-and-forget - deletion failures don't affect the main operation.
+        Runs synchronously to ensure completion before Lambda terminates.
         """
         try:
             from app.services.journal_indexer import get_journal_indexer
 
             indexer = get_journal_indexer()
 
-            # Create a new event loop for the background task if needed
             try:
                 loop = asyncio.get_event_loop()
                 if loop.is_running():
-                    asyncio.create_task(indexer.delete_journal(journal_id, space_id))
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, indexer.delete_journal(journal_id, space_id))
+                        success = future.result(timeout=10)
+                        logger.info(f"[INDEX] Deleted journal {journal_id} from index: {success}")
                 else:
-                    loop.run_until_complete(indexer.delete_journal(journal_id, space_id))
+                    success = loop.run_until_complete(indexer.delete_journal(journal_id, space_id))
+                    logger.info(f"[INDEX] Deleted journal {journal_id} from index: {success}")
             except RuntimeError:
-                asyncio.run(indexer.delete_journal(journal_id, space_id))
-
-            logger.info(f"[INDEX] Deleted journal {journal_id} from index")
+                success = asyncio.run(indexer.delete_journal(journal_id, space_id))
+                logger.info(f"[INDEX] Deleted journal {journal_id} from index: {success}")
 
         except Exception as e:
             # Log but don't fail - deletion from index is not critical
