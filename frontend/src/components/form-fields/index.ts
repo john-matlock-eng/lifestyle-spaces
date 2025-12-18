@@ -160,6 +160,7 @@ export {
 // ============================================================================
 
 import { registerField } from './registry'
+import type { FieldComponent } from './types'
 import { TextField } from './text'
 import { TextareaField } from './textarea'
 import { SliderField } from './slider'
@@ -195,10 +196,13 @@ export function initializeFieldRegistry(): void {
   registerField('date', DateField)
   registerField('date-range', DateRangeField)
 
-  // Display fields (cast as any since they have different props than input fields)
-  registerField('header', HeaderField as any)
-  registerField('static-text', StaticTextField as any)
-  registerField('divider', DividerField as any)
+  // Display fields (cast needed since they have different props than input fields)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  registerField('header', HeaderField as FieldComponent<any>)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  registerField('static-text', StaticTextField as FieldComponent<any>)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  registerField('divider', DividerField as FieldComponent<any>)
 
   // Composite fields
   registerField('fraction-tracker', FractionTrackerField)
