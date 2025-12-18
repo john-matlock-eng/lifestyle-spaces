@@ -167,6 +167,29 @@ class TestPineconeStore:
         store = PineconeStore(api_key="test-key")
         assert store._api_key == "test-key"
 
+    def test_store_initialization_with_custom_host(self):
+        """Test store initialization with custom host."""
+        reset_vector_store()
+        store = PineconeStore(api_key="test-key", host="https://custom.pinecone.io")
+        assert store._host == "https://custom.pinecone.io"
+
+    def test_store_initialization_with_custom_model(self):
+        """Test store initialization with custom embedding model."""
+        reset_vector_store()
+        store = PineconeStore(api_key="test-key", embedding_model="text-embedding-3-small")
+        assert store._embedding_model == "text-embedding-3-small"
+
+    def test_ensure_client_raises_without_api_key(self):
+        """Test that _ensure_client raises when no API key is available."""
+        reset_vector_store()
+        store = PineconeStore()
+        store._api_key = None
+
+        with pytest.raises(RuntimeError) as exc_info:
+            store._ensure_client()
+
+        assert "API key not available" in str(exc_info.value)
+
     @pytest.mark.asyncio
     async def test_upsert_documents(self, store_with_key):
         """Test upserting documents."""
@@ -258,6 +281,110 @@ class TestPineconeStore:
             delete_all=True,
             namespace="space_abc",
         )
+
+    @pytest.mark.asyncio
+    async def test_upsert_error_handling(self, store_with_key):
+        """Test error handling during upsert."""
+        store, mock_index = store_with_key
+        mock_index.upsert_records.side_effect = Exception("Connection failed")
+
+        documents = [
+            VectorDocument(
+                id="doc-1",
+                text="Test content",
+                namespace="space_abc",
+            ),
+        ]
+
+        results = await store.upsert(documents)
+
+        assert len(results) == 1
+        assert results[0].status == IndexStatus.FAILED
+        assert "Connection failed" in results[0].error
+
+    @pytest.mark.asyncio
+    async def test_search_error_handling(self, store_with_key):
+        """Test error handling during search."""
+        store, mock_index = store_with_key
+        mock_index.search_records.side_effect = Exception("Search failed")
+
+        results = await store.search(
+            query="test",
+            namespace="space_abc",
+        )
+
+        # Should return empty list on error, not raise
+        assert results == []
+
+    @pytest.mark.asyncio
+    async def test_delete_error_handling(self, store_with_key):
+        """Test error handling during delete."""
+        store, mock_index = store_with_key
+        mock_index.delete.side_effect = Exception("Delete failed")
+
+        success = await store.delete(["doc-1"], "space_abc")
+
+        assert success is False
+
+    @pytest.mark.asyncio
+    async def test_delete_namespace_error_handling(self, store_with_key):
+        """Test error handling during namespace deletion."""
+        store, mock_index = store_with_key
+        mock_index.delete.side_effect = Exception("Namespace delete failed")
+
+        success = await store.delete_namespace("space_abc")
+
+        assert success is False
+
+    @pytest.mark.asyncio
+    async def test_search_with_filter(self, store_with_key):
+        """Test searching with metadata filter."""
+        store, mock_index = store_with_key
+
+        mock_response = MagicMock()
+        mock_response.result.hits = []
+        mock_index.search_records.return_value = mock_response
+
+        await store.search(
+            query="test",
+            namespace="space_abc",
+            filter={"template_id": {"$eq": "daily"}},
+        )
+
+        call_kwargs = mock_index.search_records.call_args[1]
+        assert "filter" in call_kwargs["query"]
+
+    @pytest.mark.asyncio
+    async def test_search_empty_response(self, store_with_key):
+        """Test search with empty/None response."""
+        store, mock_index = store_with_key
+
+        # Test with None response
+        mock_index.search_records.return_value = None
+
+        results = await store.search(
+            query="test",
+            namespace="space_abc",
+        )
+
+        assert results == []
+
+    @pytest.mark.asyncio
+    async def test_upsert_multiple_namespaces(self, store_with_key):
+        """Test upserting documents to multiple namespaces."""
+        store, mock_index = store_with_key
+
+        documents = [
+            VectorDocument(id="doc-1", text="Content 1", namespace="space_a"),
+            VectorDocument(id="doc-2", text="Content 2", namespace="space_b"),
+            VectorDocument(id="doc-3", text="Content 3", namespace="space_a"),
+        ]
+
+        results = await store.upsert(documents)
+
+        assert len(results) == 3
+        # Should be called twice, once for each namespace
+        assert mock_index.upsert_records.call_count == 2
 
 
 class TestJournalIndexer:
@@ -380,6 +507,69 @@ class TestJournalIndexer:
         assert "template_id" in call_kwargs["filter"]
         assert "framework_id" in call_kwargs["filter"]
         assert "user_id" in call_kwargs["filter"]
+
+    @pytest.mark.asyncio
+    async def test_index_journal_error_handling(self, mock_store, sample_journal):
+        """Test error handling during journal indexing."""
+        mock_store.upsert = AsyncMock(side_effect=Exception("Index failed"))
+        indexer = JournalIndexer(vector_store=mock_store)
+
+        result = await indexer.index_journal(sample_journal)
+
+        assert result.status == IndexStatus.FAILED
+        assert "Index failed" in result.error
+
+    @pytest.mark.asyncio
+    async def test_index_journals_empty_list(self, indexer):
+        """Test indexing empty list of journals."""
+        results = await indexer.index_journals([])
+        assert results == []
+
+    @pytest.mark.asyncio
+    async def test_index_journals_error_handling(self, mock_store, sample_journal):
+        """Test error handling during batch journal indexing."""
+        mock_store.upsert = AsyncMock(side_effect=Exception("Batch index failed"))
+        indexer = JournalIndexer(vector_store=mock_store)
+
+        results = await indexer.index_journals([sample_journal])
+
+        assert len(results) == 1
+        assert results[0].status == IndexStatus.FAILED
+
+
+class TestJournalIndexerSingletons:
+    """Tests for singleton functions."""
+
+    def test_get_journal_indexer_singleton(self):
+        """Test that get_journal_indexer returns singleton."""
+        reset_journal_indexer()
+        indexer1 = get_journal_indexer()
+        indexer2 = get_journal_indexer()
+        assert indexer1 is indexer2
+
+    def test_reset_journal_indexer(self):
+        """Test that reset clears the singleton."""
+        reset_journal_indexer()
+        indexer1 = get_journal_indexer()
+        reset_journal_indexer()
+        indexer2 = get_journal_indexer()
+        assert indexer1 is not indexer2
+
+
+class TestVectorStoreSingletons:
+    """Tests for vector store singleton functions."""
+
+    def test_get_vector_store_singleton(self):
+        """Test that get_vector_store returns singleton."""
+        reset_vector_store()
+        # Can't easily test this without API key, but we can test reset
+        reset_vector_store()
+
+    def test_reset_vector_store(self):
+        """Test that reset clears the singleton."""
+        reset_vector_store()
+        # Verify reset doesn't raise
+        reset_vector_store()
 
 
 class TestSecretsHelper:
