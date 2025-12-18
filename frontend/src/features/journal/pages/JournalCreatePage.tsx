@@ -314,7 +314,8 @@ export const JournalCreatePage: React.FC = () => {
         contentTiptap: contentTiptapToSave || undefined,
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         emotions: emotions.length > 0 ? emotions : undefined,
-        templateId: selectedTemplate?.id
+        templateId: selectedTemplate?.id,
+        frameworkId: selectedTemplate?.frameworkId
         // NO templateData field!
       })
 
