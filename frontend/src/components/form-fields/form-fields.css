@@ -176,6 +176,95 @@
 }
 
 /* ============================================================================
+   NUMBER FIELD STYLES
+   ============================================================================ */
+
+.field-input-wrapper--number {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.field-input--number {
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+  flex: 1;
+  min-width: 60px;
+}
+
+.field-input--number::-webkit-outer-spin-button,
+.field-input--number::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.field-number-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--theme-text-secondary, rgba(255, 255, 255, 0.7));
+  font-size: 1.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.field-number-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--theme-text-primary, #fff);
+}
+
+.field-number-button:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.field-number-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field-number-button--decrement {
+  border-radius: 6px 0 0 6px;
+}
+
+.field-number-button--increment {
+  border-radius: 0 6px 6px 0;
+}
+
+.field-number-prefix,
+.field-number-suffix {
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--theme-text-secondary, rgba(255, 255, 255, 0.5));
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.field-number-prefix {
+  border-radius: 6px 0 0 6px;
+}
+
+.field-number-suffix {
+  border-radius: 0 6px 6px 0;
+}
+
+.field-hint {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--theme-text-tertiary, rgba(255, 255, 255, 0.4));
+}
+
+/* ============================================================================
    SLIDER STYLES
    ============================================================================ */
 

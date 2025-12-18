@@ -26,6 +26,7 @@ import type {
 export type FieldType =
   | 'text'
   | 'textarea'
+  | 'number'
   | 'slider'
   | 'select'
   | 'yes-no'
@@ -195,6 +196,31 @@ export interface TextareaFieldProps<TFieldValues extends FieldValues = FieldValu
   autoResize?: boolean
   /** Maximum height for auto-resize (in pixels) */
   maxHeight?: number
+}
+
+// ============================================================================
+// NUMBER FIELD PROPS
+// ============================================================================
+
+/**
+ * Props specific to number input fields
+ */
+export interface NumberFieldProps<TFieldValues extends FieldValues = FieldValues>
+  extends FormFieldProps<TFieldValues> {
+  /** Minimum value */
+  min?: number
+  /** Maximum value */
+  max?: number
+  /** Step increment */
+  step?: number
+  /** Default value */
+  defaultValue?: number
+  /** Show increment/decrement buttons */
+  showButtons?: boolean
+  /** Prefix text (e.g., "$") */
+  prefix?: string
+  /** Suffix text (e.g., "%") */
+  suffix?: string
 }
 
 // ============================================================================
@@ -414,6 +440,7 @@ export type FieldComponent<P = BaseFieldProps> = React.ComponentType<P>
 export interface FieldPropsMap<TFieldValues extends FieldValues = FieldValues> {
   text: TextFieldProps<TFieldValues>
   textarea: TextareaFieldProps<TFieldValues>
+  number: NumberFieldProps<TFieldValues>
   slider: SliderFieldProps<TFieldValues>
   select: SelectFieldProps<TFieldValues>
   'yes-no': YesNoFieldProps<TFieldValues>

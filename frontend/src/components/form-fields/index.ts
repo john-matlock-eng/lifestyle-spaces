@@ -37,6 +37,7 @@ export type {
   FormFieldProps,
   TextFieldProps,
   TextareaFieldProps,
+  NumberFieldProps,
   SliderFieldProps,
   SelectFieldProps,
   YesNoFieldProps,
@@ -94,6 +95,8 @@ export {
   registerFields,
   onRegistryChange,
   renderField,
+  resolveFieldType,
+  FIELD_TYPE_ALIASES,
   type RegistryEventType,
   type RegistryEventListener,
 } from './registry'
@@ -104,6 +107,7 @@ export {
 
 export { TextField } from './text'
 export { TextareaField } from './textarea'
+export { NumberField } from './number'
 export { SliderField } from './slider'
 export { SelectField } from './select'
 export { YesNoField } from './yes-no'
@@ -163,6 +167,7 @@ import { registerField } from './registry'
 import type { FieldComponent } from './types'
 import { TextField } from './text'
 import { TextareaField } from './textarea'
+import { NumberField } from './number'
 import { SliderField } from './slider'
 import { SelectField } from './select'
 import { YesNoField } from './yes-no'
@@ -189,6 +194,7 @@ export function initializeFieldRegistry(): void {
   // Input fields
   registerField('text', TextField)
   registerField('textarea', TextareaField)
+  registerField('number', NumberField)
   registerField('slider', SliderField)
   registerField('select', SelectField)
   registerField('yes-no', YesNoField)

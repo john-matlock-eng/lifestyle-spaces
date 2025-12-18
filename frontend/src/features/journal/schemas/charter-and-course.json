@@ -136,7 +136,7 @@
           "identity-intro": {
             "id": "identity-intro",
             "type": "paragraph",
-            "label": "",
+            "label": "About Core Identity",
             "config": {
               "content": "These are the traits that define you when you're operating at your highest level. Be specific and honest about who you aspire to be consistently."
             }
@@ -212,7 +212,7 @@
           "code-intro": {
             "id": "code-intro",
             "type": "paragraph",
-            "label": "",
+            "label": "About The Code",
             "config": {
               "content": "These are the non-negotiable principles that guide your decisions and actions. They form the moral foundation of your life."
             }
@@ -305,7 +305,7 @@
           "practice-intro": {
             "id": "practice-intro",
             "type": "paragraph",
-            "label": "",
+            "label": "About The Practice",
             "config": {
               "content": "These are the daily and weekly habits that build the foundation for your identity. They are the guardrails that keep you on course."
             }
@@ -364,7 +364,7 @@
           "impact-intro": {
             "id": "impact-intro",
             "type": "paragraph",
-            "label": "",
+            "label": "About The Impact",
             "config": {
               "content": "This defines how you show up for the key people and spheres in your life."
             }

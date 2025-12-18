@@ -10,6 +10,42 @@
 import type { FieldType, FieldComponent, BaseFieldProps } from './types'
 
 // ============================================================================
+// TYPE ALIASES
+// ============================================================================
+
+/**
+ * Maps alternative field type names to their canonical registered types.
+ * This allows JSON schemas to use semantic names that map to actual components.
+ */
+const FIELD_TYPE_ALIASES: Record<string, FieldType> = {
+  // JSON uses 'list' for dynamic lists, we use 'checklist-input'
+  'list': 'checklist-input',
+  // JSON uses 'paragraph' for static text, we use 'static-text'
+  'paragraph': 'static-text',
+  // JSON uses 'repeatable' generically, we default to 'repeatable-block'
+  'repeatable': 'repeatable-block',
+  // Additional aliases for flexibility
+  'rich-text': 'textarea', // Fallback if rich-text not implemented
+  'checkbox_group': 'checklist-input', // Snake_case variant
+}
+
+/**
+ * Resolve a field type to its canonical registered name
+ *
+ * @param type - The field type to resolve (may be an alias)
+ * @returns The canonical field type name
+ *
+ * @example
+ * ```ts
+ * resolveFieldType('list') // returns 'checklist-input'
+ * resolveFieldType('text') // returns 'text' (no alias)
+ * ```
+ */
+export function resolveFieldType(type: string): FieldType {
+  return (FIELD_TYPE_ALIASES[type] || type) as FieldType
+}
+
+// ============================================================================
 // REGISTRY IMPLEMENTATION
 // ============================================================================
 
@@ -51,8 +87,9 @@ export function registerField<P extends BaseFieldProps>(
 
 /**
  * Get the component registered for a field type
+ * Automatically resolves type aliases.
  *
- * @param type - The field type to look up
+ * @param type - The field type to look up (can be an alias)
  * @returns The registered component or undefined if not found
  *
  * @example
@@ -61,22 +98,28 @@ export function registerField<P extends BaseFieldProps>(
  * if (TextField) {
  *   return <TextField {...props} />
  * }
+ *
+ * // Works with aliases too
+ * const ListField = getFieldComponent('list') // returns checklist-input component
  * ```
  */
 export function getFieldComponent<P extends BaseFieldProps = BaseFieldProps>(
-  type: FieldType
+  type: string
 ): FieldComponent<P> | undefined {
-  return fieldRegistry.get(type) as FieldComponent<P> | undefined
+  const resolvedType = resolveFieldType(type)
+  return fieldRegistry.get(resolvedType) as FieldComponent<P> | undefined
 }
 
 /**
  * Check if a field type is registered
+ * Automatically resolves type aliases.
  *
- * @param type - The field type to check
+ * @param type - The field type to check (can be an alias)
  * @returns true if the type is registered
  */
-export function hasFieldComponent(type: FieldType): boolean {
-  return fieldRegistry.has(type)
+export function hasFieldComponent(type: string): boolean {
+  const resolvedType = resolveFieldType(type)
+  return fieldRegistry.has(resolvedType)
 }
 
 /**
@@ -190,9 +233,9 @@ function notifyListeners(type: FieldType, event: RegistryEventType): void {
 // ============================================================================
 
 /**
- * Render a field by type
+ * Render a field by type (resolves aliases automatically)
  *
- * @param type - The field type to render
+ * @param type - The field type to render (can be an alias)
  * @param props - Props to pass to the field component
  * @returns The rendered field component or null if type not found
  *
@@ -205,15 +248,21 @@ function notifyListeners(type: FieldType, event: RegistryEventType): void {
  *     error,
  *   })
  * }
+ *
+ * // Works with aliases
+ * renderField('list', props) // renders checklist-input component
+ * renderField('paragraph', props) // renders static-text component
  * ```
  */
 export function renderField<P extends BaseFieldProps>(
-  type: FieldType,
+  type: string,
   props: P
 ): React.ReactElement | null {
-  const Component = getFieldComponent(type)
+  const resolvedType = resolveFieldType(type)
+  const Component = fieldRegistry.get(resolvedType)
+
   if (!Component) {
-    console.warn(`No component registered for field type: ${type}`)
+    console.warn(`No component registered for field type: ${type} (resolved: ${resolvedType})`)
     return null
   }
 
@@ -225,5 +274,5 @@ export function renderField<P extends BaseFieldProps>(
 // EXPORTS
 // ============================================================================
 
-export { fieldRegistry }
+export { fieldRegistry, FIELD_TYPE_ALIASES }
 export type { RegistryEventType, RegistryEventListener }
