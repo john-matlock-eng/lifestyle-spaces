@@ -27,8 +27,8 @@ requests==2.32.3
 # LLM Integration
 anthropic==0.40.0
 
-# Vector Store
-pinecone[grpc]>=3.0.0
+# Vector Store (REST client - lighter weight than grpc)
+pinecone>=3.0.0
 
 # Date/time utilities
 pytz==2023.3.post1
