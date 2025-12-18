@@ -7,6 +7,7 @@
  * @module form-fields/yes-no/YesNoField
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useId, useMemo, useCallback } from 'react'
 import type { FieldValues } from 'react-hook-form'
 import type { YesNoFieldProps } from '../types'

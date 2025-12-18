@@ -7,6 +7,7 @@
  * @module form-fields/checklist-input/ChecklistInputField
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useId, useMemo, useCallback, useEffect, useState, useRef } from 'react'
 import type { FieldValues } from 'react-hook-form'
 import type { ChecklistInputFieldProps } from '../types'
@@ -157,6 +158,7 @@ export function ChecklistInputField<TFieldValues extends FieldValues = FieldValu
   }, [ariaDescribedBy, description, error, descriptionId, errorId])
 
   // Hidden input for form registration
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { ref: _ref, ...registerProps } = register(name, {
     required: required ? 'This field is required' : false,
     validate: {

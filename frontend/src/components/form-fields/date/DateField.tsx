@@ -7,6 +7,7 @@
  * @module form-fields/date/DateField
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useId, useMemo, useEffect } from 'react'
 import type { FieldValues } from 'react-hook-form'
 import type { DateFieldProps } from '../types'

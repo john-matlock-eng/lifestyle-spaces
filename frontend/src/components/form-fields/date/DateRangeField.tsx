@@ -7,7 +7,7 @@
  * @module form-fields/date/DateRangeField
  */
 
-import { useId, useMemo, useCallback, useEffect } from 'react'
+import { useId, useMemo } from 'react'
 import type { FieldValues } from 'react-hook-form'
 import type { DateRangeFieldProps } from '../types'
 import '../form-fields.css'
@@ -50,7 +50,8 @@ function formatDateForInput(date: Date | string | undefined): string {
  */
 export function DateRangeField<TFieldValues extends FieldValues = FieldValues>({
   id,
-  name,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  name: _name,
   label,
   description,
   required = false,
@@ -179,9 +180,6 @@ export function DateRangeField<TFieldValues extends FieldValues = FieldValues>({
     if (endError) ids.push(endErrorId)
     return ids.length > 0 ? ids.join(' ') : undefined
   }, [ariaDescribedBy, description, endError, descriptionId, endErrorId])
-
-  // Combined error (general field error)
-  const hasError = error || startError || endError
 
   // Wrapper classes
   const getWrapperClasses = (fieldError?: typeof error) =>

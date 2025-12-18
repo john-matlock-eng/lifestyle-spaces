@@ -19,7 +19,9 @@ import {
 import type { BaseFieldProps } from '../types'
 
 // Mock component for testing
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const MockTextField = (_props: BaseFieldProps) => null
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const MockSelectField = (_props: BaseFieldProps) => null
 
 describe('registry', () => {

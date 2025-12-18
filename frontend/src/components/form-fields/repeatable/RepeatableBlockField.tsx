@@ -7,6 +7,7 @@
  * @module form-fields/repeatable/RepeatableBlockField
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useId, useMemo, useCallback, useEffect, useState } from 'react'
 import type { FieldValues } from 'react-hook-form'
 import type {
@@ -116,6 +117,7 @@ export function RepeatableBlockField<TFieldValues extends FieldValues = FieldVal
         setCollapsedItems(new Set(initialItems.map((item) => item._id)))
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setValue, name, defaultValue, watch, minItems, defaultCollapsed])
 
   // Create an empty item with default field values
@@ -245,6 +247,7 @@ export function RepeatableBlockField<TFieldValues extends FieldValues = FieldVal
   }, [ariaDescribedBy, description, error, descriptionId, errorId])
 
   // Hidden input for form registration
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { ref: _ref, ...registerProps } = register(name, {
     required: required ? 'This field is required' : false,
     validate: {

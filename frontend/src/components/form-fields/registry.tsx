@@ -6,6 +6,7 @@
  * @module form-fields/registry
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { FieldType, FieldComponent, BaseFieldProps } from './types'
 
 // ============================================================================
@@ -216,7 +217,6 @@ export function renderField<P extends BaseFieldProps>(
     return null
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const FieldComponent = Component as React.ComponentType<any>
   return <FieldComponent {...props} />
 }

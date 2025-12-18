@@ -516,6 +516,7 @@ export class DependencyResolver {
     template: FrameworkTemplate,
     isUnlocked: boolean,
     blockReasons: UnlockBlockReason[],
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _cooldownResult: CooldownResult
   ): string {
     if (isUnlocked) {

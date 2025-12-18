@@ -7,6 +7,7 @@
  * @module form-fields/outcome-statement/OutcomeStatementField
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useId, useMemo, useCallback, useEffect } from 'react'
 import type { FieldValues } from 'react-hook-form'
 import type { OutcomeStatementFieldProps, OutcomeStatementValue } from '../types'
@@ -115,6 +116,7 @@ export function OutcomeStatementField<TFieldValues extends FieldValues = FieldVa
   }, [ariaDescribedBy, description, error, descriptionId, errorId])
 
   // Hidden input for form registration
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { ref: _ref, ...registerProps } = register(name, {
     required: required ? 'This field is required' : false,
     validate: {

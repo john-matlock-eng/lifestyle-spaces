@@ -7,6 +7,7 @@
  * @module form-fields/rating-with-evidence/RatingWithEvidenceField
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useId, useMemo, useCallback, useEffect, useRef } from 'react'
 import type { FieldValues } from 'react-hook-form'
 import type { RatingWithEvidenceFieldProps, RatingWithEvidenceValue } from '../types'
@@ -118,6 +119,7 @@ export function RatingWithEvidenceField<TFieldValues extends FieldValues = Field
   }, [ariaDescribedBy, description, error, descriptionId, errorId])
 
   // Hidden input for form registration
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { ref: _ref, ...registerProps } = register(name, {
     required: required ? 'This field is required' : false,
     validate: {

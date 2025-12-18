@@ -7,6 +7,7 @@
  * @module form-fields/select/SelectField
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   useId,
   useMemo,

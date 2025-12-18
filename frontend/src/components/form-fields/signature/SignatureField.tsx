@@ -7,6 +7,7 @@
  * @module form-fields/signature/SignatureField
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useId, useMemo, useCallback, useEffect } from 'react'
 import type { FieldValues } from 'react-hook-form'
 import type { SignatureFieldProps, SignatureValue } from '../types'
@@ -109,6 +110,7 @@ export function SignatureField<TFieldValues extends FieldValues = FieldValues>({
   }, [ariaDescribedBy, description, error, descriptionId, errorId])
 
   // Hidden input for form registration
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { ref: _ref, ...registerProps } = register(name, {
     required: required ? 'Signature is required' : false,
     validate: {

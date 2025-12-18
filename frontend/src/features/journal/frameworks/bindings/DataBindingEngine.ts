@@ -500,6 +500,7 @@ export class DataBindingEngine {
  * Create a data binding engine with in-memory entries
  */
 export function createBindingEngine(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _entries: JournalEntry[] = [],
   options?: Omit<DataBindingEngineOptions, 'provider'>
 ): DataBindingEngine {

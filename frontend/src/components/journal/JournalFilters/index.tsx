@@ -185,6 +185,7 @@ export { FrameworkFilter } from './FrameworkFilter'
 export type { FrameworkFilterValue, FrameworkFilterProps } from './FrameworkFilter'
 export { FrameworkBadge } from './FrameworkBadge'
 export type { FrameworkBadgeProps } from './FrameworkBadge'
+// eslint-disable-next-line react-refresh/only-export-components
 export { useJournalFilters } from './useJournalFilters'
 export type { DateRangeFilterValue, JournalFilterState, UseJournalFiltersReturn } from './useJournalFilters'
 

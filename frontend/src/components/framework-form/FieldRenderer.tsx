@@ -8,6 +8,7 @@
  * @module framework-form/FieldRenderer
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo, useCallback, useId } from 'react'
 import type { FieldError } from 'react-hook-form'
 import type { FieldDefinition } from '@/features/journal/types/field.types'
