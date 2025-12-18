@@ -21,15 +21,15 @@ describe('useTemplateForm', () => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     content: {
-      fields: [
-        {
+      fields: {
+        name: {
           id: 'name',
           type: 'text',
           label: 'Name',
           order: 1,
           validation: { required: true, requiredMessage: 'Name is required' },
         },
-        {
+        email: {
           id: 'email',
           type: 'text',
           label: 'Email',
@@ -39,21 +39,21 @@ describe('useTemplateForm', () => {
             patternMessage: 'Please enter a valid email',
           },
         },
-        {
+        age: {
           id: 'age',
           type: 'number',
           label: 'Age',
           order: 3,
           validation: { min: 0, max: 150 },
         },
-        {
+        bio: {
           id: 'bio',
           type: 'textarea',
           label: 'Bio',
           order: 4,
           validation: { minLength: 10, maxLength: 500 },
         },
-      ],
+      },
       sections: [
         { id: 'section1', title: 'Section 1', order: 1, fields: ['name', 'email', 'age', 'bio'] },
       ],
@@ -306,15 +306,15 @@ describe('useTemplateForm', () => {
     it('validates maxLength', async () => {
       const template = createTemplate({
         content: {
-          fields: [
-            {
+          fields: {
+            shortField: {
               id: 'shortField',
               type: 'text',
               label: 'Short Field',
               order: 1,
               validation: { maxLength: 5 },
             },
-          ],
+          },
           sections: [],
         },
       })
@@ -723,15 +723,15 @@ describe('useTemplateForm', () => {
 
       const template = createTemplate({
         content: {
-          fields: [
-            {
+          fields: {
+            customField: {
               id: 'customField',
               type: 'text',
               label: 'Custom Field',
               order: 1,
               validation: { custom: customValidator },
             },
-          ],
+          },
           sections: [],
         },
       })
