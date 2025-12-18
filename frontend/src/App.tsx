@@ -18,6 +18,7 @@ import { JournalListPage } from './features/journal/pages/JournalListPage';
 import { JournalCreatePage } from './features/journal/pages/JournalCreatePage';
 import { JournalViewPage } from './features/journal/pages/JournalViewPage';
 import { JournalEditPage } from './features/journal/pages/JournalEditPage';
+import { FrameworkDashboardPage } from './features/journal/pages/FrameworkDashboardPage';
 import './App.css';
 import './styles/layout.css';
 
@@ -50,6 +51,9 @@ function App() {
                   <Route path="/spaces/:spaceId/journals/new" element={<JournalCreatePage />} />
                   <Route path="/spaces/:spaceId/journals/:journalId" element={<JournalViewPage />} />
                   <Route path="/spaces/:spaceId/journals/:journalId/edit" element={<JournalEditPage />} />
+
+                  {/* Framework routes */}
+                  <Route path="/spaces/:spaceId/frameworks/:frameworkId" element={<FrameworkDashboardPage />} />
                 </Route>
 
                 {/* Catch all - redirect to landing */}
