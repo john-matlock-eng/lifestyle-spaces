@@ -102,6 +102,92 @@ export const TemplatePicker: React.FC<TemplatePickerProps> = ({
 
   // Show framework detail view
   if (selectedFramework) {
+    // Group templates by lifecycle
+    const foundationTemplates = selectedFramework.templates
+      .filter(t => t.lifecycle === 'foundation')
+      .sort((a, b) => a.order - b.order)
+    const recurringTemplates = selectedFramework.templates
+      .filter(t => t.lifecycle !== 'foundation')
+      .sort((a, b) => a.order - b.order)
+
+    // First foundation template with no prerequisites is the starting point
+    const startingTemplate = foundationTemplates.find(t => !t.prerequisites || t.prerequisites.length === 0)
+
+    const renderTemplateCard = (templateConfig: Framework['templates'][0], isStarting: boolean = false) => {
+      const templateId = templateConfig.templateId || templateConfig.id
+      const hasPrerequisites = templateConfig.prerequisites && templateConfig.prerequisites.length > 0
+      const isLocked = hasPrerequisites // For now, show as locked if has prerequisites (TODO: check actual completion)
+
+      return (
+        <button
+          key={templateId}
+          onClick={() => !isLocked && handleSelectFrameworkTemplate(selectedFramework, templateConfig)}
+          className={`template-card ${selectedTemplateId === templateId ? 'selected' : ''} ${isStarting ? 'template-card--starting' : ''} ${isLocked ? 'template-card--locked' : ''}`}
+          data-template-color={templateConfig.color || selectedFramework.color || ''}
+          aria-label={`${templateConfig.name} template${isLocked ? ' (locked)' : ''}`}
+          disabled={isLocked}
+          style={isLocked ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+        >
+          {isStarting && (
+            <div style={{
+              position: 'absolute',
+              top: '-8px',
+              right: '-8px',
+              background: 'var(--color-success, #10b981)',
+              color: 'white',
+              padding: '2px 8px',
+              borderRadius: '12px',
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>
+              Start Here
+            </div>
+          )}
+          {isLocked && (
+            <div style={{
+              position: 'absolute',
+              top: '-8px',
+              right: '-8px',
+              background: 'var(--color-warning, #f59e0b)',
+              color: 'white',
+              padding: '2px 8px',
+              borderRadius: '12px',
+              fontSize: '0.7rem',
+              fontWeight: 600
+            }}>
+              🔒 Locked
+            </div>
+          )}
+          <div className="template-card-header">
+            <span className="template-icon" style={{ color: templateConfig.color || selectedFramework.color }}>
+              {templateConfig.icon || selectedFramework.icon}
+            </span>
+            <h4 className="template-name">{templateConfig.name}</h4>
+          </div>
+          <p className="template-description">{templateConfig.description}</p>
+          {isLocked && templateConfig.lockedMessage && (
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-warning, #f59e0b)', marginTop: '0.5rem', fontStyle: 'italic' }}>
+              {templateConfig.lockedMessage}
+            </p>
+          )}
+          <div className="template-sections">
+            <span className="template-sections-count">
+              {templateConfig.lifecycle === 'foundation' ? '🏛️ Foundation' :
+               templateConfig.lifecycle === 'recurring' ? '🔄 Recurring' :
+               templateConfig.lifecycle || 'Template'}
+            </span>
+            {templateConfig.frequency && (
+              <span className="template-frequency" style={{ marginLeft: '0.5rem' }}>
+                • {templateConfig.frequency}
+              </span>
+            )}
+          </div>
+        </button>
+      )
+    }
+
     return (
       <div className="template-picker">
         <div className="template-picker-header">
@@ -121,37 +207,36 @@ export const TemplatePicker: React.FC<TemplatePickerProps> = ({
           </div>
         </div>
 
-        <div className="template-grid">
-          {selectedFramework.templates.map((templateConfig) => (
-            <button
-              key={templateConfig.templateId || templateConfig.id}
-              onClick={() => handleSelectFrameworkTemplate(selectedFramework, templateConfig)}
-              className={`template-card ${selectedTemplateId === (templateConfig.templateId || templateConfig.id) ? 'selected' : ''}`}
-              data-template-color={templateConfig.color || selectedFramework.color || ''}
-              aria-label={`${templateConfig.name} template`}
-            >
-              <div className="template-card-header">
-                <span className="template-icon" style={{ color: templateConfig.color || selectedFramework.color }}>
-                  {templateConfig.icon || selectedFramework.icon}
-                </span>
-                <h4 className="template-name">{templateConfig.name}</h4>
-              </div>
-              <p className="template-description">{templateConfig.description}</p>
-              <div className="template-sections">
-                <span className="template-sections-count">
-                  {templateConfig.lifecycle === 'foundation' ? '🏛️ Foundation' :
-                   templateConfig.lifecycle === 'recurring' ? '🔄 Recurring' :
-                   templateConfig.lifecycle || 'Template'}
-                </span>
-                {templateConfig.frequency && (
-                  <span className="template-frequency" style={{ marginLeft: '0.5rem' }}>
-                    • {templateConfig.frequency}
-                  </span>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
+        {/* Foundation Templates - One-time setup */}
+        {foundationTemplates.length > 0 && (
+          <>
+            <h4 style={{ margin: '1.5rem 0 0.5rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>🏛️</span> Foundation
+              <span style={{ fontSize: '0.8rem', fontWeight: 'normal' }}>— Complete these first, in order</span>
+            </h4>
+            <div className="template-grid" style={{ position: 'relative' }}>
+              {foundationTemplates.map((templateConfig) =>
+                renderTemplateCard(
+                  templateConfig,
+                  startingTemplate && (startingTemplate.templateId || startingTemplate.id) === (templateConfig.templateId || templateConfig.id)
+                )
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Recurring Templates */}
+        {recurringTemplates.length > 0 && (
+          <>
+            <h4 style={{ margin: '1.5rem 0 0.5rem', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>🔄</span> Recurring
+              <span style={{ fontSize: '0.8rem', fontWeight: 'normal' }}>— Use these regularly after foundation</span>
+            </h4>
+            <div className="template-grid">
+              {recurringTemplates.map((templateConfig) => renderTemplateCard(templateConfig, false))}
+            </div>
+          </>
+        )}
 
         {selectedTemplateId && (
           <div className="template-picker-actions">
