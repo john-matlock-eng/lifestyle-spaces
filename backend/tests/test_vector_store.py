@@ -598,3 +598,68 @@ class TestSecretsHelper:
 
         # Should not raise
         clear_secret_cache()
+
+
+class TestJournalServiceIndexing:
+    """Tests for journal service indexing integration."""
+
+    def test_index_journal_background_with_exception(self):
+        """Test that indexing exceptions are caught and logged."""
+        from app.services.journal import JournalService
+        from unittest.mock import patch, MagicMock
+        import logging
+
+        service = JournalService()
+
+        # Create invalid journal data that will cause an exception
+        invalid_data = {
+            "journal_id": "test-123",
+            # Missing required fields will cause exception
+        }
+
+        # Should not raise - exceptions are caught
+        with patch.object(logging.getLogger("app.services.journal"), "warning") as mock_log:
+            service._index_journal_background(invalid_data)
+            # Verify warning was logged
+            assert mock_log.called
+
+    def test_index_journal_background_with_valid_data(self):
+        """Test indexing with valid data but API fails."""
+        from app.services.journal import JournalService
+        from unittest.mock import patch
+        from datetime import datetime, timezone
+
+        service = JournalService()
+
+        valid_data = {
+            "journal_id": "test-123",
+            "space_id": "space-abc",
+            "user_id": "user-123",
+            "title": "Test",
+            "content": "Content",
+            "tags": [],
+            "emotions": [],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "word_count": 1,
+            "is_pinned": False,
+        }
+
+        # Should not raise even when Pinecone fails
+        service._index_journal_background(valid_data)
+
+    def test_delete_from_index_background_with_exception(self):
+        """Test that delete exceptions are caught and logged."""
+        from app.services.journal import JournalService
+        from unittest.mock import patch
+        import logging
+
+        service = JournalService()
+
+        # Mock the indexer import to raise an exception
+        with patch("app.services.journal_indexer.get_journal_indexer") as mock_indexer:
+            mock_indexer.side_effect = Exception("Test error")
+
+            with patch.object(logging.getLogger("app.services.journal"), "warning") as mock_log:
+                service._delete_from_index_background("test-id", "test-space")
+                assert mock_log.called
