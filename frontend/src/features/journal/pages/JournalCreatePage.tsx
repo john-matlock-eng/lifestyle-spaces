@@ -308,6 +308,13 @@ export const JournalCreatePage: React.FC = () => {
         console.warn('[DEBUG] Template sections:', selectedTemplate?.sections.map(s => s.id))
       }
 
+      // Debug: Log what we're sending to the API
+      console.log('[DEBUG createJournal] Sending:', {
+        templateId: selectedTemplate?.id,
+        frameworkId: selectedTemplate?.frameworkId,
+        selectedTemplate: selectedTemplate ? { id: selectedTemplate.id, name: selectedTemplate.name, frameworkId: selectedTemplate.frameworkId } : null
+      })
+
       const journal = await createJournal(spaceId, {
         title,
         content: finalContent,

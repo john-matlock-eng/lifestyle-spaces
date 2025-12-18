@@ -43,12 +43,23 @@ export const TemplatePicker: React.FC<TemplatePickerProps> = ({
     if (!spaceId) return
     try {
       const response = await journalApi.getSpaceJournals(spaceId, { pageSize: 100 })
+      console.log('[DEBUG loadCompletedTemplates] frameworkId:', frameworkId)
+      console.log('[DEBUG loadCompletedTemplates] journals count:', response.journals.length)
+
       const completedIds = new Set<string>()
       for (const journal of response.journals) {
+        console.log('[DEBUG loadCompletedTemplates] journal:', {
+          title: journal.title,
+          frameworkId: journal.frameworkId,
+          templateId: journal.templateId,
+          matches: journal.frameworkId === frameworkId
+        })
         if (journal.frameworkId === frameworkId && journal.templateId) {
           completedIds.add(journal.templateId)
+          console.log('[DEBUG loadCompletedTemplates] Added to completedIds:', journal.templateId)
         }
       }
+      console.log('[DEBUG loadCompletedTemplates] completedIds:', Array.from(completedIds))
       setCompletedTemplateIds(completedIds)
     } catch (err) {
       console.error('Failed to load completed templates:', err)
@@ -149,6 +160,17 @@ export const TemplatePicker: React.FC<TemplatePickerProps> = ({
       )
       const isCompleted = templateId ? completedTemplateIds.has(templateId) : false
       const isLocked = hasPrerequisites && !prerequisitesMet
+
+      // Debug logging
+      console.log('[DEBUG renderTemplateCard]', templateConfig.name, {
+        templateId,
+        hasPrerequisites,
+        prerequisites: templateConfig.prerequisites,
+        completedTemplateIds: Array.from(completedTemplateIds),
+        prerequisitesMet,
+        isCompleted,
+        isLocked
+      })
 
       // Show "Start Here" only if not completed and is the starting template
       const showStartHere = isStarting && !isCompleted
