@@ -133,6 +133,32 @@ class Settings(BaseSettings):
         description="Pinecone integrated embedding model",
     )
 
+    # Claude/Anthropic Configuration
+    anthropic_secret_name: str = Field(
+        default="lifestyle-spaces/dev/anthropic-api-key",
+        description="AWS Secrets Manager secret name for Anthropic API key",
+    )
+    anthropic_model: str = Field(
+        default="claude-sonnet-4-20250514",
+        description="Claude model to use for chat",
+    )
+    chat_max_context_tokens: int = Field(
+        default=8000,
+        description="Max tokens reserved for journal context",
+    )
+    chat_max_response_tokens: int = Field(
+        default=1024,
+        description="Max tokens for AI response",
+    )
+    chat_max_history_messages: int = Field(
+        default=20,
+        description="Max conversation history messages to include",
+    )
+    chat_max_journal_results: int = Field(
+        default=5,
+        description="Max journals to include in context",
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env.test" if os.getenv("PYTEST_CURRENT_TEST") else ".env",
         env_file_encoding="utf-8",
