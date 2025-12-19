@@ -23,12 +23,7 @@ resource "aws_secretsmanager_secret" "claude_api_key" {
 }
 
 # Secrets Manager for Pinecone API Key
-# Import existing secret: terraform import module.backend.aws_secretsmanager_secret.pinecone_api_key lifestyle-spaces/pinecone-api-key
-import {
-  to = aws_secretsmanager_secret.pinecone_api_key
-  id = "lifestyle-spaces/pinecone-api-key"
-}
-
+# Import existing secret from root module: see terraform/environments/prod/imports.tf
 resource "aws_secretsmanager_secret" "pinecone_api_key" {
   name        = "${var.project_name}/pinecone-api-key"
   description = "Pinecone API Key for vector search"
