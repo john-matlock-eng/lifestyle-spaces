@@ -121,7 +121,7 @@ class Settings(BaseSettings):
         description="Pinecone index host URL",
     )
     pinecone_secret_name: str = Field(
-        default="lifestyle-spaces/pinecone-api-key",
+        default="lifestyle-spaces/dev/pinecone-api-key",
         description="AWS Secrets Manager secret name for Pinecone API key",
     )
     pinecone_index_name: str = Field(
