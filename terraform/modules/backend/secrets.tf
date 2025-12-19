@@ -23,6 +23,12 @@ resource "aws_secretsmanager_secret" "claude_api_key" {
 }
 
 # Secrets Manager for Pinecone API Key
+# Import existing secret: terraform import module.backend.aws_secretsmanager_secret.pinecone_api_key lifestyle-spaces/pinecone-api-key
+import {
+  to = aws_secretsmanager_secret.pinecone_api_key
+  id = "lifestyle-spaces/pinecone-api-key"
+}
+
 resource "aws_secretsmanager_secret" "pinecone_api_key" {
   name        = "${var.project_name}/pinecone-api-key"
   description = "Pinecone API Key for vector search"
@@ -30,6 +36,8 @@ resource "aws_secretsmanager_secret" "pinecone_api_key" {
   lifecycle {
     ignore_changes = [
       name_prefix,
+      description,
+      tags,
     ]
   }
 
@@ -61,18 +69,8 @@ resource "aws_secretsmanager_secret_version" "claude_api_key" {
   }
 }
 
-# Placeholder secret value for Pinecone (to be manually updated after creation)
-resource "aws_secretsmanager_secret_version" "pinecone_api_key" {
-  secret_id     = aws_secretsmanager_secret.pinecone_api_key.id
-  secret_string = "PLACEHOLDER_UPDATE_MANUALLY"
-
-  lifecycle {
-    ignore_changes = [
-      secret_string,
-      version_stages,
-    ]
-  }
-}
+# Note: Pinecone secret version is managed manually, not by Terraform
+# The secret was created manually and imported into Terraform state
 
 # IAM Policy for Lambda to access secrets
 resource "aws_iam_policy" "lambda_secrets_policy" {
