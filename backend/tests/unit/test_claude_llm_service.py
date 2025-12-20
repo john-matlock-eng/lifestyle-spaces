@@ -26,7 +26,7 @@ def mock_anthropic_message():
 
     mock_message = Mock()
     mock_message.content = [mock_content]
-    mock_message.model = "claude-3-5-sonnet-20241022"
+    mock_message.model = "claude-sonnet-4-20250514"
     mock_message.usage = mock_usage
 
     return mock_message
@@ -113,14 +113,14 @@ class TestClaudeLLMService:
 
         # Assertions
         assert result["response"] == "This is a test response from Claude."
-        assert result["model"] == "claude-3-5-sonnet-20241022"
+        assert result["model"] == "claude-sonnet-4-20250514"
         assert result["usage"]["input_tokens"] == 25
         assert result["usage"]["output_tokens"] == 50
 
         # Verify API call
         mock_anthropic_instance.messages.create.assert_called_once()
         call_args = mock_anthropic_instance.messages.create.call_args[1]
-        assert call_args["model"] == "claude-3-5-sonnet-20241022"
+        assert call_args["model"] == "claude-sonnet-4-20250514"
         assert call_args["max_tokens"] == 500
         assert call_args["temperature"] == 0.7
         assert call_args["messages"][0]["content"] == "What is the meaning of life?"

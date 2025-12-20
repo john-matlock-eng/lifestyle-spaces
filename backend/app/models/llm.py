@@ -19,18 +19,16 @@ class LLMPromptRequest(BaseModel):
         default=1024, alias="maxTokens", ge=1, le=4096, description="Maximum tokens in response"
     )
     temperature: float = Field(default=1.0, ge=0.0, le=2.0, description="Sampling temperature")
-    model: str = Field(default="claude-3-5-sonnet-20241022", description="Claude model to use")
+    model: str = Field(default="claude-sonnet-4-20250514", description="Claude model to use")
 
     @field_validator("model")
     @classmethod
     def validate_model(cls, v: str) -> str:
         """Validate that the model is a supported Claude model"""
         allowed_models = [
-            "claude-3-5-sonnet-20241022",
-            "claude-3-5-haiku-20241022",
-            "claude-3-opus-20240229",
-            "claude-3-sonnet-20240229",
-            "claude-3-haiku-20240307",
+            "claude-sonnet-4-20250514",
+            "claude-opus-4-20250514",
+            "claude-haiku-3-5-20241022",
         ]
         if v not in allowed_models:
             raise ValueError(f"Model must be one of: {', '.join(allowed_models)}")
@@ -44,7 +42,7 @@ class LLMPromptRequest(BaseModel):
                 "systemPrompt": "You are a helpful journaling assistant.",
                 "maxTokens": 800,
                 "temperature": 0.7,
-                "model": "claude-3-5-sonnet-20241022",
+                "model": "claude-sonnet-4-20250514",
             }
         }
 
@@ -73,7 +71,7 @@ class LLMPromptResponse(BaseModel):
         json_schema_extra = {
             "example": {
                 "response": "Here are some good habits for effective journaling...",
-                "model": "claude-3-5-sonnet-20241022",
+                "model": "claude-sonnet-4-20250514",
                 "usage": {"inputTokens": 25, "outputTokens": 150},
             }
         }

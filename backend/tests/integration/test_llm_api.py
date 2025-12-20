@@ -46,7 +46,7 @@ class TestLLMGenerateEndpoint:
         # Setup mock response
         mock_claude_service.generate_response.return_value = {
             "response": "AI-generated response here",
-            "model": "claude-3-5-sonnet-20241022",
+            "model": "claude-sonnet-4-20250514",
             "usage": {"input_tokens": 30, "output_tokens": 100},
         }
 
@@ -59,7 +59,7 @@ class TestLLMGenerateEndpoint:
                 "systemPrompt": "You are a helpful assistant.",
                 "maxTokens": 500,
                 "temperature": 0.7,
-                "model": "claude-3-5-sonnet-20241022",
+                "model": "claude-sonnet-4-20250514",
             },
         )
 
@@ -67,7 +67,7 @@ class TestLLMGenerateEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert data["response"] == "AI-generated response here"
-        assert data["model"] == "claude-3-5-sonnet-20241022"
+        assert data["model"] == "claude-sonnet-4-20250514"
         assert data["usage"]["inputTokens"] == 30
         assert data["usage"]["outputTokens"] == 100
 
@@ -83,7 +83,7 @@ class TestLLMGenerateEndpoint:
         """Test generation with default parameters"""
         mock_claude_service.generate_response.return_value = {
             "response": "Default response",
-            "model": "claude-3-5-sonnet-20241022",
+            "model": "claude-sonnet-4-20250514",
             "usage": {"input_tokens": 10, "output_tokens": 20},
         }
 
@@ -160,7 +160,7 @@ class TestJournalInsightsEndpoint:
         """Test successful journal insights generation"""
         mock_claude_service.generate_journal_insights.return_value = {
             "response": "Here are some insights about your journal entry...",
-            "model": "claude-3-5-sonnet-20241022",
+            "model": "claude-sonnet-4-20250514",
             "usage": {"input_tokens": 150, "output_tokens": 200},
         }
 
@@ -177,7 +177,7 @@ class TestJournalInsightsEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert "insights" in data["response"] or "Here are" in data["response"]
-        assert data["model"] == "claude-3-5-sonnet-20241022"
+        assert data["model"] == "claude-sonnet-4-20250514"
 
         # Verify service was called with correct params
         mock_claude_service.generate_journal_insights.assert_called_once()
@@ -190,7 +190,7 @@ class TestJournalInsightsEndpoint:
         """Test journal insights with only content"""
         mock_claude_service.generate_journal_insights.return_value = {
             "response": "Minimal insights",
-            "model": "claude-3-5-sonnet-20241022",
+            "model": "claude-sonnet-4-20250514",
             "usage": {"input_tokens": 50, "output_tokens": 30},
         }
 
@@ -227,7 +227,7 @@ class TestJournalInsightsEndpoint:
         """Test journal insights with very long content"""
         mock_claude_service.generate_journal_insights.return_value = {
             "response": "Insights for long entry",
-            "model": "claude-3-5-sonnet-20241022",
+            "model": "claude-sonnet-4-20250514",
             "usage": {"input_tokens": 500, "output_tokens": 150},
         }
 

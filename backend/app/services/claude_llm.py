@@ -122,7 +122,7 @@ class ClaudeLLMService:
         system_prompt: Optional[str] = None,
         max_tokens: int = 1024,
         temperature: float = 1.0,
-        model: str = "claude-3-5-sonnet-20241022",
+        model: str = "claude-sonnet-4-20250514",
     ) -> Dict[str, Any]:
         """
         Generate a response from Claude LLM
@@ -132,7 +132,7 @@ class ClaudeLLMService:
             system_prompt: Optional system prompt to guide the model
             max_tokens: Maximum tokens in response (default: 1024)
             temperature: Sampling temperature 0-1 (default: 1.0)
-            model: Claude model to use (default: claude-3-5-sonnet-20241022)
+            model: Claude model to use (default: claude-sonnet-4-20250514)
 
         Returns:
             Dict containing:
