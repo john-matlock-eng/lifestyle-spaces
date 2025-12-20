@@ -135,7 +135,7 @@ class Settings(BaseSettings):
 
     # Claude/Anthropic Configuration
     anthropic_secret_name: str = Field(
-        default="lifestyle-spaces/dev/anthropic-api-key",
+        default="lifestyle-spaces/dev/claude-api-key",
         description="AWS Secrets Manager secret name for Anthropic API key",
     )
     anthropic_model: str = Field(
