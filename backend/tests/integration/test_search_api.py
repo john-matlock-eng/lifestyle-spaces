@@ -3,7 +3,7 @@ Integration tests for Search API.
 """
 
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import patch, AsyncMock
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -52,37 +52,47 @@ class TestSearchAPI:
             assert response.status_code == 403
 
     def test_search_success(self, client):
-        """Test successful search."""
-        from app.services.vector_store.base import SearchResult
+        """Test successful search with section-level results."""
+        from app.services.vector_store.base import SectionSearchResult
 
         with patch("app.api.routes.search.SpaceService") as mock_space_service:
             mock_space_service.return_value.get_space.return_value = {"space_id": "space-123"}
             mock_space_service.return_value.is_space_member.return_value = True
 
             with patch("app.api.routes.search.get_journal_indexer") as mock_indexer:
-                mock_indexer.return_value.search = AsyncMock(
+                mock_indexer.return_value.search_space = AsyncMock(
                     return_value=[
-                        SearchResult(
-                            id="journal-1",
+                        SectionSearchResult(
+                            id="journal-1_section_0",
                             score=0.95,
+                            journal_id="journal-1",
+                            section_index=0,
+                            section_title="Express",
+                            excerpt="This is the matched content.",
                             metadata={
-                                "space_id": "space-123",
-                                "user_id": "user-123",
-                                "template_id": "daily",
-                                "created_at": "2024-01-01T00:00:00Z",
+                                "journalTitle": "My Journal",
+                                "userId": "user-123",
+                                "templateId": "daily",
+                                "createdAt": "2024-01-01T00:00:00Z",
                             },
                         ),
-                        SearchResult(
-                            id="journal-2",
+                        SectionSearchResult(
+                            id="journal-2_section_0",
                             score=0.85,
-                            metadata={"space_id": "space-123"},
+                            journal_id="journal-2",
+                            section_index=0,
+                            section_title="",
+                            excerpt="Another matched section.",
+                            metadata={
+                                "journalTitle": "Second Journal",
+                            },
                         ),
                     ]
                 )
 
                 response = client.get(
                     "/api/spaces/space-123/search",
-                    params={"q": "test query", "topK": 10},
+                    params={"q": "test query", "limit": 10},
                 )
 
                 assert response.status_code == 200
@@ -90,8 +100,11 @@ class TestSearchAPI:
                 assert data["query"] == "test query"
                 assert len(data["results"]) == 2
                 assert data["results"][0]["journalId"] == "journal-1"
+                assert data["results"][0]["title"] == "My Journal"
+                assert data["results"][0]["sectionTitle"] == "Express"
                 assert data["results"][0]["score"] == 0.95
-                assert data["total"] == 2
+                assert data["results"][0]["excerpt"] == "This is the matched content."
+                assert data["count"] == 2
 
     def test_search_with_filters(self, client):
         """Test search with template and framework filters."""
@@ -100,7 +113,7 @@ class TestSearchAPI:
             mock_space_service.return_value.is_space_member.return_value = True
 
             with patch("app.api.routes.search.get_journal_indexer") as mock_indexer:
-                mock_indexer.return_value.search = AsyncMock(return_value=[])
+                mock_indexer.return_value.search_space = AsyncMock(return_value=[])
 
                 response = client.get(
                     "/api/spaces/space-123/search",
@@ -113,8 +126,8 @@ class TestSearchAPI:
 
                 assert response.status_code == 200
                 # Verify filters were passed to indexer
-                mock_indexer.return_value.search.assert_called_once()
-                call_kwargs = mock_indexer.return_value.search.call_args[1]
+                mock_indexer.return_value.search_space.assert_called_once()
+                call_kwargs = mock_indexer.return_value.search_space.call_args[1]
                 assert call_kwargs["template_id"] == "daily-reflection"
                 assert call_kwargs["framework_id"] == "charter"
 
@@ -125,7 +138,7 @@ class TestSearchAPI:
             mock_space_service.return_value.is_space_member.return_value = True
 
             with patch("app.api.routes.search.get_journal_indexer") as mock_indexer:
-                mock_indexer.return_value.search = AsyncMock(
+                mock_indexer.return_value.search_space = AsyncMock(
                     side_effect=Exception("Database error")
                 )
 

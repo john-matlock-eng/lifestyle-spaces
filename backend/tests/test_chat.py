@@ -243,7 +243,24 @@ class TestChatService:
         assert citations == []
 
     def test_build_journal_context_with_journals(self, service):
-        """Test building context with journals."""
+        """Test building context with grouped search results."""
+        # Grouped search results in new format
+        search_results = [
+            {
+                "journalId": "j1",
+                "journalTitle": "Test Journal",
+                "createdAt": "2024-01-15T10:00:00Z",
+                "sections": [
+                    {
+                        "sectionIndex": 0,
+                        "sectionTitle": "Express",
+                        "excerpt": "This is my reflection on growth.",
+                        "score": 0.85,
+                    }
+                ],
+            }
+        ]
+        # Optional full journal content (for additional context if needed)
         journals = [
             {
                 "journalId": "j1",
@@ -252,9 +269,8 @@ class TestChatService:
                 "content": "This is my reflection on growth.",
             }
         ]
-        search_results = [{"journalId": "j1", "score": 0.85}]
 
-        context, citations = service._build_journal_context(journals, search_results)
+        context, citations = service._build_journal_context(search_results, journals)
 
         assert "Test Journal" in context
         assert "growth" in context
@@ -430,12 +446,23 @@ class TestChatServiceRAG:
         )
         service.table.put_item = MagicMock()
 
-        # Mock search results
-        mock_search_result = MagicMock()
-        mock_search_result.id = "journal_1"
-        mock_search_result.score = 0.9
-        mock_search_result.metadata = {"space_id": "space_1"}
-        service.journal_indexer.search = AsyncMock(return_value=[mock_search_result])
+        # Mock grouped search results (new format)
+        mock_grouped_results = [
+            {
+                "journalId": "journal_1",
+                "journalTitle": "My Growth Journal",
+                "createdAt": now.isoformat(),
+                "sections": [
+                    {
+                        "sectionIndex": 0,
+                        "sectionTitle": "Express",
+                        "excerpt": "Today I reflected on my progress...",
+                        "score": 0.9,
+                    }
+                ],
+            }
+        ]
+        service.journal_indexer.search_space_grouped = AsyncMock(return_value=mock_grouped_results)
 
         # Mock journal retrieval - use side_effect for multiple calls
         def get_item_side_effect(**kwargs):
@@ -486,14 +513,28 @@ class TestChatServiceRAG:
 
     @pytest.mark.asyncio
     async def test_search_relevant_journals(self, service_with_mocks):
-        """Test journal search."""
+        """Test journal search using grouped results."""
         service = service_with_mocks
 
-        mock_result = MagicMock()
-        mock_result.id = "j1"
-        mock_result.score = 0.8
-        mock_result.metadata = {"title": "Test"}
-        service.journal_indexer.search = AsyncMock(return_value=[mock_result])
+        # Mock grouped search results (new format from search_space_grouped)
+        mock_grouped_results = [
+            {
+                "journalId": "j1",
+                "journalTitle": "Test Journal",
+                "createdAt": "2024-01-15T10:00:00Z",
+                "sections": [
+                    {
+                        "sectionIndex": 0,
+                        "sectionTitle": "Express",
+                        "excerpt": "Test content",
+                        "score": 0.8,
+                    }
+                ],
+            }
+        ]
+        service.journal_indexer.search_space_grouped = AsyncMock(
+            return_value=mock_grouped_results
+        )
 
         results = await service._search_relevant_journals(
             query="growth",
@@ -504,13 +545,15 @@ class TestChatServiceRAG:
 
         assert len(results) == 1
         assert results[0]["journalId"] == "j1"
-        assert results[0]["score"] == 0.8
+        assert results[0]["journalTitle"] == "Test Journal"
 
     @pytest.mark.asyncio
     async def test_search_relevant_journals_error(self, service_with_mocks):
         """Test journal search handles errors gracefully."""
         service = service_with_mocks
-        service.journal_indexer.search = AsyncMock(side_effect=Exception("Search failed"))
+        service.journal_indexer.search_space_grouped = AsyncMock(
+            side_effect=Exception("Search failed")
+        )
 
         results = await service._search_relevant_journals(
             query="test",

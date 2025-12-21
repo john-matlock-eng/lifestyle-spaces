@@ -1,11 +1,11 @@
 /**
  * Citation Card Component
  *
- * Displays a journal reference used in AI response.
+ * Displays a journal reference with section-level detail used in AI response.
  */
 
 import { Link } from 'react-router-dom';
-import { FileText } from 'lucide-react';
+import { FileText, ChevronRight } from 'lucide-react';
 import type { JournalCitation } from '../types';
 import styles from './Chat.module.css';
 
@@ -21,6 +21,17 @@ export function CitationCard({ citation }: CitationCardProps) {
       <FileText size={16} className={styles.citationIcon} />
       <div className={styles.citationContent}>
         <div className={styles.citationTitle}>{citation.title}</div>
+        {citation.sectionTitle && (
+          <div className={styles.citationSection}>
+            <ChevronRight size={12} />
+            {citation.sectionTitle}
+          </div>
+        )}
+        {citation.excerpt && (
+          <div className={styles.citationExcerpt}>
+            "{citation.excerpt.length > 100 ? `${citation.excerpt.slice(0, 100)}...` : citation.excerpt}"
+          </div>
+        )}
         {citation.createdAt && (
           <div className={styles.citationDate}>{citation.createdAt}</div>
         )}

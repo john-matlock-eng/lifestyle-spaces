@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
 """
-Backfill Vector Index Script
+Backfill Vector Index
 
-Indexes all existing journal entries to Pinecone for semantic search.
-Run this script once to populate the index with existing data.
+Re-indexes existing journals with section-level vectors.
 
 Usage:
-    python scripts/backfill_vector_index.py [--space-id SPACE_ID] [--batch-size N] [--dry-run]
+    python -m scripts.backfill_vector_index --space-id <space_id>
+    python -m scripts.backfill_vector_index --all
+    python -m scripts.backfill_vector_index --stats
+    python -m scripts.backfill_vector_index --dry-run --all
 
 Arguments:
-    --space-id    Optional: Only index journals from a specific space
-    --batch-size  Number of journals to process per batch (default: 50)
-    --dry-run     Show what would be indexed without actually indexing
+    --space-id    Index journals from a specific space
+    --all         Index all journals from all spaces
+    --stats       Show index statistics
+    --dry-run     Show what would be indexed without indexing
+    --batch-size  Number of journals per batch (default: 50)
 
 Environment:
-    PINECONE_API_KEY: Pinecone API key (required)
+    PINECONE_API_KEY: Pinecone API key (required for indexing)
     AWS_REGION: AWS region for DynamoDB (default: us-east-1)
     DYNAMODB_TABLE: DynamoDB table name (default: lifestyle-spaces)
 """
@@ -31,11 +35,11 @@ from typing import List, Optional
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 
 from app.models.journal import JournalEntry
-from app.services.journal_indexer import JournalIndexer
-from app.services.vector_store import PineconeStore, IndexStatus
+from app.services.journal_indexer import get_journal_indexer, reset_journal_indexer
+from app.services.vector_store import get_vector_store, reset_vector_store
 
 # Configure logging
 logging.basicConfig(
@@ -45,216 +49,243 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def get_all_journals(
-    table,
-    space_id: Optional[str] = None,
-) -> List[dict]:
-    """
-    Fetch all journals from DynamoDB.
+def get_all_spaces(table) -> List[dict]:
+    """Fetch all spaces from DynamoDB."""
+    spaces = []
 
-    Args:
-        table: DynamoDB table resource.
-        space_id: Optional space ID to filter by.
+    response = table.scan(
+        FilterExpression=Attr("entityType").eq("Space")
+    )
+    spaces.extend(response.get("Items", []))
 
-    Returns:
-        List of journal items.
-    """
+    while "LastEvaluatedKey" in response:
+        response = table.scan(
+            FilterExpression=Attr("entityType").eq("Space"),
+            ExclusiveStartKey=response["LastEvaluatedKey"],
+        )
+        spaces.extend(response.get("Items", []))
+
+    return spaces
+
+
+def get_space_journals(table, space_id: str) -> List[dict]:
+    """Fetch all journals for a space from DynamoDB."""
     journals = []
 
-    if space_id:
-        # Query specific space
-        logger.info(f"Querying journals for space: {space_id}")
+    response = table.query(
+        KeyConditionExpression=Key("PK").eq(f"SPACE#{space_id}")
+        & Key("SK").begins_with("JOURNAL#")
+    )
+    journals.extend(response.get("Items", []))
+
+    while "LastEvaluatedKey" in response:
         response = table.query(
             KeyConditionExpression=Key("PK").eq(f"SPACE#{space_id}")
-            & Key("SK").begins_with("JOURNAL#")
+            & Key("SK").begins_with("JOURNAL#"),
+            ExclusiveStartKey=response["LastEvaluatedKey"],
         )
         journals.extend(response.get("Items", []))
-
-        while "LastEvaluatedKey" in response:
-            response = table.query(
-                KeyConditionExpression=Key("PK").eq(f"SPACE#{space_id}")
-                & Key("SK").begins_with("JOURNAL#"),
-                ExclusiveStartKey=response["LastEvaluatedKey"],
-            )
-            journals.extend(response.get("Items", []))
-    else:
-        # Scan all journals (less efficient but necessary for full backfill)
-        logger.info("Scanning all journals in the table...")
-        response = table.scan(
-            FilterExpression=Key("SK").begins_with("JOURNAL#")
-        )
-        journals.extend(response.get("Items", []))
-
-        while "LastEvaluatedKey" in response:
-            response = table.scan(
-                FilterExpression=Key("SK").begins_with("JOURNAL#"),
-                ExclusiveStartKey=response["LastEvaluatedKey"],
-            )
-            journals.extend(response.get("Items", []))
 
     return journals
 
 
 def convert_to_journal_entry(item: dict) -> JournalEntry:
-    """
-    Convert a DynamoDB item to a JournalEntry.
+    """Convert a DynamoDB item to a JournalEntry."""
+    # Handle camelCase field names from DynamoDB
+    journal_id = item.get("journal_id") or item.get("journalId")
+    space_id = item.get("space_id") or item.get("spaceId")
+    user_id = item.get("user_id") or item.get("userId")
+    template_id = item.get("template_id") or item.get("templateId")
+    framework_id = item.get("framework_id") or item.get("frameworkId")
+    created_at = item.get("created_at") or item.get("createdAt")
+    updated_at = item.get("updated_at") or item.get("updatedAt")
+    word_count = item.get("word_count") or item.get("wordCount", 0)
+    is_pinned = item.get("is_pinned") or item.get("isPinned", False)
+    content_tiptap = item.get("content_tiptap") or item.get("contentTiptap")
 
-    Args:
-        item: DynamoDB item dictionary.
-
-    Returns:
-        JournalEntry instance.
-    """
     # Parse datetime strings
-    created_at = item.get("created_at", "")
     if isinstance(created_at, str):
         created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-
-    updated_at = item.get("updated_at", "")
     if isinstance(updated_at, str):
         updated_at = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
 
     return JournalEntry(
-        journal_id=item["journal_id"],
-        space_id=item["space_id"],
-        user_id=item["user_id"],
+        journal_id=journal_id,
+        space_id=space_id,
+        user_id=user_id,
         title=item.get("title", ""),
         content=item.get("content", ""),
-        content_tiptap=item.get("content_tiptap"),
-        template_id=item.get("template_id"),
-        framework_id=item.get("framework_id"),
+        content_tiptap=content_tiptap,
+        template_id=template_id,
+        framework_id=framework_id,
         tags=item.get("tags", []),
         emotions=item.get("emotions", []),
         created_at=created_at,
         updated_at=updated_at,
-        word_count=item.get("word_count", 0),
-        is_pinned=item.get("is_pinned", False),
+        word_count=int(word_count) if word_count else 0,
+        is_pinned=bool(is_pinned),
     )
 
 
-async def backfill_index(
-    space_id: Optional[str] = None,
-    batch_size: int = 50,
-    dry_run: bool = False,
-) -> None:
-    """
-    Backfill the vector index with existing journals.
+async def backfill_space(
+    space_id: str,
+    table,
+    dry_run: bool = False
+) -> dict:
+    """Backfill all journals in a single space with section-level indexing."""
+    logger.info(f"{'[DRY RUN] ' if dry_run else ''}Backfilling space: {space_id}")
 
-    Args:
-        space_id: Optional space ID to filter by.
-        batch_size: Number of journals per batch.
-        dry_run: If True, don't actually index.
-    """
-    # Verify API key is available
-    api_key = os.environ.get("PINECONE_API_KEY")
-    if not api_key and not dry_run:
-        logger.error("PINECONE_API_KEY environment variable is required")
-        sys.exit(1)
+    items = get_space_journals(table, space_id)
 
-    # Connect to DynamoDB
+    if not items:
+        logger.info(f"No journals found in space {space_id}")
+        return {"journals": 0, "sections": 0}
+
+    logger.info(f"Found {len(items)} journals to index")
+
+    if dry_run:
+        logger.info(f"[DRY RUN] Would index {len(items)} journals:")
+        for item in items[:5]:
+            title = item.get("title", "Untitled")
+            jid = item.get("journal_id") or item.get("journalId")
+            logger.info(f"  - {jid}: {title}")
+        if len(items) > 5:
+            logger.info(f"  ... and {len(items) - 5} more")
+        return {"journals": len(items), "sections": 0}
+
+    indexer = get_journal_indexer()
+    total_sections = 0
+    journals_indexed = 0
+
+    for item in items:
+        try:
+            journal = convert_to_journal_entry(item)
+            count = await indexer.index_journal(journal)
+            total_sections += count
+            journals_indexed += 1
+            logger.info(
+                f"  Indexed {count} sections: {journal.title or journal.journal_id}"
+            )
+        except Exception as e:
+            jid = item.get("journal_id") or item.get("journalId")
+            logger.warning(f"  Failed to index journal {jid}: {e}")
+
+    logger.info(
+        f"Space {space_id}: indexed {total_sections} sections "
+        f"from {journals_indexed} journals"
+    )
+    return {"journals": journals_indexed, "sections": total_sections}
+
+
+async def backfill_all(table, dry_run: bool = False) -> dict:
+    """Backfill all spaces."""
+    logger.info(f"{'[DRY RUN] ' if dry_run else ''}Backfilling ALL spaces...")
+
+    spaces = get_all_spaces(table)
+    logger.info(f"Found {len(spaces)} spaces")
+
+    total_journals = 0
+    total_sections = 0
+
+    for space in spaces:
+        space_id = space.get("space_id") or space.get("spaceId")
+        if space_id:
+            result = await backfill_space(space_id, table, dry_run=dry_run)
+            total_journals += result["journals"]
+            total_sections += result["sections"]
+
+    logger.info("=" * 50)
+    logger.info("BACKFILL COMPLETE")
+    logger.info(f"Total spaces: {len(spaces)}")
+    logger.info(f"Total journals: {total_journals}")
+    logger.info(f"Total sections indexed: {total_sections}")
+    logger.info("=" * 50)
+
+    return {
+        "spaces": len(spaces),
+        "journals": total_journals,
+        "sections": total_sections
+    }
+
+
+async def get_stats():
+    """Print index statistics."""
+    store = get_vector_store()
+    stats = await store.get_stats()
+
+    print("\n=== Vector Index Statistics ===")
+    print(f"Total records (sections): {stats.get('total_record_count', 0)}")
+    print(f"Dimension: {stats.get('dimension', 'N/A')}")
+    print("\nNamespaces:")
+
+    for ns_name, ns_data in stats.get("namespaces", {}).items():
+        print(f"  {ns_name}: {ns_data.get('record_count', 0)} sections")
+
+    print("================================\n")
+
+
+async def main_async(args):
+    """Async main function."""
+    # Initialize DynamoDB
     region = os.environ.get("AWS_REGION", "us-east-1")
     table_name = os.environ.get("DYNAMODB_TABLE", "lifestyle-spaces")
+
+    if args.stats:
+        await get_stats()
+        return
+
+    # Verify API key for indexing operations
+    if not args.dry_run:
+        api_key = os.environ.get("PINECONE_API_KEY")
+        if not api_key:
+            logger.error("PINECONE_API_KEY environment variable is required")
+            sys.exit(1)
 
     logger.info(f"Connecting to DynamoDB table: {table_name} in {region}")
     dynamodb = boto3.resource("dynamodb", region_name=region)
     table = dynamodb.Table(table_name)
 
-    # Fetch journals
-    logger.info("Fetching journals from DynamoDB...")
-    items = get_all_journals(table, space_id)
-    logger.info(f"Found {len(items)} journals to index")
-
-    if not items:
-        logger.info("No journals to index")
-        return
-
-    if dry_run:
-        logger.info("DRY RUN - Would index the following journals:")
-        for item in items[:10]:  # Show first 10
-            logger.info(f"  - {item['journal_id']}: {item.get('title', 'Untitled')}")
-        if len(items) > 10:
-            logger.info(f"  ... and {len(items) - 10} more")
-        return
-
-    # Initialize indexer
-    store = PineconeStore(api_key=api_key)
-    indexer = JournalIndexer(vector_store=store)
-
-    # Process in batches
-    total_indexed = 0
-    total_failed = 0
-
-    for i in range(0, len(items), batch_size):
-        batch = items[i : i + batch_size]
-        batch_num = (i // batch_size) + 1
-        total_batches = (len(items) + batch_size - 1) // batch_size
-
-        logger.info(f"Processing batch {batch_num}/{total_batches} ({len(batch)} journals)")
-
-        # Convert to JournalEntry objects
-        journals = []
-        for item in batch:
-            try:
-                journal = convert_to_journal_entry(item)
-                journals.append(journal)
-            except Exception as e:
-                logger.warning(f"Failed to convert journal {item.get('journal_id')}: {e}")
-                total_failed += 1
-
-        # Index the batch
-        if journals:
-            results = await indexer.index_journals(journals)
-
-            # Count results
-            for result in results:
-                if result.status == IndexStatus.SUCCESS:
-                    total_indexed += 1
-                else:
-                    total_failed += 1
-                    logger.warning(f"Failed to index {result.document_id}: {result.error}")
-
-        logger.info(f"Batch {batch_num} complete. Total indexed: {total_indexed}")
-
-    # Summary
-    logger.info("=" * 50)
-    logger.info("BACKFILL COMPLETE")
-    logger.info(f"Total journals found: {len(items)}")
-    logger.info(f"Successfully indexed: {total_indexed}")
-    logger.info(f"Failed: {total_failed}")
-    logger.info("=" * 50)
+    if args.space_id:
+        await backfill_space(args.space_id, table, dry_run=args.dry_run)
+    elif args.all:
+        await backfill_all(table, dry_run=args.dry_run)
+    else:
+        logger.error("Please specify --space-id or --all")
+        sys.exit(1)
 
 
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Backfill vector index with existing journal entries"
+        description="Backfill journal sections into vector index"
     )
     parser.add_argument(
         "--space-id",
-        type=str,
-        help="Only index journals from this space",
+        help="Space ID to backfill"
     )
     parser.add_argument(
-        "--batch-size",
-        type=int,
-        default=50,
-        help="Number of journals per batch (default: 50)",
+        "--all",
+        action="store_true",
+        help="Backfill all spaces"
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be indexed without actually indexing",
+        help="Show what would be indexed"
+    )
+    parser.add_argument(
+        "--stats",
+        action="store_true",
+        help="Show index statistics"
     )
 
     args = parser.parse_args()
 
-    asyncio.run(
-        backfill_index(
-            space_id=args.space_id,
-            batch_size=args.batch_size,
-            dry_run=args.dry_run,
-        )
-    )
+    if not args.stats and not args.space_id and not args.all:
+        parser.print_help()
+        sys.exit(1)
+
+    asyncio.run(main_async(args))
 
 
 if __name__ == "__main__":

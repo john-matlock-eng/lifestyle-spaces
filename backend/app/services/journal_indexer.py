@@ -1,297 +1,390 @@
 """
-Journal Indexer Service
+Journal Indexing Service
 
-Handles indexing journal entries to the vector store for semantic search.
-Provides space-isolated indexing with proper namespace management.
+Indexes journal sections into Pinecone for semantic search.
+Each section is indexed as a separate vector for granular retrieval.
+
+SECURITY: All operations are space-isolated via namespaces.
 """
 
 import logging
-import re
-from typing import List, Optional, Dict, Any
+from typing import Optional, List, Dict, Any
 
 from app.models.journal import JournalEntry
 from app.services.vector_store import (
-    VectorStore,
     VectorDocument,
-    SearchResult,
-    IndexResult,
-    IndexStatus,
     get_vector_store,
 )
+from app.services.vector_store.base import SectionSearchResult
+from app.services.section_parser import get_section_parser, ParsedSection
 
 logger = logging.getLogger(__name__)
 
 
-def extract_plain_text(content: str) -> str:
-    """
-    Extract plain text from journal content with template metadata.
-
-    Removes HTML comments, template markers, and markdown formatting
-    to get clean searchable text.
-
-    Args:
-        content: Raw journal content with embedded template metadata.
-
-    Returns:
-        Clean plain text suitable for embedding.
-    """
-    if not content:
-        return ""
-
-    # Remove HTML comments (template metadata)
-    text = re.sub(r"<!--[\s\S]*?-->", "", content)
-
-    # Remove markdown headers
-    text = re.sub(r"^#+\s*", "", text, flags=re.MULTILINE)
-
-    # Remove markdown bold/italic
-    text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
-    text = re.sub(r"\*([^*]+)\*", r"\1", text)
-    text = re.sub(r"__([^_]+)__", r"\1", text)
-    text = re.sub(r"_([^_]+)_", r"\1", text)
-
-    # Remove markdown links but keep text
-    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
-
-    # Remove markdown code blocks
-    text = re.sub(r"```[\s\S]*?```", "", text)
-    text = re.sub(r"`([^`]+)`", r"\1", text)
-
-    # Remove bullet points and list markers
-    text = re.sub(r"^[\s]*[-*+]\s*", "", text, flags=re.MULTILINE)
-    text = re.sub(r"^[\s]*\d+\.\s*", "", text, flags=re.MULTILINE)
-
-    # Normalize whitespace
-    text = re.sub(r"\n\s*\n", "\n", text)
-    text = re.sub(r"[ \t]+", " ", text)
-
-    return text.strip()
-
-
 class JournalIndexer:
     """
-    Service for indexing journals to vector store.
+    Service for indexing journals into vector store at section level.
 
-    Handles:
-    - Converting journal entries to vector documents
-    - Managing space-isolated namespaces
-    - Batch indexing for backfill operations
-    - Search with space isolation
+    ISOLATION MODEL:
+    - Each space gets its own Pinecone namespace: space_{spaceId}
+    - Searches are ALWAYS scoped to a single space
     """
 
-    def __init__(self, vector_store: Optional[VectorStore] = None):
-        """
-        Initialize the journal indexer.
+    def __init__(self):
+        self.vector_store = get_vector_store()
+        self.section_parser = get_section_parser()
 
-        Args:
-            vector_store: Vector store instance. If not provided, uses singleton.
-        """
-        self._store = vector_store
+    @staticmethod
+    def _get_namespace(space_id: str) -> str:
+        """Generate namespace for a space."""
+        if not space_id:
+            raise ValueError("space_id is REQUIRED for namespace generation")
+        return f"space_{space_id}"
 
-    @property
-    def store(self) -> VectorStore:
-        """Get the vector store instance."""
-        if self._store is None:
-            self._store = get_vector_store()
-        return self._store
+    @staticmethod
+    def _get_section_document_id(journal_id: str, section_index: int) -> str:
+        """Generate document ID for a journal section."""
+        return f"journal_{journal_id}_section_{section_index}"
 
-    def _journal_to_document(self, journal: JournalEntry) -> VectorDocument:
-        """
-        Convert a journal entry to a vector document.
+    @staticmethod
+    def _get_journal_id_prefix(journal_id: str) -> str:
+        """Get prefix for all sections of a journal."""
+        return f"journal_{journal_id}_section_"
 
-        Args:
-            journal: Journal entry to convert.
+    def _build_section_documents(
+        self,
+        journal: JournalEntry,
+        sections: List[ParsedSection]
+    ) -> List[VectorDocument]:
+        """Build vector documents for each section."""
+        documents = []
 
-        Returns:
-            VectorDocument ready for indexing.
-        """
-        # Extract clean text for embedding
-        text = extract_plain_text(journal.content)
+        title = journal.title or "Untitled"
+        namespace = self._get_namespace(journal.space_id)
 
-        # Add title to searchable text
-        if journal.title:
-            text = f"{journal.title}\n\n{text}"
-
-        # Build metadata
-        metadata = {
-            "journal_id": journal.journal_id,
-            "space_id": journal.space_id,
-            "user_id": journal.user_id,
-            "created_at": journal.created_at.isoformat(),
-        }
-
-        # Add optional fields
-        if journal.template_id:
-            metadata["template_id"] = journal.template_id
-        if journal.framework_id:
-            metadata["framework_id"] = journal.framework_id
-        if journal.tags:
-            metadata["tags"] = journal.tags
-        if journal.emotions:
-            metadata["emotions"] = journal.emotions
-
-        # Get namespace for space isolation
-        namespace = VectorStore.get_space_namespace(journal.space_id)
-
-        return VectorDocument(
-            id=journal.journal_id,
-            text=text,
-            metadata=metadata,
-            namespace=namespace,
-        )
-
-    async def index_journal(self, journal: JournalEntry) -> IndexResult:
-        """
-        Index a single journal entry.
-
-        Args:
-            journal: Journal entry to index.
-
-        Returns:
-            IndexResult with status.
-        """
-        try:
-            document = self._journal_to_document(journal)
-            results = await self.store.upsert([document])
-
-            if results and len(results) > 0:
-                return results[0]
-
-            return IndexResult(
-                status=IndexStatus.FAILED,
-                document_id=journal.journal_id,
-                error="No result returned from upsert",
+        for section in sections:
+            doc_id = self._get_section_document_id(
+                journal.journal_id, section.index
             )
+
+            # Build rich metadata for filtering and display
+            metadata = {
+                "journalId": journal.journal_id,
+                "journalTitle": title[:100],
+                "sectionIndex": section.index,
+                "sectionTitle": section.title[:100],
+                "sectionType": section.section_type,
+                "userId": journal.user_id,
+                "spaceId": journal.space_id,
+                "templateId": journal.template_id or "",
+                "frameworkId": journal.framework_id or "",
+                "status": getattr(journal, 'status', None) or "published",
+                "createdAt": (
+                    journal.created_at.isoformat() if journal.created_at else ""
+                ),
+            }
+
+            # Add tags if present
+            if hasattr(journal, 'tags') and journal.tags:
+                metadata["tags"] = journal.tags[:10]
+
+            documents.append(VectorDocument(
+                id=doc_id,
+                text=section.content,
+                metadata=metadata,
+                namespace=namespace,
+            ))
+
+        return documents
+
+    async def index_journal(self, journal: JournalEntry) -> int:
+        """
+        Index a journal's sections.
+
+        Args:
+            journal: Journal to index
+
+        Returns:
+            Number of sections indexed
+        """
+        if not journal.space_id:
+            logger.error(
+                f"Cannot index journal {journal.journal_id}: missing space_id"
+            )
+            return 0
+
+        try:
+            # First, delete any existing sections for this journal
+            await self._delete_journal_sections(
+                journal.journal_id, journal.space_id
+            )
+
+            # Parse content into sections
+            # Handle both TipTap JSON (contentTiptap) and plain content
+            content_to_parse = journal.content
+            if hasattr(journal, 'content_tiptap') and journal.content_tiptap:
+                content_to_parse = journal.content_tiptap
+
+            sections = self.section_parser.parse(
+                content=content_to_parse,
+                template_id=journal.template_id,
+                title=journal.title
+            )
+
+            if not sections:
+                logger.warning(
+                    f"No sections parsed from journal {journal.journal_id}"
+                )
+                return 0
+
+            # Build documents
+            documents = self._build_section_documents(journal, sections)
+
+            # Index to vector store
+            results = await self.vector_store.upsert(documents)
+            count = sum(1 for r in results if r.status.value == "success")
+
+            logger.info(
+                f"Indexed {count} sections for journal {journal.journal_id} "
+                f"→ {self._get_namespace(journal.space_id)}"
+            )
+            return count
 
         except Exception as e:
             logger.error(f"Failed to index journal {journal.journal_id}: {e}")
-            return IndexResult(
-                status=IndexStatus.FAILED,
-                document_id=journal.journal_id,
-                error=str(e),
-            )
+            return 0
 
-    async def index_journals(
-        self, journals: List[JournalEntry]
-    ) -> List[IndexResult]:
-        """
-        Index multiple journal entries.
+    async def index_journals(self, journals: List[JournalEntry]) -> int:
+        """Batch index multiple journals."""
+        total = 0
+        for journal in journals:
+            count = await self.index_journal(journal)
+            total += count
+        return total
 
-        Args:
-            journals: List of journal entries to index.
-
-        Returns:
-            List of IndexResult for each journal.
-        """
-        if not journals:
-            return []
+    async def _delete_journal_sections(
+        self, journal_id: str, space_id: str
+    ) -> None:
+        """Delete all sections for a journal."""
+        namespace = self._get_namespace(space_id)
 
         try:
-            documents = [self._journal_to_document(j) for j in journals]
-            return await self.store.upsert(documents)
-
+            # Delete by filter matching journalId
+            await self.vector_store.delete_by_filter(
+                filter={"journalId": {"$eq": journal_id}},
+                namespace=namespace
+            )
+            logger.debug(f"Deleted existing sections for journal {journal_id}")
         except Exception as e:
-            logger.error(f"Failed to batch index journals: {e}")
-            return [
-                IndexResult(
-                    status=IndexStatus.FAILED,
-                    document_id=j.journal_id,
-                    error=str(e),
-                )
-                for j in journals
-            ]
+            logger.warning(f"Failed to delete existing sections: {e}")
 
     async def delete_journal(self, journal_id: str, space_id: str) -> bool:
-        """
-        Delete a journal from the index.
+        """Remove all sections for a journal from the index."""
+        if not space_id:
+            raise ValueError("space_id is REQUIRED for deletion")
 
-        Args:
-            journal_id: ID of the journal to delete.
-            space_id: Space ID for namespace lookup.
+        try:
+            await self._delete_journal_sections(journal_id, space_id)
+            logger.info(f"Deleted journal {journal_id} sections from index")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete journal {journal_id}: {e}")
+            return False
 
-        Returns:
-            True if deletion was successful.
-        """
-        namespace = VectorStore.get_space_namespace(space_id)
-        return await self.store.delete([journal_id], namespace)
-
-    async def delete_space(self, space_id: str) -> bool:
-        """
-        Delete all journals for a space from the index.
-
-        Called when a space is deleted.
-
-        Args:
-            space_id: Space ID to delete.
-
-        Returns:
-            True if deletion was successful.
-        """
-        namespace = VectorStore.get_space_namespace(space_id)
-        return await self.store.delete_namespace(namespace)
-
-    async def search(
+    async def search_space(
         self,
         query: str,
         space_id: str,
-        top_k: int = 10,
-        template_id: Optional[str] = None,
-        framework_id: Optional[str] = None,
         user_id: Optional[str] = None,
-    ) -> List[SearchResult]:
+        framework_id: Optional[str] = None,
+        template_id: Optional[str] = None,
+        top_k: int = 10
+    ) -> List[SectionSearchResult]:
         """
-        Search journals within a space.
+        Search journal sections within a space.
+
+        Returns section-level results with actual content excerpts.
 
         Args:
-            query: Search query text.
-            space_id: Space to search within (required for isolation).
-            top_k: Maximum number of results.
-            template_id: Optional filter by template.
-            framework_id: Optional filter by framework.
-            user_id: Optional filter by user.
+            query: Natural language search query
+            space_id: REQUIRED - Space to search within
+            user_id: Optional - Filter to specific user
+            framework_id: Optional - Filter by framework
+            template_id: Optional - Filter by template
+            top_k: Number of results (default 10 for sections)
 
         Returns:
-            List of search results with journal metadata.
+            List of section results with excerpts
         """
-        namespace = VectorStore.get_space_namespace(space_id)
+        if not space_id:
+            raise ValueError("space_id is REQUIRED - cannot search across spaces")
 
-        # Build filter
-        filter_dict: Optional[Dict[str, Any]] = None
-        if template_id or framework_id or user_id:
-            filter_dict = {}
-            if template_id:
-                filter_dict["template_id"] = {"$eq": template_id}
-            if framework_id:
-                filter_dict["framework_id"] = {"$eq": framework_id}
-            if user_id:
-                filter_dict["user_id"] = {"$eq": user_id}
+        if not query or not query.strip():
+            raise ValueError("query is required")
 
-        return await self.store.search(
+        # Build metadata filter
+        filter_dict: Dict[str, Any] = {}
+
+        if user_id:
+            filter_dict["userId"] = {"$eq": user_id}
+        if framework_id:
+            filter_dict["frameworkId"] = {"$eq": framework_id}
+        if template_id:
+            filter_dict["templateId"] = {"$eq": template_id}
+
+        namespace = self._get_namespace(space_id)
+
+        try:
+            results = await self.vector_store.search(
+                query=query.strip(),
+                namespace=namespace,
+                top_k=min(top_k, 20),
+                filter=filter_dict if filter_dict else None,
+            )
+
+            section_results = []
+            for r in results:
+                # Extract section info from metadata
+                metadata = r.metadata
+
+                section_results.append(SectionSearchResult(
+                    id=r.id,
+                    score=round(r.score, 4),
+                    journal_id=metadata.get("journalId", ""),
+                    section_index=metadata.get("sectionIndex", 0),
+                    section_title=metadata.get("sectionTitle", ""),
+                    excerpt=self._get_excerpt_from_result(r),
+                    metadata={
+                        "journalTitle": metadata.get("journalTitle", "Untitled"),
+                        "templateId": metadata.get("templateId"),
+                        "frameworkId": metadata.get("frameworkId"),
+                        "createdAt": metadata.get("createdAt"),
+                        "userId": metadata.get("userId"),
+                    }
+                ))
+
+            logger.debug(
+                f"Search '{query[:30]}...' in {namespace}: "
+                f"{len(section_results)} sections"
+            )
+            return section_results
+
+        except Exception as e:
+            logger.error(f"Search failed in {namespace}: {e}")
+            return []
+
+    def _get_excerpt_from_result(self, result) -> str:
+        """
+        Extract excerpt from search result.
+
+        Pinecone with integrated embeddings may return the text in metadata.
+        """
+        # Try to get original text from result
+        # This depends on how Pinecone returns it
+        text = result.metadata.get("text", "")
+
+        if not text:
+            # Fallback - we don't have the original text
+            # Return a placeholder; the actual text can be fetched from DynamoDB
+            return ""
+
+        # Truncate for excerpt
+        max_excerpt = 300
+        if len(text) > max_excerpt:
+            return text[:max_excerpt] + "..."
+        return text
+
+    async def search_space_grouped(
+        self,
+        query: str,
+        space_id: str,
+        user_id: Optional[str] = None,
+        top_k: int = 5
+    ) -> List[dict]:
+        """
+        Search and group results by journal.
+
+        Returns top N journals with their best matching sections.
+        """
+        # Get more section results to ensure we have enough journals
+        section_results = await self.search_space(
             query=query,
-            namespace=namespace,
-            top_k=top_k,
-            filter=filter_dict,
+            space_id=space_id,
+            user_id=user_id,
+            top_k=top_k * 3  # Get more to allow grouping
         )
 
+        # Group by journal
+        journal_map: Dict[str, dict] = {}
+        for result in section_results:
+            jid = result.journal_id
+            if jid not in journal_map:
+                journal_map[jid] = {
+                    "journalId": jid,
+                    "journalTitle": result.metadata.get(
+                        "journalTitle", "Untitled"
+                    ),
+                    "topScore": result.score,
+                    "sections": [],
+                    "createdAt": result.metadata.get("createdAt"),
+                }
 
-# Singleton instance
-_indexer_instance: Optional[JournalIndexer] = None
+            journal_map[jid]["sections"].append({
+                "sectionIndex": result.section_index,
+                "sectionTitle": result.section_title,
+                "score": result.score,
+                "excerpt": result.excerpt,
+            })
+
+        # Sort by top score and limit
+        grouped = sorted(
+            journal_map.values(),
+            key=lambda x: x["topScore"],
+            reverse=True
+        )[:top_k]
+
+        return grouped
+
+    async def delete_space_index(self, space_id: str) -> bool:
+        """Delete ALL indexed data for a space."""
+        if not space_id:
+            raise ValueError("space_id is required")
+
+        try:
+            namespace = self._get_namespace(space_id)
+            await self.vector_store.delete_namespace(namespace)
+            logger.info(f"Deleted entire index for space {space_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete space index {space_id}: {e}")
+            return False
+
+    async def get_space_stats(self, space_id: str) -> dict:
+        """Get indexing stats for a space."""
+        if not space_id:
+            raise ValueError("space_id is required")
+
+        namespace = self._get_namespace(space_id)
+        stats = await self.vector_store.get_stats(namespace=namespace)
+        return {
+            "space_id": space_id,
+            "indexed_sections": stats.get("record_count", 0)
+        }
+
+
+# Singleton
+_journal_indexer: Optional[JournalIndexer] = None
 
 
 def get_journal_indexer() -> JournalIndexer:
-    """
-    Get the singleton journal indexer instance.
-
-    Returns:
-        JournalIndexer instance.
-    """
-    global _indexer_instance
-    if _indexer_instance is None:
-        _indexer_instance = JournalIndexer()
-    return _indexer_instance
+    """Get singleton journal indexer instance."""
+    global _journal_indexer
+    if _journal_indexer is None:
+        _journal_indexer = JournalIndexer()
+    return _journal_indexer
 
 
 def reset_journal_indexer() -> None:
-    """Reset the singleton instance. Useful for testing."""
-    global _indexer_instance
-    _indexer_instance = None
+    """Reset singleton (for testing)."""
+    global _journal_indexer
+    _journal_indexer = None

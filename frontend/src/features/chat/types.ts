@@ -5,6 +5,8 @@
 export interface JournalCitation {
   journalId: string;
   title: string;
+  sectionTitle?: string;
+  sectionIndex?: number;
   relevanceScore: number;
   excerpt?: string;
   createdAt?: string;

@@ -9,6 +9,7 @@ from .base import (
     VectorStore,
     VectorDocument,
     SearchResult,
+    SectionSearchResult,
     IndexResult,
     IndexStatus,
 )
@@ -23,6 +24,7 @@ __all__ = [
     "VectorStore",
     "VectorDocument",
     "SearchResult",
+    "SectionSearchResult",
     "IndexResult",
     "IndexStatus",
     # Pinecone implementation
