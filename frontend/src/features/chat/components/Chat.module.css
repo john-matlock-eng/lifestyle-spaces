@@ -395,6 +395,34 @@
   height: 100vh;
   z-index: 100;
   overflow: hidden;
+  display: flex;
+}
+
+/* Resize Handle */
+.resizeHandle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ew-resize;
+  background: transparent;
+  transition: background 0.2s;
+  z-index: 10;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.resizeHandle:hover {
+  background: rgba(139, 92, 246, 0.2);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.resizeHandle:active {
+  background: rgba(139, 92, 246, 0.3);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .sidebarToggle {
