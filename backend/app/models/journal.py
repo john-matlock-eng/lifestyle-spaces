@@ -16,6 +16,8 @@ from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator, ConfigDict, field_serializer
 
+from app.models.ai_metadata import JournalAIMetadata
+
 
 class JournalBase(BaseModel):
     """
@@ -214,6 +216,13 @@ class JournalEntry(BaseModel):
     is_encrypted: bool = False
     word_count: int = 0
     is_pinned: bool = False
+    ai_metadata: Optional[JournalAIMetadata] = Field(
+        default=None,
+        alias="aiMetadata",
+        description="AI-generated metadata (synopsis, themes, insights)"
+    )
+
+    model_config = ConfigDict(populate_by_name=True)
 
     def is_multi_section_tiptap(self) -> bool:
         """
@@ -298,6 +307,11 @@ class JournalResponse(BaseModel):
     word_count: int = Field(..., alias="wordCount")
     is_pinned: bool = Field(False, alias="isPinned")
     author: Optional[Dict[str, Any]] = None
+    ai_metadata: Optional[Dict[str, Any]] = Field(
+        default=None,
+        alias="aiMetadata",
+        description="AI-generated metadata (synopsis, themes, insights)"
+    )
 
     @field_serializer("created_at", "updated_at")
     def serialize_datetime(self, dt: datetime) -> str:

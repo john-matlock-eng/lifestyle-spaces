@@ -169,6 +169,87 @@ class JournalService:
             # Log but don't fail - deletion from index is not critical
             logger.warning(f"[INDEX] Failed to delete journal {journal_id} from index: {e}")
 
+    def _generate_metadata_background(self, journal_data: Dict[str, Any]) -> None:
+        """
+        Generate AI metadata for a journal entry in the background.
+
+        This is fire-and-forget - metadata failures don't affect the main operation.
+        """
+        try:
+            from app.services.metadata_generator import get_metadata_generator
+
+            generator = get_metadata_generator()
+
+            async def _generate_and_save():
+                metadata = await generator.generate_metadata(
+                    journal_id=journal_data["journal_id"],
+                    title=journal_data["title"],
+                    content=journal_data.get("content_tiptap") or journal_data["content"],
+                    template_id=journal_data.get("template_id")
+                )
+
+                # Update journal with metadata in DynamoDB
+                self._update_ai_metadata(
+                    space_id=journal_data["space_id"],
+                    journal_id=journal_data["journal_id"],
+                    ai_metadata=metadata
+                )
+
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, _generate_and_save())
+                        future.result(timeout=30)  # 30 second timeout
+                        logger.info(f"[METADATA] Generated metadata for journal {journal_data['journal_id']}")
+                else:
+                    loop.run_until_complete(_generate_and_save())
+                    logger.info(f"[METADATA] Generated metadata for journal {journal_data['journal_id']}")
+            except RuntimeError:
+                asyncio.run(_generate_and_save())
+                logger.info(f"[METADATA] Generated metadata for journal {journal_data['journal_id']}")
+
+        except Exception as e:
+            # Log but don't fail - metadata is not critical
+            logger.warning(f"[METADATA] Failed to generate metadata for journal {journal_data.get('journal_id')}: {e}")
+
+    def _update_ai_metadata(
+        self,
+        space_id: str,
+        journal_id: str,
+        ai_metadata: "JournalAIMetadata"
+    ) -> bool:
+        """Update only the AI metadata field for a journal."""
+        from app.models.ai_metadata import JournalAIMetadata
+
+        try:
+            self.table.update_item(
+                Key={
+                    "PK": f"SPACE#{space_id}",
+                    "SK": f"JOURNAL#{journal_id}",
+                },
+                UpdateExpression="SET ai_metadata = :metadata, updated_at = :now",
+                ExpressionAttributeValues={
+                    ":metadata": {
+                        "synopsis": ai_metadata.synopsis,
+                        "themes": ai_metadata.themes,
+                        "insights": ai_metadata.insights,
+                        "sentiment": ai_metadata.sentiment,
+                        "emotionalTone": ai_metadata.emotional_tone,
+                        "generatedAt": ai_metadata.generated_at.isoformat(),
+                        "modelUsed": ai_metadata.model_used,
+                    },
+                    ":now": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+            logger.info(f"[METADATA] Updated AI metadata for journal {journal_id}")
+            return True
+
+        except ClientError as e:
+            logger.error(f"[METADATA] Failed to update AI metadata for {journal_id}: {e}")
+            return False
+
     def _is_space_member(self, space_id: str, user_id: str) -> bool:
         """Check if user is a member of the space."""
         try:
@@ -318,6 +399,9 @@ class JournalService:
         # Index journal for search (background, non-blocking)
         self._index_journal_background(result)
 
+        # Generate AI metadata (background, non-blocking)
+        self._generate_metadata_background(result)
+
         return result
 
     def get_journal_entry(self, space_id: str, journal_id: str, user_id: str) -> Dict[str, Any]:
@@ -377,6 +461,7 @@ class JournalService:
             "word_count": journal.get("word_count", 0),
             "is_pinned": journal.get("is_pinned", False),
             "author": author_info,
+            "ai_metadata": journal.get("ai_metadata"),
         }
 
     def update_journal_entry(
@@ -510,10 +595,14 @@ class JournalService:
             "word_count": updated_journal.get("word_count", 0),
             "is_pinned": updated_journal.get("is_pinned", False),
             "author": author_info,
+            "ai_metadata": updated_journal.get("ai_metadata"),
         }
 
         # Re-index journal for search (background, non-blocking)
         self._index_journal_background(result)
+
+        # Regenerate AI metadata on content update (background, non-blocking)
+        self._generate_metadata_background(result)
 
         return result
 

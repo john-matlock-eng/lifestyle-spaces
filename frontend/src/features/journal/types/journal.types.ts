@@ -1,6 +1,39 @@
 import type { TemplateFrequency } from './framework.types'
 
 /**
+ * Sentiment types for AI-generated metadata
+ */
+export type SentimentType =
+  | 'reflective'
+  | 'positive'
+  | 'challenging'
+  | 'grateful'
+  | 'anxious'
+  | 'hopeful'
+  | 'neutral'
+  | 'mixed'
+
+/**
+ * AI-generated metadata for a journal entry
+ */
+export interface JournalAIMetadata {
+  /** 2-3 sentence summary of the journal entry */
+  synopsis: string
+  /** 3-7 topic tags/themes */
+  themes: string[]
+  /** Key takeaways or realizations (0-5) */
+  insights: string[]
+  /** Overall emotional tone */
+  sentiment: SentimentType
+  /** More nuanced emotional description */
+  emotionalTone?: string
+  /** When the metadata was generated */
+  generatedAt: string
+  /** Model that generated this metadata */
+  modelUsed?: string
+}
+
+/**
  * Journal entry author information
  */
 export interface JournalAuthor {
@@ -42,6 +75,12 @@ export interface JournalEntry {
    * Helps with progress tracking and cycle completion
    */
   templateFrequency?: TemplateFrequency
+
+  /**
+   * AI-generated metadata (synopsis, themes, insights, sentiment)
+   * Generated asynchronously after journal creation/update
+   */
+  aiMetadata?: JournalAIMetadata
 }
 
 /**

@@ -429,6 +429,7 @@ class ChatService:
         Build context string and citations from search results.
 
         Uses section-level excerpts for precise context.
+        Enhances context with AI-generated synopses when available.
 
         Args:
             search_results: Grouped search results with section info
@@ -440,7 +441,7 @@ class ChatService:
         if not search_results:
             return "", []
 
-        # Create journal lookup for full content if needed
+        # Create journal lookup for full content and AI metadata
         journal_lookup = {
             (j.get("journal_id") or j.get("journalId")): j
             for j in journals
@@ -460,6 +461,19 @@ class ChatService:
             context_parts.append(f"### [{i}] {journal_title}")
             if created_at:
                 context_parts.append(f"*Date: {created_at[:10]}*\n")
+
+            # Add AI synopsis if available (provides quick context)
+            full_journal = journal_lookup.get(journal_id, {})
+            ai_metadata = full_journal.get("ai_metadata")
+            if ai_metadata:
+                synopsis = ai_metadata.get("synopsis", "")
+                if synopsis:
+                    context_parts.append(f"*Summary: {synopsis}*\n")
+
+                # Optionally add themes for additional context
+                themes = ai_metadata.get("themes", [])
+                if themes:
+                    context_parts.append(f"*Themes: {', '.join(themes[:5])}*\n")
 
             # Add each relevant section
             for section in sections[:2]:  # Limit to top 2 sections per journal

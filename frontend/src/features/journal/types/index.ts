@@ -11,6 +11,8 @@
 // ============================================================================
 
 export type {
+  SentimentType,
+  JournalAIMetadata,
   JournalAuthor,
   JournalEntry,
   JournalListResponse,

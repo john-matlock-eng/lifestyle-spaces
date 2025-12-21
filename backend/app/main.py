@@ -130,6 +130,7 @@ from app.api.routes import (
     conversations,
     search,
     chat,
+    metadata,
 )
 
 # Include API routers
@@ -148,3 +149,4 @@ app.include_router(journal_comments.router)
 app.include_router(conversations.router)
 app.include_router(search.router)
 app.include_router(chat.router)
+app.include_router(metadata.router)
