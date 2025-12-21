@@ -4,6 +4,7 @@ Chat API Routes
 Endpoints for AI chat with journal context (Ellie conversations).
 """
 
+import json
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -327,13 +328,21 @@ async def send_message_streaming(
         )
 
         async def generate():
-            async for chunk in service.send_message_streaming(
-                space_id=space_id,
-                conversation_id=conversation_id,
-                user_id=user_id,
-                request=request,
-            ):
-                yield f"data: {chunk}\n\n"
+            """Generator with error handling inside to catch streaming errors."""
+            try:
+                async for chunk in service.send_message_streaming(
+                    space_id=space_id,
+                    conversation_id=conversation_id,
+                    user_id=user_id,
+                    request=request,
+                ):
+                    yield f"data: {chunk}\n\n"
+            except Exception as e:
+                # Log the error that happens during streaming
+                logger.error(f"[CHAT] Error during streaming iteration: {e}", exc_info=True)
+                # Yield error as SSE event so client knows what happened
+                error_event = json.dumps({"type": "error", "message": str(e)})
+                yield f"data: {error_event}\n\n"
 
         return StreamingResponse(
             generate(),
