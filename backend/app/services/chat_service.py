@@ -102,22 +102,36 @@ class ChatService:
         """
         if self._client is None:
             secret_arn = os.environ.get("CLAUDE_API_KEY_SECRET_ARN")
+            logger.info(f"[CHAT] Initializing Anthropic client, secret_arn present: {bool(secret_arn)}")
+
             if not secret_arn:
+                logger.error("[CHAT] CLAUDE_API_KEY_SECRET_ARN environment variable not set")
                 raise ValueError("CLAUDE_API_KEY_SECRET_ARN environment variable not set")
 
             # Get secret and parse JSON
-            secret_string = get_secret(secret_arn)
+            try:
+                secret_string = get_secret(secret_arn)
+                logger.info(f"[CHAT] Retrieved secret, length: {len(secret_string) if secret_string else 0}")
+            except Exception as e:
+                logger.error(f"[CHAT] Failed to retrieve secret: {e}")
+                raise
+
             try:
                 secret_data = json.loads(secret_string)
                 api_key = secret_data.get("api_key")
+                logger.info(f"[CHAT] Parsed JSON secret, api_key present: {bool(api_key)}")
             except json.JSONDecodeError:
                 # If not JSON, use the raw string as the API key
                 api_key = secret_string
+                logger.info("[CHAT] Secret is not JSON, using raw string")
 
             if not api_key or api_key == "PLACEHOLDER_UPDATE_MANUALLY":
+                logger.error("[CHAT] Claude API key not configured or is placeholder")
                 raise ValueError("Claude API key not configured in Secrets Manager")
 
+            logger.info(f"[CHAT] Creating Anthropic client with key prefix: {api_key[:10]}...")
             self._client = anthropic.Anthropic(api_key=api_key)
+            logger.info("[CHAT] Anthropic client created successfully")
         return self._client
 
     # =========================================================================
