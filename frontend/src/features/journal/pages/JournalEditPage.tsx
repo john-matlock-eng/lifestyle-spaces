@@ -22,6 +22,7 @@ import { useEllieJournalGuide } from '../hooks/useEllieJournalGuide'
 import type { Template, TemplateData, QAPair, ListItem, TableRow, MomentBlock } from '../types/template.types'
 import type { CustomSection } from '../types/customSection.types'
 import { Trash2, Edit2 } from 'lucide-react'
+import { ChatSidebar, ChatBottomSheet } from '../../chat'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -885,6 +886,14 @@ export const JournalEditPage: React.FC = () => {
 
         showPerchControl={true}
       />
+
+      {/* Chat Sidebar */}
+      {spaceId && (
+        <>
+          <ChatSidebar spaceId={spaceId} />
+          <ChatBottomSheet spaceId={spaceId} />
+        </>
+      )}
     </div>
   )
 }

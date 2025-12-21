@@ -22,6 +22,7 @@ import type { Template, TemplateData, QAPair, ListItem, TableRow, MomentBlock } 
 import type { CustomSection } from '../types/customSection.types'
 import { getFrameworkRegistry } from '../frameworks'
 import { Trash2, Edit2 } from 'lucide-react'
+import { ChatSidebar, ChatBottomSheet } from '../../chat'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -818,8 +819,16 @@ export const JournalCreatePage: React.FC = () => {
           collarColor={customization.collarColor}
           collarTag={customization.collarTag}
           showPerchControl={true}
-          
+
         />
+      )}
+
+      {/* Chat Sidebar */}
+      {spaceId && (
+        <>
+          <ChatSidebar spaceId={spaceId} />
+          <ChatBottomSheet spaceId={spaceId} />
+        </>
       )}
     </div>
   )
