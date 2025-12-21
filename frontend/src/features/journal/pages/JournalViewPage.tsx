@@ -27,6 +27,7 @@ import { CheckboxSectionDisplay } from '../components/sections/CheckboxSectionDi
 import { ScaleSectionDisplay } from '../components/sections/ScaleSectionDisplay'
 import { TableSectionDisplay } from '../components/sections/TableSectionDisplay'
 import { MomentBlocksSectionDisplay } from '../components/sections/MomentBlocksSectionDisplay'
+import { ChatSidebar, ChatBottomSheet } from '../../chat'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -847,6 +848,14 @@ ${content}
           onNavigateHighlight={handleNavigateHighlight}
         />
       </div>
+    )}
+
+    {/* Ellie Chat - Desktop sidebar and mobile bottom sheet */}
+    {spaceId && (
+      <>
+        <ChatSidebar spaceId={spaceId} />
+        <ChatBottomSheet spaceId={spaceId} />
+      </>
     )}
     </div>
   )
