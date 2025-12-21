@@ -4,6 +4,7 @@
 
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
+import ReactMarkdown from 'react-markdown';
 import type { ChatMessage as ChatMessageType } from '../types';
 import { CitationCard } from './CitationCard';
 import styles from './Chat.module.css';
@@ -32,7 +33,13 @@ export function ChatMessage({ message, isStreaming, streamingContent }: ChatMess
 
       <div className={styles.messageContent}>
         <div className={styles.messageBubble}>
-          {content}
+          {isUser ? (
+            content
+          ) : (
+            <div className={styles.markdown}>
+              <ReactMarkdown>{content || ''}</ReactMarkdown>
+            </div>
+          )}
           {isStreaming && <span className={styles.cursor}>|</span>}
         </div>
 

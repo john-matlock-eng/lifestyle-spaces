@@ -214,6 +214,95 @@
   }
 }
 
+/* Markdown Styles */
+.markdown {
+  line-height: 1.6;
+}
+
+.markdown p {
+  margin: 0 0 0.75rem;
+}
+
+.markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown strong {
+  font-weight: 600;
+  color: #fff;
+}
+
+.markdown em {
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.markdown ul,
+.markdown ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.markdown li {
+  margin: 0.25rem 0;
+}
+
+.markdown li::marker {
+  color: rgba(139, 92, 246, 0.8);
+}
+
+.markdown blockquote {
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid rgba(139, 92, 246, 0.6);
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.markdown blockquote p {
+  margin: 0;
+}
+
+.markdown code {
+  padding: 0.125rem 0.375rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.8em;
+  color: rgba(139, 92, 246, 1);
+}
+
+.markdown pre {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.markdown pre code {
+  padding: 0;
+  background: none;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.markdown hr {
+  margin: 1rem 0;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.markdown a {
+  color: rgba(139, 92, 246, 1);
+  text-decoration: none;
+}
+
+.markdown a:hover {
+  text-decoration: underline;
+}
+
 /* Citations */
 .citations {
   display: flex;
