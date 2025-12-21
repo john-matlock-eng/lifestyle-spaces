@@ -12,6 +12,7 @@ import os
 import logging
 import json
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Optional, List, AsyncGenerator, Tuple, Dict, Any
 from uuid import uuid4
 
@@ -171,7 +172,7 @@ class ChatService:
                         {
                             "journalId": c.journal_id,
                             "title": c.title,
-                            "relevanceScore": float(c.relevance_score),
+                            "relevanceScore": Decimal(str(c.relevance_score)),
                             "excerpt": c.excerpt,
                             "createdAt": c.created_at,
                         }
