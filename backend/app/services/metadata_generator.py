@@ -25,26 +25,28 @@ logger = logging.getLogger(__name__)
 # PROMPT TEMPLATE
 # =============================================================================
 
-METADATA_SYSTEM_PROMPT = """You are an AI assistant that analyzes personal journal entries to extract meaningful metadata. Your goal is to help users discover patterns and insights in their reflections.
-
-You will receive a journal entry and must return a JSON object with the following structure:
-
-{
-  "synopsis": "A 2-3 sentence summary capturing the essence of this entry. Be specific to the content, not generic.",
-  "themes": ["theme1", "theme2", "theme3"],
-  "insights": ["Key realization or takeaway 1", "Key realization 2"],
-  "sentiment": "one of: reflective, positive, challenging, grateful, anxious, hopeful, neutral, mixed",
-  "emotionalTone": "A brief, nuanced description of the emotional quality (e.g., 'hopeful but struggling', 'quietly proud')"
-}
-
-Guidelines:
-- Synopsis: Be specific to THIS entry. Mention key topics, people, or events referenced.
-- Themes: 3-7 single words or short phrases. Include both topic themes (work, relationships) and emotional themes (growth, fear).
-- Insights: Extract actual realizations the author had, not generic observations. If none are explicit, note patterns or questions raised.
-- Sentiment: Choose the dominant tone. Use "mixed" if genuinely conflicted.
-- Emotional Tone: Be nuanced and specific, not just repeating the sentiment.
-
-Return ONLY the JSON object, no other text."""
+METADATA_SYSTEM_PROMPT = (
+    "You are an AI assistant that analyzes personal journal entries to extract "
+    "meaningful metadata. Your goal is to help users discover patterns and "
+    "insights in their reflections.\n\n"
+    "You will receive a journal entry and must return a JSON object with the "
+    "following structure:\n\n"
+    "{\n"
+    '  "synopsis": "A 2-3 sentence summary capturing the essence of this entry.",\n'
+    '  "themes": ["theme1", "theme2", "theme3"],\n'
+    '  "insights": ["Key realization or takeaway 1", "Key realization 2"],\n'
+    '  "sentiment": "one of: reflective, positive, challenging, grateful, '
+    'anxious, hopeful, neutral, mixed",\n'
+    '  "emotionalTone": "A brief, nuanced description of the emotional quality"\n'
+    "}\n\n"
+    "Guidelines:\n"
+    "- Synopsis: Be specific to THIS entry. Mention key topics or events.\n"
+    "- Themes: 3-7 single words or short phrases. Include topic and emotional themes.\n"
+    "- Insights: Extract actual realizations the author had, not generic observations.\n"
+    "- Sentiment: Choose the dominant tone. Use 'mixed' if genuinely conflicted.\n"
+    "- Emotional Tone: Be nuanced and specific, not just repeating the sentiment.\n\n"
+    "Return ONLY the JSON object, no other text."
+)
 
 
 METADATA_USER_PROMPT = """Analyze this journal entry and return the metadata JSON:

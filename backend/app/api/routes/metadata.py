@@ -26,6 +26,7 @@ def _get_user_id(current_user: Dict[str, Any]) -> str:
     """Extract user ID from current user dict."""
     return current_user.get("sub") or current_user.get("userId")
 
+
 router = APIRouter(prefix="/metadata", tags=["metadata"])
 
 
@@ -38,7 +39,7 @@ def get_journal_service() -> JournalService:
     "/journals/{journal_id}/generate",
     response_model=GenerateMetadataResponse,
     summary="Generate AI metadata for a journal",
-    description="Generate or regenerate AI metadata (synopsis, themes, insights, sentiment) for a journal entry.",
+    description="Generate or regenerate AI metadata for a journal entry.",
 )
 async def generate_journal_metadata(
     journal_id: str,

@@ -5,7 +5,7 @@ Pydantic models for AI-generated journal metadata.
 """
 
 from datetime import datetime, timezone
-from typing import List, Optional, Literal
+from typing import List, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
 
