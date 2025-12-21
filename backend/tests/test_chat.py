@@ -982,3 +982,81 @@ class TestChatDynamoDBHelpers:
         assert len(conversation.messages) == 1
         assert len(conversation.messages[0].citations) == 1
         assert conversation.messages[0].citations[0].journal_id == "j1"
+
+
+class TestChatServiceClientInit:
+    """Tests for ChatService client property initialization."""
+
+    @pytest.fixture
+    def service(self):
+        """Create chat service without client initialized."""
+        reset_chat_service()
+        service = ChatService()
+        service.table = MagicMock()
+        service._client = None  # Ensure client is not initialized
+        return service
+
+    @patch("app.services.chat_service.get_secret")
+    @patch.dict("os.environ", {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123:secret:test"})
+    def test_client_init_with_json_secret(self, mock_get_secret, service):
+        """Test client initialization with JSON secret."""
+        mock_get_secret.return_value = '{"api_key": "sk-ant-test-key-12345"}'
+
+        with patch("app.services.chat_service.anthropic.Anthropic") as mock_anthropic:
+            mock_anthropic.return_value = MagicMock()
+            client = service.client
+
+            mock_get_secret.assert_called_once()
+            mock_anthropic.assert_called_once_with(api_key="sk-ant-test-key-12345")
+            assert client is not None
+
+    @patch("app.services.chat_service.get_secret")
+    @patch.dict("os.environ", {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123:secret:test"})
+    def test_client_init_with_raw_string_secret(self, mock_get_secret, service):
+        """Test client initialization with non-JSON raw API key."""
+        mock_get_secret.return_value = "sk-ant-raw-key-67890"
+
+        with patch("app.services.chat_service.anthropic.Anthropic") as mock_anthropic:
+            mock_anthropic.return_value = MagicMock()
+            client = service.client
+
+            mock_anthropic.assert_called_once_with(api_key="sk-ant-raw-key-67890")
+            assert client is not None
+
+    @patch.dict("os.environ", {}, clear=True)
+    def test_client_init_missing_env_var(self, service):
+        """Test client initialization fails without env var."""
+        # Remove any CLAUDE_API_KEY_SECRET_ARN that might exist
+        import os
+        if "CLAUDE_API_KEY_SECRET_ARN" in os.environ:
+            del os.environ["CLAUDE_API_KEY_SECRET_ARN"]
+
+        with pytest.raises(ValueError, match="CLAUDE_API_KEY_SECRET_ARN environment variable not set"):
+            _ = service.client
+
+    @patch("app.services.chat_service.get_secret")
+    @patch.dict("os.environ", {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123:secret:test"})
+    def test_client_init_placeholder_api_key(self, mock_get_secret, service):
+        """Test client initialization fails with placeholder key."""
+        mock_get_secret.return_value = '{"api_key": "PLACEHOLDER_UPDATE_MANUALLY"}'
+
+        with pytest.raises(ValueError, match="Claude API key not configured"):
+            _ = service.client
+
+    @patch("app.services.chat_service.get_secret")
+    @patch.dict("os.environ", {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123:secret:test"})
+    def test_client_init_empty_api_key(self, mock_get_secret, service):
+        """Test client initialization fails with empty key."""
+        mock_get_secret.return_value = '{"api_key": ""}'
+
+        with pytest.raises(ValueError, match="Claude API key not configured"):
+            _ = service.client
+
+    @patch("app.services.chat_service.get_secret")
+    @patch.dict("os.environ", {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123:secret:test"})
+    def test_client_init_secret_retrieval_fails(self, mock_get_secret, service):
+        """Test client initialization when secret retrieval fails."""
+        mock_get_secret.side_effect = Exception("Secret not found")
+
+        with pytest.raises(Exception, match="Secret not found"):
+            _ = service.client
