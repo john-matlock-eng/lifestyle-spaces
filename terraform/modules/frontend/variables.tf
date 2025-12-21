@@ -46,3 +46,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "enable_secondary_distribution" {
+  description = "Enable a secondary CloudFront distribution (for testing/staging)"
+  type        = bool
+  default     = false
+}

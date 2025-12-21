@@ -124,12 +124,29 @@ output "cloudfront_distribution_status" {
   value       = module.frontend.cloudfront_distribution_status
 }
 
+# Secondary CloudFront Distribution
+output "secondary_cloudfront_distribution_id" {
+  description = "ID of the secondary CloudFront distribution"
+  value       = module.frontend.secondary_cloudfront_distribution_id
+}
+
+output "secondary_cloudfront_domain_name" {
+  description = "Domain name of the secondary CloudFront distribution"
+  value       = module.frontend.secondary_cloudfront_domain_name
+}
+
+output "secondary_website_url" {
+  description = "URL of the secondary website"
+  value       = module.frontend.secondary_website_url
+}
+
 output "deployment_info" {
   description = "Important deployment information"
   value = {
     # Website URLs
-    website_url       = module.frontend.website_url
-    cloudfront_domain = module.frontend.cloudfront_distribution_domain
+    website_url           = module.frontend.website_url
+    cloudfront_domain     = module.frontend.cloudfront_distribution_domain
+    secondary_website_url = module.frontend.secondary_website_url
 
     # API URLs
     api_url        = module.backend.api_gateway_url

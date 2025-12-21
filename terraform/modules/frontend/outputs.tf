@@ -59,3 +59,19 @@ output "cloudfront_distribution_status" {
   description = "Status of the CloudFront distribution"
   value       = aws_cloudfront_distribution.website.status
 }
+
+# Secondary CloudFront Distribution outputs
+output "secondary_cloudfront_distribution_id" {
+  description = "ID of the secondary CloudFront distribution"
+  value       = var.enable_secondary_distribution ? aws_cloudfront_distribution.secondary[0].id : null
+}
+
+output "secondary_cloudfront_domain_name" {
+  description = "Domain name of the secondary CloudFront distribution"
+  value       = var.enable_secondary_distribution ? aws_cloudfront_distribution.secondary[0].domain_name : null
+}
+
+output "secondary_website_url" {
+  description = "URL of the secondary website"
+  value       = var.enable_secondary_distribution ? "https://${aws_cloudfront_distribution.secondary[0].domain_name}" : null
+}
