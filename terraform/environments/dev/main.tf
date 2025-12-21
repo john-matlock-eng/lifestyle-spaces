@@ -89,7 +89,7 @@ module "frontend" {
   api_gateway_url               = module.backend.api_gateway_url
   enable_versioning             = var.enable_s3_versioning
   cloudfront_price_class        = var.cloudfront_price_class
-  enable_secondary_distribution = true  # Secondary CloudFront for testing
+  enable_secondary_distribution = true # Secondary CloudFront for testing
 
   tags = local.common_tags
 
