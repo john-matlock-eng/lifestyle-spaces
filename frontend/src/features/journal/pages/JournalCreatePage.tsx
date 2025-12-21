@@ -14,7 +14,6 @@ import AIWritingPrompts from '../../../components/AIWritingPrompts'
 import { useJournal } from '../hooks/useJournal'
 import { useSectionTipTap } from '../hooks/useSectionTipTap'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
-import { AIAssistantDock } from '../components/AIAssistantDock'
 import { aiService } from '../../../services/ai'
 import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
@@ -26,7 +25,6 @@ import { Trash2, Edit2, Bot } from 'lucide-react'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
-import '../styles/ai-assistant-dock.css'
 
 /**
  * Page for creating a new journal entry
@@ -45,8 +43,7 @@ export const JournalCreatePage: React.FC = () => {
   const [emotions, setEmotions] = useState<string[]>([])
   const [showTemplatePicker, setShowTemplatePicker] = useState(true)
   const [customSections, setCustomSections] = useState<CustomSection[]>([])
-  const [showAIDock, setShowAIDock] = useState(false)
-  const [currentSectionId, setCurrentSectionId] = useState<string | undefined>()
+    const [currentSectionId, setCurrentSectionId] = useState<string | undefined>()
 
   // Multi-section TipTap state management
   const { updateSection, getAllSections } = useSectionTipTap()
@@ -856,16 +853,6 @@ export const JournalCreatePage: React.FC = () => {
         <div className="journal-form-actions">
           <button
             type="button"
-            onClick={() => setShowAIDock(!showAIDock)}
-            className={`button-secondary ${showAIDock ? 'active' : ''}`}
-            disabled={loading}
-            title="AI Writing Assistant"
-          >
-            <Bot size={18} />
-            {showAIDock ? 'Hide AI Assistant' : 'Show AI Assistant'}
-          </button>
-          <button
-            type="button"
             onClick={handleCancel}
             className="button-secondary"
             disabled={loading}
@@ -879,66 +866,6 @@ export const JournalCreatePage: React.FC = () => {
       </form>
       )}
 
-      {/* AI Assistant Dock */}
-      {showAIDock && !showTemplatePicker && (
-        <AIAssistantDock
-          journalContent={
-            // For templated journals, combine all section content
-            selectedTemplate || customSections.length > 0
-              ? [
-                  // Template sections
-                  ...Object.values(templateData).map(val => {
-                    if (typeof val === 'string') return val
-                    if (Array.isArray(val)) {
-                      // For Q&A pairs and lists, extract content
-                      return val.map((item: QAPair | ListItem | unknown) => {
-                        if (typeof item === 'object' && item !== null) {
-                          const qaItem = item as QAPair
-                          if ('question' in qaItem && 'answer' in qaItem) {
-                            return `**Q:** ${qaItem.question}\n\n**A:** ${qaItem.answer || '(not answered yet)'}`
-                          }
-                          const listItem = item as ListItem
-                          if ('text' in listItem) {
-                            return `- ${listItem.text}`
-                          }
-                        }
-                        return String(item)
-                      }).join('\n\n')
-                    }
-                    return String(val)
-                  }),
-                  // Custom sections
-                  ...customSections.map(section => {
-                    if (typeof section.content === 'string') return section.content
-                    if (Array.isArray(section.content)) {
-                      return section.content.map((item: QAPair | ListItem | unknown) => {
-                        if (typeof item === 'object' && item !== null) {
-                          const qaItem = item as QAPair
-                          if ('question' in qaItem && 'answer' in qaItem) {
-                            return `**Q:** ${qaItem.question}\n\n**A:** ${qaItem.answer || '(not answered yet)'}`
-                          }
-                          const listItem = item as ListItem
-                          if ('text' in listItem) {
-                            return `- ${listItem.text}`
-                          }
-                        }
-                        return String(item)
-                      }).join('\n\n')
-                    }
-                    return String(section.content)
-                  })
-                ]
-                  .filter(text => text.trim())
-                  .join('\n\n---\n\n')
-              : content
-          }
-          journalTitle={title}
-          journalId="draft"
-          emotions={emotions}
-          onClose={() => setShowAIDock(false)}
-          onGenerateQuestions={handleGenerateQuestions}
-        />
-      )}
 
       {/* Ellie companion */}
       {!showTemplatePicker && (

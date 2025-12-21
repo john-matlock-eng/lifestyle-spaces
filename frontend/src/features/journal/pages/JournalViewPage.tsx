@@ -9,7 +9,6 @@ import type { DisplaySection } from '../../../lib/journal/types'
 import type { Template } from '../types/template.types'
 import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
-import { AIAssistantDock } from '../components/AIAssistantDock'
 import { HighlightableText } from '../components/HighlightableText'
 import { TipTapViewer } from '../components/TipTapViewer'
 import { MultiSectionTipTapViewer } from '../components/MultiSectionTipTapViewer'
@@ -31,7 +30,6 @@ import { ChatSidebar, ChatBottomSheet } from '../../chat'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
-import '../styles/ai-assistant-dock.css'
 import '../styles/journal-compact.css'
 
 /**
@@ -46,8 +44,7 @@ export const JournalViewPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false)
   const [template, setTemplate] = useState<Template | null>(null)
   const [displaySections, setDisplaySections] = useState<DisplaySection[]>([])
-  const [showAIDock, setShowAIDock] = useState(false)
-  const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
+    const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
   const [pendingHighlightId, setPendingHighlightId] = useState<string | null>(null)
   const [showJournalCommentPanel, setShowJournalCommentPanel] = useState(false)
@@ -762,13 +759,6 @@ ${content}
           >
             📥
           </button>
-          <button
-            onClick={() => setShowAIDock(!showAIDock)}
-            className="journal-action-icon-btn"
-            title="AI Assistant"
-          >
-            🤖
-          </button>
         </div>
 
         <div className="journal-actions-right">
@@ -794,16 +784,6 @@ ${content}
         </div>
       </div>
 
-      {/* AI Assistant Dock */}
-      {showAIDock && (
-        <AIAssistantDock
-          journalContent={journal.content}
-          journalTitle={journal.title}
-          journalId={journalId}
-          emotions={journal.emotions?.map(id => getEmotionById(id)?.label).filter((label): label is string => !!label)}
-          onClose={() => setShowAIDock(false)}
-        />
-      )}
 
       {/* Journal Comment Panel (expanded Conversations view) */}
       {spaceId && journalId && (
