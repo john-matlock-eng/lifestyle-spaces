@@ -360,6 +360,55 @@ class TestMetadataGenerator:
         # Should return minimal metadata on JSON error
         assert result.model_used == "none"
 
+    @pytest.mark.asyncio
+    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
+    @patch("app.services.metadata_generator.anthropic.Anthropic")
+    async def test_generate_metadata_api_error(self, mock_anthropic_class):
+        """Test handling of Anthropic API error."""
+        import anthropic
+
+        mock_client = Mock()
+        mock_client.messages.create.side_effect = anthropic.APIError(
+            message="Rate limit exceeded",
+            request=Mock(),
+            body=None
+        )
+        mock_anthropic_class.return_value = mock_client
+
+        reset_metadata_generator()
+        generator = MetadataGenerator()
+
+        content = "This is a journal entry with enough content. " * 10
+
+        with pytest.raises(anthropic.APIError):
+            await generator.generate_metadata(
+                journal_id="test-123",
+                title="Test",
+                content=content
+            )
+
+    @pytest.mark.asyncio
+    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
+    @patch("app.services.metadata_generator.anthropic.Anthropic")
+    async def test_generate_metadata_unexpected_error(self, mock_anthropic_class):
+        """Test handling of unexpected errors returns minimal metadata."""
+        mock_client = Mock()
+        mock_client.messages.create.side_effect = RuntimeError("Unexpected")
+        mock_anthropic_class.return_value = mock_client
+
+        reset_metadata_generator()
+        generator = MetadataGenerator()
+
+        content = "This is a journal entry with enough content. " * 10
+        result = await generator.generate_metadata(
+            journal_id="test-123",
+            title="Test",
+            content=content
+        )
+
+        # Should return minimal metadata on unexpected error
+        assert result.model_used == "none"
+
 
 class TestMetadataGeneratorSingleton:
     """Test singleton pattern for MetadataGenerator."""
