@@ -94,9 +94,29 @@ class ChatService:
 
     @property
     def client(self) -> anthropic.Anthropic:
-        """Lazy-load Anthropic client."""
+        """Lazy-load Anthropic client.
+
+        Uses the same secret retrieval pattern as ClaudeLLMService:
+        - Gets secret ARN from CLAUDE_API_KEY_SECRET_ARN environment variable
+        - Parses JSON and extracts 'api_key' field
+        """
         if self._client is None:
-            api_key = get_secret(self.settings.anthropic_secret_name)
+            secret_arn = os.environ.get("CLAUDE_API_KEY_SECRET_ARN")
+            if not secret_arn:
+                raise ValueError("CLAUDE_API_KEY_SECRET_ARN environment variable not set")
+
+            # Get secret and parse JSON
+            secret_string = get_secret(secret_arn)
+            try:
+                secret_data = json.loads(secret_string)
+                api_key = secret_data.get("api_key")
+            except json.JSONDecodeError:
+                # If not JSON, use the raw string as the API key
+                api_key = secret_string
+
+            if not api_key or api_key == "PLACEHOLDER_UPDATE_MANUALLY":
+                raise ValueError("Claude API key not configured in Secrets Manager")
+
             self._client = anthropic.Anthropic(api_key=api_key)
         return self._client
 
