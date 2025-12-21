@@ -8,6 +8,7 @@ import {
   createContext,
   useReducer,
   useCallback,
+  useEffect,
   useRef,
   type ReactNode,
 } from 'react';
@@ -160,6 +161,25 @@ export function ChatProvider({ children }: ChatProviderProps) {
   // Refs to track streaming content (for closure issues)
   const streamingContentRef = useRef('');
   const streamingCitationsRef = useRef<JournalCitation[]>([]);
+
+  // Set CSS custom property for sidebar width to enable layout adjustment
+  useEffect(() => {
+    const root = document.documentElement;
+
+    if (state.isOpen) {
+      root.style.setProperty('--chat-sidebar-width', '380px');
+      document.body.setAttribute('data-chat-open', 'true');
+    } else {
+      root.style.setProperty('--chat-sidebar-width', '0px');
+      document.body.removeAttribute('data-chat-open');
+    }
+
+    // Cleanup on unmount
+    return () => {
+      root.style.setProperty('--chat-sidebar-width', '0px');
+      document.body.removeAttribute('data-chat-open');
+    };
+  }, [state.isOpen]);
 
   // UI Actions
   const openChat = useCallback(() => {

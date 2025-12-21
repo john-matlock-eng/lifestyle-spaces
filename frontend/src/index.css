@@ -56,3 +56,51 @@ button:focus-visible {
 }
 
 /* Theme system handles color scheme - no media queries needed */
+
+/* =============================================================================
+   CHAT SIDEBAR LAYOUT INTEGRATION
+   ============================================================================= */
+
+:root {
+  --chat-sidebar-width: 0px;
+}
+
+/* Prevent horizontal scroll during sidebar transition */
+body {
+  overflow-x: hidden;
+}
+
+/* Base transition for smooth sidebar open/close */
+main,
+.main-content,
+.journal-viewer,
+.journal-editor,
+.page-content,
+.journal-view-page,
+.journal-list-page {
+  transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Adjust main content when chat sidebar is open */
+body[data-chat-open='true'] main,
+body[data-chat-open='true'] .main-content,
+body[data-chat-open='true'] .journal-viewer,
+body[data-chat-open='true'] .journal-editor,
+body[data-chat-open='true'] .page-content,
+body[data-chat-open='true'] .journal-view-page,
+body[data-chat-open='true'] .journal-list-page {
+  margin-right: var(--chat-sidebar-width);
+}
+
+/* Desktop only - don't adjust on mobile where we use bottom sheet */
+@media (max-width: 768px) {
+  body[data-chat-open='true'] main,
+  body[data-chat-open='true'] .main-content,
+  body[data-chat-open='true'] .journal-viewer,
+  body[data-chat-open='true'] .journal-editor,
+  body[data-chat-open='true'] .page-content,
+  body[data-chat-open='true'] .journal-view-page,
+  body[data-chat-open='true'] .journal-list-page {
+    margin-right: 0;
+  }
+}
