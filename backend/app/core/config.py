@@ -115,6 +115,50 @@ class Settings(BaseSettings):
     cors_allow_methods: List[str] = Field(default=["*"], description="Allowed CORS methods")
     cors_allow_headers: List[str] = Field(default=["*"], description="Allowed CORS headers")
 
+    # Pinecone Vector Store Configuration
+    pinecone_host: str = Field(
+        default="https://journals-5pzznwb.svc.aped-4627-b74a.pinecone.io",
+        description="Pinecone index host URL",
+    )
+    pinecone_secret_name: str = Field(
+        default="lifestyle-spaces/dev/pinecone-api-key",
+        description="AWS Secrets Manager secret name for Pinecone API key",
+    )
+    pinecone_index_name: str = Field(
+        default="journals",
+        description="Pinecone index name",
+    )
+    pinecone_embedding_model: str = Field(
+        default="llama-text-embed-v2",
+        description="Pinecone integrated embedding model",
+    )
+
+    # Claude/Anthropic Configuration
+    anthropic_secret_name: str = Field(
+        default="lifestyle-spaces/dev/claude-api-key",
+        description="AWS Secrets Manager secret name for Anthropic API key",
+    )
+    anthropic_model: str = Field(
+        default="claude-sonnet-4-20250514",
+        description="Claude model to use for chat",
+    )
+    chat_max_context_tokens: int = Field(
+        default=8000,
+        description="Max tokens reserved for journal context",
+    )
+    chat_max_response_tokens: int = Field(
+        default=1024,
+        description="Max tokens for AI response",
+    )
+    chat_max_history_messages: int = Field(
+        default=20,
+        description="Max conversation history messages to include",
+    )
+    chat_max_journal_results: int = Field(
+        default=5,
+        description="Max journals to include in context",
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env.test" if os.getenv("PYTEST_CURRENT_TEST") else ".env",
         env_file_encoding="utf-8",

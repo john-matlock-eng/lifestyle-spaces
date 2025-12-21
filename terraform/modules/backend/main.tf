@@ -120,6 +120,7 @@ resource "aws_lambda_function" "api" {
       ACCESS_TOKEN_EXPIRE_MINUTES = "30"
       DYNAMODB_TABLE              = var.dynamodb_table_name
       CLAUDE_API_KEY_SECRET_ARN   = aws_secretsmanager_secret.claude_api_key.arn
+      PINECONE_SECRET_NAME        = aws_secretsmanager_secret.pinecone_api_key.name
     }
   }
 

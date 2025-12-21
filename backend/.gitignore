@@ -42,7 +42,9 @@ build/
 
 # Lambda packages
 lambda_package/
+build_lambda/
 deployment_package.zip
+lambda-deployment.zip
 
 # Logs
 *.log

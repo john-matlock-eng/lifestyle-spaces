@@ -22,6 +22,30 @@ resource "aws_secretsmanager_secret" "claude_api_key" {
   )
 }
 
+# Secrets Manager for Pinecone API Key
+resource "aws_secretsmanager_secret" "pinecone_api_key" {
+  name        = "${var.project_name}/${var.environment}/pinecone-api-key"
+  description = "Pinecone API Key for vector search"
+
+  lifecycle {
+    ignore_changes = [
+      name_prefix,
+      description,
+      tags,
+    ]
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name      = "Pinecone API Key"
+      Purpose   = "Vector Search"
+      ManagedBy = "Terraform"
+      UpdatedBy = "Manual"
+    }
+  )
+}
+
 # Placeholder secret value (to be manually updated after creation)
 resource "aws_secretsmanager_secret_version" "claude_api_key" {
   secret_id = aws_secretsmanager_secret.claude_api_key.id
@@ -39,7 +63,20 @@ resource "aws_secretsmanager_secret_version" "claude_api_key" {
   }
 }
 
-# IAM Policy for Lambda to access Claude API Key secret
+# Placeholder secret value for Pinecone (to be manually updated after creation)
+resource "aws_secretsmanager_secret_version" "pinecone_api_key" {
+  secret_id     = aws_secretsmanager_secret.pinecone_api_key.id
+  secret_string = "PLACEHOLDER_UPDATE_MANUALLY"
+
+  lifecycle {
+    ignore_changes = [
+      secret_string,
+      version_stages,
+    ]
+  }
+}
+
+# IAM Policy for Lambda to access secrets
 resource "aws_iam_policy" "lambda_secrets_policy" {
   name        = "${var.project_name}-${var.environment}-lambda-secrets-policy"
   description = "IAM policy for Lambda to access Secrets Manager"
@@ -54,7 +91,8 @@ resource "aws_iam_policy" "lambda_secrets_policy" {
           "secretsmanager:DescribeSecret"
         ]
         Resource = [
-          aws_secretsmanager_secret.claude_api_key.arn
+          aws_secretsmanager_secret.claude_api_key.arn,
+          aws_secretsmanager_secret.pinecone_api_key.arn
         ]
       }
     ]

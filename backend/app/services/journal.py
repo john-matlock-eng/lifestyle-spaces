@@ -4,12 +4,13 @@ Journal management service with DynamoDB.
 import os
 import uuid
 import logging
+import asyncio
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
-from app.models.journal import JournalCreate, JournalUpdate
+from app.models.journal import JournalCreate, JournalUpdate, JournalEntry
 from app.services.exceptions import (
     SpaceNotFoundError,
     UnauthorizedError,
@@ -85,6 +86,88 @@ class JournalService:
             return 0
         # Simple word count by splitting on whitespace
         return len(content.split())
+
+    def _index_journal_background(self, journal_data: Dict[str, Any]) -> None:
+        """
+        Index a journal entry in the background.
+
+        This is fire-and-forget - indexing failures don't affect the main operation.
+        """
+        try:
+            from app.services.journal_indexer import get_journal_indexer
+            from datetime import datetime
+
+            # Convert to JournalEntry for indexing
+            journal_entry = JournalEntry(
+                journal_id=journal_data["journal_id"],
+                space_id=journal_data["space_id"],
+                user_id=journal_data["user_id"],
+                title=journal_data["title"],
+                content=journal_data["content"],
+                content_tiptap=journal_data.get("content_tiptap"),
+                template_id=journal_data.get("template_id"),
+                framework_id=journal_data.get("framework_id"),
+                tags=journal_data.get("tags", []),
+                emotions=journal_data.get("emotions", []),
+                created_at=datetime.fromisoformat(journal_data["created_at"].replace("Z", "+00:00")),
+                updated_at=datetime.fromisoformat(journal_data["updated_at"].replace("Z", "+00:00")),
+                word_count=journal_data.get("word_count", 0),
+                is_pinned=journal_data.get("is_pinned", False),
+            )
+
+            # Run async indexing synchronously to ensure it completes before Lambda terminates
+            indexer = get_journal_indexer()
+
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # In async context, need to run in a new thread to avoid blocking
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, indexer.index_journal(journal_entry))
+                        result = future.result(timeout=10)  # 10 second timeout
+                        logger.info(f"[INDEX] Indexed journal {journal_data['journal_id']}: {result.status}")
+                else:
+                    result = loop.run_until_complete(indexer.index_journal(journal_entry))
+                    logger.info(f"[INDEX] Indexed journal {journal_data['journal_id']}: {result.status}")
+            except RuntimeError:
+                # No event loop, create one
+                result = asyncio.run(indexer.index_journal(journal_entry))
+                logger.info(f"[INDEX] Indexed journal {journal_data['journal_id']}: {result.status}")
+
+        except Exception as e:
+            # Log but don't fail - indexing is not critical
+            logger.warning(f"[INDEX] Failed to index journal {journal_data.get('journal_id')}: {e}")
+
+    def _delete_from_index_background(self, journal_id: str, space_id: str) -> None:
+        """
+        Delete a journal from the index.
+
+        Runs synchronously to ensure completion before Lambda terminates.
+        """
+        try:
+            from app.services.journal_indexer import get_journal_indexer
+
+            indexer = get_journal_indexer()
+
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, indexer.delete_journal(journal_id, space_id))
+                        success = future.result(timeout=10)
+                        logger.info(f"[INDEX] Deleted journal {journal_id} from index: {success}")
+                else:
+                    success = loop.run_until_complete(indexer.delete_journal(journal_id, space_id))
+                    logger.info(f"[INDEX] Deleted journal {journal_id} from index: {success}")
+            except RuntimeError:
+                success = asyncio.run(indexer.delete_journal(journal_id, space_id))
+                logger.info(f"[INDEX] Deleted journal {journal_id} from index: {success}")
+
+        except Exception as e:
+            # Log but don't fail - deletion from index is not critical
+            logger.warning(f"[INDEX] Failed to delete journal {journal_id} from index: {e}")
 
     def _is_space_member(self, space_id: str, user_id: str) -> bool:
         """Check if user is a member of the space."""
@@ -231,6 +314,9 @@ class JournalService:
         # Include content_tiptap if provided
         if data.content_tiptap is not None:
             result["content_tiptap"] = data.content_tiptap
+
+        # Index journal for search (background, non-blocking)
+        self._index_journal_background(result)
 
         return result
 
@@ -408,7 +494,7 @@ class JournalService:
         # Get author info
         author_info = self._get_author_info(updated_journal["user_id"])
 
-        return {
+        result = {
             "journal_id": updated_journal["journal_id"],
             "space_id": updated_journal["space_id"],
             "user_id": updated_journal["user_id"],
@@ -425,6 +511,11 @@ class JournalService:
             "is_pinned": updated_journal.get("is_pinned", False),
             "author": author_info,
         }
+
+        # Re-index journal for search (background, non-blocking)
+        self._index_journal_background(result)
+
+        return result
 
     def delete_journal_entry(self, space_id: str, journal_id: str, user_id: str) -> bool:
         """
@@ -486,6 +577,10 @@ class JournalService:
             logger.warning(f"Failed to record journal deleted activity: {e}")
 
         logger.info(f"[DELETE_JOURNAL] Journal deleted: {journal_id}")
+
+        # Delete from search index (background, non-blocking)
+        self._delete_from_index_background(journal_id, space_id)
+
         return True
 
     def list_space_journals(
