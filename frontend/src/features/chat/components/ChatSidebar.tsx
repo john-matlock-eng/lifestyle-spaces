@@ -114,7 +114,9 @@ export function ChatSidebar({ spaceId }: ChatSidebarProps) {
             >
               <GripVertical size={16} />
             </div>
-            <ChatContainer spaceId={spaceId} onClose={closeChat} />
+            <div className={styles.sidebarContent}>
+              <ChatContainer spaceId={spaceId} onClose={closeChat} />
+            </div>
           </motion.aside>
         )}
       </AnimatePresence>

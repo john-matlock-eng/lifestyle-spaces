@@ -6,6 +6,7 @@
 .container {
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100%;
   background: rgba(30, 30, 46, 0.95);
   backdrop-filter: blur(20px);
@@ -395,7 +396,11 @@
   height: 100vh;
   z-index: 100;
   overflow: hidden;
-  display: flex;
+}
+
+.sidebarContent {
+  width: 100%;
+  height: 100%;
 }
 
 /* Resize Handle */
