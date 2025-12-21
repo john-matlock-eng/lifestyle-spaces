@@ -21,7 +21,7 @@ import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizati
 import { useEllieJournalGuide } from '../hooks/useEllieJournalGuide'
 import type { Template, TemplateData, QAPair, ListItem, TableRow, MomentBlock } from '../types/template.types'
 import type { CustomSection } from '../types/customSection.types'
-import { Trash2, Edit2, Bot } from 'lucide-react'
+import { Trash2, Edit2 } from 'lucide-react'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -491,74 +491,6 @@ export const JournalEditPage: React.FC = () => {
     }
   }
 
-  const handleGenerateQuestions = async (type: 'reflection' | 'emotional' | 'growth' | 'patterns') => {
-    if (!content.trim() && !title.trim()) {
-      alert('Please write some content first so the AI can generate relevant questions')
-      return
-    }
-
-    try {
-      // Get the journal content (either from template sections or free-form content)
-      let journalText = content
-      if (template) {
-        // Combine all template section content
-        journalText = Object.values(templateData)
-          .map(val => {
-            if (typeof val === 'string') return val
-            if (Array.isArray(val)) return JSON.stringify(val)
-            return String(val)
-          })
-          .join('\n\n')
-      }
-
-      // Generate questions using AI
-      const questions = await aiService.generateReflectionQuestions(
-        journalText || title,
-        title,
-        emotions
-      )
-
-      // Find or create a Q&A section
-      const qaSectionId = customSections.find(s => s.type === 'q_and_a')?.id
-
-      if (!qaSectionId) {
-        // Create new Q&A section
-        const newSection: CustomSection = {
-          id: `custom_${Date.now()}`,
-          title: `${type.charAt(0).toUpperCase() + type.slice(1)} Questions`,
-          type: 'q_and_a',
-          content: questions.map((q, idx) => ({
-            id: `q_${Date.now()}_${idx}`,
-            question: q,
-            answer: '',
-            isCollapsed: false
-          })),
-          isEditing: false
-        }
-        setCustomSections([...customSections, newSection])
-      } else {
-        // Add to existing Q&A section
-        handleUpdateCustomSection(qaSectionId, {
-          content: [
-            ...(Array.isArray(customSections.find(s => s.id === qaSectionId)?.content)
-              ? customSections.find(s => s.id === qaSectionId)!.content as QAPair[]
-              : []),
-            ...questions.map((q, idx) => ({
-              id: `q_${Date.now()}_${idx}`,
-              question: q,
-              answer: '',
-              isCollapsed: false
-            }))
-          ]
-        })
-      }
-
-      alert(`Added ${questions.length} ${type} questions to your journal!`)
-    } catch (err) {
-      console.error('Error generating questions:', err)
-      alert('Failed to generate questions. Please try again.')
-    }
-  }
 
   if (loading && !journal) {
     return (
