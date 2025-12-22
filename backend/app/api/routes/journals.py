@@ -8,6 +8,7 @@ from app.models.journal import (
     JournalCreate,
     JournalCreateRequest,
     JournalResponse,
+    JournalCardResponse,
     JournalUpdate,
     JournalListResponse,
 )
@@ -118,20 +119,17 @@ async def list_space_journals(
             author_id=author_id,
         )
 
-        # Convert to response format
+        # Convert to lightweight card response format (no content fields)
         journal_responses = []
         for journal in result["journals"]:
             journal_responses.append(
-                JournalResponse(
+                JournalCardResponse(
                     journal_id=journal["journal_id"],
                     space_id=journal["space_id"],
                     user_id=journal["user_id"],
                     title=journal["title"],
-                    content=journal["content"],
-                    content_tiptap=journal.get("content_tiptap"),
                     template_id=journal.get("template_id"),
                     framework_id=journal.get("framework_id"),
-                    # REMOVED: template_data - data is embedded in content
                     tags=journal.get("tags", []),
                     emotions=journal.get("emotions", []),
                     created_at=journal["created_at"],
@@ -484,20 +482,17 @@ async def list_user_journals(
             user_id=current_user.get("sub", ""), page=page, page_size=page_size
         )
 
-        # Convert to response format
+        # Convert to lightweight card response format (no content fields)
         journal_responses = []
         for journal in result["journals"]:
             journal_responses.append(
-                JournalResponse(
+                JournalCardResponse(
                     journal_id=journal["journal_id"],
                     space_id=journal["space_id"],
                     user_id=journal["user_id"],
                     title=journal["title"],
-                    content=journal["content"],
-                    content_tiptap=journal.get("content_tiptap"),
                     template_id=journal.get("template_id"),
                     framework_id=journal.get("framework_id"),
-                    # REMOVED: template_data - data is embedded in content
                     tags=journal.get("tags", []),
                     emotions=journal.get("emotions", []),
                     created_at=journal["created_at"],

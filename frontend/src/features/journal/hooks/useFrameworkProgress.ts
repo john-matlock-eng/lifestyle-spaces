@@ -8,7 +8,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { journalApi } from '../services/journalApi'
 import { getFrameworkRegistry } from '../frameworks'
 import type { Framework, TemplateFrequency } from '../types/framework.types'
-import type { JournalEntry } from '../types/journal.types'
+import type { JournalCardEntry } from '../types/journal.types'
 
 /**
  * Template completion status
@@ -51,7 +51,7 @@ export interface FrameworkProgress {
   nextTemplate?: TemplateProgress
   // Activity
   totalEntries: number
-  recentEntries: JournalEntry[]
+  recentEntries: JournalCardEntry[]
   lastActivityAt?: string
   // Streaks
   dailyStreak: number
@@ -66,7 +66,7 @@ export interface FrameworkProgress {
  * Calculate streak for a recurring template
  */
 function calculateStreak(
-  entries: JournalEntry[],
+  entries: JournalCardEntry[],
   templateId: string,
   frequency: TemplateFrequency
 ): { current: number; longest: number; isOverdue: boolean; nextDue?: string } {
@@ -168,7 +168,7 @@ export function useFrameworkProgress(spaceId: string | undefined) {
 
     try {
       // Fetch journals for this space (paginate if needed)
-      let journals: JournalEntry[] = []
+      let journals: JournalCardEntry[] = []
       let page = 1
       let hasMore = true
 
@@ -192,7 +192,7 @@ export function useFrameworkProgress(spaceId: string | undefined) {
 
         // Build completion map
         const completedTemplates = new Set<string>()
-        const templateEntries: Record<string, JournalEntry[]> = {}
+        const templateEntries: Record<string, JournalCardEntry[]> = {}
 
         for (const journal of frameworkJournals) {
           if (journal.templateId) {

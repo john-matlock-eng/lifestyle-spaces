@@ -84,10 +84,33 @@ export interface JournalEntry {
 }
 
 /**
- * Journal list response with pagination
+ * Lightweight journal card entry for list views
+ * Excludes heavy content fields, includes AI metadata for rich cards
+ */
+export interface JournalCardEntry {
+  journalId: string
+  spaceId: string
+  userId: string
+  title: string
+  // content and contentTiptap excluded for lightweight response
+  templateId?: string
+  frameworkId?: string
+  tags: string[]
+  emotions?: string[]
+  createdAt: string
+  updatedAt: string
+  wordCount: number
+  isPinned: boolean
+  author?: JournalAuthor
+  /** AI-generated metadata for rich card display */
+  aiMetadata?: JournalAIMetadata
+}
+
+/**
+ * Journal list response with pagination (uses lightweight card entries)
  */
 export interface JournalListResponse {
-  journals: JournalEntry[]
+  journals: JournalCardEntry[]
   total: number
   page: number
   pageSize: number

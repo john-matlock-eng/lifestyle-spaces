@@ -5,6 +5,7 @@ Backfill AI Metadata
 Generates AI metadata (synopsis, themes, insights, sentiment) for existing journals.
 
 Usage:
+    python -m scripts.backfill_metadata --journal-id <journal_id> --space-id <space_id>
     python -m scripts.backfill_metadata --space-id <space_id>
     python -m scripts.backfill_metadata --all
     python -m scripts.backfill_metadata --stats
@@ -12,6 +13,7 @@ Usage:
     python -m scripts.backfill_metadata --force --space-id <space_id>
 
 Arguments:
+    --journal-id  Generate metadata for a specific journal (requires --space-id)
     --space-id    Generate metadata for journals in a specific space
     --all         Generate metadata for all journals
     --stats       Show metadata generation statistics
@@ -112,6 +114,17 @@ def get_space_journals(table, space_id: str) -> List[dict]:
     return journals
 
 
+def get_single_journal(table, space_id: str, journal_id: str) -> Optional[dict]:
+    """Fetch a single journal from DynamoDB."""
+    response = table.get_item(
+        Key={
+            "PK": f"SPACE#{space_id}",
+            "SK": f"JOURNAL#{journal_id}",
+        }
+    )
+    return response.get("Item")
+
+
 def update_journal_metadata(
     table, space_id: str, journal_id: str, metadata: JournalAIMetadata
 ) -> bool:
@@ -180,6 +193,45 @@ async def generate_metadata_for_journal(
     except Exception as e:
         logger.error(f"Failed to generate metadata for {journal_id}: {e}")
         return None
+
+
+async def backfill_single_journal(
+    table,
+    space_id: str,
+    journal_id: str,
+    force: bool = False,
+    dry_run: bool = False,
+) -> Dict[str, int]:
+    """Backfill metadata for a single journal."""
+    generator = get_metadata_generator()
+    journal = get_single_journal(table, space_id, journal_id)
+
+    if not journal:
+        logger.error(f"Journal {journal_id} not found in space {space_id}")
+        return {"total": 0, "processed": 0, "skipped": 0, "failed": 1}
+
+    # Check if metadata already exists
+    if journal.get("ai_metadata") and not force:
+        logger.info(f"Journal already has metadata (use --force to regenerate)")
+        return {"total": 1, "processed": 0, "skipped": 1, "failed": 0, "already_has_metadata": 1}
+
+    logger.info(f"Processing journal: {journal.get('title', 'Untitled')}")
+
+    # Generate metadata
+    metadata = await generate_metadata_for_journal(generator, journal, dry_run)
+
+    if dry_run:
+        return {"total": 1, "processed": 1, "skipped": 0, "failed": 0}
+
+    if metadata:
+        if update_journal_metadata(table, space_id, journal_id, metadata):
+            logger.info(f"✓ Generated metadata:")
+            logger.info(f"  Synopsis: {metadata.synopsis[:100]}...")
+            logger.info(f"  Themes: {', '.join(metadata.themes)}")
+            logger.info(f"  Sentiment: {metadata.sentiment}")
+            return {"total": 1, "processed": 1, "skipped": 0, "failed": 0}
+
+    return {"total": 1, "processed": 0, "skipped": 0, "failed": 1}
 
 
 async def backfill_space(
@@ -319,6 +371,10 @@ def main():
         description="Backfill AI metadata for existing journals"
     )
     parser.add_argument(
+        "--journal-id",
+        help="Journal ID to backfill (requires --space-id)",
+    )
+    parser.add_argument(
         "--space-id",
         help="Space ID to backfill",
     )
@@ -361,6 +417,9 @@ def main():
     if not args.stats and not args.space_id and not args.all:
         parser.error("Must specify --space-id, --all, or --stats")
 
+    if args.journal_id and not args.space_id:
+        parser.error("--journal-id requires --space-id")
+
     # Check for API key
     if not args.stats and not args.dry_run:
         if not os.getenv("ANTHROPIC_API_KEY"):
@@ -378,7 +437,19 @@ def main():
         logger.info("DRY RUN MODE - No changes will be made")
         logger.info("=" * 50)
 
-    if args.space_id:
+    if args.journal_id:
+        # Single journal
+        stats = asyncio.run(
+            backfill_single_journal(
+                table,
+                args.space_id,
+                args.journal_id,
+                args.force,
+                args.dry_run,
+            )
+        )
+    elif args.space_id:
+        # All journals in a space
         stats = asyncio.run(
             backfill_space(
                 table,
@@ -390,6 +461,7 @@ def main():
             )
         )
     else:
+        # All journals in all spaces
         stats = asyncio.run(
             backfill_all(
                 table,

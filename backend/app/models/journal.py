@@ -341,10 +341,70 @@ class JournalResponse(BaseModel):
     )
 
 
-class JournalListResponse(BaseModel):
-    """Journal list response model."""
+class JournalCardResponse(BaseModel):
+    """
+    Lightweight journal response for list/card views.
 
-    journals: List[JournalResponse]
+    Excludes heavy content fields (content, content_tiptap) and includes
+    only metadata needed for rich card display with AI insights.
+    """
+
+    journal_id: str = Field(..., alias="journalId")
+    space_id: str = Field(..., alias="spaceId")
+    user_id: str = Field(..., alias="userId")
+    title: str
+    template_id: Optional[str] = Field(None, alias="templateId")
+    framework_id: Optional[str] = Field(None, alias="frameworkId")
+    tags: List[str] = Field(default_factory=list)
+    emotions: List[str] = Field(default_factory=list)
+    created_at: datetime = Field(..., alias="createdAt")
+    updated_at: datetime = Field(..., alias="updatedAt")
+    word_count: int = Field(..., alias="wordCount")
+    is_pinned: bool = Field(False, alias="isPinned")
+    author: Optional[Dict[str, Any]] = None
+    ai_metadata: Optional[Dict[str, Any]] = Field(
+        default=None,
+        alias="aiMetadata",
+        description="AI-generated metadata (synopsis, themes, insights, sentiment)"
+    )
+
+    @field_serializer("created_at", "updated_at")
+    def serialize_datetime(self, dt: datetime) -> str:
+        """Serialize datetime fields to ISO format."""
+        return dt.isoformat() if dt else None
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        by_alias=True,
+        json_schema_extra={
+            "example": {
+                "journalId": "123e4567-e89b-12d3-a456-426614174000",
+                "spaceId": "space-123",
+                "userId": "user-123",
+                "title": "My Daily Reflection",
+                "templateId": "daily-reflection",
+                "tags": ["daily", "reflection"],
+                "emotions": ["happy", "grateful"],
+                "createdAt": "2024-01-01T00:00:00Z",
+                "updatedAt": "2024-01-01T00:00:00Z",
+                "wordCount": 250,
+                "isPinned": False,
+                "author": {"userId": "user-123", "displayName": "John Doe"},
+                "aiMetadata": {
+                    "synopsis": "A reflective entry about gratitude and personal growth.",
+                    "themes": ["gratitude", "self-improvement"],
+                    "sentiment": "positive",
+                    "emotionalTone": "hopeful and appreciative"
+                }
+            }
+        },
+    )
+
+
+class JournalListResponse(BaseModel):
+    """Journal list response model with lightweight card data."""
+
+    journals: List[JournalCardResponse]
     total: int
     page: int = Field(default=1)
     page_size: int = Field(default=20, alias="pageSize")

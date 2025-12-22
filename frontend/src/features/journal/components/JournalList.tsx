@@ -4,7 +4,7 @@ import { JournalCard } from './JournalCard'
 import { journalApi } from '../services/journalApi'
 import { JournalFilters, useJournalFilters } from '../../../components/journal/JournalFilters'
 import { ThemeFilter } from '../../../components/journal/ThemeFilter'
-import type { JournalEntry } from '../types/journal.types'
+import type { JournalCardEntry } from '../types/journal.types'
 import { getEmotionById } from '../data/emotionData'
 import '../styles/journal.css'
 
@@ -17,7 +17,7 @@ interface JournalListProps {
  */
 export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
   const navigate = useNavigate()
-  const [journals, setJournals] = useState<JournalEntry[]>([])
+  const [journals, setJournals] = useState<JournalCardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
@@ -144,7 +144,7 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
   }, [filters.dateRange])
 
   // Helper function to check if framework matches filter
-  const matchesFrameworkFilter = useCallback((journal: JournalEntry): boolean => {
+  const matchesFrameworkFilter = useCallback((journal: JournalCardEntry): boolean => {
     if (filters.framework === 'all') return true
     if (filters.framework === 'standalone') {
       // Show entries without a framework
@@ -157,15 +157,16 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
   // Filter journals based on search query and filters
   const filteredJournals = useMemo(() => {
     return journals.filter((journal) => {
-      // Search query filter
+      // Search query filter (uses title, AI synopsis, themes, tags, author)
       if (filters.search.trim()) {
         const query = filters.search.toLowerCase()
         const titleMatch = journal.title?.toLowerCase().includes(query) || false
-        const contentMatch = journal.content?.toLowerCase().includes(query) || false
+        const synopsisMatch = journal.aiMetadata?.synopsis?.toLowerCase().includes(query) || false
+        const themesMatch = journal.aiMetadata?.themes?.some((t) => t.toLowerCase().includes(query)) || false
         const tagsMatch = journal.tags?.some((tag) => tag.toLowerCase().includes(query)) || false
         const authorMatch = journal.author?.displayName?.toLowerCase().includes(query) || false
 
-        if (!titleMatch && !contentMatch && !tagsMatch && !authorMatch) {
+        if (!titleMatch && !synopsisMatch && !themesMatch && !tagsMatch && !authorMatch) {
           return false
         }
       }

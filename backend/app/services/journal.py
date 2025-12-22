@@ -736,7 +736,7 @@ class JournalService:
         end = start + page_size
         paginated_journals = journals[start:end]
 
-        # Enrich with author info
+        # Enrich with author info (lightweight - no content fields for card display)
         enriched_journals = []
         for journal in paginated_journals:
             author_info = self._get_author_info(journal["user_id"])
@@ -746,11 +746,9 @@ class JournalService:
                     "space_id": journal["space_id"],
                     "user_id": journal["user_id"],
                     "title": journal["title"],
-                    "content": journal["content"],
-                    "content_tiptap": journal.get("content_tiptap"),
+                    # content and content_tiptap excluded for lightweight list response
                     "template_id": journal.get("template_id"),
                     "framework_id": journal.get("framework_id"),
-                    # REMOVED: template_data - data is embedded in content
                     "tags": journal.get("tags", []),
                     "emotions": journal.get("emotions", []),
                     "created_at": journal["created_at"],
@@ -811,7 +809,7 @@ class JournalService:
         end = start + page_size
         paginated_journals = accessible_journals[start:end]
 
-        # Enrich with author info
+        # Enrich with author info (lightweight - no content fields for card display)
         enriched_journals = []
         for journal in paginated_journals:
             author_info = self._get_author_info(journal["user_id"])
@@ -821,11 +819,9 @@ class JournalService:
                     "space_id": journal["space_id"],
                     "user_id": journal["user_id"],
                     "title": journal["title"],
-                    "content": journal["content"],
-                    "content_tiptap": journal.get("content_tiptap"),
+                    # content and content_tiptap excluded for lightweight list response
                     "template_id": journal.get("template_id"),
                     "framework_id": journal.get("framework_id"),
-                    # REMOVED: template_data - data is embedded in content
                     "tags": journal.get("tags", []),
                     "emotions": journal.get("emotions", []),
                     "created_at": journal["created_at"],
