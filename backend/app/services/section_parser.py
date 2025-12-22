@@ -8,8 +8,10 @@ Supports:
 - Fallback chunking for unstructured content
 """
 
+import json
 import logging
-from typing import List, Optional, Any
+import re
+from typing import List, Optional, Any, Dict
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -51,7 +53,7 @@ class SectionParser:
     }
 
     # Minimum section length (chars) to index
-    MIN_SECTION_LENGTH = 50
+    MIN_SECTION_LENGTH = 30
 
     # Maximum section length before chunking
     MAX_SECTION_LENGTH = 2000
@@ -76,29 +78,75 @@ class SectionParser:
         Returns:
             List of parsed sections
         """
-        # Extract text with structure preserved
-        if isinstance(content, dict):
-            structured_content = self._extract_structured_content(content)
-        else:
-            structured_content = [
-                {"type": "text", "content": str(content) if content else ""}
-            ]
+        # Handle None or empty content
+        if not content:
+            return []
 
-        # Try template-aware parsing first
-        if template_id and template_id in self.TEMPLATE_SECTIONS:
-            sections = self._parse_by_template(structured_content, template_id)
+        # Handle string content
+        if isinstance(content, str):
+            text_content = content.strip()
+            if len(text_content) < self.MIN_SECTION_LENGTH:
+                return []
+
+            # Check for HTML comment section markers
+            if "<!-- section:" in text_content:
+                sections = self._parse_markdown_sections(text_content)
+                if sections:
+                    return self._finalize_sections(sections, title)
+
+            # If longer than MAX_SECTION_LENGTH, use chunking
+            if len(text_content) > self.MAX_SECTION_LENGTH:
+                sections = self._parse_by_chunks(text_content)
+                return self._finalize_sections(sections, title)
+
+            # Otherwise return as single section
+            return [ParsedSection(
+                index=0,
+                title=title or "Content",
+                content=f"[Journal: {title}]\n\n{text_content}" if title else text_content,
+                section_type="chunk"
+            )]
+
+        # Handle dict content
+        if isinstance(content, dict):
+            # Check if it's a contentTiptap structure with section keys
+            if self._is_section_dict(content):
+                sections = self._parse_section_dict(content)
+                if sections:
+                    return self._finalize_sections(sections, title)
+
+            # Otherwise treat as single TipTap doc
+            structured_content = self._extract_structured_content(content)
+
+            # Try template-aware parsing
+            if template_id and template_id in self.TEMPLATE_SECTIONS:
+                sections = self._parse_by_template(structured_content, template_id)
+                if sections:
+                    return self._finalize_sections(sections, title)
+
+            # Try header-based parsing
+            sections = self._parse_by_headers(structured_content)
             if sections:
                 return self._finalize_sections(sections, title)
 
-        # Try header-based parsing
-        sections = self._parse_by_headers(structured_content)
-        if sections:
-            return self._finalize_sections(sections, title)
+            # Fallback to chunking
+            full_text = self._flatten_to_text(structured_content)
+            sections = self._parse_by_chunks(full_text)
+            finalized = self._finalize_sections(sections, title)
 
-        # Fallback to chunking
-        full_text = self._flatten_to_text(structured_content)
-        sections = self._parse_by_chunks(full_text)
-        return self._finalize_sections(sections, title)
+            # Ultimate fallback: if no sections found, index whole content
+            if not finalized and full_text and len(full_text.strip()) >= self.MIN_SECTION_LENGTH:
+                return [ParsedSection(
+                    index=0,
+                    title=title or "Content",
+                    content=f"[Journal: {title}]\n\n{full_text}" if title else full_text,
+                    section_type="chunk"
+                )]
+
+            return finalized
+
+        # Handle other types (shouldn't happen)
+        return []
 
     def _extract_structured_content(
         self,
@@ -268,7 +316,13 @@ class SectionParser:
         current_content = []
 
         for item in structured:
-            if item["type"] == "heading" and item.get("level", 1) <= 2:
+            if item["type"] == "heading":
+                level = item.get("level", 1)
+                if isinstance(level, str):
+                    level = int(level) if level.isdigit() else 1
+                if level > 2:
+                    current_content.append(item["content"])
+                    continue
                 # Save previous section
                 if current_content:
                     sections.append(ParsedSection(
@@ -343,6 +397,177 @@ class SectionParser:
 
             # Move start with overlap
             start = end - self.CHUNK_OVERLAP if end < len(text) else end
+
+        return sections
+
+    def _is_section_dict(self, content: dict) -> bool:
+        """Check if content is a dict of section TipTap docs (contentTiptap format)."""
+        # Must have at least one key that's a TipTap doc (besides 'content')
+        section_keys = [k for k in content.keys() if k != 'content']
+        if not section_keys:
+            return False
+
+        # Check if any key contains a TipTap doc structure
+        for key in section_keys:
+            value = content.get(key)
+            if isinstance(value, dict) and value.get('type') == 'doc':
+                return True
+
+        return False
+
+    def _parse_section_dict(self, content: Dict[str, Any]) -> List[ParsedSection]:
+        """Parse a dict where each key is a section with its own TipTap doc."""
+
+        # Map internal section keys to display titles
+        SECTION_KEY_MAP = {
+            'raw_thoughts': 'Express',
+            'deep_dive': 'Examine',
+            'action_plan': 'Evolve',
+            'gratitude': 'Gratitude',
+            'reflection': 'Reflection',
+            'scene': 'The Scene',
+            'reaction': 'My Reaction',
+            'takeaway': 'The Takeaway',
+            'review': 'Review',
+            'lead_measures': 'Lead Measures',
+            'commitments': 'Commitments',
+            'identity': 'Identity',
+            'values': 'Values',
+            'mission': 'Mission',
+            'acknowledge': 'Acknowledge',
+            'understand': 'Understand',
+            'recommit': 'Recommit',
+            'focus_areas': 'Focus Areas',
+            'outcomes': 'Outcomes',
+        }
+
+        # Define preferred section order
+        SECTION_ORDER = [
+            'raw_thoughts', 'deep_dive', 'action_plan',  # Express/Examine/Evolve
+            'scene', 'reaction', 'takeaway',              # Daily Lens
+            'gratitude', 'reflection',                    # Gratitude
+            'identity', 'values', 'mission', 'commitments',  # Charter
+            'review', 'lead_measures',                    # Scoreboard
+            'acknowledge', 'understand', 'recommit',      # Reset Protocol
+            'focus_areas', 'outcomes',                    # Quarterly Snapshot
+        ]
+
+        sections = []
+
+        # Process keys in preferred order, then any remaining
+        processed_keys = set()
+        keys_to_process = []
+
+        for key in SECTION_ORDER:
+            if key in content:
+                keys_to_process.append(key)
+                processed_keys.add(key)
+
+        # Add any remaining keys not in the order list
+        for key in content.keys():
+            if key not in processed_keys and key != 'content':
+                keys_to_process.append(key)
+
+        for key in keys_to_process:
+            value = content.get(key)
+
+            if value is None:
+                continue
+
+            # Get display title
+            display_title = SECTION_KEY_MAP.get(key, key.replace('_', ' ').title())
+
+            # Extract text from the section
+            text = ""
+            if isinstance(value, dict) and value.get('type') == 'doc':
+                # It's a TipTap doc
+                text = self._extract_text_from_node(value)
+            elif isinstance(value, str):
+                # It's a string (might be JSON for Q&A sections)
+                text = value
+                # Try to parse as JSON for Q&A format
+                if value.strip().startswith('['):
+                    try:
+                        qa_list = json.loads(value)
+                        if isinstance(qa_list, list):
+                            qa_texts = []
+                            for item in qa_list:
+                                if isinstance(item, dict):
+                                    q = item.get('question', '')
+                                    a = item.get('answer', '')
+                                    if q and a:
+                                        qa_texts.append(f"Q: {q}\nA: {a}")
+                            if qa_texts:
+                                text = "\n\n".join(qa_texts)
+                    except (json.JSONDecodeError, AttributeError):
+                        pass
+            elif isinstance(value, list):
+                # It's a Q&A list directly
+                qa_texts = []
+                for item in value:
+                    if isinstance(item, dict):
+                        q = item.get('question', '')
+                        a = item.get('answer', '')
+                        if q and a:
+                            qa_texts.append(f"Q: {q}\nA: {a}")
+                if qa_texts:
+                    text = "\n\n".join(qa_texts)
+            else:
+                continue
+
+            # Skip empty sections
+            if not text or len(text.strip()) < self.MIN_SECTION_LENGTH:
+                continue
+
+            sections.append(ParsedSection(
+                index=len(sections),
+                title=display_title,
+                content=text.strip(),
+                section_type="template_section"
+            ))
+
+        return sections
+
+    def _parse_markdown_sections(self, content: str) -> List[ParsedSection]:
+        """Parse markdown with HTML comment section markers."""
+        sections = []
+
+        # Pattern: <!-- section:name @title:"Title" --> content <!-- /section:name -->
+        section_pattern = (
+            r'<!-- section:(\w+).*?@title:"([^"]+)".*?-->'
+            r'(.*?)'
+            r'<!-- /section:\1 -->'
+        )
+
+        matches = re.findall(section_pattern, content, re.DOTALL)
+
+        for i, (section_id, title, section_content) in enumerate(matches):
+            # Clean up the content
+            clean_content = section_content.strip()
+
+            # Handle Q&A JSON in deep_dive sections
+            if section_id == 'deep_dive' and clean_content.startswith('['):
+                try:
+                    qa_list = json.loads(clean_content)
+                    qa_texts = []
+                    for item in qa_list:
+                        if isinstance(item, dict):
+                            q = item.get('question', '')
+                            a = item.get('answer', '')
+                            if q and a:
+                                qa_texts.append(f"Q: {q}\nA: {a}")
+                    if qa_texts:
+                        clean_content = "\n\n".join(qa_texts)
+                except (json.JSONDecodeError, AttributeError):
+                    pass
+
+            if len(clean_content) >= self.MIN_SECTION_LENGTH:
+                sections.append(ParsedSection(
+                    index=i,
+                    title=title,
+                    content=clean_content,
+                    section_type="template_section"
+                ))
 
         return sections
 
