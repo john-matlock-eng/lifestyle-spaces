@@ -1,0 +1,110 @@
+/* ============================================
+   Journal Card Skeleton (Loading State)
+   ============================================ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+}
+
+/* Skeleton animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+}
+
+.sentimentSkeleton,
+.dateSkeleton,
+.titleSkeleton,
+.synopsisLine1,
+.synopsisLine2,
+.themeSkeleton,
+.footerSkeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.sentimentSkeleton {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+}
+
+.dateSkeleton {
+  width: 60px;
+  height: 14px;
+}
+
+.titleSkeleton {
+  width: 75%;
+  height: 22px;
+  border-radius: 6px;
+}
+
+.synopsisLine1 {
+  width: 100%;
+  height: 14px;
+}
+
+.synopsisLine2 {
+  width: 85%;
+  height: 14px;
+}
+
+.themes {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.themeSkeleton {
+  width: 60px;
+  height: 22px;
+  border-radius: 6px;
+}
+
+.footer {
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  margin-top: auto;
+}
+
+.footerSkeleton {
+  width: 40%;
+  height: 14px;
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+
+@media (max-width: 640px) {
+  .card {
+    padding: 1rem;
+    gap: 0.625rem;
+  }
+
+  .titleSkeleton {
+    height: 20px;
+  }
+}

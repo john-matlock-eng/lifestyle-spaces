@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { JournalCard } from './JournalCard'
+import { JournalCard, JournalCardSkeleton } from '../../../components/JournalCard'
 import { journalApi } from '../services/journalApi'
 import { JournalFilters, useJournalFilters } from '../../../components/journal/JournalFilters'
 import { ThemeFilter } from '../../../components/journal/ThemeFilter'
@@ -77,16 +77,6 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
   const handleNextPage = () => {
     if (hasMore) {
       setCurrentPage(currentPage + 1)
-    }
-  }
-
-  const handleDelete = async (journalId: string) => {
-    try {
-      await journalApi.deleteJournal(spaceId, journalId)
-      // Reload journals after successful delete
-      await loadJournals()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete journal')
     }
   }
 
@@ -211,10 +201,34 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     })
   }, [journals, filters, matchesFrameworkFilter, matchesDateFilter, selectedThemes])
 
+  // Handle theme click from card
+  const handleCardThemeClick = useCallback((theme: string) => {
+    if (!selectedThemes.includes(theme)) {
+      setSelectedThemes((prev) => [...prev, theme])
+    }
+  }, [selectedThemes])
+
+  // Handle tag click from card - use the existing setTag filter
+  const handleCardTagClick = useCallback((tag: string) => {
+    setTag(tag)
+  }, [setTag])
+
   if (loading) {
     return (
-      <div className="journal-list-loading">
-        <p>Loading journals...</p>
+      <div className="journal-list-container">
+        <div className="journal-list-header">
+          <h2 className="journal-list-title">Journals</h2>
+          <div className="journal-list-actions">
+            <button onClick={handleNewJournal} className="button-primary">
+              + New Journal
+            </button>
+          </div>
+        </div>
+        <div className="journal-list-grid">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <JournalCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     )
   }
@@ -366,7 +380,8 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
             <JournalCard
               key={journal.journalId}
               journal={journal}
-              onDelete={handleDelete}
+              onThemeClick={handleCardThemeClick}
+              onTagClick={handleCardTagClick}
             />
           ))}
         </div>

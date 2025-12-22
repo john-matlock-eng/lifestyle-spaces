@@ -4,7 +4,7 @@
 
 // Components
 export { RichTextEditor } from './components/RichTextEditor'
-export { JournalCard } from './components/JournalCard'
+export { JournalCard, JournalCardSkeleton } from '../../components/JournalCard'
 export { JournalList } from './components/JournalList'
 
 // Pages
