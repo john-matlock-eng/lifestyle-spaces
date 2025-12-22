@@ -3,10 +3,12 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
+import { getFrameworkRegistry } from '../frameworks'
 import { getEmotionById } from '../data/emotionData'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { DisplaySection } from '../../../lib/journal/types'
 import type { Template } from '../types/template.types'
+import type { FrameworkTemplateConfig } from '../types/framework.types'
 import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
 import { HighlightableText } from '../components/HighlightableText'
@@ -135,11 +137,64 @@ export const JournalViewPage: React.FC = () => {
     if (journal?.templateId) {
       const loadTemplateAndParse = async () => {
         try {
-          const templateData = await getTemplate(journal.templateId!)
-          setTemplate(templateData)
-
           // Parse the content to extract template sections
           const sections = JournalContentManager.extractDisplaySections(journal.content)
+
+          // Check if this is a framework template
+          const registry = getFrameworkRegistry()
+          const frameworkTemplateData = registry.getTemplateById(journal.templateId!)
+
+          if (frameworkTemplateData) {
+            // Framework template - use content.sections for ordering
+            const frameworkTemplate = frameworkTemplateData.template as FrameworkTemplateConfig
+            const templateSections = frameworkTemplate.content?.sections || []
+
+            // Create a basic Template object for display purposes
+            const templateData: Template = {
+              id: frameworkTemplate.id,
+              name: frameworkTemplate.name,
+              description: frameworkTemplate.description || '',
+              version: frameworkTemplate.version || 1,
+              sections: [],
+              icon: frameworkTemplate.icon,
+              color: frameworkTemplate.color,
+              frameworkId: frameworkTemplateData.frameworkId,
+            }
+            setTemplate(templateData)
+
+            // Sort sections according to framework template's defined order
+            if (templateSections.length > 0) {
+              const sectionOrderMap = new Map<string, number>()
+              templateSections.forEach((sec: { id: string; order?: number }, index: number) => {
+                sectionOrderMap.set(sec.id, sec.order ?? index)
+              })
+
+              sections.sort((a, b) => {
+                const orderA = sectionOrderMap.get(a.id) ?? 999
+                const orderB = sectionOrderMap.get(b.id) ?? 999
+                return orderA - orderB
+              })
+            }
+          } else {
+            // Regular backend template
+            const templateData = await getTemplate(journal.templateId!)
+            setTemplate(templateData)
+
+            // Sort sections according to template's section order (array position)
+            if (templateData?.sections) {
+              const sectionOrderMap = new Map<string, number>()
+              templateData.sections.forEach((sec, index) => {
+                sectionOrderMap.set(sec.id, index)
+              })
+
+              sections.sort((a, b) => {
+                const orderA = sectionOrderMap.get(a.id) ?? 999
+                const orderB = sectionOrderMap.get(b.id) ?? 999
+                return orderA - orderB
+              })
+            }
+          }
+
           setDisplaySections(sections)
 
           console.log('[DEBUG VIEW] Parsed sections:', sections)

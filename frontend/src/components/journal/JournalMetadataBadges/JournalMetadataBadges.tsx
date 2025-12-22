@@ -13,7 +13,6 @@ import {
   Sunrise,
   HelpCircle,
   Frown,
-  Smile,
   Meh,
 } from 'lucide-react'
 import type { JournalAIMetadata, SentimentType } from '../../../features/journal/types/journal.types'

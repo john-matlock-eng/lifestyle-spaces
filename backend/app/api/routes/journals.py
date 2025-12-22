@@ -160,184 +160,8 @@ async def list_space_journals(
         )
 
 
-@router.get("/spaces/{space_id}/journals/{journal_id}", response_model=JournalResponse)
-async def get_journal(
-    space_id: str, journal_id: str, current_user: dict = Depends(get_current_user)
-):
-    """Get a single journal entry by ID."""
-    try:
-        logger.info(
-            f"[API_GET_JOURNAL] space={space_id}, journal={journal_id}, user={current_user.get('sub')}"
-        )
-
-        service = JournalService()
-        result = service.get_journal_entry(
-            space_id=space_id, journal_id=journal_id, user_id=current_user.get("sub", "")
-        )
-
-        return JournalResponse(
-            journal_id=result["journal_id"],
-            space_id=result["space_id"],
-            user_id=result["user_id"],
-            title=result["title"],
-            content=result["content"],
-            content_tiptap=result.get("content_tiptap"),
-            template_id=result.get("template_id"),
-            framework_id=result.get("framework_id"),
-            # REMOVED: template_data - data is embedded in content
-            tags=result.get("tags", []),
-            emotions=result.get("emotions", []),
-            created_at=result["created_at"],
-            updated_at=result["updated_at"],
-            word_count=result.get("word_count", 0),
-            is_pinned=result.get("is_pinned", False),
-            author=result.get("author"),
-        )
-    except JournalNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except UnauthorizedError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-    except Exception as e:
-        logger.error(f"Failed to get journal: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get journal"
-        )
-
-
-@router.put("/spaces/{space_id}/journals/{journal_id}", response_model=JournalResponse)
-async def update_journal(
-    space_id: str,
-    journal_id: str,
-    update: JournalUpdate,
-    current_user: dict = Depends(get_current_user),
-):
-    """Update a journal entry (author only)."""
-    try:
-        logger.info(
-            f"[API_UPDATE_JOURNAL] space={space_id}, journal={journal_id}, user={current_user.get('sub')}"
-        )
-
-        service = JournalService()
-        result = service.update_journal_entry(
-            space_id=space_id,
-            journal_id=journal_id,
-            user_id=current_user.get("sub", ""),
-            data=update,
-        )
-
-        return JournalResponse(
-            journal_id=result["journal_id"],
-            space_id=result["space_id"],
-            user_id=result["user_id"],
-            title=result["title"],
-            content=result["content"],
-            content_tiptap=result.get("content_tiptap"),
-            template_id=result.get("template_id"),
-            framework_id=result.get("framework_id"),
-            # REMOVED: template_data - data is embedded in content
-            tags=result.get("tags", []),
-            emotions=result.get("emotions", []),
-            created_at=result["created_at"],
-            updated_at=result["updated_at"],
-            word_count=result.get("word_count", 0),
-            is_pinned=result.get("is_pinned", False),
-            author=result.get("author"),
-        )
-    except JournalNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except UnauthorizedError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-    except ValidationError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
-    except Exception as e:
-        logger.error(f"Failed to update journal: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update journal"
-        )
-
-
-@router.delete("/spaces/{space_id}/journals/{journal_id}", response_model=SuccessResponse)
-async def delete_journal(
-    space_id: str, journal_id: str, current_user: dict = Depends(get_current_user)
-):
-    """Delete a journal entry (author or space owner only)."""
-    try:
-        logger.info(
-            f"[API_DELETE_JOURNAL] space={space_id}, journal={journal_id}, user={current_user.get('sub')}"
-        )
-
-        service = JournalService()
-        service.delete_journal_entry(
-            space_id=space_id, journal_id=journal_id, user_id=current_user.get("sub", "")
-        )
-
-        return SuccessResponse(message=f"Journal {journal_id} deleted successfully")
-    except JournalNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except UnauthorizedError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-    except Exception as e:
-        logger.error(f"Failed to delete journal: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete journal"
-        )
-
-
-@router.get("/users/me/journals", response_model=JournalListResponse)
-async def list_user_journals(
-    current_user: dict = Depends(get_current_user),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100, alias="pageSize"),
-):
-    """List all journals created by the current user across all spaces."""
-    try:
-        logger.info(f"[API_LIST_USER_JOURNALS] user={current_user.get('sub')}")
-
-        service = JournalService()
-        result = service.list_user_journals(
-            user_id=current_user.get("sub", ""), page=page, page_size=page_size
-        )
-
-        # Convert to response format
-        journal_responses = []
-        for journal in result["journals"]:
-            journal_responses.append(
-                JournalResponse(
-                    journal_id=journal["journal_id"],
-                    space_id=journal["space_id"],
-                    user_id=journal["user_id"],
-                    title=journal["title"],
-                    content=journal["content"],
-                    content_tiptap=journal.get("content_tiptap"),
-                    template_id=journal.get("template_id"),
-                    framework_id=journal.get("framework_id"),
-                    # REMOVED: template_data - data is embedded in content
-                    tags=journal.get("tags", []),
-                    emotions=journal.get("emotions", []),
-                    created_at=journal["created_at"],
-                    updated_at=journal["updated_at"],
-                    word_count=journal.get("word_count", 0),
-                    is_pinned=journal.get("is_pinned", False),
-                    author=journal.get("author"),
-                )
-            )
-
-        return JournalListResponse(
-            journals=journal_responses,
-            total=result["total"],
-            page=result["page"],
-            page_size=result["page_size"],
-            has_more=result.get("has_more", False),
-        )
-    except Exception as e:
-        logger.error(f"Failed to list user journals: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to list journals"
-        )
-
-
 # =============================================================================
-# Theme Filter Endpoints
+# Theme Filter Endpoints (must be defined BEFORE {journal_id} routes)
 # =============================================================================
 
 
@@ -511,4 +335,185 @@ async def get_journals_by_theme(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get journals by theme"
+        )
+
+
+# =============================================================================
+# Individual Journal Endpoints (must be AFTER specific path routes)
+# =============================================================================
+
+
+@router.get("/spaces/{space_id}/journals/{journal_id}", response_model=JournalResponse)
+async def get_journal(
+    space_id: str, journal_id: str, current_user: dict = Depends(get_current_user)
+):
+    """Get a single journal entry by ID."""
+    try:
+        logger.info(
+            f"[API_GET_JOURNAL] space={space_id}, journal={journal_id}, user={current_user.get('sub')}"
+        )
+
+        service = JournalService()
+        result = service.get_journal_entry(
+            space_id=space_id, journal_id=journal_id, user_id=current_user.get("sub", "")
+        )
+
+        return JournalResponse(
+            journal_id=result["journal_id"],
+            space_id=result["space_id"],
+            user_id=result["user_id"],
+            title=result["title"],
+            content=result["content"],
+            content_tiptap=result.get("content_tiptap"),
+            template_id=result.get("template_id"),
+            framework_id=result.get("framework_id"),
+            # REMOVED: template_data - data is embedded in content
+            tags=result.get("tags", []),
+            emotions=result.get("emotions", []),
+            created_at=result["created_at"],
+            updated_at=result["updated_at"],
+            word_count=result.get("word_count", 0),
+            is_pinned=result.get("is_pinned", False),
+            author=result.get("author"),
+        )
+    except JournalNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except UnauthorizedError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to get journal: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get journal"
+        )
+
+
+@router.put("/spaces/{space_id}/journals/{journal_id}", response_model=JournalResponse)
+async def update_journal(
+    space_id: str,
+    journal_id: str,
+    update: JournalUpdate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Update a journal entry (author only)."""
+    try:
+        logger.info(
+            f"[API_UPDATE_JOURNAL] space={space_id}, journal={journal_id}, user={current_user.get('sub')}"
+        )
+
+        service = JournalService()
+        result = service.update_journal_entry(
+            space_id=space_id,
+            journal_id=journal_id,
+            user_id=current_user.get("sub", ""),
+            data=update,
+        )
+
+        return JournalResponse(
+            journal_id=result["journal_id"],
+            space_id=result["space_id"],
+            user_id=result["user_id"],
+            title=result["title"],
+            content=result["content"],
+            content_tiptap=result.get("content_tiptap"),
+            template_id=result.get("template_id"),
+            framework_id=result.get("framework_id"),
+            # REMOVED: template_data - data is embedded in content
+            tags=result.get("tags", []),
+            emotions=result.get("emotions", []),
+            created_at=result["created_at"],
+            updated_at=result["updated_at"],
+            word_count=result.get("word_count", 0),
+            is_pinned=result.get("is_pinned", False),
+            author=result.get("author"),
+        )
+    except JournalNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except UnauthorizedError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except ValidationError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to update journal: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update journal"
+        )
+
+
+@router.delete("/spaces/{space_id}/journals/{journal_id}", response_model=SuccessResponse)
+async def delete_journal(
+    space_id: str, journal_id: str, current_user: dict = Depends(get_current_user)
+):
+    """Delete a journal entry (author or space owner only)."""
+    try:
+        logger.info(
+            f"[API_DELETE_JOURNAL] space={space_id}, journal={journal_id}, user={current_user.get('sub')}"
+        )
+
+        service = JournalService()
+        service.delete_journal_entry(
+            space_id=space_id, journal_id=journal_id, user_id=current_user.get("sub", "")
+        )
+
+        return SuccessResponse(message=f"Journal {journal_id} deleted successfully")
+    except JournalNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except UnauthorizedError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to delete journal: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete journal"
+        )
+
+
+@router.get("/users/me/journals", response_model=JournalListResponse)
+async def list_user_journals(
+    current_user: dict = Depends(get_current_user),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100, alias="pageSize"),
+):
+    """List all journals created by the current user across all spaces."""
+    try:
+        logger.info(f"[API_LIST_USER_JOURNALS] user={current_user.get('sub')}")
+
+        service = JournalService()
+        result = service.list_user_journals(
+            user_id=current_user.get("sub", ""), page=page, page_size=page_size
+        )
+
+        # Convert to response format
+        journal_responses = []
+        for journal in result["journals"]:
+            journal_responses.append(
+                JournalResponse(
+                    journal_id=journal["journal_id"],
+                    space_id=journal["space_id"],
+                    user_id=journal["user_id"],
+                    title=journal["title"],
+                    content=journal["content"],
+                    content_tiptap=journal.get("content_tiptap"),
+                    template_id=journal.get("template_id"),
+                    framework_id=journal.get("framework_id"),
+                    # REMOVED: template_data - data is embedded in content
+                    tags=journal.get("tags", []),
+                    emotions=journal.get("emotions", []),
+                    created_at=journal["created_at"],
+                    updated_at=journal["updated_at"],
+                    word_count=journal.get("word_count", 0),
+                    is_pinned=journal.get("is_pinned", False),
+                    author=journal.get("author"),
+                )
+            )
+
+        return JournalListResponse(
+            journals=journal_responses,
+            total=result["total"],
+            page=result["page"],
+            page_size=result["page_size"],
+            has_more=result.get("has_more", False),
+        )
+    except Exception as e:
+        logger.error(f"Failed to list user journals: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to list journals"
         )
