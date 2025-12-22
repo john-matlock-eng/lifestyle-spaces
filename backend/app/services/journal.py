@@ -758,6 +758,7 @@ class JournalService:
                     "word_count": journal.get("word_count", 0),
                     "is_pinned": journal.get("is_pinned", False),
                     "author": author_info,
+                    "ai_metadata": journal.get("ai_metadata"),
                 }
             )
 
@@ -832,6 +833,7 @@ class JournalService:
                     "word_count": journal.get("word_count", 0),
                     "is_pinned": journal.get("is_pinned", False),
                     "author": author_info,
+                    "ai_metadata": journal.get("ai_metadata"),
                 }
             )
 
