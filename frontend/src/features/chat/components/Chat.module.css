@@ -281,6 +281,10 @@
   color: var(--theme-text-secondary);
 }
 
+:global(.dark) .markdown blockquote {
+  background: rgba(20, 184, 166, 0.1);
+}
+
 .markdown blockquote p {
   margin: 0;
 }
@@ -403,6 +407,11 @@
   color: var(--theme-primary-600);
 }
 
+:global(.dark) .citationScore {
+  background: rgba(20, 184, 166, 0.15);
+  color: var(--theme-primary-400);
+}
+
 /* Suggestions */
 .suggestions {
   padding: 1rem;
@@ -441,6 +450,11 @@
   color: var(--theme-primary-700);
 }
 
+:global(.dark) .suggestionButton:hover {
+  background: rgba(20, 184, 166, 0.1);
+  color: var(--theme-primary-400);
+}
+
 /* Input */
 .inputContainer {
   display: flex;
@@ -473,6 +487,10 @@
   outline: none;
   border-color: var(--theme-primary-500);
   box-shadow: 0 0 0 3px var(--theme-primary-100, rgba(59, 130, 246, 0.1));
+}
+
+:global(.dark) .input:focus {
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
 }
 
 .sendButton {
@@ -522,6 +540,12 @@
   font-size: 0.8rem;
 }
 
+:global(.dark) .error {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
+}
+
 /* Sidebar (Desktop) */
 .sidebar {
   position: fixed;
@@ -560,9 +584,18 @@
   color: var(--theme-primary-500);
 }
 
+:global(.dark) .resizeHandle:hover {
+  background: rgba(20, 184, 166, 0.1);
+}
+
 .resizeHandle:active {
   background: var(--theme-primary-100);
   color: var(--theme-primary-600);
+}
+
+:global(.dark) .resizeHandle:active {
+  background: rgba(20, 184, 166, 0.15);
+  color: var(--theme-primary-400);
 }
 
 .sidebarToggle {

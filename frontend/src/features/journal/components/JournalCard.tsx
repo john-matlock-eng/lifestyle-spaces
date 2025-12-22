@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../stores/authStore'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import { FrameworkBadge } from '../../../components/journal/JournalFilters/FrameworkBadge'
+import { JournalMetadataBadges } from '../../../components/journal/JournalMetadataBadges'
 import type { JournalEntry } from '../types/journal.types'
 import '../styles/journal.css'
 
@@ -193,6 +194,18 @@ export const JournalCard: React.FC<JournalCardProps> = ({ journal, onDelete }) =
       </div>
 
       <p className="journal-card-excerpt">{getJournalPreview(journal.content)}</p>
+
+      {/* AI Metadata Badges */}
+      {journal.aiMetadata && (
+        <div className="journal-card-ai-metadata">
+          <JournalMetadataBadges
+            metadata={journal.aiMetadata}
+            compact
+            maxThemes={2}
+            showSentiment={true}
+          />
+        </div>
+      )}
 
       <div className="journal-card-meta">
         {/* Framework Badge */}

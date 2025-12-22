@@ -12,6 +12,7 @@ from app.models.journal import (
     JournalListResponse,
 )
 from app.models.common import SuccessResponse
+from pydantic import BaseModel
 from app.services.journal import JournalService, JournalNotFoundError
 from app.services.exceptions import SpaceNotFoundError, UnauthorizedError, ValidationError
 from app.core.dependencies import get_current_user
@@ -332,4 +333,182 @@ async def list_user_journals(
         logger.error(f"Failed to list user journals: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to list journals"
+        )
+
+
+# =============================================================================
+# Theme Filter Endpoints
+# =============================================================================
+
+
+class ThemeCount(BaseModel):
+    """A theme with its occurrence count."""
+
+    theme: str
+    count: int
+
+
+class ThemesResponse(BaseModel):
+    """Response containing theme counts."""
+
+    themes: List[ThemeCount]
+    total: int
+
+
+class JournalsByThemeResponse(BaseModel):
+    """Response containing journals filtered by theme."""
+
+    theme: str
+    journals: List[JournalResponse]
+    total: int
+
+
+@router.get(
+    "/spaces/{space_id}/journals/themes",
+    response_model=ThemesResponse,
+    summary="Get all unique AI themes in a space",
+)
+async def get_space_themes(
+    space_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get all unique AI-generated themes across journals in a space.
+
+    Returns themes sorted by count (most frequent first).
+    """
+    try:
+        logger.info(f"[API_GET_THEMES] space={space_id}, user={current_user.get('sub')}")
+
+        service = JournalService()
+        # Get all journals in the space (up to a reasonable limit)
+        result = service.list_space_journals(
+            space_id=space_id,
+            user_id=current_user.get("sub", ""),
+            page=1,
+            page_size=1000,
+        )
+
+        theme_counts: dict = {}
+
+        for journal in result["journals"]:
+            ai_metadata = journal.get("ai_metadata")
+            if ai_metadata and isinstance(ai_metadata, dict):
+                themes = ai_metadata.get("themes", [])
+                if themes:
+                    for theme in themes:
+                        theme_lower = theme.lower()
+                        theme_counts[theme_lower] = theme_counts.get(theme_lower, 0) + 1
+
+        # Sort by count descending
+        sorted_themes = sorted(
+            theme_counts.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        return ThemesResponse(
+            themes=[
+                ThemeCount(theme=theme, count=count)
+                for theme, count in sorted_themes[:50]
+            ],
+            total=len(sorted_themes),
+        )
+
+    except SpaceNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except UnauthorizedError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to get themes: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get themes"
+        )
+
+
+@router.get(
+    "/spaces/{space_id}/journals/by-theme/{theme}",
+    response_model=JournalsByThemeResponse,
+    summary="Get journals by AI theme",
+)
+async def get_journals_by_theme(
+    space_id: str,
+    theme: str,
+    limit: int = Query(default=20, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get journals that have a specific AI-generated theme.
+
+    Case-insensitive matching.
+    """
+    try:
+        logger.info(
+            f"[API_GET_BY_THEME] space={space_id}, theme={theme}, user={current_user.get('sub')}"
+        )
+
+        service = JournalService()
+        # Get all journals in the space
+        result = service.list_space_journals(
+            space_id=space_id,
+            user_id=current_user.get("sub", ""),
+            page=1,
+            page_size=1000,
+        )
+
+        theme_lower = theme.lower()
+        matching_journals = []
+
+        for journal in result["journals"]:
+            ai_metadata = journal.get("ai_metadata")
+            if ai_metadata and isinstance(ai_metadata, dict):
+                themes = ai_metadata.get("themes", [])
+                if themes and any(t.lower() == theme_lower for t in themes):
+                    matching_journals.append(journal)
+
+        # Sort by updated_at descending
+        matching_journals.sort(
+            key=lambda j: j.get("updated_at") or j.get("created_at", ""),
+            reverse=True
+        )
+
+        # Convert to response format
+        journal_responses = []
+        for journal in matching_journals[:limit]:
+            journal_responses.append(
+                JournalResponse(
+                    journal_id=journal["journal_id"],
+                    space_id=journal["space_id"],
+                    user_id=journal["user_id"],
+                    title=journal["title"],
+                    content=journal["content"],
+                    content_tiptap=journal.get("content_tiptap"),
+                    template_id=journal.get("template_id"),
+                    framework_id=journal.get("framework_id"),
+                    tags=journal.get("tags", []),
+                    emotions=journal.get("emotions", []),
+                    created_at=journal["created_at"],
+                    updated_at=journal["updated_at"],
+                    word_count=journal.get("word_count", 0),
+                    is_pinned=journal.get("is_pinned", False),
+                    author=journal.get("author"),
+                    ai_metadata=journal.get("ai_metadata"),
+                )
+            )
+
+        return JournalsByThemeResponse(
+            theme=theme,
+            journals=journal_responses,
+            total=len(matching_journals),
+        )
+
+    except SpaceNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except UnauthorizedError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to get journals by theme: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get journals by theme"
         )

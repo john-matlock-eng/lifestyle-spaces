@@ -27,6 +27,8 @@ import { ScaleSectionDisplay } from '../components/sections/ScaleSectionDisplay'
 import { TableSectionDisplay } from '../components/sections/TableSectionDisplay'
 import { MomentBlocksSectionDisplay } from '../components/sections/MomentBlocksSectionDisplay'
 import { ChatSidebar, ChatBottomSheet } from '../../chat'
+import { JournalSynopsis } from '../../../components/journal/JournalSynopsis'
+import { JournalMetadataBadges } from '../../../components/journal/JournalMetadataBadges'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -325,6 +327,15 @@ ${content}
                 <span>{template.name}</span>
               </div>
             )}
+            {/* AI Metadata Badges */}
+            {journal.aiMetadata && (
+              <JournalMetadataBadges
+                metadata={journal.aiMetadata}
+                compact
+                maxThemes={3}
+                showSentiment={true}
+              />
+            )}
           </div>
 
           {/* Density Toggle */}
@@ -457,6 +468,11 @@ ${content}
           onReconnect={reconnect}
         />
       </div>
+
+      {/* AI Synopsis (collapsible) */}
+      {journal.aiMetadata && (
+        <JournalSynopsis metadata={journal.aiMetadata} />
+      )}
 
       <div className="journal-view-content">
         {journal.contentTiptap && template && displaySections.length > 0 ? (
