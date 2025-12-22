@@ -139,6 +139,7 @@ async def list_space_journals(
                     word_count=journal.get("word_count", 0),
                     is_pinned=journal.get("is_pinned", False),
                     author=journal.get("author"),
+                    ai_metadata=journal.get("ai_metadata"),
                 )
             )
 
@@ -375,6 +376,7 @@ async def get_journal(
             word_count=result.get("word_count", 0),
             is_pinned=result.get("is_pinned", False),
             author=result.get("author"),
+            ai_metadata=result.get("ai_metadata"),
         )
     except JournalNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
@@ -425,6 +427,7 @@ async def update_journal(
             word_count=result.get("word_count", 0),
             is_pinned=result.get("is_pinned", False),
             author=result.get("author"),
+            ai_metadata=result.get("ai_metadata"),
         )
     except JournalNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
@@ -502,6 +505,7 @@ async def list_user_journals(
                     word_count=journal.get("word_count", 0),
                     is_pinned=journal.get("is_pinned", False),
                     author=journal.get("author"),
+                    ai_metadata=journal.get("ai_metadata"),
                 )
             )
 
