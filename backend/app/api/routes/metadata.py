@@ -81,14 +81,16 @@ async def generate_journal_metadata(
     try:
         metadata_generator = get_metadata_generator()
 
-        # Prefer TipTap content if available
-        content = journal.get("content_tiptap") or journal.get("content", "")
+        # Get both content formats
+        content = journal.get("content", "")
+        content_tiptap = journal.get("content_tiptap") or journal.get("contentTiptap")
 
         metadata = await metadata_generator.generate_metadata(
             journal_id=journal_id,
             title=journal.get("title", ""),
             content=content,
-            template_id=journal.get("template_id")
+            template_id=journal.get("template_id"),
+            content_tiptap=content_tiptap
         )
 
         # Update the journal with new metadata
@@ -189,13 +191,15 @@ async def _generate_metadata_for_journals(
             continue
 
         try:
-            content = journal.get("content_tiptap") or journal.get("content", "")
+            content = journal.get("content", "")
+            content_tiptap = journal.get("content_tiptap") or journal.get("contentTiptap")
 
             metadata = await metadata_generator.generate_metadata(
                 journal_id=journal_id,
                 title=journal.get("title", ""),
                 content=content,
-                template_id=journal.get("template_id")
+                template_id=journal.get("template_id"),
+                content_tiptap=content_tiptap
             )
 
             journal_service._update_ai_metadata(

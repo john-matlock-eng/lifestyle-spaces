@@ -33,7 +33,7 @@ import argparse
 import logging
 import time
 from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict
 from decimal import Decimal
 
 # Add parent directory to path for imports
@@ -43,7 +43,7 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 
 from app.models.ai_metadata import JournalAIMetadata
-from app.services.metadata_generator import get_metadata_generator, reset_metadata_generator
+from app.services.metadata_generator import get_metadata_generator
 
 # Configure logging
 logging.basicConfig(
@@ -112,7 +112,9 @@ def get_space_journals(table, space_id: str) -> List[dict]:
     return journals
 
 
-def update_journal_metadata(table, space_id: str, journal_id: str, metadata: JournalAIMetadata) -> bool:
+def update_journal_metadata(
+    table, space_id: str, journal_id: str, metadata: JournalAIMetadata
+) -> bool:
     """Update a journal's AI metadata in DynamoDB."""
     try:
         metadata_dict = metadata.model_dump(by_alias=True)
@@ -147,10 +149,18 @@ async def generate_metadata_for_journal(
     journal_id = journal.get("journal_id", "")
     title = journal.get("title", "Untitled")
 
-    # Prefer TipTap content if available
-    content = journal.get("content_tiptap") or journal.get("content", "")
+    # Get both content formats
+    content = journal.get("content", "")
+    content_tiptap = journal.get("content_tiptap") or journal.get("contentTiptap")
 
-    if not content or len(str(content)) < 50:
+    # Check if we have enough content
+    has_content = False
+    if content_tiptap:
+        has_content = True
+    elif content and len(str(content)) >= 50:
+        has_content = True
+
+    if not has_content:
         logger.warning(f"Skipping {journal_id}: insufficient content")
         return None
 
@@ -164,6 +174,7 @@ async def generate_metadata_for_journal(
             title=title,
             content=content,
             template_id=journal.get("template_id"),
+            content_tiptap=content_tiptap,
         )
         return metadata
     except Exception as e:

@@ -98,9 +98,102 @@ class MetadataGenerator:
 
     def _extract_text_content(self, content: Any) -> str:
         """Extract plain text from journal content."""
+        if content is None:
+            return ""
+
+        if isinstance(content, str):
+            return content
+
         if isinstance(content, dict):
+            # Check if it's a section dict (contentTiptap format)
+            if self._is_section_dict(content):
+                return self._extract_from_section_dict(content)
+            # Single TipTap doc
             return self._extract_tiptap_text(content)
-        return str(content) if content else ""
+
+        return str(content)
+
+    def _is_section_dict(self, content: dict) -> bool:
+        """Check if content is a dict of section TipTap docs."""
+        section_keys = [k for k in content.keys() if k != 'content']
+        for key in section_keys:
+            value = content.get(key)
+            if isinstance(value, dict) and value.get('type') == 'doc':
+                return True
+        return False
+
+    def _extract_from_section_dict(self, content: dict) -> str:
+        """Extract text from section dict format (contentTiptap)."""
+        texts = []
+
+        # Section key order for readable output
+        section_order = [
+            'raw_thoughts', 'deep_dive', 'action_plan',  # Express/Examine/Evolve
+            'scene', 'reaction', 'takeaway',              # Daily Lens
+            'gratitude', 'reflection',                    # Gratitude
+            'identity', 'values', 'mission', 'commitments',
+        ]
+
+        # Process in order, then remaining keys
+        processed = set()
+        keys_to_process = []
+
+        for key in section_order:
+            if key in content:
+                keys_to_process.append(key)
+                processed.add(key)
+
+        for key in content.keys():
+            if key not in processed and key != 'content':
+                keys_to_process.append(key)
+
+        for key in keys_to_process:
+            value = content.get(key)
+            if value is None:
+                continue
+
+            section_text = ""
+            if isinstance(value, dict) and value.get('type') == 'doc':
+                section_text = self._extract_tiptap_text(value)
+            elif isinstance(value, str):
+                # Try to parse as JSON for Q&A format
+                if value.strip().startswith('['):
+                    try:
+                        qa_list = json.loads(value)
+                        if isinstance(qa_list, list):
+                            qa_texts = []
+                            for item in qa_list:
+                                if isinstance(item, dict):
+                                    q = item.get('question', '')
+                                    a = item.get('answer', '')
+                                    if q and a:
+                                        qa_texts.append(f"Q: {q}\nA: {a}")
+                            if qa_texts:
+                                section_text = "\n\n".join(qa_texts)
+                            else:
+                                section_text = value
+                        else:
+                            section_text = value
+                    except (json.JSONDecodeError, AttributeError):
+                        section_text = value
+                else:
+                    section_text = value
+            elif isinstance(value, list):
+                # Q&A list directly
+                qa_texts = []
+                for item in value:
+                    if isinstance(item, dict):
+                        q = item.get('question', '')
+                        a = item.get('answer', '')
+                        if q and a:
+                            qa_texts.append(f"Q: {q}\nA: {a}")
+                if qa_texts:
+                    section_text = "\n\n".join(qa_texts)
+
+            if section_text and section_text.strip():
+                texts.append(section_text.strip())
+
+        return "\n\n".join(texts)
 
     def _extract_tiptap_text(self, node: dict) -> str:
         """Recursively extract text from TipTap document."""
@@ -120,7 +213,8 @@ class MetadataGenerator:
         journal_id: str,
         title: str,
         content: Any,
-        template_id: Optional[str] = None
+        template_id: Optional[str] = None,
+        content_tiptap: Any = None
     ) -> JournalAIMetadata:
         """
         Generate AI metadata for a journal entry.
@@ -128,14 +222,19 @@ class MetadataGenerator:
         Args:
             journal_id: Journal ID (for logging)
             title: Journal title
-            content: Journal content (TipTap JSON or plain text)
+            content: Journal content (markdown string or TipTap JSON)
             template_id: Optional template ID for context
+            content_tiptap: TipTap content structure (preferred if available)
 
         Returns:
             JournalAIMetadata with generated fields
         """
-        # Extract text content
-        text_content = self._extract_text_content(content)
+        # Prefer contentTiptap, fall back to content
+        text_content = ""
+        if content_tiptap:
+            text_content = self._extract_text_content(content_tiptap)
+        if not text_content and content:
+            text_content = self._extract_text_content(content)
 
         if not text_content or len(text_content.strip()) < 50:
             logger.warning(f"Journal {journal_id} has insufficient content for metadata")

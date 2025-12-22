@@ -456,3 +456,119 @@ class TestMetadataPrompts:
         )
         assert "Test Title" in prompt
         assert "Test content here" in prompt
+
+
+class TestMetadataGeneratorSectionDict:
+    """Tests for section dict (contentTiptap) handling."""
+
+    def test_is_section_dict_true(self):
+        """Should detect section dict format."""
+        generator = MetadataGenerator()
+        content = {
+            "raw_thoughts": {"type": "doc", "content": []},
+            "deep_dive": {"type": "doc", "content": []},
+            "content": {"type": "doc", "content": []}
+        }
+        assert generator._is_section_dict(content) is True
+
+    def test_is_section_dict_false_single_doc(self):
+        """Should not detect single TipTap doc as section dict."""
+        generator = MetadataGenerator()
+        content = {"type": "doc", "content": []}
+        assert generator._is_section_dict(content) is False
+
+    def test_extract_from_section_dict_tiptap(self):
+        """Should extract text from section dict with TipTap docs."""
+        generator = MetadataGenerator()
+        content = {
+            "raw_thoughts": {
+                "type": "doc",
+                "content": [
+                    {"type": "paragraph", "content": [
+                        {"type": "text", "text": "Express section content"}
+                    ]}
+                ]
+            },
+            "action_plan": {
+                "type": "doc",
+                "content": [
+                    {"type": "paragraph", "content": [
+                        {"type": "text", "text": "Evolve section content"}
+                    ]}
+                ]
+            },
+            "content": {"type": "doc", "content": []}
+        }
+
+        text = generator._extract_from_section_dict(content)
+        assert "Express section content" in text
+        assert "Evolve section content" in text
+
+    def test_extract_from_section_dict_qa_list(self):
+        """Should extract text from section dict with Q&A list."""
+        generator = MetadataGenerator()
+        content = {
+            "deep_dive": [
+                {"question": "What happened?", "answer": "Something important."},
+                {"question": "How did I feel?", "answer": "I felt good."}
+            ],
+            "content": {"type": "doc", "content": []}
+        }
+
+        text = generator._extract_from_section_dict(content)
+        assert "Q: What happened?" in text
+        assert "A: Something important" in text
+
+    def test_extract_from_section_dict_qa_json_string(self):
+        """Should extract text from section dict with Q&A JSON string."""
+        import json
+        generator = MetadataGenerator()
+        qa_list = [
+            {"question": "Why?", "answer": "Because."},
+        ]
+        content = {
+            "deep_dive": json.dumps(qa_list),
+            "content": {"type": "doc", "content": []}
+        }
+
+        text = generator._extract_from_section_dict(content)
+        assert "Q: Why?" in text
+        assert "A: Because" in text
+
+    @pytest.mark.asyncio
+    @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
+    @patch("app.services.metadata_generator.anthropic.Anthropic")
+    async def test_generate_metadata_prefers_content_tiptap(
+        self, mock_anthropic_class, mock_anthropic_response
+    ):
+        """Should prefer content_tiptap over content parameter."""
+        mock_client = Mock()
+        mock_client.messages.create.return_value = mock_anthropic_response
+        mock_anthropic_class.return_value = mock_client
+
+        reset_metadata_generator()
+        generator = MetadataGenerator()
+
+        section_content = {
+            "raw_thoughts": {
+                "type": "doc",
+                "content": [
+                    {"type": "paragraph", "content": [
+                        {"type": "text", "text": "This is from contentTiptap section with enough content to pass the minimum length check for metadata generation."}
+                    ]}
+                ]
+            },
+            "content": {"type": "doc", "content": []}
+        }
+
+        await generator.generate_metadata(
+            journal_id="test-123",
+            title="Test",
+            content="This is old content that should be ignored because we prefer contentTiptap.",
+            content_tiptap=section_content
+        )
+
+        # Verify API was called with contentTiptap content
+        call_args = mock_client.messages.create.call_args
+        user_message = call_args[1]["messages"][0]["content"]
+        assert "contentTiptap section" in user_message
