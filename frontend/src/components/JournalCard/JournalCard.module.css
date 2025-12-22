@@ -1,5 +1,6 @@
 /* ============================================
    Journal Card Component
+   Uses theme CSS variables for light/dark mode
    ============================================ */
 
 .card {
@@ -7,8 +8,8 @@
   flex-direction: column;
   gap: 0.75rem;
   padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--theme-bg-surface);
+  border: 1px solid var(--theme-border-light);
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -20,19 +21,36 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+  background: linear-gradient(135deg, var(--theme-primary-500, #8b5cf6) 0%, transparent 50%);
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
 }
 
+/* Light mode: subtle gradient */
+:root:not(.dark) .card::before {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+}
+
+/* Dark mode: more visible gradient */
+:root.dark .card::before {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+}
+
 .card:hover,
 .card.hovered {
-  border-color: rgba(139, 92, 246, 0.3);
+  border-color: var(--theme-primary-500, #8b5cf6);
   transform: translateY(-2px);
   box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(139, 92, 246, 0.1);
+    0 8px 24px rgba(0, 0, 0, 0.1),
+    0 0 0 1px var(--theme-primary-500, #8b5cf6);
+}
+
+:root.dark .card:hover,
+:root.dark .card.hovered {
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--theme-primary-500, #8b5cf6);
 }
 
 .card:hover::before,
@@ -41,7 +59,7 @@
 }
 
 .card:focus-visible {
-  outline: 2px solid rgba(139, 92, 246, 0.5);
+  outline: 2px solid var(--theme-primary-500, #8b5cf6);
   outline-offset: 2px;
 }
 
@@ -80,7 +98,7 @@
 
 .date {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--theme-text-muted);
   font-weight: 500;
 }
 
@@ -88,7 +106,7 @@
 .title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--theme-text-primary);
   margin: 0;
   line-height: 1.3;
   display: -webkit-box;
@@ -101,7 +119,7 @@
 .synopsis {
   font-size: 0.85rem;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--theme-text-secondary);
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -116,16 +134,21 @@
   gap: 0.375rem;
   padding: 0.5rem 0.75rem;
   background: rgba(139, 92, 246, 0.08);
-  border-left: 2px solid rgba(139, 92, 246, 0.4);
+  border-left: 2px solid var(--theme-primary-500, #8b5cf6);
   border-radius: 0 8px 8px 0;
   font-size: 0.8rem;
   font-style: italic;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--theme-text-secondary);
   line-height: 1.4;
 }
 
+:root:not(.dark) .emotionalTone {
+  background: rgba(139, 92, 246, 0.06);
+}
+
 .emotionalTone svg {
-  color: rgba(139, 92, 246, 0.6);
+  color: var(--theme-primary-500, #8b5cf6);
+  opacity: 0.7;
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -145,21 +168,24 @@
   border-radius: 6px;
   font-size: 0.7rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--theme-text-primary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
+:root:not(.dark) .theme {
+  background: rgba(139, 92, 246, 0.1);
+}
+
 .theme:hover {
   background: rgba(139, 92, 246, 0.25);
-  color: #fff;
   transform: translateY(-1px);
 }
 
 .moreThemes {
   padding: 0.25rem 0.5rem;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--theme-text-muted);
 }
 
 /* Footer */
@@ -169,7 +195,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--theme-border-light);
   margin-top: auto;
 }
 
@@ -185,7 +211,7 @@
   align-items: center;
   gap: 0.25rem;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--theme-text-muted);
 }
 
 .wordCount svg {
@@ -195,9 +221,9 @@
 .template {
   font-size: 0.65rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--theme-text-secondary);
   padding: 0.125rem 0.5rem;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--theme-bg-elevated);
   border-radius: 4px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -214,19 +240,19 @@
   border: none;
   background: transparent;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--theme-text-muted);
   cursor: pointer;
   padding: 0;
   transition: color 0.15s ease;
 }
 
 .tag:hover {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--theme-text-primary);
 }
 
 .moreTags {
   font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--theme-text-muted);
 }
 
 /* ============================================

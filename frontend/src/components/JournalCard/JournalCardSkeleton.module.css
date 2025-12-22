@@ -1,5 +1,6 @@
 /* ============================================
    Journal Card Skeleton (Loading State)
+   Uses theme CSS variables for light/dark mode
    ============================================ */
 
 .card {
@@ -7,8 +8,8 @@
   flex-direction: column;
   gap: 0.75rem;
   padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--theme-bg-surface);
+  border: 1px solid var(--theme-border-light);
   border-radius: 16px;
 }
 
@@ -27,6 +28,7 @@
   justify-content: space-between;
 }
 
+/* Base skeleton styles */
 .sentimentSkeleton,
 .dateSkeleton,
 .titleSkeleton,
@@ -34,6 +36,36 @@
 .synopsisLine2,
 .themeSkeleton,
 .footerSkeleton {
+  border-radius: 4px;
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Light mode skeleton colors */
+:root:not(.dark) .sentimentSkeleton,
+:root:not(.dark) .dateSkeleton,
+:root:not(.dark) .titleSkeleton,
+:root:not(.dark) .synopsisLine1,
+:root:not(.dark) .synopsisLine2,
+:root:not(.dark) .themeSkeleton,
+:root:not(.dark) .footerSkeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.04) 0%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0.04) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Dark mode skeleton colors */
+:root.dark .sentimentSkeleton,
+:root.dark .dateSkeleton,
+:root.dark .titleSkeleton,
+:root.dark .synopsisLine1,
+:root.dark .synopsisLine2,
+:root.dark .themeSkeleton,
+:root.dark .footerSkeleton {
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0.04) 0%,
@@ -41,8 +73,6 @@
     rgba(255, 255, 255, 0.04) 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 4px;
 }
 
 .sentimentSkeleton {
@@ -85,7 +115,7 @@
 
 .footer {
   padding-top: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--theme-border-light);
   margin-top: auto;
 }
 
