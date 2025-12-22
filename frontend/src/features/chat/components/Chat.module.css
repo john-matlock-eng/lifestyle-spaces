@@ -80,6 +80,18 @@
   border-color: var(--theme-primary-500);
 }
 
+:global(.dark) .iconButton {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+:global(.dark) .iconButton:hover {
+  background: rgba(20, 184, 166, 0.15);
+  border-color: rgba(20, 184, 166, 0.5);
+  color: var(--theme-primary-400);
+}
+
 /* Messages Area */
 .messages {
   flex: 1;
