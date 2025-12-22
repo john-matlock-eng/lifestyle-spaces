@@ -13,7 +13,9 @@ import { useJournal } from '../hooks/useJournal'
 import { useSectionTipTap } from '../hooks/useSectionTipTap'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
+import { getFrameworkRegistry } from '../frameworks'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
+import type { FrameworkTemplateConfig } from '../types/framework.types'
 import { aiService } from '../../../services/ai'
 import { ElliePerch } from '../../../components/ellie'
 import { useEllie } from '../../../contexts/EllieContext'
@@ -125,8 +127,42 @@ export const JournalEditPage: React.FC = () => {
       if (journal.templateId && journal.templateId !== 'blank') {
         const loadTemplateAndParse = async () => {
           try {
-            // Load the template definition
-            const loadedTemplate = await getTemplate(journal.templateId!)
+            // Check if this is a framework template first
+            const registry = getFrameworkRegistry()
+            const frameworkTemplateData = registry.getTemplateById(journal.templateId!)
+
+            let loadedTemplate: Template
+
+            if (frameworkTemplateData) {
+              // Framework template - convert to Template format for editing
+              const frameworkTemplate = frameworkTemplateData.template as FrameworkTemplateConfig
+              const templateSections = frameworkTemplate.content?.sections || []
+
+              // Convert framework sections to Template sections format
+              loadedTemplate = {
+                id: frameworkTemplate.id || journal.templateId!,
+                name: frameworkTemplate.name || 'Template',
+                description: frameworkTemplate.description || '',
+                version: frameworkTemplate.version || 1,
+                sections: templateSections.map((sec: { id: string; title?: string; type?: string; order?: number; description?: string }, index: number) => ({
+                  id: sec.id,
+                  title: sec.title || sec.id,
+                  type: sec.type || 'paragraph',
+                  placeholder: sec.description || '',
+                  order: sec.order ?? index,
+                })),
+                icon: frameworkTemplate.icon,
+                color: frameworkTemplate.color,
+                frameworkId: frameworkTemplateData.frameworkId,
+              }
+
+              // Sort sections by order
+              loadedTemplate.sections.sort((a, b) => ((a as { order?: number }).order ?? 0) - ((b as { order?: number }).order ?? 0))
+            } else {
+              // Regular backend template
+              loadedTemplate = await getTemplate(journal.templateId!)
+            }
+
             setTemplate(loadedTemplate)
 
             // Parse the content to extract embedded template data
