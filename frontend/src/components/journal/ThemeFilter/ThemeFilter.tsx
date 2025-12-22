@@ -4,7 +4,7 @@
  * Displays clickable theme pills for filtering journals by AI-generated themes.
  */
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Tag, X } from 'lucide-react'
 import { useAuth } from '../../../stores/authStore'
 import styles from './ThemeFilter.module.css'
@@ -32,15 +32,16 @@ export function ThemeFilter({
   const [themes, setThemes] = useState<ThemeCount[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isExpanded, setIsExpanded] = useState(false)
-  const { getAccessToken } = useAuth()
+  const { accessToken } = useAuth()
 
   useEffect(() => {
     async function fetchThemes() {
+      if (!accessToken) return
+
       try {
-        const token = await getAccessToken()
         const response = await fetch(`/api/spaces/${spaceId}/journals/themes`, {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         })
 
@@ -61,7 +62,7 @@ export function ThemeFilter({
     if (spaceId) {
       fetchThemes()
     }
-  }, [spaceId, getAccessToken])
+  }, [spaceId, accessToken])
 
   if (isLoading) {
     return (

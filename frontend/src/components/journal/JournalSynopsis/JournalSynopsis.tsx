@@ -4,7 +4,7 @@
  * Displays AI-generated synopsis with expandable insights.
  */
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Sparkles, ChevronDown, ChevronUp, Lightbulb } from 'lucide-react'
 import { JournalMetadataBadges } from '../JournalMetadataBadges'
 import type { JournalAIMetadata } from '../../../features/journal/types/journal.types'

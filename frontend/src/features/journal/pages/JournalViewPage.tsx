@@ -151,8 +151,8 @@ export const JournalViewPage: React.FC = () => {
 
             // Create a basic Template object for display purposes
             const templateData: Template = {
-              id: frameworkTemplate.id,
-              name: frameworkTemplate.name,
+              id: frameworkTemplate.id || journal.templateId!,
+              name: frameworkTemplate.name || 'Template',
               description: frameworkTemplate.description || '',
               version: frameworkTemplate.version || 1,
               sections: [],
