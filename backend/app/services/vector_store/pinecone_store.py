@@ -163,16 +163,31 @@ class PineconeStore(VectorStore):
 
         try:
             # Use search_records for integrated embeddings
+            # Include section-level fields for granular retrieval
             search_params = {
                 "namespace": namespace,
                 "query": {"top_k": top_k, "inputs": {"text": query}},
-                "fields": ["text", "journal_id", "space_id", "user_id", "template_id", "created_at"],
+                "fields": [
+                    "text",
+                    "journalId",
+                    "journalTitle",
+                    "sectionIndex",
+                    "sectionTitle",
+                    "sectionType",
+                    "spaceId",
+                    "userId",
+                    "templateId",
+                    "frameworkId",
+                    "createdAt",
+                    "tags",
+                ],
             }
 
             if filter:
                 search_params["query"]["filter"] = filter
 
             response = self._index.search_records(**search_params)
+            logger.debug(f"Pinecone search response: {response}")
 
             results = []
             if response and hasattr(response, "result") and response.result:
@@ -241,6 +256,78 @@ class PineconeStore(VectorStore):
         except Exception as e:
             logger.error(f"Failed to delete namespace '{namespace}': {e}")
             return False
+
+    async def delete_by_filter(
+        self,
+        filter: Dict[str, Any],
+        namespace: str
+    ) -> int:
+        """
+        Delete documents matching a metadata filter.
+
+        Args:
+            filter: Metadata filter to match documents.
+            namespace: Namespace containing the documents.
+
+        Returns:
+            Number of documents deleted (estimated).
+        """
+        self._ensure_client()
+
+        try:
+            # Pinecone supports delete by filter
+            self._index.delete(filter=filter, namespace=namespace)
+            logger.info(
+                f"Deleted documents matching filter in namespace '{namespace}'"
+            )
+            # Pinecone doesn't return count, so return 1 as indicator of success
+            return 1
+
+        except Exception as e:
+            logger.error(f"Failed to delete by filter from '{namespace}': {e}")
+            return 0
+
+    async def get_stats(self, namespace: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get statistics about the vector store.
+
+        Args:
+            namespace: Optional namespace to get stats for.
+
+        Returns:
+            Dictionary with stats (record_count, dimension, etc.).
+        """
+        self._ensure_client()
+
+        try:
+            stats = self._index.describe_index_stats()
+
+            result = {
+                "total_record_count": stats.get("total_record_count", 0),
+                "dimension": stats.get("dimension", 0),
+                "namespaces": {},
+            }
+
+            # Get namespace-specific stats
+            namespaces = stats.get("namespaces", {})
+            for ns_name, ns_data in namespaces.items():
+                result["namespaces"][ns_name] = {
+                    "record_count": ns_data.get("record_count", 0)
+                }
+
+            # If specific namespace requested, return just that
+            if namespace:
+                ns_stats = namespaces.get(namespace, {})
+                return {
+                    "record_count": ns_stats.get("record_count", 0),
+                    "namespace": namespace,
+                }
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Failed to get stats: {e}")
+            return {"record_count": 0, "error": str(e)}
 
 
 # Singleton instance

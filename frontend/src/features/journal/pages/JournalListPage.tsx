@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { JournalList } from '../components/JournalList'
 import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
+import { ChatSidebar, ChatBottomSheet } from '../../chat'
 import '../styles/journal.css'
 
 /**
@@ -40,8 +41,11 @@ export const JournalListPage: React.FC = () => {
         collarColor={customization.collarColor}
         collarTag={customization.collarTag}
         showPerchControl={true}
-        
       />
+
+      {/* Ellie Chat - Desktop sidebar and mobile bottom sheet */}
+      <ChatSidebar spaceId={spaceId} />
+      <ChatBottomSheet spaceId={spaceId} />
     </>
   )
 }

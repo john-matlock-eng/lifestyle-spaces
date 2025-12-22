@@ -54,6 +54,30 @@ class SearchResult:
 
 
 @dataclass
+class SectionSearchResult:
+    """
+    Result from section-level vector search.
+
+    Attributes:
+        id: Document ID (journal_{id}_section_{index}).
+        score: Similarity score (0-1).
+        journal_id: Parent journal ID.
+        section_index: Section index within journal.
+        section_title: Section title/header.
+        excerpt: Actual section content (excerpt).
+        metadata: Additional metadata.
+    """
+
+    id: str
+    score: float
+    journal_id: str
+    section_index: int
+    section_title: str
+    excerpt: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class IndexResult:
     """
     Result from an indexing operation.
@@ -138,6 +162,37 @@ class VectorStore(ABC):
 
         Returns:
             True if deletion was successful.
+        """
+        pass
+
+    @abstractmethod
+    async def delete_by_filter(
+        self,
+        filter: Dict[str, Any],
+        namespace: str
+    ) -> int:
+        """
+        Delete documents matching a metadata filter.
+
+        Args:
+            filter: Metadata filter to match documents.
+            namespace: Namespace containing the documents.
+
+        Returns:
+            Number of documents deleted.
+        """
+        pass
+
+    @abstractmethod
+    async def get_stats(self, namespace: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get statistics about the vector store.
+
+        Args:
+            namespace: Optional namespace to get stats for.
+
+        Returns:
+            Dictionary with stats (record_count, dimension, etc.).
         """
         pass
 

@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.core.dependencies import get_current_user
 from app.models.chat import ChatConversation, ChatMessage
+from app.services.exceptions import SpaceNotFoundError, UnauthorizedError
 
 
 def mock_get_current_user():
@@ -67,7 +68,7 @@ class TestChatAPIConversations:
     ):
         """Test creating conversation in non-existent space."""
         mock_space_service = MagicMock()
-        mock_space_service.get_space.return_value = None
+        mock_space_service.get_space.side_effect = SpaceNotFoundError("Space not found")
         mock_space_service_class.return_value = mock_space_service
 
         response = client.post("/api/chat/spaces/nonexistent/conversations")
@@ -78,8 +79,7 @@ class TestChatAPIConversations:
     def test_create_conversation_not_member(self, mock_space_service_class, client):
         """Test creating conversation when not a member."""
         mock_space_service = MagicMock()
-        mock_space_service.get_space.return_value = {"spaceId": "space-123"}
-        mock_space_service.is_space_member.return_value = False
+        mock_space_service.get_space.side_effect = UnauthorizedError("Not a member")
         mock_space_service_class.return_value = mock_space_service
 
         response = client.post("/api/chat/spaces/space-123/conversations")
@@ -343,7 +343,7 @@ class TestChatAPIStreaming:
     def test_stream_message_space_not_found(self, mock_space_service_class, client):
         """Test streaming with non-existent space."""
         mock_space_service = MagicMock()
-        mock_space_service.get_space.return_value = None
+        mock_space_service.get_space.side_effect = SpaceNotFoundError("Space not found")
         mock_space_service_class.return_value = mock_space_service
 
         response = client.post(

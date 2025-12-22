@@ -12,6 +12,7 @@ from app.services.vector_store.base import (
     VectorStore,
     VectorDocument,
     SearchResult,
+    SectionSearchResult,
     IndexResult,
     IndexStatus,
 )
@@ -22,7 +23,6 @@ from app.services.vector_store.pinecone_store import (
 )
 from app.services.journal_indexer import (
     JournalIndexer,
-    extract_plain_text,
     get_journal_indexer,
     reset_journal_indexer,
 )
@@ -62,6 +62,24 @@ class TestVectorStoreBase:
         assert result.score == 0.95
         assert result.metadata == {"journal_id": "j123"}
 
+    def test_section_search_result_creation(self):
+        """Test SectionSearchResult dataclass."""
+        result = SectionSearchResult(
+            id="journal_j123_section_0",
+            score=0.95,
+            journal_id="j123",
+            section_index=0,
+            section_title="Express",
+            excerpt="I feel grateful today...",
+            metadata={"journalTitle": "My Reflection"},
+        )
+        assert result.id == "journal_j123_section_0"
+        assert result.score == 0.95
+        assert result.journal_id == "j123"
+        assert result.section_index == 0
+        assert result.section_title == "Express"
+        assert result.excerpt == "I feel grateful today..."
+
     def test_index_result_success(self):
         """Test IndexResult for successful indexing."""
         result = IndexResult(
@@ -86,61 +104,6 @@ class TestVectorStoreBase:
         """Test namespace generation for spaces."""
         namespace = VectorStore.get_space_namespace("abc-123")
         assert namespace == "space_abc-123"
-
-
-class TestExtractPlainText:
-    """Tests for text extraction utility."""
-
-    def test_extract_removes_html_comments(self):
-        """Test that HTML comments are removed."""
-        content = "<!-- template metadata -->\nActual content"
-        result = extract_plain_text(content)
-        assert "template metadata" not in result
-        assert "Actual content" in result
-
-    def test_extract_removes_markdown_headers(self):
-        """Test that markdown headers are stripped."""
-        content = "# Header\n## Subheader\nContent"
-        result = extract_plain_text(content)
-        assert result.startswith("Header")
-        assert "#" not in result
-
-    def test_extract_removes_markdown_formatting(self):
-        """Test that bold/italic formatting is removed."""
-        content = "This is **bold** and *italic* text"
-        result = extract_plain_text(content)
-        assert "bold" in result
-        assert "italic" in result
-        assert "*" not in result
-
-    def test_extract_removes_links(self):
-        """Test that markdown links are converted to plain text."""
-        content = "Check [this link](https://example.com) out"
-        result = extract_plain_text(content)
-        assert "this link" in result
-        assert "https://example.com" not in result
-
-    def test_extract_removes_code_blocks(self):
-        """Test that code blocks are removed."""
-        content = "Before\n```python\ndef foo(): pass\n```\nAfter"
-        result = extract_plain_text(content)
-        assert "Before" in result
-        assert "After" in result
-        assert "def foo" not in result
-
-    def test_extract_removes_list_markers(self):
-        """Test that list markers are removed."""
-        content = "- Item 1\n* Item 2\n1. Item 3"
-        result = extract_plain_text(content)
-        assert "Item 1" in result
-        assert "Item 2" in result
-        assert "Item 3" in result
-        assert "-" not in result
-
-    def test_extract_empty_content(self):
-        """Test handling of empty content."""
-        assert extract_plain_text("") == ""
-        assert extract_plain_text(None) == ""
 
 
 class TestPineconeStore:
@@ -232,8 +195,8 @@ class TestPineconeStore:
         # Mock search response
         mock_response = MagicMock()
         mock_response.result.hits = [
-            {"_id": "doc-1", "_score": 0.95, "fields": {"journal_id": "j1"}},
-            {"_id": "doc-2", "_score": 0.85, "fields": {"journal_id": "j2"}},
+            {"_id": "doc-1", "_score": 0.95, "fields": {"journalId": "j1"}},
+            {"_id": "doc-2", "_score": 0.85, "fields": {"journalId": "j2"}},
         ]
         mock_index.search_records.return_value = mock_response
 
@@ -281,6 +244,60 @@ class TestPineconeStore:
             delete_all=True,
             namespace="space_abc",
         )
+
+    @pytest.mark.asyncio
+    async def test_delete_by_filter(self, store_with_key):
+        """Test deleting by metadata filter."""
+        store, mock_index = store_with_key
+
+        count = await store.delete_by_filter(
+            filter={"journalId": {"$eq": "j123"}},
+            namespace="space_abc"
+        )
+
+        assert count == 1
+        mock_index.delete.assert_called_once_with(
+            filter={"journalId": {"$eq": "j123"}},
+            namespace="space_abc",
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_stats(self, store_with_key):
+        """Test getting stats."""
+        store, mock_index = store_with_key
+
+        mock_index.describe_index_stats.return_value = {
+            "total_record_count": 100,
+            "dimension": 1024,
+            "namespaces": {
+                "space_abc": {"record_count": 50},
+                "space_def": {"record_count": 50},
+            },
+        }
+
+        stats = await store.get_stats()
+
+        assert stats["total_record_count"] == 100
+        assert stats["dimension"] == 1024
+        assert "space_abc" in stats["namespaces"]
+
+    @pytest.mark.asyncio
+    async def test_get_stats_by_namespace(self, store_with_key):
+        """Test getting stats for specific namespace."""
+        store, mock_index = store_with_key
+
+        mock_index.describe_index_stats.return_value = {
+            "total_record_count": 100,
+            "dimension": 1024,
+            "namespaces": {
+                "space_abc": {"record_count": 50},
+            },
+        }
+
+        stats = await store.get_stats(namespace="space_abc")
+
+        assert stats["record_count"] == 50
+        assert stats["namespace"] == "space_abc"
 
     @pytest.mark.asyncio
     async def test_upsert_error_handling(self, store_with_key):
@@ -348,7 +365,7 @@ class TestPineconeStore:
         await store.search(
             query="test",
             namespace="space_abc",
-            filter={"template_id": {"$eq": "daily"}},
+            filter={"templateId": {"$eq": "daily"}},
         )
 
         call_kwargs = mock_index.search_records.call_args[1]
@@ -387,154 +404,263 @@ class TestPineconeStore:
         assert mock_index.upsert_records.call_count == 2
 
 
-class TestJournalIndexer:
-    """Tests for journal indexing service."""
+class TestJournalIndexerSections:
+    """Tests for section-level journal indexing."""
 
     @pytest.fixture
-    def mock_store(self):
+    def mock_vector_store(self):
         """Create a mock vector store."""
-        store = Mock(spec=VectorStore)
+        store = MagicMock()
         store.upsert = AsyncMock(return_value=[
-            IndexResult(status=IndexStatus.SUCCESS, document_id="j123")
+            IndexResult(status=IndexStatus.SUCCESS, document_id="section_0"),
+            IndexResult(status=IndexStatus.SUCCESS, document_id="section_1"),
         ])
         store.search = AsyncMock(return_value=[
-            SearchResult(id="j123", score=0.9, metadata={"journal_id": "j123"})
+            SearchResult(
+                id="journal_j123_section_0",
+                score=0.95,
+                metadata={
+                    "journalId": "j123",
+                    "journalTitle": "My Reflection",
+                    "sectionIndex": 0,
+                    "sectionTitle": "Express",
+                    "text": "I feel grateful today for many things...",
+                }
+            ),
         ])
         store.delete = AsyncMock(return_value=True)
+        store.delete_by_filter = AsyncMock(return_value=1)
         store.delete_namespace = AsyncMock(return_value=True)
+        store.get_stats = AsyncMock(return_value={"record_count": 10})
         return store
 
     @pytest.fixture
-    def indexer(self, mock_store):
+    def indexer(self, mock_vector_store):
         """Create a JournalIndexer with mock store."""
         reset_journal_indexer()
-        return JournalIndexer(vector_store=mock_store)
+        indexer = JournalIndexer()
+        indexer.vector_store = mock_vector_store
+        return indexer
 
     @pytest.fixture
-    def sample_journal(self):
-        """Create a sample journal entry."""
+    def structured_journal(self):
+        """Journal with template sections (content must be >50 chars each)."""
+        tiptap_content = {
+            "type": "doc",
+            "content": [
+                {"type": "heading", "attrs": {"level": 2}, "content": [
+                    {"type": "text", "text": "Express"}
+                ]},
+                {"type": "paragraph", "content": [
+                    {"type": "text", "text": "I feel grateful today for many things happening in my life and work environment."}
+                ]},
+                {"type": "heading", "attrs": {"level": 2}, "content": [
+                    {"type": "text", "text": "Examine"}
+                ]},
+                {"type": "paragraph", "content": [
+                    {"type": "text", "text": "Why do I feel this way? Let me explore the underlying reasons for my feelings."}
+                ]},
+            ]
+        }
         return JournalEntry(
             journal_id="j123",
             space_id="space-abc",
             user_id="user-123",
-            title="Test Journal",
-            content="This is test content for indexing.",
-            template_id="daily-reflection",
-            framework_id="charter-and-course",
-            tags=["test", "sample"],
-            emotions=["happy"],
+            title="My Reflection",
+            content="Express\nI feel grateful today for many things happening in my life.\nExamine\nWhy do I feel this way? Let me explore.",
+            content_tiptap=tiptap_content,
+            template_id="express_examine_evolve",
+            framework_id=None,
+            tags=[],
+            emotions=[],
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
-            word_count=6,
+            word_count=30,
         )
 
     @pytest.mark.asyncio
-    async def test_index_journal(self, indexer, mock_store, sample_journal):
-        """Test indexing a single journal."""
-        result = await indexer.index_journal(sample_journal)
+    async def test_indexes_multiple_sections(
+        self, indexer, mock_vector_store, structured_journal
+    ):
+        """Should create multiple vectors for sections."""
+        count = await indexer.index_journal(structured_journal)
 
-        assert result.status == IndexStatus.SUCCESS
-        assert result.document_id == "j123"
-        mock_store.upsert.assert_called_once()
+        # Should have called upsert
+        mock_vector_store.upsert.assert_called_once()
+        call_args = mock_vector_store.upsert.call_args[0][0]
 
-        # Verify the document that was upserted
-        call_args = mock_store.upsert.call_args[0][0]
-        assert len(call_args) == 1
-        doc = call_args[0]
-        assert doc.id == "j123"
-        assert doc.namespace == "space_space-abc"
-        assert "Test Journal" in doc.text
-        assert doc.metadata["journal_id"] == "j123"
+        # Verify multiple documents were created
+        assert len(call_args) >= 2
 
-    @pytest.mark.asyncio
-    async def test_index_multiple_journals(self, indexer, mock_store, sample_journal):
-        """Test batch indexing journals."""
-        journals = [sample_journal]
-        mock_store.upsert = AsyncMock(return_value=[
-            IndexResult(status=IndexStatus.SUCCESS, document_id="j123")
-        ])
-
-        results = await indexer.index_journals(journals)
-
-        assert len(results) == 1
-        assert results[0].status == IndexStatus.SUCCESS
+        # Check document IDs include section index
+        doc_ids = [d.id for d in call_args]
+        assert any("section_0" in id for id in doc_ids)
+        assert any("section_1" in id for id in doc_ids)
 
     @pytest.mark.asyncio
-    async def test_delete_journal(self, indexer, mock_store):
-        """Test deleting a journal from index."""
-        success = await indexer.delete_journal("j123", "space-abc")
+    async def test_section_metadata_includes_section_info(
+        self, indexer, mock_vector_store, structured_journal
+    ):
+        """Section metadata should include section title and index."""
+        await indexer.index_journal(structured_journal)
 
-        assert success is True
-        mock_store.delete.assert_called_once_with(
-            ["j123"],
-            "space_space-abc",
-        )
+        call_args = mock_vector_store.upsert.call_args[0][0]
 
-    @pytest.mark.asyncio
-    async def test_delete_space(self, indexer, mock_store):
-        """Test deleting all journals for a space."""
-        success = await indexer.delete_space("space-abc")
-
-        assert success is True
-        mock_store.delete_namespace.assert_called_once_with("space_space-abc")
+        for doc in call_args:
+            assert "sectionIndex" in doc.metadata
+            assert "sectionTitle" in doc.metadata
+            assert "journalId" in doc.metadata
 
     @pytest.mark.asyncio
-    async def test_search(self, indexer, mock_store):
-        """Test searching journals."""
-        results = await indexer.search(
-            query="test query",
+    async def test_deletes_old_sections_before_reindex(
+        self, indexer, mock_vector_store, structured_journal
+    ):
+        """Should delete existing sections before re-indexing."""
+        await indexer.index_journal(structured_journal)
+
+        # Should have called delete_by_filter
+        mock_vector_store.delete_by_filter.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_search_space_returns_section_results(
+        self, indexer, mock_vector_store
+    ):
+        """Search should return section-level results."""
+        results = await indexer.search_space(
+            query="grateful",
             space_id="space-abc",
             top_k=10,
         )
 
         assert len(results) == 1
-        assert results[0].id == "j123"
-        mock_store.search.assert_called_once()
+        assert results[0].journal_id == "j123"
+        assert results[0].section_index == 0
+        assert results[0].section_title == "Express"
 
     @pytest.mark.asyncio
-    async def test_search_with_filters(self, indexer, mock_store):
-        """Test searching with filters."""
-        await indexer.search(
-            query="test",
+    async def test_search_space_grouped_groups_by_journal(
+        self, indexer, mock_vector_store
+    ):
+        """Grouped search should return journals with their sections."""
+        # Add more search results
+        mock_vector_store.search.return_value = [
+            SearchResult(
+                id="journal_j123_section_0",
+                score=0.95,
+                metadata={
+                    "journalId": "j123",
+                    "journalTitle": "My Reflection",
+                    "sectionIndex": 0,
+                    "sectionTitle": "Express",
+                    "text": "Content...",
+                    "createdAt": "2024-01-01",
+                }
+            ),
+            SearchResult(
+                id="journal_j123_section_1",
+                score=0.85,
+                metadata={
+                    "journalId": "j123",
+                    "journalTitle": "My Reflection",
+                    "sectionIndex": 1,
+                    "sectionTitle": "Examine",
+                    "text": "More content...",
+                    "createdAt": "2024-01-01",
+                }
+            ),
+        ]
+
+        results = await indexer.search_space_grouped(
+            query="grateful",
             space_id="space-abc",
-            template_id="daily-reflection",
-            framework_id="charter",
-            user_id="user-123",
+            top_k=5,
         )
 
-        call_kwargs = mock_store.search.call_args[1]
-        assert call_kwargs["filter"] is not None
-        assert "template_id" in call_kwargs["filter"]
-        assert "framework_id" in call_kwargs["filter"]
-        assert "user_id" in call_kwargs["filter"]
-
-    @pytest.mark.asyncio
-    async def test_index_journal_error_handling(self, mock_store, sample_journal):
-        """Test error handling during journal indexing."""
-        mock_store.upsert = AsyncMock(side_effect=Exception("Index failed"))
-        indexer = JournalIndexer(vector_store=mock_store)
-
-        result = await indexer.index_journal(sample_journal)
-
-        assert result.status == IndexStatus.FAILED
-        assert "Index failed" in result.error
-
-    @pytest.mark.asyncio
-    async def test_index_journals_empty_list(self, indexer):
-        """Test indexing empty list of journals."""
-        results = await indexer.index_journals([])
-        assert results == []
-
-    @pytest.mark.asyncio
-    async def test_index_journals_error_handling(self, mock_store, sample_journal):
-        """Test error handling during batch journal indexing."""
-        mock_store.upsert = AsyncMock(side_effect=Exception("Batch index failed"))
-        indexer = JournalIndexer(vector_store=mock_store)
-
-        results = await indexer.index_journals([sample_journal])
-
         assert len(results) == 1
-        assert results[0].status == IndexStatus.FAILED
+        assert results[0]["journalId"] == "j123"
+        assert len(results[0]["sections"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_delete_journal_removes_all_sections(
+        self, indexer, mock_vector_store
+    ):
+        """Deleting journal should remove all its sections."""
+        success = await indexer.delete_journal("j123", "space-abc")
+
+        assert success is True
+        mock_vector_store.delete_by_filter.assert_called_once()
+        filter_arg = mock_vector_store.delete_by_filter.call_args[1]["filter"]
+        assert filter_arg == {"journalId": {"$eq": "j123"}}
+
+    @pytest.mark.asyncio
+    async def test_get_space_stats(self, indexer, mock_vector_store):
+        """Should return space stats."""
+        stats = await indexer.get_space_stats("space-abc")
+
+        assert stats["space_id"] == "space-abc"
+        assert stats["indexed_sections"] == 10
+
+    @pytest.mark.asyncio
+    async def test_delete_space_index(self, indexer, mock_vector_store):
+        """Should delete entire space index."""
+        success = await indexer.delete_space_index("space-abc")
+
+        assert success is True
+        mock_vector_store.delete_namespace.assert_called_once_with(
+            "space_space-abc"
+        )
+
+    @pytest.mark.asyncio
+    async def test_search_with_filters(self, indexer, mock_vector_store):
+        """Search should pass filters to vector store."""
+        await indexer.search_space(
+            query="test",
+            space_id="space-abc",
+            user_id="user-123",
+            template_id="daily",
+            framework_id="charter",
+        )
+
+        call_kwargs = mock_vector_store.search.call_args[1]
+        assert call_kwargs["filter"] is not None
+        assert "userId" in call_kwargs["filter"]
+        assert "templateId" in call_kwargs["filter"]
+        assert "frameworkId" in call_kwargs["filter"]
+
+    @pytest.mark.asyncio
+    async def test_index_journal_without_space_id(self, indexer):
+        """Should return 0 when journal has empty space_id."""
+        journal = JournalEntry(
+            journal_id="j123",
+            space_id="",
+            user_id="user-123",
+            title="Test",
+            content="Content",
+            tags=[],
+            emotions=[],
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+            word_count=1,
+        )
+
+        count = await indexer.index_journal(journal)
+        assert count == 0
+
+    @pytest.mark.asyncio
+    async def test_search_space_requires_space_id(self, indexer):
+        """Search should raise without space_id."""
+        with pytest.raises(ValueError) as exc_info:
+            await indexer.search_space(query="test", space_id="")
+
+        assert "space_id is REQUIRED" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_search_space_requires_query(self, indexer):
+        """Search should raise without query."""
+        with pytest.raises(ValueError) as exc_info:
+            await indexer.search_space(query="", space_id="space-abc")
+
+        assert "query is required" in str(exc_info.value)
 
 
 class TestJournalIndexerSingletons:
@@ -598,68 +724,3 @@ class TestSecretsHelper:
 
         # Should not raise
         clear_secret_cache()
-
-
-class TestJournalServiceIndexing:
-    """Tests for journal service indexing integration."""
-
-    def test_index_journal_background_with_exception(self):
-        """Test that indexing exceptions are caught and logged."""
-        from app.services.journal import JournalService
-        from unittest.mock import patch, MagicMock
-        import logging
-
-        service = JournalService()
-
-        # Create invalid journal data that will cause an exception
-        invalid_data = {
-            "journal_id": "test-123",
-            # Missing required fields will cause exception
-        }
-
-        # Should not raise - exceptions are caught
-        with patch.object(logging.getLogger("app.services.journal"), "warning") as mock_log:
-            service._index_journal_background(invalid_data)
-            # Verify warning was logged
-            assert mock_log.called
-
-    def test_index_journal_background_with_valid_data(self):
-        """Test indexing with valid data but API fails."""
-        from app.services.journal import JournalService
-        from unittest.mock import patch
-        from datetime import datetime, timezone
-
-        service = JournalService()
-
-        valid_data = {
-            "journal_id": "test-123",
-            "space_id": "space-abc",
-            "user_id": "user-123",
-            "title": "Test",
-            "content": "Content",
-            "tags": [],
-            "emotions": [],
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-            "word_count": 1,
-            "is_pinned": False,
-        }
-
-        # Should not raise even when Pinecone fails
-        service._index_journal_background(valid_data)
-
-    def test_delete_from_index_background_with_exception(self):
-        """Test that delete exceptions are caught and logged."""
-        from app.services.journal import JournalService
-        from unittest.mock import patch
-        import logging
-
-        service = JournalService()
-
-        # Mock the indexer import to raise an exception
-        with patch("app.services.journal_indexer.get_journal_indexer") as mock_indexer:
-            mock_indexer.side_effect = Exception("Test error")
-
-            with patch.object(logging.getLogger("app.services.journal"), "warning") as mock_log:
-                service._delete_from_index_background("test-id", "test-space")
-                assert mock_log.called

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { JournalCard } from './JournalCard'
+import { JournalCard, JournalCardSkeleton } from '../../../components/JournalCard'
 import { journalApi } from '../services/journalApi'
 import { JournalFilters, useJournalFilters } from '../../../components/journal/JournalFilters'
-import type { JournalEntry } from '../types/journal.types'
+import { ThemeFilter } from '../../../components/journal/ThemeFilter'
+import type { JournalCardEntry } from '../types/journal.types'
 import { getEmotionById } from '../data/emotionData'
 import '../styles/journal.css'
 
@@ -16,13 +17,16 @@ interface JournalListProps {
  */
 export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
   const navigate = useNavigate()
-  const [journals, setJournals] = useState<JournalEntry[]>([])
+  const [journals, setJournals] = useState<JournalCardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [hasMore, setHasMore] = useState(false)
   const pageSize = 9
+
+  // AI Theme filter state
+  const [selectedThemes, setSelectedThemes] = useState<string[]>([])
 
   // Use URL-synced filters hook
   const {
@@ -76,20 +80,23 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     }
   }
 
-  const handleDelete = async (journalId: string) => {
-    try {
-      await journalApi.deleteJournal(spaceId, journalId)
-      // Reload journals after successful delete
-      await loadJournals()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete journal')
-    }
-  }
-
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [filters])
+  }, [filters, selectedThemes])
+
+  // Theme filter handlers
+  const handleThemeSelect = useCallback((theme: string) => {
+    setSelectedThemes((prev) => [...prev, theme])
+  }, [])
+
+  const handleThemeDeselect = useCallback((theme: string) => {
+    setSelectedThemes((prev) => prev.filter((t) => t !== theme))
+  }, [])
+
+  const handleClearThemes = useCallback(() => {
+    setSelectedThemes([])
+  }, [])
 
   // Extract unique values for filter dropdowns
   const uniqueAuthors = Array.from(
@@ -127,7 +134,7 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
   }, [filters.dateRange])
 
   // Helper function to check if framework matches filter
-  const matchesFrameworkFilter = useCallback((journal: JournalEntry): boolean => {
+  const matchesFrameworkFilter = useCallback((journal: JournalCardEntry): boolean => {
     if (filters.framework === 'all') return true
     if (filters.framework === 'standalone') {
       // Show entries without a framework
@@ -140,15 +147,16 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
   // Filter journals based on search query and filters
   const filteredJournals = useMemo(() => {
     return journals.filter((journal) => {
-      // Search query filter
+      // Search query filter (uses title, AI synopsis, themes, tags, author)
       if (filters.search.trim()) {
         const query = filters.search.toLowerCase()
         const titleMatch = journal.title?.toLowerCase().includes(query) || false
-        const contentMatch = journal.content?.toLowerCase().includes(query) || false
+        const synopsisMatch = journal.aiMetadata?.synopsis?.toLowerCase().includes(query) || false
+        const themesMatch = journal.aiMetadata?.themes?.some((t) => t.toLowerCase().includes(query)) || false
         const tagsMatch = journal.tags?.some((tag) => tag.toLowerCase().includes(query)) || false
         const authorMatch = journal.author?.displayName?.toLowerCase().includes(query) || false
 
-        if (!titleMatch && !contentMatch && !tagsMatch && !authorMatch) {
+        if (!titleMatch && !synopsisMatch && !themesMatch && !tagsMatch && !authorMatch) {
           return false
         }
       }
@@ -178,14 +186,49 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
         return false
       }
 
+      // AI Theme filter
+      if (selectedThemes.length > 0) {
+        const journalThemes = journal.aiMetadata?.themes || []
+        const hasMatchingTheme = selectedThemes.some((selectedTheme) =>
+          journalThemes.some((t) => t.toLowerCase() === selectedTheme.toLowerCase())
+        )
+        if (!hasMatchingTheme) {
+          return false
+        }
+      }
+
       return true
     })
-  }, [journals, filters, matchesFrameworkFilter, matchesDateFilter])
+  }, [journals, filters, matchesFrameworkFilter, matchesDateFilter, selectedThemes])
+
+  // Handle theme click from card
+  const handleCardThemeClick = useCallback((theme: string) => {
+    if (!selectedThemes.includes(theme)) {
+      setSelectedThemes((prev) => [...prev, theme])
+    }
+  }, [selectedThemes])
+
+  // Handle tag click from card - use the existing setTag filter
+  const handleCardTagClick = useCallback((tag: string) => {
+    setTag(tag)
+  }, [setTag])
 
   if (loading) {
     return (
-      <div className="journal-list-loading">
-        <p>Loading journals...</p>
+      <div className="journal-list-container">
+        <div className="journal-list-header">
+          <h2 className="journal-list-title">Journals</h2>
+          <div className="journal-list-actions">
+            <button onClick={handleNewJournal} className="button-primary">
+              + New Journal
+            </button>
+          </div>
+        </div>
+        <div className="journal-list-grid">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <JournalCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     )
   }
@@ -199,7 +242,7 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
     )
   }
 
-  if (journals.length === 0 && !hasActiveFilters) {
+  if (journals.length === 0 && !hasActiveFilters && selectedThemes.length === 0) {
     return (
       <div className="journal-list-empty">
         <div className="journal-list-empty-icon">📔</div>
@@ -308,12 +351,24 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
         </div>
       )}
 
-      {filteredJournals.length === 0 && hasActiveFilters ? (
+      {/* AI Theme Filter */}
+      <ThemeFilter
+        spaceId={spaceId}
+        selectedThemes={selectedThemes}
+        onThemeSelect={handleThemeSelect}
+        onThemeDeselect={handleThemeDeselect}
+        onClearAll={handleClearThemes}
+      />
+
+      {filteredJournals.length === 0 && (hasActiveFilters || selectedThemes.length > 0) ? (
         <div className="journal-list-empty">
           <div className="journal-list-empty-icon">🔍</div>
           <p className="journal-list-empty-text">No journals match your filters</p>
           <button
-            onClick={clearAll}
+            onClick={() => {
+              clearAll()
+              handleClearThemes()
+            }}
             className="button-secondary"
           >
             Clear All Filters
@@ -325,7 +380,8 @@ export const JournalList: React.FC<JournalListProps> = ({ spaceId }) => {
             <JournalCard
               key={journal.journalId}
               journal={journal}
-              onDelete={handleDelete}
+              onThemeClick={handleCardThemeClick}
+              onTagClick={handleCardTagClick}
             />
           ))}
         </div>

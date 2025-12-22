@@ -4,6 +4,7 @@ Chat API Routes
 Endpoints for AI chat with journal context (Ellie conversations).
 """
 
+import json
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -29,15 +30,16 @@ router = APIRouter(prefix="/api/chat", tags=["Chat"])
 
 
 def _verify_space_access(space_id: str, user_id: str) -> None:
-    """Verify user has access to the space."""
-    space_service = SpaceService()
-    space = space_service.get_space(space_id)
-    if not space:
-        raise SpaceNotFoundError(f"Space {space_id} not found")
+    """Verify user has access to the space.
 
-    is_member = space_service.is_space_member(space_id, user_id)
-    if not is_member:
-        raise UnauthorizedError("You are not a member of this space")
+    SpaceService.get_space() already checks:
+    1. Space exists (raises SpaceNotFoundError if not)
+    2. User is a member or space is public (raises UnauthorizedError if not)
+    """
+    space_service = SpaceService()
+    # get_space raises SpaceNotFoundError if space doesn't exist
+    # and UnauthorizedError if user is not a member and space is not public
+    space_service.get_space(space_id, user_id)
 
 
 # =============================================================================
@@ -326,13 +328,21 @@ async def send_message_streaming(
         )
 
         async def generate():
-            async for chunk in service.send_message_streaming(
-                space_id=space_id,
-                conversation_id=conversation_id,
-                user_id=user_id,
-                request=request,
-            ):
-                yield f"data: {chunk}\n\n"
+            """Generator with error handling inside to catch streaming errors."""
+            try:
+                async for chunk in service.send_message_streaming(
+                    space_id=space_id,
+                    conversation_id=conversation_id,
+                    user_id=user_id,
+                    request=request,
+                ):
+                    yield f"data: {chunk}\n\n"
+            except Exception as e:
+                # Log the error that happens during streaming
+                logger.error(f"[CHAT] Error during streaming iteration: {e}", exc_info=True)
+                # Yield error as SSE event so client knows what happened
+                error_event = json.dumps({"type": "error", "message": str(e)})
+                yield f"data: {error_event}\n\n"
 
         return StreamingResponse(
             generate(),

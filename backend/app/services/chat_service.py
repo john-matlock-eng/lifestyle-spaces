@@ -12,6 +12,7 @@ import os
 import logging
 import json
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Optional, List, AsyncGenerator, Tuple, Dict, Any
 from uuid import uuid4
 
@@ -44,7 +45,7 @@ ELLIE_SYSTEM_PROMPT = """You are Ellie, a warm and insightful AI companion in th
 - Warm, supportive, and genuinely curious about the user's experiences
 - Thoughtful and reflective, helping users see patterns and insights
 - Encouraging without being saccharine or dismissive of real struggles
-- You speak naturally, not in bullet points unless specifically helpful
+- You speak naturally and conversationally
 
 ## Your Capabilities
 - You have access to the user's journal entries in this space (provided in context)
@@ -52,11 +53,27 @@ ELLIE_SYSTEM_PROMPT = """You are Ellie, a warm and insightful AI companion in th
 - You help users notice patterns, growth, and areas for reflection
 - You ask thoughtful follow-up questions when appropriate
 
+## Response Formatting
+Use markdown to create beautiful, readable responses:
+- Use **bold** for emphasis on key insights or important phrases
+- Use *italics* for gentle emphasis, journal titles, or reflective questions
+- Use bullet points for lists of observations, patterns, or suggestions
+- Use `inline code` sparingly for specific terms or labels
+- Use > blockquotes when directly quoting from a journal entry
+- Keep paragraphs short (2-3 sentences) for easy reading
+- Use --- horizontal rules to separate distinct topics in longer responses
+- Never use headers (# ## ###) in responses - keep it conversational
+
+Example formatting:
+> "I felt really proud of myself today..."
+
+This is a beautiful moment of **self-recognition**! I notice this connects to a pattern in your recent entries...
+
 ## Guidelines
 - When referencing a journal, mention it naturally (e.g., "In your entry about...")
 - Don't make up or assume journal content not provided in context
 - If asked about something not in the provided journals, say so honestly
-- Keep responses conversational and appropriately concise
+- Keep responses appropriately concise - quality over quantity
 - Respect emotional vulnerability - match the tone of the user's message
 
 ## Citation Format
@@ -94,10 +111,44 @@ class ChatService:
 
     @property
     def client(self) -> anthropic.Anthropic:
-        """Lazy-load Anthropic client."""
+        """Lazy-load Anthropic client.
+
+        Uses the same secret retrieval pattern as ClaudeLLMService:
+        - Gets secret ARN from CLAUDE_API_KEY_SECRET_ARN environment variable
+        - Parses JSON and extracts 'api_key' field
+        """
         if self._client is None:
-            api_key = get_secret(self.settings.anthropic_secret_name)
+            secret_arn = os.environ.get("CLAUDE_API_KEY_SECRET_ARN")
+            logger.info(f"[CHAT] Initializing Anthropic client, secret_arn present: {bool(secret_arn)}")
+
+            if not secret_arn:
+                logger.error("[CHAT] CLAUDE_API_KEY_SECRET_ARN environment variable not set")
+                raise ValueError("CLAUDE_API_KEY_SECRET_ARN environment variable not set")
+
+            # Get secret and parse JSON
+            try:
+                secret_string = get_secret(secret_arn)
+                logger.info(f"[CHAT] Retrieved secret, length: {len(secret_string) if secret_string else 0}")
+            except Exception as e:
+                logger.error(f"[CHAT] Failed to retrieve secret: {e}")
+                raise
+
+            try:
+                secret_data = json.loads(secret_string)
+                api_key = secret_data.get("api_key")
+                logger.info(f"[CHAT] Parsed JSON secret, api_key present: {bool(api_key)}")
+            except json.JSONDecodeError:
+                # If not JSON, use the raw string as the API key
+                api_key = secret_string
+                logger.info("[CHAT] Secret is not JSON, using raw string")
+
+            if not api_key or api_key == "PLACEHOLDER_UPDATE_MANUALLY":
+                logger.error("[CHAT] Claude API key not configured or is placeholder")
+                raise ValueError("Claude API key not configured in Secrets Manager")
+
+            logger.info(f"[CHAT] Creating Anthropic client with key prefix: {api_key[:10]}...")
             self._client = anthropic.Anthropic(api_key=api_key)
+            logger.info("[CHAT] Anthropic client created successfully")
         return self._client
 
     # =========================================================================
@@ -137,7 +188,9 @@ class ChatService:
                         {
                             "journalId": c.journal_id,
                             "title": c.title,
-                            "relevanceScore": float(c.relevance_score),
+                            "sectionTitle": c.section_title,
+                            "sectionIndex": c.section_index,
+                            "relevanceScore": Decimal(str(c.relevance_score)),
                             "excerpt": c.excerpt,
                             "createdAt": c.created_at,
                         }
@@ -159,8 +212,10 @@ class ChatService:
                 JournalCitation(
                     journalId=c["journalId"],
                     title=c["title"],
-                    relevanceScore=c.get("relevanceScore", 0.0),
-                    excerpt=c.get("excerpt"),
+                    sectionTitle=c.get("sectionTitle", ""),
+                    sectionIndex=c.get("sectionIndex", 0),
+                    relevanceScore=float(c.get("relevanceScore", 0.0)),
+                    excerpt=c.get("excerpt", ""),
                     createdAt=c.get("createdAt"),
                 )
                 for c in msg_data.get("citations", [])
@@ -300,23 +355,18 @@ class ChatService:
     async def _search_relevant_journals(
         self, query: str, space_id: str, user_id: str, top_k: int = 5
     ) -> List[Dict[str, Any]]:
-        """Search for journals relevant to the query."""
+        """Search for journal sections relevant to the query.
+
+        Uses grouped search to get journals with their best matching sections.
+        """
         try:
-            results = await self.journal_indexer.search(
+            results = await self.journal_indexer.search_space_grouped(
                 query=query,
                 space_id=space_id,
                 user_id=user_id,
                 top_k=top_k,
             )
-            # Convert SearchResult to dict
-            return [
-                {
-                    "journalId": r.id,
-                    "score": r.score,
-                    "metadata": r.metadata,
-                }
-                for r in results
-            ]
+            return results
         except Exception as e:
             logger.error(f"Journal search failed: {e}")
             return []
@@ -371,53 +421,87 @@ class ChatService:
     # =========================================================================
 
     def _build_journal_context(
-        self, journals: List[Dict[str, Any]], search_results: List[Dict[str, Any]]
+        self,
+        search_results: List[Dict[str, Any]],
+        journals: List[Dict[str, Any]]
     ) -> Tuple[str, List[JournalCitation]]:
         """
-        Build context string and citations from journals.
+        Build context string and citations from search results.
+
+        Uses section-level excerpts for precise context.
+        Enhances context with AI-generated synopses when available.
+
+        Args:
+            search_results: Grouped search results with section info
+            journals: Full journal content from DynamoDB (optional)
 
         Returns:
             Tuple of (context_string, citations_list)
         """
-        if not journals:
+        if not search_results:
             return "", []
 
-        # Create score lookup from search results
-        score_lookup = {r["journalId"]: r["score"] for r in search_results}
+        # Create journal lookup for full content and AI metadata
+        journal_lookup = {
+            (j.get("journal_id") or j.get("journalId")): j
+            for j in journals
+        }
 
         context_parts = []
         citations = []
 
         context_parts.append("## Relevant Journal Entries\n")
 
-        for i, journal in enumerate(journals, 1):
-            journal_id = journal.get("journalId") or journal.get("journal_id")
-            title = journal.get("title", "Untitled")
-            created_at = journal.get("createdAt") or journal.get("created_at", "")
-            content = self._extract_journal_text(journal)
+        for i, result in enumerate(search_results, 1):
+            journal_id = result["journalId"]
+            journal_title = result.get("journalTitle", "Untitled")
+            created_at = result.get("createdAt", "")
+            sections = result.get("sections", [])
 
-            # Truncate content if too long
-            max_content_length = 1500
-            if len(content) > max_content_length:
-                content = content[:max_content_length] + "..."
-
-            context_parts.append(f"### [{i}] {title}")
+            context_parts.append(f"### [{i}] {journal_title}")
             if created_at:
-                date_str = created_at[:10] if isinstance(created_at, str) else str(created_at)[:10]
-                context_parts.append(f"*Date: {date_str}*")
-            context_parts.append(f"\n{content}\n")
+                context_parts.append(f"*Date: {created_at[:10]}*\n")
 
-            # Build citation
-            score = score_lookup.get(journal_id, 0.0)
-            citations.append(
-                JournalCitation(
-                    journalId=journal_id,
-                    title=title,
-                    relevanceScore=score,
-                    excerpt=content[:200] + "..." if len(content) > 200 else content,
-                    createdAt=created_at[:10] if created_at else None,
+            # Add AI synopsis if available (provides quick context)
+            full_journal = journal_lookup.get(journal_id, {})
+            ai_metadata = full_journal.get("ai_metadata")
+            if ai_metadata:
+                synopsis = ai_metadata.get("synopsis", "")
+                if synopsis:
+                    context_parts.append(f"*Summary: {synopsis}*\n")
+
+                # Optionally add themes for additional context
+                themes = ai_metadata.get("themes", [])
+                if themes:
+                    context_parts.append(f"*Themes: {', '.join(themes[:5])}*\n")
+
+            # Add each relevant section
+            for section in sections[:2]:  # Limit to top 2 sections per journal
+                section_title = section.get("sectionTitle", "")
+                excerpt = section.get("excerpt", "")
+
+                if section_title:
+                    context_parts.append(f"**{section_title}:**")
+                if excerpt:
+                    context_parts.append(excerpt)
+                context_parts.append("")
+
+                # Build citation for each section
+                citations.append(
+                    JournalCitation(
+                        journalId=journal_id,
+                        title=journal_title,
+                        sectionTitle=section_title,
+                        sectionIndex=section.get("sectionIndex", 0),
+                        relevanceScore=section.get("score", 0.0),
+                        excerpt=(
+                            excerpt[:200] + "..."
+                            if len(excerpt) > 200
+                            else excerpt
+                        ),
+                        createdAt=created_at[:10] if created_at else None,
+                    )
                 )
-            )
 
         return "\n".join(context_parts), citations
 
@@ -492,12 +576,14 @@ User message: {new_message}"""
             top_k=self.settings.chat_max_journal_results,
         )
 
-        # 2. Retrieve full journal content
+        # 2. Retrieve full journal content (optional, for fallback)
         journal_ids = [r["journalId"] for r in search_results if r.get("journalId")]
         journals = await self._retrieve_journal_content(journal_ids, space_id)
 
-        # 3. Build context
-        journal_context, citations = self._build_journal_context(journals, search_results)
+        # 3. Build context from section-level search results
+        journal_context, citations = self._build_journal_context(
+            search_results, journals
+        )
 
         # 4. Build messages
         messages = self._build_messages_for_claude(
@@ -591,12 +677,14 @@ User message: {new_message}"""
             top_k=self.settings.chat_max_journal_results,
         )
 
-        # 2. Retrieve full journal content
+        # 2. Retrieve full journal content (optional, for fallback)
         journal_ids = [r["journalId"] for r in search_results if r.get("journalId")]
         journals = await self._retrieve_journal_content(journal_ids, space_id)
 
-        # 3. Build context
-        journal_context, citations = self._build_journal_context(journals, search_results)
+        # 3. Build context from section-level search results
+        journal_context, citations = self._build_journal_context(
+            search_results, journals
+        )
 
         # Yield citations first
         yield json.dumps(

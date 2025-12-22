@@ -196,7 +196,10 @@ resource "aws_s3_bucket_policy" "website" {
         Resource = "${aws_s3_bucket.website.arn}/*"
         Condition = {
           StringEquals = {
-            "AWS:SourceArn" = aws_cloudfront_distribution.website.arn
+            "AWS:SourceArn" = compact([
+              aws_cloudfront_distribution.website.arn,
+              var.enable_secondary_distribution ? aws_cloudfront_distribution.secondary[0].arn : ""
+            ])
           }
         }
       }
@@ -204,4 +207,124 @@ resource "aws_s3_bucket_policy" "website" {
   })
 
   depends_on = [aws_s3_bucket_public_access_block.website]
+}
+
+# =============================================================================
+# SECONDARY CLOUDFRONT DISTRIBUTION (for testing/staging)
+# =============================================================================
+
+# Origin Access Control for Secondary CloudFront
+resource "aws_cloudfront_origin_access_control" "secondary" {
+  count = var.enable_secondary_distribution ? 1 : 0
+
+  name                              = "${var.project_name}-${var.environment}-secondary-oac"
+  description                       = "OAC for ${var.project_name} ${var.environment} secondary distribution"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+# Secondary CloudFront Distribution
+resource "aws_cloudfront_distribution" "secondary" {
+  count = var.enable_secondary_distribution ? 1 : 0
+
+  origin {
+    domain_name              = aws_s3_bucket.website.bucket_regional_domain_name
+    origin_access_control_id = aws_cloudfront_origin_access_control.secondary[0].id
+    origin_id                = "S3-${aws_s3_bucket.website.bucket}-secondary"
+  }
+
+  # API Gateway Origin for backend API
+  origin {
+    domain_name = replace(var.api_gateway_url, "/^https?://([^/]+).*/", "$1")
+    origin_id   = "API-Gateway-Secondary"
+    origin_path = "/${var.environment}"
+
+    custom_origin_config {
+      http_port              = 443
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  enabled             = true
+  is_ipv6_enabled     = true
+  default_root_object = "index.html"
+  comment             = "Secondary distribution for ${var.project_name} ${var.environment}"
+
+  # Cache behavior for static assets
+  default_cache_behavior {
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "S3-${aws_s3_bucket.website.bucket}-secondary"
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 86400
+    max_ttl                = 31536000
+
+    compress = true
+  }
+
+  # Cache behavior for API calls
+  ordered_cache_behavior {
+    path_pattern     = "/api/*"
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "API-Gateway-Secondary"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["Authorization", "Content-Type"]
+
+      cookies {
+        forward = "all"
+      }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+
+    compress = true
+  }
+
+  price_class = var.cloudfront_price_class
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  # Custom error pages for SPA
+  custom_error_response {
+    error_code         = 404
+    response_code      = 200
+    response_page_path = "/index.html"
+  }
+
+  custom_error_response {
+    error_code         = 403
+    response_code      = 200
+    response_page_path = "/index.html"
+  }
+
+  tags = merge(var.tags, {
+    Distribution = "secondary"
+  })
 }

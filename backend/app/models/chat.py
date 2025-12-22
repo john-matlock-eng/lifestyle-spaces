@@ -11,12 +11,20 @@ from uuid import uuid4
 
 
 class JournalCitation(BaseModel):
-    """Reference to a journal used in AI response."""
+    """Reference to a journal section used in AI response."""
 
     journal_id: str = Field(..., alias="journalId")
-    title: str
+    title: str = Field(..., description="Journal title")
+    section_title: str = Field(
+        default="", alias="sectionTitle", description="Section title"
+    )
+    section_index: int = Field(
+        default=0, alias="sectionIndex", description="Section index"
+    )
     relevance_score: float = Field(..., alias="relevanceScore")
-    excerpt: Optional[str] = None
+    excerpt: str = Field(
+        default="", description="Actual matched content excerpt"
+    )
     created_at: Optional[str] = Field(None, alias="createdAt")
 
     model_config = ConfigDict(populate_by_name=True)

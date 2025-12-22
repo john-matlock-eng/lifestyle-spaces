@@ -1,0 +1,154 @@
+.container {
+  background: var(--theme-bg-surface);
+  border: 1px solid var(--theme-border-light);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.loading {
+  color: var(--theme-text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--theme-text-secondary);
+}
+
+.headerLeft svg {
+  color: #8b5cf6;
+}
+
+.clearButton {
+  padding: 0.25rem 0.5rem;
+  border: none;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 4px;
+  color: #ef4444;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clearButton:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.themes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.themeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--theme-border-light);
+  background: var(--theme-bg-elevated);
+  border-radius: 9999px;
+  color: var(--theme-text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.themeButton:hover {
+  background: var(--theme-primary-50);
+  border-color: var(--theme-primary-500);
+  color: var(--theme-primary-600);
+}
+
+.themeButton.selected {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.5);
+  color: #8b5cf6;
+}
+
+.count {
+  font-size: 0.65rem;
+  padding: 0.125rem 0.375rem;
+  background: var(--theme-bg-surface);
+  border-radius: 9999px;
+  color: var(--theme-text-muted);
+}
+
+.selected .count {
+  background: rgba(139, 92, 246, 0.2);
+  color: #a78bfa;
+}
+
+.expandButton {
+  padding: 0.375rem 0.75rem;
+  border: 1px dashed var(--theme-border-light);
+  background: transparent;
+  border-radius: 9999px;
+  color: var(--theme-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.expandButton:hover {
+  border-color: var(--theme-primary-500);
+  color: var(--theme-primary-600);
+}
+
+/* Dark mode adjustments */
+:global(.dark) .container {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global(.dark) .themeButton {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+:global(.dark) .themeButton:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #c4b5fd;
+}
+
+:global(.dark) .themeButton.selected {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.5);
+  color: #c4b5fd;
+}
+
+:global(.dark) .count {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+:global(.dark) .selected .count {
+  background: rgba(139, 92, 246, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+:global(.dark) .expandButton {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+:global(.dark) .expandButton:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+  color: #c4b5fd;
+}

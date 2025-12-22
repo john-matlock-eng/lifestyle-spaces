@@ -14,7 +14,6 @@ import AIWritingPrompts from '../../../components/AIWritingPrompts'
 import { useJournal } from '../hooks/useJournal'
 import { useSectionTipTap } from '../hooks/useSectionTipTap'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
-import { AIAssistantDock } from '../components/AIAssistantDock'
 import { aiService } from '../../../services/ai'
 import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
@@ -22,11 +21,11 @@ import { useEllieJournalGuide } from '../hooks/useEllieJournalGuide'
 import type { Template, TemplateData, QAPair, ListItem, TableRow, MomentBlock } from '../types/template.types'
 import type { CustomSection } from '../types/customSection.types'
 import { getFrameworkRegistry } from '../frameworks'
-import { Trash2, Edit2, Bot } from 'lucide-react'
+import { Trash2, Edit2 } from 'lucide-react'
+import { ChatSidebar, ChatBottomSheet } from '../../chat'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
-import '../styles/ai-assistant-dock.css'
 
 /**
  * Page for creating a new journal entry
@@ -45,8 +44,7 @@ export const JournalCreatePage: React.FC = () => {
   const [emotions, setEmotions] = useState<string[]>([])
   const [showTemplatePicker, setShowTemplatePicker] = useState(true)
   const [customSections, setCustomSections] = useState<CustomSection[]>([])
-  const [showAIDock, setShowAIDock] = useState(false)
-  const [currentSectionId, setCurrentSectionId] = useState<string | undefined>()
+    const [currentSectionId, setCurrentSectionId] = useState<string | undefined>()
 
   // Multi-section TipTap state management
   const { updateSection, getAllSections } = useSectionTipTap()
@@ -398,74 +396,6 @@ export const JournalCreatePage: React.FC = () => {
     })
   }
 
-  const handleGenerateQuestions = async (type: 'reflection' | 'emotional' | 'growth' | 'patterns') => {
-    if (!content.trim() && !title.trim()) {
-      alert('Please write some content first so the AI can generate relevant questions')
-      return
-    }
-
-    try {
-      // Get the journal content (either from template sections or free-form content)
-      let journalText = content
-      if (selectedTemplate) {
-        // Combine all template section content
-        journalText = Object.values(templateData)
-          .map(val => {
-            if (typeof val === 'string') return val
-            if (Array.isArray(val)) return JSON.stringify(val)
-            return String(val)
-          })
-          .join('\n\n')
-      }
-
-      // Generate questions using AI
-      const questions = await aiService.generateReflectionQuestions(
-        journalText || title,
-        title,
-        emotions
-      )
-
-      // Find or create a Q&A section
-      const qaSectionId = customSections.find(s => s.type === 'q_and_a')?.id
-
-      if (!qaSectionId) {
-        // Create new Q&A section
-        const newSection: CustomSection = {
-          id: `custom_${Date.now()}`,
-          title: `${type.charAt(0).toUpperCase() + type.slice(1)} Questions`,
-          type: 'q_and_a',
-          content: questions.map((q, idx) => ({
-            id: `q_${Date.now()}_${idx}`,
-            question: q,
-            answer: '',
-            isCollapsed: false
-          })),
-          isEditing: false
-        }
-        setCustomSections([...customSections, newSection])
-      } else {
-        // Add to existing Q&A section
-        handleUpdateCustomSection(qaSectionId, {
-          content: [
-            ...(Array.isArray(customSections.find(s => s.id === qaSectionId)?.content)
-              ? customSections.find(s => s.id === qaSectionId)!.content as QAPair[]
-              : []),
-            ...questions.map((q, idx) => ({
-              id: `q_${Date.now()}_${idx}`,
-              question: q,
-              answer: '',
-              isCollapsed: false
-            }))
-          ]
-        })
-      }
-
-      alert(`Added ${questions.length} ${type} questions to your journal!`)
-    } catch (err) {
-      console.error('Error generating questions:', err)
-      alert('Failed to generate questions. Please try again.')
-    }
-  }
 
   if (!spaceId) {
     return (
@@ -856,16 +786,6 @@ export const JournalCreatePage: React.FC = () => {
         <div className="journal-form-actions">
           <button
             type="button"
-            onClick={() => setShowAIDock(!showAIDock)}
-            className={`button-secondary ${showAIDock ? 'active' : ''}`}
-            disabled={loading}
-            title="AI Writing Assistant"
-          >
-            <Bot size={18} />
-            {showAIDock ? 'Hide AI Assistant' : 'Show AI Assistant'}
-          </button>
-          <button
-            type="button"
             onClick={handleCancel}
             className="button-secondary"
             disabled={loading}
@@ -879,66 +799,6 @@ export const JournalCreatePage: React.FC = () => {
       </form>
       )}
 
-      {/* AI Assistant Dock */}
-      {showAIDock && !showTemplatePicker && (
-        <AIAssistantDock
-          journalContent={
-            // For templated journals, combine all section content
-            selectedTemplate || customSections.length > 0
-              ? [
-                  // Template sections
-                  ...Object.values(templateData).map(val => {
-                    if (typeof val === 'string') return val
-                    if (Array.isArray(val)) {
-                      // For Q&A pairs and lists, extract content
-                      return val.map((item: QAPair | ListItem | unknown) => {
-                        if (typeof item === 'object' && item !== null) {
-                          const qaItem = item as QAPair
-                          if ('question' in qaItem && 'answer' in qaItem) {
-                            return `**Q:** ${qaItem.question}\n\n**A:** ${qaItem.answer || '(not answered yet)'}`
-                          }
-                          const listItem = item as ListItem
-                          if ('text' in listItem) {
-                            return `- ${listItem.text}`
-                          }
-                        }
-                        return String(item)
-                      }).join('\n\n')
-                    }
-                    return String(val)
-                  }),
-                  // Custom sections
-                  ...customSections.map(section => {
-                    if (typeof section.content === 'string') return section.content
-                    if (Array.isArray(section.content)) {
-                      return section.content.map((item: QAPair | ListItem | unknown) => {
-                        if (typeof item === 'object' && item !== null) {
-                          const qaItem = item as QAPair
-                          if ('question' in qaItem && 'answer' in qaItem) {
-                            return `**Q:** ${qaItem.question}\n\n**A:** ${qaItem.answer || '(not answered yet)'}`
-                          }
-                          const listItem = item as ListItem
-                          if ('text' in listItem) {
-                            return `- ${listItem.text}`
-                          }
-                        }
-                        return String(item)
-                      }).join('\n\n')
-                    }
-                    return String(section.content)
-                  })
-                ]
-                  .filter(text => text.trim())
-                  .join('\n\n---\n\n')
-              : content
-          }
-          journalTitle={title}
-          journalId="draft"
-          emotions={emotions}
-          onClose={() => setShowAIDock(false)}
-          onGenerateQuestions={handleGenerateQuestions}
-        />
-      )}
 
       {/* Ellie companion */}
       {!showTemplatePicker && (
@@ -959,8 +819,16 @@ export const JournalCreatePage: React.FC = () => {
           collarColor={customization.collarColor}
           collarTag={customization.collarTag}
           showPerchControl={true}
-          
+
         />
+      )}
+
+      {/* Chat Sidebar */}
+      {spaceId && (
+        <>
+          <ChatSidebar spaceId={spaceId} />
+          <ChatBottomSheet spaceId={spaceId} />
+        </>
       )}
     </div>
   )

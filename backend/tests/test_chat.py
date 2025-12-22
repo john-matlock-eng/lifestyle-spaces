@@ -243,7 +243,24 @@ class TestChatService:
         assert citations == []
 
     def test_build_journal_context_with_journals(self, service):
-        """Test building context with journals."""
+        """Test building context with grouped search results."""
+        # Grouped search results in new format
+        search_results = [
+            {
+                "journalId": "j1",
+                "journalTitle": "Test Journal",
+                "createdAt": "2024-01-15T10:00:00Z",
+                "sections": [
+                    {
+                        "sectionIndex": 0,
+                        "sectionTitle": "Express",
+                        "excerpt": "This is my reflection on growth.",
+                        "score": 0.85,
+                    }
+                ],
+            }
+        ]
+        # Optional full journal content (for additional context if needed)
         journals = [
             {
                 "journalId": "j1",
@@ -252,9 +269,8 @@ class TestChatService:
                 "content": "This is my reflection on growth.",
             }
         ]
-        search_results = [{"journalId": "j1", "score": 0.85}]
 
-        context, citations = service._build_journal_context(journals, search_results)
+        context, citations = service._build_journal_context(search_results, journals)
 
         assert "Test Journal" in context
         assert "growth" in context
@@ -430,12 +446,23 @@ class TestChatServiceRAG:
         )
         service.table.put_item = MagicMock()
 
-        # Mock search results
-        mock_search_result = MagicMock()
-        mock_search_result.id = "journal_1"
-        mock_search_result.score = 0.9
-        mock_search_result.metadata = {"space_id": "space_1"}
-        service.journal_indexer.search = AsyncMock(return_value=[mock_search_result])
+        # Mock grouped search results (new format)
+        mock_grouped_results = [
+            {
+                "journalId": "journal_1",
+                "journalTitle": "My Growth Journal",
+                "createdAt": now.isoformat(),
+                "sections": [
+                    {
+                        "sectionIndex": 0,
+                        "sectionTitle": "Express",
+                        "excerpt": "Today I reflected on my progress...",
+                        "score": 0.9,
+                    }
+                ],
+            }
+        ]
+        service.journal_indexer.search_space_grouped = AsyncMock(return_value=mock_grouped_results)
 
         # Mock journal retrieval - use side_effect for multiple calls
         def get_item_side_effect(**kwargs):
@@ -486,14 +513,28 @@ class TestChatServiceRAG:
 
     @pytest.mark.asyncio
     async def test_search_relevant_journals(self, service_with_mocks):
-        """Test journal search."""
+        """Test journal search using grouped results."""
         service = service_with_mocks
 
-        mock_result = MagicMock()
-        mock_result.id = "j1"
-        mock_result.score = 0.8
-        mock_result.metadata = {"title": "Test"}
-        service.journal_indexer.search = AsyncMock(return_value=[mock_result])
+        # Mock grouped search results (new format from search_space_grouped)
+        mock_grouped_results = [
+            {
+                "journalId": "j1",
+                "journalTitle": "Test Journal",
+                "createdAt": "2024-01-15T10:00:00Z",
+                "sections": [
+                    {
+                        "sectionIndex": 0,
+                        "sectionTitle": "Express",
+                        "excerpt": "Test content",
+                        "score": 0.8,
+                    }
+                ],
+            }
+        ]
+        service.journal_indexer.search_space_grouped = AsyncMock(
+            return_value=mock_grouped_results
+        )
 
         results = await service._search_relevant_journals(
             query="growth",
@@ -504,13 +545,15 @@ class TestChatServiceRAG:
 
         assert len(results) == 1
         assert results[0]["journalId"] == "j1"
-        assert results[0]["score"] == 0.8
+        assert results[0]["journalTitle"] == "Test Journal"
 
     @pytest.mark.asyncio
     async def test_search_relevant_journals_error(self, service_with_mocks):
         """Test journal search handles errors gracefully."""
         service = service_with_mocks
-        service.journal_indexer.search = AsyncMock(side_effect=Exception("Search failed"))
+        service.journal_indexer.search_space_grouped = AsyncMock(
+            side_effect=Exception("Search failed")
+        )
 
         results = await service._search_relevant_journals(
             query="test",
@@ -982,3 +1025,81 @@ class TestChatDynamoDBHelpers:
         assert len(conversation.messages) == 1
         assert len(conversation.messages[0].citations) == 1
         assert conversation.messages[0].citations[0].journal_id == "j1"
+
+
+class TestChatServiceClientInit:
+    """Tests for ChatService client property initialization."""
+
+    @pytest.fixture
+    def service(self):
+        """Create chat service without client initialized."""
+        reset_chat_service()
+        service = ChatService()
+        service.table = MagicMock()
+        service._client = None  # Ensure client is not initialized
+        return service
+
+    @patch("app.services.chat_service.get_secret")
+    @patch.dict("os.environ", {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123:secret:test"})
+    def test_client_init_with_json_secret(self, mock_get_secret, service):
+        """Test client initialization with JSON secret."""
+        mock_get_secret.return_value = '{"api_key": "sk-ant-test-key-12345"}'
+
+        with patch("app.services.chat_service.anthropic.Anthropic") as mock_anthropic:
+            mock_anthropic.return_value = MagicMock()
+            client = service.client
+
+            mock_get_secret.assert_called_once()
+            mock_anthropic.assert_called_once_with(api_key="sk-ant-test-key-12345")
+            assert client is not None
+
+    @patch("app.services.chat_service.get_secret")
+    @patch.dict("os.environ", {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123:secret:test"})
+    def test_client_init_with_raw_string_secret(self, mock_get_secret, service):
+        """Test client initialization with non-JSON raw API key."""
+        mock_get_secret.return_value = "sk-ant-raw-key-67890"
+
+        with patch("app.services.chat_service.anthropic.Anthropic") as mock_anthropic:
+            mock_anthropic.return_value = MagicMock()
+            client = service.client
+
+            mock_anthropic.assert_called_once_with(api_key="sk-ant-raw-key-67890")
+            assert client is not None
+
+    @patch.dict("os.environ", {}, clear=True)
+    def test_client_init_missing_env_var(self, service):
+        """Test client initialization fails without env var."""
+        # Remove any CLAUDE_API_KEY_SECRET_ARN that might exist
+        import os
+        if "CLAUDE_API_KEY_SECRET_ARN" in os.environ:
+            del os.environ["CLAUDE_API_KEY_SECRET_ARN"]
+
+        with pytest.raises(ValueError, match="CLAUDE_API_KEY_SECRET_ARN environment variable not set"):
+            _ = service.client
+
+    @patch("app.services.chat_service.get_secret")
+    @patch.dict("os.environ", {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123:secret:test"})
+    def test_client_init_placeholder_api_key(self, mock_get_secret, service):
+        """Test client initialization fails with placeholder key."""
+        mock_get_secret.return_value = '{"api_key": "PLACEHOLDER_UPDATE_MANUALLY"}'
+
+        with pytest.raises(ValueError, match="Claude API key not configured"):
+            _ = service.client
+
+    @patch("app.services.chat_service.get_secret")
+    @patch.dict("os.environ", {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123:secret:test"})
+    def test_client_init_empty_api_key(self, mock_get_secret, service):
+        """Test client initialization fails with empty key."""
+        mock_get_secret.return_value = '{"api_key": ""}'
+
+        with pytest.raises(ValueError, match="Claude API key not configured"):
+            _ = service.client
+
+    @patch("app.services.chat_service.get_secret")
+    @patch.dict("os.environ", {"CLAUDE_API_KEY_SECRET_ARN": "arn:aws:secretsmanager:us-east-1:123:secret:test"})
+    def test_client_init_secret_retrieval_fails(self, mock_get_secret, service):
+        """Test client initialization when secret retrieval fails."""
+        mock_get_secret.side_effect = Exception("Secret not found")
+
+        with pytest.raises(Exception, match="Secret not found"):
+            _ = service.client

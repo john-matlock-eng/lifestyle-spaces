@@ -1,0 +1,1 @@
+export { JournalSynopsis } from './JournalSynopsis'

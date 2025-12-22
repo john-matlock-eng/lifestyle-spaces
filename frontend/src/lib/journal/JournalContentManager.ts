@@ -1,8 +1,9 @@
 import type { ParsedJournal, DisplaySection } from './types';
 
 export class JournalContentManager {
-  private static readonly SECTION_START_REGEX = /^<!--\s*section:(\w+)(.*?)-->/;
-  private static readonly SECTION_END_REGEX = /^<!--\s*\/section:(\w+)\s*-->/;
+  // Support section IDs with hyphens (e.g., "quarter-meta", "high-level-review")
+  private static readonly SECTION_START_REGEX = /^<!--\s*section:([\w-]+)(.*?)-->/;
+  private static readonly SECTION_END_REGEX = /^<!--\s*\/section:([\w-]+)\s*-->/;
 
   static parse(content: string): ParsedJournal {
     const lines = content.split('\n');

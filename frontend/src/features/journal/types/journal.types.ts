@@ -1,6 +1,39 @@
 import type { TemplateFrequency } from './framework.types'
 
 /**
+ * Sentiment types for AI-generated metadata
+ */
+export type SentimentType =
+  | 'reflective'
+  | 'positive'
+  | 'challenging'
+  | 'grateful'
+  | 'anxious'
+  | 'hopeful'
+  | 'neutral'
+  | 'mixed'
+
+/**
+ * AI-generated metadata for a journal entry
+ */
+export interface JournalAIMetadata {
+  /** 2-3 sentence summary of the journal entry */
+  synopsis: string
+  /** 3-7 topic tags/themes */
+  themes: string[]
+  /** Key takeaways or realizations (0-5) */
+  insights: string[]
+  /** Overall emotional tone */
+  sentiment: SentimentType
+  /** More nuanced emotional description */
+  emotionalTone?: string
+  /** When the metadata was generated */
+  generatedAt: string
+  /** Model that generated this metadata */
+  modelUsed?: string
+}
+
+/**
  * Journal entry author information
  */
 export interface JournalAuthor {
@@ -42,13 +75,42 @@ export interface JournalEntry {
    * Helps with progress tracking and cycle completion
    */
   templateFrequency?: TemplateFrequency
+
+  /**
+   * AI-generated metadata (synopsis, themes, insights, sentiment)
+   * Generated asynchronously after journal creation/update
+   */
+  aiMetadata?: JournalAIMetadata
 }
 
 /**
- * Journal list response with pagination
+ * Lightweight journal card entry for list views
+ * Excludes heavy content fields, includes AI metadata for rich cards
+ */
+export interface JournalCardEntry {
+  journalId: string
+  spaceId: string
+  userId: string
+  title: string
+  // content and contentTiptap excluded for lightweight response
+  templateId?: string
+  frameworkId?: string
+  tags: string[]
+  emotions?: string[]
+  createdAt: string
+  updatedAt: string
+  wordCount: number
+  isPinned: boolean
+  author?: JournalAuthor
+  /** AI-generated metadata for rich card display */
+  aiMetadata?: JournalAIMetadata
+}
+
+/**
+ * Journal list response with pagination (uses lightweight card entries)
  */
 export interface JournalListResponse {
-  journals: JournalEntry[]
+  journals: JournalCardEntry[]
   total: number
   page: number
   pageSize: number

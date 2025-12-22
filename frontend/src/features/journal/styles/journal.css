@@ -419,6 +419,10 @@
   min-width: 0;
 }
 
+.journal-card-ai-metadata {
+  margin: 8px 0;
+}
+
 .journal-card-meta {
   display: flex;
   flex-wrap: wrap;

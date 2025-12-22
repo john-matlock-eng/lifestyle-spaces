@@ -1,0 +1,1 @@
+export { JournalMetadataBadges } from './JournalMetadataBadges'

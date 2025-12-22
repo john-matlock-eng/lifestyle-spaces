@@ -3,13 +3,14 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
 import { getTemplate } from '../services/templateApi'
+import { getFrameworkRegistry } from '../frameworks'
 import { getEmotionById } from '../data/emotionData'
 import { JournalContentManager } from '../../../lib/journal/JournalContentManager'
 import type { DisplaySection } from '../../../lib/journal/types'
 import type { Template } from '../types/template.types'
+import type { FrameworkTemplateConfig } from '../types/framework.types'
 import { ElliePerch } from '../../../components/ellie'
 import { useEllieCustomizationContext } from '../../../hooks/useEllieCustomizationContext'
-import { AIAssistantDock } from '../components/AIAssistantDock'
 import { HighlightableText } from '../components/HighlightableText'
 import { TipTapViewer } from '../components/TipTapViewer'
 import { MultiSectionTipTapViewer } from '../components/MultiSectionTipTapViewer'
@@ -27,10 +28,12 @@ import { CheckboxSectionDisplay } from '../components/sections/CheckboxSectionDi
 import { ScaleSectionDisplay } from '../components/sections/ScaleSectionDisplay'
 import { TableSectionDisplay } from '../components/sections/TableSectionDisplay'
 import { MomentBlocksSectionDisplay } from '../components/sections/MomentBlocksSectionDisplay'
+import { ChatSidebar, ChatBottomSheet } from '../../chat'
+import { JournalSynopsis } from '../../../components/journal/JournalSynopsis'
+import { JournalMetadataBadges } from '../../../components/journal/JournalMetadataBadges'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
-import '../styles/ai-assistant-dock.css'
 import '../styles/journal-compact.css'
 
 /**
@@ -45,8 +48,7 @@ export const JournalViewPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false)
   const [template, setTemplate] = useState<Template | null>(null)
   const [displaySections, setDisplaySections] = useState<DisplaySection[]>([])
-  const [showAIDock, setShowAIDock] = useState(false)
-  const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
+    const [selectedHighlight, setSelectedHighlight] = useState<Highlight | null>(null)
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
   const [pendingHighlightId, setPendingHighlightId] = useState<string | null>(null)
   const [showJournalCommentPanel, setShowJournalCommentPanel] = useState(false)
@@ -135,11 +137,64 @@ export const JournalViewPage: React.FC = () => {
     if (journal?.templateId) {
       const loadTemplateAndParse = async () => {
         try {
-          const templateData = await getTemplate(journal.templateId!)
-          setTemplate(templateData)
-
           // Parse the content to extract template sections
           const sections = JournalContentManager.extractDisplaySections(journal.content)
+
+          // Check if this is a framework template
+          const registry = getFrameworkRegistry()
+          const frameworkTemplateData = registry.getTemplateById(journal.templateId!)
+
+          if (frameworkTemplateData) {
+            // Framework template - use content.sections for ordering
+            const frameworkTemplate = frameworkTemplateData.template as FrameworkTemplateConfig
+            const templateSections = frameworkTemplate.content?.sections || []
+
+            // Create a basic Template object for display purposes
+            const templateData: Template = {
+              id: frameworkTemplate.id || journal.templateId!,
+              name: frameworkTemplate.name || 'Template',
+              description: frameworkTemplate.description || '',
+              version: frameworkTemplate.version || 1,
+              sections: [],
+              icon: frameworkTemplate.icon,
+              color: frameworkTemplate.color,
+              frameworkId: frameworkTemplateData.frameworkId,
+            }
+            setTemplate(templateData)
+
+            // Sort sections according to framework template's defined order
+            if (templateSections.length > 0) {
+              const sectionOrderMap = new Map<string, number>()
+              templateSections.forEach((sec: { id: string; order?: number }, index: number) => {
+                sectionOrderMap.set(sec.id, sec.order ?? index)
+              })
+
+              sections.sort((a, b) => {
+                const orderA = sectionOrderMap.get(a.id) ?? 999
+                const orderB = sectionOrderMap.get(b.id) ?? 999
+                return orderA - orderB
+              })
+            }
+          } else {
+            // Regular backend template
+            const templateData = await getTemplate(journal.templateId!)
+            setTemplate(templateData)
+
+            // Sort sections according to template's section order (array position)
+            if (templateData?.sections) {
+              const sectionOrderMap = new Map<string, number>()
+              templateData.sections.forEach((sec, index) => {
+                sectionOrderMap.set(sec.id, index)
+              })
+
+              sections.sort((a, b) => {
+                const orderA = sectionOrderMap.get(a.id) ?? 999
+                const orderB = sectionOrderMap.get(b.id) ?? 999
+                return orderA - orderB
+              })
+            }
+          }
+
           setDisplaySections(sections)
 
           console.log('[DEBUG VIEW] Parsed sections:', sections)
@@ -327,6 +382,15 @@ ${content}
                 <span>{template.name}</span>
               </div>
             )}
+            {/* AI Metadata Badges */}
+            {journal.aiMetadata && (
+              <JournalMetadataBadges
+                metadata={journal.aiMetadata}
+                compact
+                maxThemes={3}
+                showSentiment={true}
+              />
+            )}
           </div>
 
           {/* Density Toggle */}
@@ -459,6 +523,11 @@ ${content}
           onReconnect={reconnect}
         />
       </div>
+
+      {/* AI Synopsis (collapsible) */}
+      {journal.aiMetadata && (
+        <JournalSynopsis metadata={journal.aiMetadata} />
+      )}
 
       <div className="journal-view-content">
         {journal.contentTiptap && template && displaySections.length > 0 ? (
@@ -761,13 +830,6 @@ ${content}
           >
             📥
           </button>
-          <button
-            onClick={() => setShowAIDock(!showAIDock)}
-            className="journal-action-icon-btn"
-            title="AI Assistant"
-          >
-            🤖
-          </button>
         </div>
 
         <div className="journal-actions-right">
@@ -793,16 +855,6 @@ ${content}
         </div>
       </div>
 
-      {/* AI Assistant Dock */}
-      {showAIDock && (
-        <AIAssistantDock
-          journalContent={journal.content}
-          journalTitle={journal.title}
-          journalId={journalId}
-          emotions={journal.emotions?.map(id => getEmotionById(id)?.label).filter((label): label is string => !!label)}
-          onClose={() => setShowAIDock(false)}
-        />
-      )}
 
       {/* Journal Comment Panel (expanded Conversations view) */}
       {spaceId && journalId && (
@@ -847,6 +899,14 @@ ${content}
           onNavigateHighlight={handleNavigateHighlight}
         />
       </div>
+    )}
+
+    {/* Ellie Chat - Desktop sidebar and mobile bottom sheet */}
+    {spaceId && (
+      <>
+        <ChatSidebar spaceId={spaceId} />
+        <ChatBottomSheet spaceId={spaceId} />
+      </>
     )}
     </div>
   )
