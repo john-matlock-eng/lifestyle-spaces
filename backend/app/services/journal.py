@@ -1,10 +1,12 @@
 """
 Journal management service with DynamoDB.
 """
+
 import os
 import uuid
 import logging
 import asyncio
+import concurrent.futures
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 import boto3
@@ -20,6 +22,18 @@ from app.services.exceptions import (
 from app.models.activity import ActivityType
 
 logger = logging.getLogger(__name__)
+
+
+def _run_async_safely(coro):
+    """
+    Run an async coroutine safely, whether called from sync or async context.
+
+    Uses a ThreadPoolExecutor to run asyncio.run() in a separate thread,
+    avoiding issues with nested event loops in Lambda/FastAPI.
+    """
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(asyncio.run, coro)
+        return future.result(timeout=30)  # 30 second timeout
 
 
 class JournalService:
@@ -109,8 +123,12 @@ class JournalService:
                 framework_id=journal_data.get("framework_id"),
                 tags=journal_data.get("tags", []),
                 emotions=journal_data.get("emotions", []),
-                created_at=datetime.fromisoformat(journal_data["created_at"].replace("Z", "+00:00")),
-                updated_at=datetime.fromisoformat(journal_data["updated_at"].replace("Z", "+00:00")),
+                created_at=datetime.fromisoformat(
+                    journal_data["created_at"].replace("Z", "+00:00")
+                ),
+                updated_at=datetime.fromisoformat(
+                    journal_data["updated_at"].replace("Z", "+00:00")
+                ),
                 word_count=journal_data.get("word_count", 0),
                 is_pinned=journal_data.get("is_pinned", False),
             )
@@ -118,26 +136,24 @@ class JournalService:
             # Run async indexing synchronously to ensure it completes before Lambda terminates
             indexer = get_journal_indexer()
 
-            try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    # In async context, need to run in a new thread to avoid blocking
-                    import concurrent.futures
-                    with concurrent.futures.ThreadPoolExecutor() as executor:
-                        future = executor.submit(asyncio.run, indexer.index_journal(journal_entry))
-                        result = future.result(timeout=10)  # 10 second timeout
-                        logger.info(f"[INDEX] Indexed journal {journal_data['journal_id']}: {result.status}")
-                else:
-                    result = loop.run_until_complete(indexer.index_journal(journal_entry))
-                    logger.info(f"[INDEX] Indexed journal {journal_data['journal_id']}: {result.status}")
-            except RuntimeError:
-                # No event loop, create one
-                result = asyncio.run(indexer.index_journal(journal_entry))
-                logger.info(f"[INDEX] Indexed journal {journal_data['journal_id']}: {result.status}")
+            # Run the async indexer - index_journal returns int (number of sections indexed)
+            # Use _run_async_safely to handle being called from async FastAPI context
+            sections_indexed = _run_async_safely(indexer.index_journal(journal_entry))
+            logger.info(
+                f"[INDEX] Indexed journal {journal_data['journal_id']}: {sections_indexed} sections"
+            )
 
+        except concurrent.futures.TimeoutError:
+            # Timeout - indexing took too long
+            logger.error(
+                f"[INDEX] Timeout indexing journal {journal_data.get('journal_id')} after 30s"
+            )
         except Exception as e:
-            # Log but don't fail - indexing is not critical
-            logger.warning(f"[INDEX] Failed to index journal {journal_data.get('journal_id')}: {e}")
+            # Log the full error with traceback for debugging
+            logger.error(
+                f"[INDEX] Failed to index journal {journal_data.get('journal_id')}: {e}",
+                exc_info=True,
+            )
 
     def _delete_from_index_background(self, journal_id: str, space_id: str) -> None:
         """
@@ -150,24 +166,18 @@ class JournalService:
 
             indexer = get_journal_indexer()
 
-            try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    import concurrent.futures
-                    with concurrent.futures.ThreadPoolExecutor() as executor:
-                        future = executor.submit(asyncio.run, indexer.delete_journal(journal_id, space_id))
-                        success = future.result(timeout=10)
-                        logger.info(f"[INDEX] Deleted journal {journal_id} from index: {success}")
-                else:
-                    success = loop.run_until_complete(indexer.delete_journal(journal_id, space_id))
-                    logger.info(f"[INDEX] Deleted journal {journal_id} from index: {success}")
-            except RuntimeError:
-                success = asyncio.run(indexer.delete_journal(journal_id, space_id))
-                logger.info(f"[INDEX] Deleted journal {journal_id} from index: {success}")
+            # Run the async delete - use _run_async_safely to handle async context
+            success = _run_async_safely(indexer.delete_journal(journal_id, space_id))
+            logger.info(f"[INDEX] Deleted journal {journal_id} from index: {success}")
 
+        except concurrent.futures.TimeoutError:
+            # Timeout - deletion took too long
+            logger.error(f"[INDEX] Timeout deleting journal {journal_id} from index after 30s")
         except Exception as e:
-            # Log but don't fail - deletion from index is not critical
-            logger.warning(f"[INDEX] Failed to delete journal {journal_id} from index: {e}")
+            # Log the full error with traceback for debugging
+            logger.error(
+                f"[INDEX] Failed to delete journal {journal_id} from index: {e}", exc_info=True
+            )
 
     def _generate_metadata_background(self, journal_data: Dict[str, Any]) -> None:
         """
@@ -185,40 +195,33 @@ class JournalService:
                     journal_id=journal_data["journal_id"],
                     title=journal_data["title"],
                     content=journal_data.get("content_tiptap") or journal_data["content"],
-                    template_id=journal_data.get("template_id")
+                    template_id=journal_data.get("template_id"),
                 )
 
                 # Update journal with metadata in DynamoDB
                 self._update_ai_metadata(
                     space_id=journal_data["space_id"],
                     journal_id=journal_data["journal_id"],
-                    ai_metadata=metadata
+                    ai_metadata=metadata,
                 )
 
-            try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    import concurrent.futures
-                    with concurrent.futures.ThreadPoolExecutor() as executor:
-                        future = executor.submit(asyncio.run, _generate_and_save())
-                        future.result(timeout=30)  # 30 second timeout
-                        logger.info(f"[METADATA] Generated metadata for journal {journal_data['journal_id']}")
-                else:
-                    loop.run_until_complete(_generate_and_save())
-                    logger.info(f"[METADATA] Generated metadata for journal {journal_data['journal_id']}")
-            except RuntimeError:
-                asyncio.run(_generate_and_save())
-                logger.info(f"[METADATA] Generated metadata for journal {journal_data['journal_id']}")
+            # Run the async generate and save - use _run_async_safely to handle async context
+            _run_async_safely(_generate_and_save())
+            logger.info(f"[METADATA] Generated metadata for journal {journal_data['journal_id']}")
 
+        except concurrent.futures.TimeoutError:
+            # Timeout - metadata generation took too long
+            journal_id = journal_data.get("journal_id")
+            logger.error(f"[METADATA] Timeout generating metadata for {journal_id} after 30s")
         except Exception as e:
-            # Log but don't fail - metadata is not critical
-            logger.warning(f"[METADATA] Failed to generate metadata for journal {journal_data.get('journal_id')}: {e}")
+            # Log the full error with traceback for debugging
+            journal_id = journal_data.get("journal_id")
+            logger.error(
+                f"[METADATA] Failed to generate metadata for {journal_id}: {e}", exc_info=True
+            )
 
     def _update_ai_metadata(
-        self,
-        space_id: str,
-        journal_id: str,
-        ai_metadata: "JournalAIMetadata"
+        self, space_id: str, journal_id: str, ai_metadata: "JournalAIMetadata"
     ) -> bool:
         """Update only the AI metadata field for a journal."""
         from app.models.ai_metadata import JournalAIMetadata
@@ -241,7 +244,7 @@ class JournalService:
                         "modelUsed": ai_metadata.model_used,
                     },
                     ":now": datetime.now(timezone.utc).isoformat(),
-                }
+                },
             )
             logger.info(f"[METADATA] Updated AI metadata for journal {journal_id}")
             return True
@@ -364,9 +367,9 @@ class JournalService:
                 metadata={
                     "journal_id": journal_id,
                     "journal_title": data.title.strip(),
-                    "content_preview": data.content[:100]
-                    if len(data.content) > 100
-                    else data.content,
+                    "content_preview": (
+                        data.content[:100] if len(data.content) > 100 else data.content
+                    ),
                     "template_id": data.template_id,
                     "framework_id": data.framework_id,
                 },
@@ -567,9 +570,11 @@ class JournalService:
                 metadata={
                     "journal_id": journal_id,
                     "journal_title": updated_journal["title"],
-                    "content_preview": updated_journal["content"][:100]
-                    if len(updated_journal["content"]) > 100
-                    else updated_journal["content"],
+                    "content_preview": (
+                        updated_journal["content"][:100]
+                        if len(updated_journal["content"]) > 100
+                        else updated_journal["content"]
+                    ),
                 },
             )
         except Exception as e:
