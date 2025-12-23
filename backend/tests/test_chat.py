@@ -671,7 +671,8 @@ class TestChatServiceStreaming:
 
         assert len(chunks) == 1
         assert "error" in chunks[0]
-        assert "Not authorized" in chunks[0]
+        assert "CONVERSATION_OWNERSHIP_MISMATCH" in chunks[0]
+        assert "belongs to another user" in chunks[0]
 
     @pytest.mark.asyncio
     async def test_stream_message_success(self, service_with_mocks):

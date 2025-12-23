@@ -66,6 +66,7 @@ export interface StreamChunk {
   messageId?: string;
   modelUsed?: string;
   message?: string;
+  code?: string; // Error code for specific error handling
 }
 
 // UI State

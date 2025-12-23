@@ -744,7 +744,16 @@ User message: {new_message}"""
             return
 
         if conversation.user_id != user_id:
-            yield json.dumps({"type": "error", "message": "Not authorized"})
+            logger.warning(
+                f"[CHAT] Authorization mismatch: conversation {conversation_id} "
+                f"owned by {conversation.user_id[:8]}..., "
+                f"but accessed by {user_id[:8]}..."
+            )
+            yield json.dumps({
+                "type": "error",
+                "message": "This conversation belongs to another user",
+                "code": "CONVERSATION_OWNERSHIP_MISMATCH",
+            })
             return
 
         user_message = request.content

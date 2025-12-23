@@ -371,7 +371,17 @@ export function ChatProvider({ children }: ChatProviderProps) {
                 messageId = chunk.messageId || '';
                 break;
               case 'error':
-                dispatch({ type: 'SET_ERROR', payload: chunk.message || 'Stream error' });
+                // Handle conversation ownership mismatch with auto-recovery
+                if (chunk.code === 'CONVERSATION_OWNERSHIP_MISMATCH') {
+                  console.warn('[Chat] Conversation ownership mismatch, creating new conversation');
+                  dispatch({ type: 'CLEAR_ACTIVE_CONVERSATION' });
+                  dispatch({
+                    type: 'SET_ERROR',
+                    payload: 'Starting a fresh conversation for you. Please resend your message.',
+                  });
+                } else {
+                  dispatch({ type: 'SET_ERROR', payload: chunk.message || 'Stream error' });
+                }
                 break;
             }
           },
