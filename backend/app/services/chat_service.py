@@ -440,7 +440,8 @@ class ChatService:
     def _build_journal_context(
         self,
         search_results: List[Dict[str, Any]],
-        journals: List[Dict[str, Any]]
+        journals: List[Dict[str, Any]],
+        author_name: Optional[str] = None,
     ) -> Tuple[str, List[JournalCitation]]:
         """
         Build context string and citations from search results.
@@ -452,6 +453,7 @@ class ChatService:
         Args:
             search_results: Grouped search results with section info
             journals: Full journal content from DynamoDB (optional)
+            author_name: Name of journal author (for supporter mode attribution)
 
         Returns:
             Tuple of (context_string, citations_list)
@@ -483,7 +485,15 @@ class ChatService:
             else:
                 tiers["older"].append(result)
 
-        # Build header with date range
+        # Build header with author attribution (critical for supporter mode)
+        author_attribution = ""
+        if author_name:
+            author_attribution = f" by {author_name}"
+            context_parts.append(
+                f"*Note: These are {author_name}'s journal entries. "
+                "They have shared these with you.*\n"
+            )
+
         dates = [
             r.get("createdAt", "")[:10]
             for r in search_results
@@ -491,9 +501,9 @@ class ChatService:
         ]
         if dates:
             date_range = f"from {min(dates)} to {max(dates)}"
-            context_parts.append(f"## Journal Entries ({date_range})\n")
+            context_parts.append(f"## Journal Entries{author_attribution} ({date_range})\n")
         else:
-            context_parts.append("## Relevant Journal Entries\n")
+            context_parts.append(f"## Relevant Journal Entries{author_attribution}\n")
 
         def format_result(result: Dict[str, Any], index: int) -> None:
             """Format a single result and add to context/citations."""
@@ -660,8 +670,11 @@ User message: {new_message}"""
         journals = await self._retrieve_journal_content(journal_ids, space_id)
 
         # 4. Build context from section-level search results
+        # Pass author_name for supporter mode attribution in context
         journal_context, citations = self._build_journal_context(
-            search_results, journals
+            search_results,
+            journals,
+            author_name=chat_context.primary_author_name if chat_context.mode == ChatMode.SUPPORTER else None,
         )
 
         # 5. Build messages
@@ -772,6 +785,12 @@ User message: {new_message}"""
             current_user_id=user_id,
         )
 
+        logger.info(
+            f"[CHAT] Mode detected: {chat_context.mode.value}, "
+            f"author_name: {chat_context.primary_author_name}, "
+            f"prompt_type: {'SUPPORTER' if 'speaking to someone who CARES' in system_prompt else 'AUTHOR'}"
+        )
+
         # Yield mode information first
         yield json.dumps({
             "type": "mode",
@@ -787,8 +806,11 @@ User message: {new_message}"""
         journals = await self._retrieve_journal_content(journal_ids, space_id)
 
         # 4. Build context from section-level search results
+        # Pass author_name for supporter mode attribution in context
         journal_context, citations = self._build_journal_context(
-            search_results, journals
+            search_results,
+            journals,
+            author_name=chat_context.primary_author_name if chat_context.mode == ChatMode.SUPPORTER else None,
         )
 
         # Yield citations
