@@ -718,10 +718,11 @@ class TestChatServiceStreaming:
         ):
             chunks.append(chunk)
 
-        # Should have: citations, content chunks, done
-        assert len(chunks) >= 4
-        assert "citations" in chunks[0]
-        assert "content" in chunks[1]
+        # Should have: mode, citations, content chunks, done
+        assert len(chunks) >= 5
+        assert "mode" in chunks[0]  # Mode detection is first
+        assert "citations" in chunks[1]
+        assert "content" in chunks[2]
         assert "done" in chunks[-1]
 
     @pytest.mark.asyncio

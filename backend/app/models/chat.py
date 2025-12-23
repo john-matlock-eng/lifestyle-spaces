@@ -5,9 +5,45 @@ Pydantic models for AI chat conversations with Ellie.
 """
 
 from datetime import datetime
+from enum import Enum
 from typing import Optional, List, Literal
 from pydantic import BaseModel, Field, ConfigDict
 from uuid import uuid4
+
+
+# =============================================================================
+# Chat Mode Detection
+# =============================================================================
+
+
+class ChatMode(str, Enum):
+    """Chat mode based on user's relationship to journal content."""
+
+    AUTHOR = "author"  # User wrote the journals - self-reflection
+    SUPPORTER = "supporter"  # User is reading someone else's journals
+
+
+class ChatContext(BaseModel):
+    """Context for chat sessions including mode detection results."""
+
+    mode: ChatMode = Field(..., description="Detected chat mode")
+    primary_author_id: Optional[str] = Field(
+        None,
+        alias="primaryAuthorId",
+        description="User ID of the primary journal author",
+    )
+    primary_author_name: Optional[str] = Field(
+        None,
+        alias="primaryAuthorName",
+        description="Display name of primary author (for supporter mode)",
+    )
+    author_percentage: float = Field(
+        0.0,
+        alias="authorPercentage",
+        description="Percentage of journals authored by current user",
+    )
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class JournalCitation(BaseModel):

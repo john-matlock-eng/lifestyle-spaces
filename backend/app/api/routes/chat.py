@@ -14,6 +14,9 @@ from app.core.dependencies import get_current_user
 from app.services.chat_service import get_chat_service
 from app.services.space import SpaceService
 from app.services.exceptions import SpaceNotFoundError, UnauthorizedError
+from app.services.chat_mode import detect_chat_mode, get_author_display_name
+from app.services.chat_suggestions import get_suggestions
+from app.services.chat_prompts import get_welcome_message
 from app.models.chat import (
     CreateChatConversationRequest,
     CreateChatConversationResponse,
@@ -22,6 +25,7 @@ from app.models.chat import (
     ChatConversationResponse,
     ChatConversationListResponse,
     ChatConversationListItem,
+    ChatMode,
 )
 
 logger = logging.getLogger(__name__)
@@ -232,6 +236,100 @@ async def delete_conversation(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete conversation",
+        )
+
+
+# =============================================================================
+# CONTEXT ENDPOINT
+# =============================================================================
+
+
+@router.get(
+    "/spaces/{space_id}/context",
+    summary="Get chat context including mode and suggestions",
+    response_model=None,  # We'll return a dict
+)
+async def get_chat_context(
+    space_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get chat context for a space.
+
+    Analyzes journal authorship to determine chat mode and returns
+    appropriate suggestions and welcome message.
+
+    Returns:
+        - mode: 'author' or 'supporter'
+        - authorName: Display name of primary author (if supporter mode)
+        - authorPercentage: Percentage of journals authored by current user
+        - suggestions: Mode-appropriate conversation starters
+        - welcomeMessage: Mode-appropriate welcome text
+    """
+    try:
+        user_id = current_user.get("sub", "")
+        _verify_space_access(space_id, user_id)
+
+        service = get_chat_service()
+
+        # Search for journals to determine mode
+        # Use a general query to get representative sample
+        search_results = await service._search_relevant_journals(
+            query="recent thoughts feelings experiences reflections",
+            space_id=space_id,
+            user_id=None,  # Get all users' journals for mode detection
+            top_k=10,  # Get enough for accurate mode detection
+        )
+
+        # Detect mode
+        chat_context = detect_chat_mode(
+            current_user_id=user_id,
+            journals=search_results,
+        )
+
+        # Get author name if in supporter mode
+        author_name = None
+        if chat_context.mode == ChatMode.SUPPORTER and chat_context.primary_author_id:
+            author_name = await get_author_display_name(
+                chat_context.primary_author_id,
+                service.table,
+            )
+
+        # Get mode-appropriate suggestions
+        suggestions = get_suggestions(
+            mode=chat_context.mode,
+            author_name=author_name,
+            limit=4,
+        )
+
+        # Get welcome message
+        welcome_msg = get_welcome_message(
+            mode=chat_context.mode,
+            author_name=author_name,
+        )
+
+        logger.info(
+            f"[CHAT] Context for user {user_id[:8]}... in space {space_id[:8]}...: "
+            f"mode={chat_context.mode.value}, author={author_name}"
+        )
+
+        return {
+            "mode": chat_context.mode.value,
+            "authorName": author_name,
+            "authorPercentage": chat_context.author_percentage,
+            "suggestions": suggestions,
+            "welcomeMessage": welcome_msg,
+        }
+
+    except SpaceNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except UnauthorizedError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except Exception as e:
+        logger.error(f"[CHAT] Failed to get context: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get chat context",
         )
 
 

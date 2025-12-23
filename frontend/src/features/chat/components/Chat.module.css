@@ -50,9 +50,37 @@
 }
 
 .headerSubtitle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.75rem;
   color: var(--theme-text-secondary);
   margin: 0;
+}
+
+.modeIcon {
+  margin-right: 2px;
+  color: var(--theme-primary-500);
+}
+
+/* Mode indicator for supporter mode */
+.modeIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, var(--theme-primary-50) 0%, var(--theme-primary-100) 100%);
+  border-bottom: 1px solid var(--theme-border-light);
+  font-size: 13px;
+  color: var(--theme-text-secondary);
+}
+
+.modeIndicator svg {
+  color: var(--theme-primary-500);
+}
+
+:global(.dark) .modeIndicator {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.08) 0%, rgba(20, 184, 166, 0.12) 100%);
 }
 
 .headerActions {
