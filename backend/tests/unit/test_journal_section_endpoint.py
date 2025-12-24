@@ -362,7 +362,10 @@ class TestGetJournalSectionEndpoint:
 
     @pytest.fixture
     def mock_journal_with_sections(self):
-        """Mock journal with TipTap content."""
+        """Mock journal with TipTap content.
+
+        Note: Content must be >= 30 chars to pass section_parser's MIN_SECTION_LENGTH filter.
+        """
         return {
             "journal_id": "journal-123",
             "space_id": "space-456",
@@ -375,12 +378,12 @@ class TestGetJournalSectionEndpoint:
                     {"type": "heading", "content": [{"type": "text", "text": "First Section"}]},
                     {
                         "type": "paragraph",
-                        "content": [{"type": "text", "text": "Content of first section."}],
+                        "content": [{"type": "text", "text": "This is the detailed content of the first section which is long enough to pass the minimum length filter."}],
                     },
                     {"type": "heading", "content": [{"type": "text", "text": "Second Section"}]},
                     {
                         "type": "paragraph",
-                        "content": [{"type": "text", "text": "Content of second section."}],
+                        "content": [{"type": "text", "text": "This is the detailed content of the second section which is also long enough to pass the minimum length filter."}],
                     },
                 ],
             },
@@ -406,7 +409,7 @@ class TestGetJournalSectionEndpoint:
 
             assert result.sectionIndex == 0
             assert result.sectionTitle == "First Section"
-            assert "Content of first section" in result.content
+            assert "first section" in result.content.lower()
             assert result.journalTitle == "My Test Journal"
             assert result.wordCount > 0
 
@@ -428,7 +431,7 @@ class TestGetJournalSectionEndpoint:
 
             assert result.sectionIndex == 1
             assert result.sectionTitle == "Second Section"
-            assert "Content of second section" in result.content
+            assert "second section" in result.content.lower()
 
     @pytest.mark.asyncio
     async def test_invalid_section_index_returns_404(self, mock_auth_user, mock_journal_with_sections):
@@ -526,7 +529,7 @@ class TestGetJournalSectionEndpoint:
             "content": {
                 "type": "doc",
                 "content": [
-                    {"type": "paragraph", "content": [{"type": "text", "text": "Legacy content."}]},
+                    {"type": "paragraph", "content": [{"type": "text", "text": "This is some legacy content that is long enough to pass the minimum length filter requirements."}]},
                 ],
             },
             "created_at": "2025-12-23T10:00:00Z",
@@ -542,7 +545,7 @@ class TestGetJournalSectionEndpoint:
                 current_user=mock_auth_user,
             )
 
-            assert "Legacy content" in result.content
+            assert "legacy content" in result.content.lower()
 
     @pytest.mark.asyncio
     async def test_word_count_calculation(self, mock_auth_user):
@@ -550,6 +553,8 @@ class TestGetJournalSectionEndpoint:
         from app.api.routes.journals import get_journal_section
         from app.services.journal import JournalService
 
+        # Content must be >= 30 chars to pass MIN_SECTION_LENGTH filter
+        # "One two three four five six seven eight nine ten." = 50 chars, 10 words
         journal = {
             "journal_id": "journal-123",
             "space_id": "space-456",
@@ -560,7 +565,7 @@ class TestGetJournalSectionEndpoint:
                 "content": [
                     {
                         "type": "paragraph",
-                        "content": [{"type": "text", "text": "One two three four five."}],
+                        "content": [{"type": "text", "text": "One two three four five six seven eight nine ten."}],
                     },
                 ],
             },
@@ -577,4 +582,5 @@ class TestGetJournalSectionEndpoint:
                 current_user=mock_auth_user,
             )
 
-            assert result.wordCount == 5
+            # section_parser prepends "[Journal: title]" so word count is higher
+            assert result.wordCount >= 10

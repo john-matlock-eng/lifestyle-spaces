@@ -517,6 +517,10 @@ async def get_journal_section(
     Used by chat citations to expand and show full section content
     without navigating away from the conversation.
 
+    IMPORTANT: Uses section_parser to ensure section indices match what was
+    indexed in Pinecone. The parser applies MIN_SECTION_LENGTH filtering and
+    re-indexes, which must match the citation's sectionIndex.
+
     Returns:
         - sectionIndex: The section index
         - sectionTitle: Title of the section (if any)
@@ -537,24 +541,30 @@ async def get_journal_section(
             space_id=space_id, journal_id=journal_id, user_id=current_user.get("sub", "")
         )
 
-        # Extract sections from TipTap content
-        # Uses extract_sections_from_content which handles both heading-based
-        # and template section dict formats without minimum length filtering
+        # Use section_parser to extract sections - this MUST match the indexing
+        # logic used when the journal was indexed in Pinecone. The parser applies
+        # MIN_SECTION_LENGTH filtering and re-indexes, ensuring the sectionIndex
+        # from citations maps to the correct section.
+        section_parser = get_section_parser()
         content_tiptap = journal.get("content_tiptap") or journal.get("content", {})
-        sections = extract_sections_from_content(content_tiptap)
+        parsed_sections = section_parser.parse(
+            content=content_tiptap,
+            template_id=journal.get("template_id"),
+            title=journal.get("title")
+        )
 
-        if section_index < 0 or section_index >= len(sections):
+        if section_index < 0 or section_index >= len(parsed_sections):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Section {section_index} not found. Journal has {len(sections)} sections.",
+                detail=f"Section {section_index} not found. Journal has {len(parsed_sections)} sections.",
             )
 
-        section = sections[section_index]
-        content = section.get("content", "")
+        parsed_section = parsed_sections[section_index]
+        content = parsed_section.content
 
         return SectionContentResponse(
             sectionIndex=section_index,
-            sectionTitle=section.get("title", ""),
+            sectionTitle=parsed_section.title,
             content=content,
             wordCount=len(content.split()) if content else 0,
             journalTitle=journal.get("title", "Untitled"),
