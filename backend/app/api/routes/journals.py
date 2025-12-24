@@ -338,6 +338,158 @@ async def get_journals_by_theme(
 
 
 # =============================================================================
+# Section Content Endpoint (for citation expand-in-place)
+# =============================================================================
+
+
+class SectionContentResponse(BaseModel):
+    """Response containing a single section's full content."""
+
+    sectionIndex: int
+    sectionTitle: str
+    content: str
+    wordCount: int
+    journalTitle: str
+    createdAt: str
+
+
+def extract_sections_from_content(content: dict) -> list:
+    """
+    Extract sections from TipTap JSON content.
+
+    Sections are typically defined by heading nodes followed by content.
+    Falls back to treating entire content as single section.
+    """
+    if not content or not isinstance(content, dict):
+        return [{"title": "", "content": ""}]
+
+    sections = []
+    current_section = {"title": "", "content": ""}
+
+    def extract_text(node: dict) -> str:
+        """Recursively extract text from TipTap node."""
+        if not isinstance(node, dict):
+            return ""
+        if node.get("type") == "text":
+            return node.get("text", "")
+
+        texts = []
+        for child in node.get("content", []):
+            if isinstance(child, dict):
+                texts.append(extract_text(child))
+        return " ".join(filter(None, texts))
+
+    def process_node(node: dict):
+        nonlocal current_section
+
+        node_type = node.get("type", "")
+
+        # Heading starts a new section
+        if node_type == "heading":
+            # Save previous section if it has content
+            if current_section["content"].strip():
+                sections.append(current_section)
+
+            current_section = {"title": extract_text(node), "content": ""}
+        else:
+            # Add content to current section
+            text = extract_text(node)
+            if text:
+                if current_section["content"]:
+                    current_section["content"] += "\n\n"
+                current_section["content"] += text
+
+    # Process top-level content nodes
+    for node in content.get("content", []):
+        if isinstance(node, dict):
+            process_node(node)
+
+    # Don't forget the last section
+    if current_section["content"].strip() or current_section["title"]:
+        sections.append(current_section)
+
+    # If no sections found, treat entire content as one section
+    if not sections:
+        full_text = extract_text(content)
+        sections = [{"title": "", "content": full_text}]
+
+    return sections
+
+
+@router.get(
+    "/spaces/{space_id}/journals/{journal_id}/sections/{section_index}",
+    response_model=SectionContentResponse,
+    summary="Get a specific section from a journal",
+)
+async def get_journal_section(
+    space_id: str,
+    journal_id: str,
+    section_index: int,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get the full content of a specific section from a journal.
+
+    Used by chat citations to expand and show full section content
+    without navigating away from the conversation.
+
+    Returns:
+        - sectionIndex: The section index
+        - sectionTitle: Title of the section (if any)
+        - content: Full text content of the section
+        - wordCount: Approximate word count
+        - journalTitle: Parent journal title
+        - createdAt: Journal creation date
+    """
+    try:
+        logger.info(
+            f"[API_GET_SECTION] space={space_id}, journal={journal_id}, "
+            f"section={section_index}, user={current_user.get('sub')}"
+        )
+
+        # Get the journal first (this handles authorization)
+        service = JournalService()
+        journal = service.get_journal_entry(
+            space_id=space_id, journal_id=journal_id, user_id=current_user.get("sub", "")
+        )
+
+        # Extract sections from TipTap content
+        content_tiptap = journal.get("content_tiptap") or journal.get("content", {})
+        sections = extract_sections_from_content(content_tiptap)
+
+        if section_index < 0 or section_index >= len(sections):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Section {section_index} not found. Journal has {len(sections)} sections.",
+            )
+
+        section = sections[section_index]
+        content = section.get("content", "")
+
+        return SectionContentResponse(
+            sectionIndex=section_index,
+            sectionTitle=section.get("title", ""),
+            content=content,
+            wordCount=len(content.split()) if content else 0,
+            journalTitle=journal.get("title", "Untitled"),
+            createdAt=journal.get("created_at", ""),
+        )
+
+    except JournalNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except UnauthorizedError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions as-is
+    except Exception as e:
+        logger.error(f"Failed to get journal section: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get journal section",
+        )
+
+
+# =============================================================================
 # Individual Journal Endpoints (must be AFTER specific path routes)
 # =============================================================================
 

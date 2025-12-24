@@ -11,11 +11,12 @@ import styles from './Chat.module.css';
 
 interface ChatMessageProps {
   message: ChatMessageType;
+  spaceId: string;
   isStreaming?: boolean;
   streamingContent?: string;
 }
 
-export function ChatMessage({ message, isStreaming, streamingContent }: ChatMessageProps) {
+export function ChatMessage({ message, spaceId, isStreaming, streamingContent }: ChatMessageProps) {
   const isUser = message.role === 'user';
   const content = isStreaming ? streamingContent : message.content;
 
@@ -46,8 +47,12 @@ export function ChatMessage({ message, isStreaming, streamingContent }: ChatMess
         {/* Citations */}
         {message.citations && message.citations.length > 0 && (
           <div className={styles.citations}>
-            {message.citations.map((citation) => (
-              <CitationCard key={citation.journalId} citation={citation} />
+            {message.citations.map((citation, index) => (
+              <CitationCard
+                key={`${citation.journalId}-${citation.sectionIndex ?? index}`}
+                citation={citation}
+                spaceId={spaceId}
+              />
             ))}
           </div>
         )}

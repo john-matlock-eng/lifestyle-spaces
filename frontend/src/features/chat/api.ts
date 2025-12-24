@@ -25,6 +25,16 @@ export interface ChatContextResponse {
   welcomeMessage: string;
 }
 
+// Response type for section content (expand in place)
+export interface SectionContent {
+  sectionIndex: number;
+  sectionTitle: string;
+  content: string;
+  wordCount: number;
+  journalTitle: string;
+  createdAt: string;
+}
+
 const CHAT_BASE = '/api/chat';
 
 export const chatApi = {
@@ -98,6 +108,20 @@ export const chatApi = {
     }>(
       `${CHAT_BASE}/spaces/${spaceId}/conversations/${conversationId}/messages`,
       request
+    );
+  },
+
+  /**
+   * Get full content of a specific journal section
+   * Used for citation expand-in-place functionality
+   */
+  async getJournalSection(
+    spaceId: string,
+    journalId: string,
+    sectionIndex: number
+  ): Promise<SectionContent> {
+    return apiService.get<SectionContent>(
+      `/api/spaces/${spaceId}/journals/${journalId}/sections/${sectionIndex}`
     );
   },
 

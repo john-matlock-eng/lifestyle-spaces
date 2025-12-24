@@ -1,0 +1,80 @@
+.backButton {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow:
+    0 4px 14px rgba(99, 102, 241, 0.4),
+    0 0 0 0 rgba(99, 102, 241, 0.4);
+  transition: all 0.2s ease;
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out, pulse 2s ease-in-out 3;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow:
+      0 4px 14px rgba(99, 102, 241, 0.4),
+      0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 4px 14px rgba(99, 102, 241, 0.4),
+      0 0 0 8px rgba(99, 102, 241, 0);
+  }
+}
+
+.backButton:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 20px rgba(99, 102, 241, 0.5),
+    0 0 0 0 rgba(99, 102, 241, 0.4);
+}
+
+.backButton:active {
+  transform: translateY(0);
+}
+
+.backButton:focus {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+.buttonText {
+  white-space: nowrap;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .backButton {
+    bottom: 80px; /* Above any mobile nav */
+    right: 16px;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  .buttonText {
+    display: none; /* Icon only on mobile */
+  }
+}
