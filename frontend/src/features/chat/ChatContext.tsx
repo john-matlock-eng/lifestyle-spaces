@@ -12,9 +12,11 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import { chatApi } from './api';
+import { chatApi, type ChatContextResponse } from './api';
 import type {
   ChatState,
+  ChatMode,
+  ModeData,
   Conversation,
   ConversationListItem,
   ChatMessage,
@@ -36,6 +38,11 @@ const initialState: ChatState = {
   error: null,
   isOpen: false,
   isExpanded: false,
+  chatMode: null,
+  authorName: null,
+  suggestions: [],
+  welcomeMessage: null,
+  isLoadingContext: false,
 };
 
 type ChatAction =
@@ -50,7 +57,10 @@ type ChatAction =
   | { type: 'FINISH_STREAMING'; payload: ChatMessage }
   | { type: 'SET_OPEN'; payload: boolean }
   | { type: 'SET_EXPANDED'; payload: boolean }
-  | { type: 'CLEAR_ACTIVE_CONVERSATION' };
+  | { type: 'CLEAR_ACTIVE_CONVERSATION' }
+  | { type: 'SET_MODE'; payload: { mode: ChatMode; authorName?: string } }
+  | { type: 'SET_CONTEXT'; payload: ChatContextResponse }
+  | { type: 'SET_LOADING_CONTEXT'; payload: boolean };
 
 function chatReducer(state: ChatState, action: ChatAction): ChatState {
   switch (action.type) {
@@ -118,6 +128,29 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case 'CLEAR_ACTIVE_CONVERSATION':
       return { ...state, activeConversation: null };
 
+    case 'SET_MODE':
+      return {
+        ...state,
+        chatMode: action.payload.mode,
+        authorName: action.payload.authorName || null,
+      };
+
+    case 'SET_CONTEXT':
+      return {
+        ...state,
+        chatMode: action.payload.mode,
+        authorName: action.payload.authorName,
+        suggestions: action.payload.suggestions,
+        welcomeMessage: action.payload.welcomeMessage,
+        isLoadingContext: false,
+      };
+
+    case 'SET_LOADING_CONTEXT':
+      return {
+        ...state,
+        isLoadingContext: action.payload,
+      };
+
     default:
       return state;
   }
@@ -143,6 +176,9 @@ interface ChatContextValue extends ChatState {
 
   // Messaging
   sendMessage: (spaceId: string, content: string, useStreaming?: boolean) => Promise<void>;
+
+  // Context (mode and suggestions)
+  loadChatContext: (spaceId: string) => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextValue | undefined>(undefined);
@@ -301,6 +337,19 @@ export function ChatProvider({ children }: ChatProviderProps) {
           // onChunk
           (chunk: StreamChunk) => {
             switch (chunk.type) {
+              case 'mode':
+                // Chat mode detected (author/supporter)
+                {
+                  const modeData = chunk.data as ModeData;
+                  dispatch({
+                    type: 'SET_MODE',
+                    payload: {
+                      mode: modeData.mode,
+                      authorName: modeData.authorName,
+                    },
+                  });
+                }
+                break;
               case 'model':
                 // Model info received
                 break;
@@ -322,7 +371,17 @@ export function ChatProvider({ children }: ChatProviderProps) {
                 messageId = chunk.messageId || '';
                 break;
               case 'error':
-                dispatch({ type: 'SET_ERROR', payload: chunk.message || 'Stream error' });
+                // Handle conversation ownership mismatch with auto-recovery
+                if (chunk.code === 'CONVERSATION_OWNERSHIP_MISMATCH') {
+                  console.warn('[Chat] Conversation ownership mismatch, creating new conversation');
+                  dispatch({ type: 'CLEAR_ACTIVE_CONVERSATION' });
+                  dispatch({
+                    type: 'SET_ERROR',
+                    payload: 'Starting a fresh conversation for you. Please resend your message.',
+                  });
+                } else {
+                  dispatch({ type: 'SET_ERROR', payload: chunk.message || 'Stream error' });
+                }
                 break;
             }
           },
@@ -360,6 +419,19 @@ export function ChatProvider({ children }: ChatProviderProps) {
     [state.activeConversation]
   );
 
+  // Load chat context (mode, suggestions, welcome message)
+  const loadChatContext = useCallback(async (spaceId: string) => {
+    dispatch({ type: 'SET_LOADING_CONTEXT', payload: true });
+    try {
+      const context = await chatApi.getChatContext(spaceId);
+      dispatch({ type: 'SET_CONTEXT', payload: context });
+    } catch (error) {
+      console.error('Failed to load chat context:', error);
+      // Don't set error - context is enhancement, not critical
+      dispatch({ type: 'SET_LOADING_CONTEXT', payload: false });
+    }
+  }, []);
+
   const value: ChatContextValue = {
     ...state,
     openChat,
@@ -372,6 +444,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     loadConversation,
     deleteConversation,
     sendMessage,
+    loadChatContext,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

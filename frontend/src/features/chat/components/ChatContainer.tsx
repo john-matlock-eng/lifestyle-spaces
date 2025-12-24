@@ -5,7 +5,7 @@
  */
 
 import { useRef, useEffect } from 'react';
-import { X, MessageSquarePlus } from 'lucide-react';
+import { X, MessageSquarePlus, Users } from 'lucide-react';
 import { useChat } from '../useChat';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
@@ -27,6 +27,13 @@ export function ChatContainer({ spaceId, onClose }: ChatContainerProps) {
     error,
     startNewConversation,
     sendMessage,
+    loadChatContext,
+    // Mode-related state
+    chatMode,
+    authorName,
+    suggestions,
+    welcomeMessage,
+    isLoadingContext,
   } = useChat();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -35,6 +42,11 @@ export function ChatContainer({ spaceId, onClose }: ChatContainerProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeConversation?.messages, streamingContent]);
+
+  // Load chat context on mount
+  useEffect(() => {
+    loadChatContext(spaceId);
+  }, [spaceId, loadChatContext]);
 
   // Start a new conversation if none exists
   useEffect(() => {
@@ -48,7 +60,18 @@ export function ChatContainer({ spaceId, onClose }: ChatContainerProps) {
   };
 
   const messages = activeConversation?.messages || [];
-  const showSuggestions = messages.length === 0 && !isLoading;
+  const showSuggestions = messages.length === 0 && !isLoading && !isLoadingContext;
+
+  // Use dynamic welcome message or fallback
+  const displayWelcomeMessage =
+    welcomeMessage ||
+    "I can help you reflect on your journals, find patterns, and discover insights from your writing.";
+
+  // Determine subtitle based on mode
+  const subtitle =
+    chatMode === 'supporter' && authorName
+      ? `Supporting ${authorName}`
+      : 'Your journaling companion';
 
   return (
     <div className={styles.container}>
@@ -58,7 +81,10 @@ export function ChatContainer({ spaceId, onClose }: ChatContainerProps) {
           <div className={styles.headerAvatar}>E</div>
           <div>
             <h3 className={styles.headerTitle}>Ellie</h3>
-            <p className={styles.headerSubtitle}>Your journaling companion</p>
+            <p className={styles.headerSubtitle}>
+              {chatMode === 'supporter' && <Users size={12} className={styles.modeIcon} />}
+              {subtitle}
+            </p>
           </div>
         </div>
         <div className={styles.headerActions}>
@@ -77,6 +103,14 @@ export function ChatContainer({ spaceId, onClose }: ChatContainerProps) {
         </div>
       </div>
 
+      {/* Mode indicator for supporter mode */}
+      {chatMode === 'supporter' && authorName && (
+        <div className={styles.modeIndicator}>
+          <Users size={14} />
+          <span>Viewing {authorName}'s journals</span>
+        </div>
+      )}
+
       {/* Messages */}
       <div className={styles.messages}>
         {/* Welcome message */}
@@ -84,15 +118,12 @@ export function ChatContainer({ spaceId, onClose }: ChatContainerProps) {
           <div className={styles.welcome}>
             <div className={styles.welcomeAvatar}>E</div>
             <h4>Hi! I'm Ellie</h4>
-            <p>
-              I can help you reflect on your journals, find patterns, and discover insights
-              from your writing.
-            </p>
+            <p>{displayWelcomeMessage}</p>
           </div>
         )}
 
         {/* Suggestions for empty state */}
-        {showSuggestions && <ChatSuggestions onSelect={handleSend} />}
+        {showSuggestions && <ChatSuggestions suggestions={suggestions} onSelect={handleSend} />}
 
         {/* Message list */}
         {messages.map((message) => (

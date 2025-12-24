@@ -2,6 +2,15 @@
  * Chat Feature Types
  */
 
+// Chat mode based on user's relationship to journal content
+export type ChatMode = 'author' | 'supporter';
+
+export interface ModeData {
+  mode: ChatMode;
+  authorName?: string;
+  authorPercentage?: number;
+}
+
 export interface JournalCitation {
   journalId: string;
   title: string;
@@ -38,6 +47,13 @@ export interface ConversationListItem {
   updatedAt: string;
 }
 
+// Suggestion for conversation starters
+export interface Suggestion {
+  icon: string;
+  text: string;
+  category: string;
+}
+
 // API Types
 export interface SendMessageRequest {
   content: string;
@@ -45,11 +61,12 @@ export interface SendMessageRequest {
 }
 
 export interface StreamChunk {
-  type: 'model' | 'citations' | 'content' | 'done' | 'error';
-  data?: string | JournalCitation[];
+  type: 'mode' | 'model' | 'citations' | 'content' | 'done' | 'error';
+  data?: string | JournalCitation[] | ModeData;
   messageId?: string;
   modelUsed?: string;
   message?: string;
+  code?: string; // Error code for specific error handling
 }
 
 // UI State
@@ -63,4 +80,11 @@ export interface ChatState {
   error: string | null;
   isOpen: boolean;
   isExpanded: boolean; // For mobile bottom sheet
+  // Chat mode detection
+  chatMode: ChatMode | null;
+  authorName: string | null;
+  // Mode-aware suggestions
+  suggestions: Suggestion[];
+  welcomeMessage: string | null;
+  isLoadingContext: boolean;
 }

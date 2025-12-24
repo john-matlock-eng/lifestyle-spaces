@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.core.dependencies import get_current_user
-from app.models.chat import ChatConversation, ChatMessage
+from app.models.chat import ChatConversation, ChatMessage, ChatMode, ChatContext
 from app.services.exceptions import SpaceNotFoundError, UnauthorizedError
 
 
@@ -352,3 +352,241 @@ class TestChatAPIStreaming:
         )
 
         assert response.status_code == 404
+
+
+class TestChatAPIContext:
+    """Tests for GET /api/chat/spaces/{space_id}/context endpoint."""
+
+    @patch("app.api.routes.chat.SpaceService")
+    @patch("app.api.routes.chat.get_chat_service")
+    @patch("app.api.routes.chat.detect_chat_mode")
+    @patch("app.api.routes.chat.get_suggestions")
+    @patch("app.api.routes.chat.get_welcome_message")
+    def test_context_returns_author_mode_for_own_journals(
+        self,
+        mock_welcome,
+        mock_suggestions,
+        mock_detect,
+        mock_get_service,
+        mock_space_service_class,
+        client,
+    ):
+        """Returns author mode when user authored the journals."""
+        # Mock space service
+        mock_space_service = MagicMock()
+        mock_space_service.get_space.return_value = {"spaceId": "space-123"}
+        mock_space_service_class.return_value = mock_space_service
+
+        # Mock chat service
+        mock_service = MagicMock()
+        mock_service._search_relevant_journals = AsyncMock(
+            return_value=[
+                {"userId": "user-123", "journalId": "j1"},
+                {"userId": "user-123", "journalId": "j2"},
+            ]
+        )
+        mock_service.table = MagicMock()
+        mock_get_service.return_value = mock_service
+
+        # Mock mode detection
+        mock_detect.return_value = ChatContext(
+            mode=ChatMode.AUTHOR,
+            primary_author_id="user-123",
+            author_percentage=1.0,
+        )
+
+        # Mock suggestions
+        mock_suggestions.return_value = [
+            {"icon": "TrendingUp", "text": "What patterns?", "category": "patterns"},
+        ]
+
+        # Mock welcome message
+        mock_welcome.return_value = "Hi! Let's reflect on your journals."
+
+        response = client.get("/api/chat/spaces/space-123/context")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["mode"] == "author"
+        assert data["authorName"] is None
+        assert data["authorPercentage"] == 1.0
+        assert len(data["suggestions"]) == 1
+        assert data["welcomeMessage"] == "Hi! Let's reflect on your journals."
+
+    @patch("app.api.routes.chat.SpaceService")
+    @patch("app.api.routes.chat.get_chat_service")
+    @patch("app.api.routes.chat.detect_chat_mode")
+    @patch("app.api.routes.chat.get_author_display_name")
+    @patch("app.api.routes.chat.get_suggestions")
+    @patch("app.api.routes.chat.get_welcome_message")
+    def test_context_returns_supporter_mode_for_others_journals(
+        self,
+        mock_welcome,
+        mock_suggestions,
+        mock_author_name,
+        mock_detect,
+        mock_get_service,
+        mock_space_service_class,
+        client,
+    ):
+        """Returns supporter mode when viewing someone else's journals."""
+        # Mock space service
+        mock_space_service = MagicMock()
+        mock_space_service.get_space.return_value = {"spaceId": "space-123"}
+        mock_space_service_class.return_value = mock_space_service
+
+        # Mock chat service
+        mock_service = MagicMock()
+        mock_service._search_relevant_journals = AsyncMock(
+            return_value=[
+                {"userId": "author-456", "journalId": "j1"},
+                {"userId": "author-456", "journalId": "j2"},
+            ]
+        )
+        mock_service.table = MagicMock()
+        mock_get_service.return_value = mock_service
+
+        # Mock mode detection
+        mock_detect.return_value = ChatContext(
+            mode=ChatMode.SUPPORTER,
+            primary_author_id="author-456",
+            author_percentage=0.0,
+        )
+
+        # Mock author name lookup
+        mock_author_name.return_value = "Alex"
+
+        # Mock suggestions
+        mock_suggestions.return_value = [
+            {"icon": "Heart", "text": "How is Alex feeling?", "category": "emotions"},
+        ]
+
+        # Mock welcome message
+        mock_welcome.return_value = "Hi! I can help you understand Alex's journals."
+
+        response = client.get("/api/chat/spaces/space-123/context")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["mode"] == "supporter"
+        assert data["authorName"] == "Alex"
+        assert data["authorPercentage"] == 0.0
+        assert len(data["suggestions"]) == 1
+        assert "Alex" in data["welcomeMessage"]
+
+    @patch("app.api.routes.chat.SpaceService")
+    @patch("app.api.routes.chat.get_chat_service")
+    @patch("app.api.routes.chat.detect_chat_mode")
+    @patch("app.api.routes.chat.get_suggestions")
+    @patch("app.api.routes.chat.get_welcome_message")
+    def test_context_includes_welcome_message(
+        self,
+        mock_welcome,
+        mock_suggestions,
+        mock_detect,
+        mock_get_service,
+        mock_space_service_class,
+        client,
+    ):
+        """Response includes a welcome message."""
+        mock_space_service = MagicMock()
+        mock_space_service.get_space.return_value = {"spaceId": "space-123"}
+        mock_space_service_class.return_value = mock_space_service
+
+        mock_service = MagicMock()
+        mock_service._search_relevant_journals = AsyncMock(return_value=[])
+        mock_service.table = MagicMock()
+        mock_get_service.return_value = mock_service
+
+        mock_detect.return_value = ChatContext(
+            mode=ChatMode.AUTHOR,
+            author_percentage=1.0,
+        )
+        mock_suggestions.return_value = []
+        mock_welcome.return_value = "Welcome to Ellie!"
+
+        response = client.get("/api/chat/spaces/space-123/context")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "welcomeMessage" in data
+        assert len(data["welcomeMessage"]) > 0
+
+    def test_context_requires_authentication(self, client):
+        """Endpoint requires authentication."""
+        # Clear the auth override
+        app.dependency_overrides.clear()
+
+        response = client.get("/api/chat/spaces/space-123/context")
+
+        # Should return 401 without auth
+        assert response.status_code == 401
+
+        # Restore the override for other tests
+        app.dependency_overrides[get_current_user] = mock_get_current_user
+
+    @patch("app.api.routes.chat.SpaceService")
+    def test_context_validates_space_access(self, mock_space_service_class, client):
+        """Endpoint validates user has access to space."""
+        mock_space_service = MagicMock()
+        mock_space_service.get_space.side_effect = UnauthorizedError("Not a member")
+        mock_space_service_class.return_value = mock_space_service
+
+        response = client.get("/api/chat/spaces/space-123/context")
+
+        assert response.status_code == 403
+
+    @patch("app.api.routes.chat.SpaceService")
+    def test_context_handles_missing_space(self, mock_space_service_class, client):
+        """Returns 404 for non-existent space."""
+        mock_space_service = MagicMock()
+        mock_space_service.get_space.side_effect = SpaceNotFoundError("Space not found")
+        mock_space_service_class.return_value = mock_space_service
+
+        response = client.get("/api/chat/spaces/nonexistent/context")
+
+        assert response.status_code == 404
+
+    @patch("app.api.routes.chat.SpaceService")
+    @patch("app.api.routes.chat.get_chat_service")
+    @patch("app.api.routes.chat.detect_chat_mode")
+    @patch("app.api.routes.chat.get_suggestions")
+    @patch("app.api.routes.chat.get_welcome_message")
+    def test_context_suggestions_have_required_fields(
+        self,
+        mock_welcome,
+        mock_suggestions,
+        mock_detect,
+        mock_get_service,
+        mock_space_service_class,
+        client,
+    ):
+        """Suggestions in response have icon, text, and category."""
+        mock_space_service = MagicMock()
+        mock_space_service.get_space.return_value = {"spaceId": "space-123"}
+        mock_space_service_class.return_value = mock_space_service
+
+        mock_service = MagicMock()
+        mock_service._search_relevant_journals = AsyncMock(return_value=[])
+        mock_service.table = MagicMock()
+        mock_get_service.return_value = mock_service
+
+        mock_detect.return_value = ChatContext(
+            mode=ChatMode.AUTHOR,
+            author_percentage=1.0,
+        )
+        mock_suggestions.return_value = [
+            {"icon": "TrendingUp", "text": "What patterns?", "category": "patterns"},
+            {"icon": "Heart", "text": "What am I grateful for?", "category": "gratitude"},
+        ]
+        mock_welcome.return_value = "Welcome!"
+
+        response = client.get("/api/chat/spaces/space-123/context")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        for suggestion in data["suggestions"]:
+            assert "icon" in suggestion
+            assert "text" in suggestion
+            assert "category" in suggestion

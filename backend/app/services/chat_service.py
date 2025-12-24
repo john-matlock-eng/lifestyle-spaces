@@ -29,57 +29,21 @@ from app.models.chat import (
     JournalCitation,
     CreateChatConversationRequest,
     SendMessageRequest,
+    ChatMode,
+    ChatContext,
 )
 from app.services.journal_indexer import get_journal_indexer
+from app.services.chat_mode import detect_chat_mode, get_author_display_name
+from app.services.chat_prompts import get_system_prompt
+from app.services.search_scoring import get_recency_tier
 
 logger = logging.getLogger(__name__)
 
 
 # =============================================================================
-# SYSTEM PROMPT
+# SYSTEM PROMPT - Moved to chat_prompts.py
+# Mode-specific prompts (author/supporter) are now in chat_prompts.py
 # =============================================================================
-
-ELLIE_SYSTEM_PROMPT = """You are Ellie, a warm and insightful AI companion in the Lifestyle Spaces journaling app. You're represented as a friendly Shih Tzu who helps users reflect on their journal entries and personal growth.
-
-## Your Personality
-- Warm, supportive, and genuinely curious about the user's experiences
-- Thoughtful and reflective, helping users see patterns and insights
-- Encouraging without being saccharine or dismissive of real struggles
-- You speak naturally and conversationally
-
-## Your Capabilities
-- You have access to the user's journal entries in this space (provided in context)
-- You can reference specific journals to ground your responses
-- You help users notice patterns, growth, and areas for reflection
-- You ask thoughtful follow-up questions when appropriate
-
-## Response Formatting
-Use markdown to create beautiful, readable responses:
-- Use **bold** for emphasis on key insights or important phrases
-- Use *italics* for gentle emphasis, journal titles, or reflective questions
-- Use bullet points for lists of observations, patterns, or suggestions
-- Use `inline code` sparingly for specific terms or labels
-- Use > blockquotes when directly quoting from a journal entry
-- Keep paragraphs short (2-3 sentences) for easy reading
-- Use --- horizontal rules to separate distinct topics in longer responses
-- Never use headers (# ## ###) in responses - keep it conversational
-
-Example formatting:
-> "I felt really proud of myself today..."
-
-This is a beautiful moment of **self-recognition**! I notice this connects to a pattern in your recent entries...
-
-## Guidelines
-- When referencing a journal, mention it naturally (e.g., "In your entry about...")
-- Don't make up or assume journal content not provided in context
-- If asked about something not in the provided journals, say so honestly
-- Keep responses appropriately concise - quality over quantity
-- Respect emotional vulnerability - match the tone of the user's message
-
-## Citation Format
-When you reference a specific journal entry, include it naturally in your response. The system will automatically link citations based on the journals provided in context.
-
-Remember: You're a supportive companion, not a therapist. Encourage professional help for serious mental health concerns."""
 
 
 # =============================================================================
@@ -353,11 +317,21 @@ class ChatService:
     # =========================================================================
 
     async def _search_relevant_journals(
-        self, query: str, space_id: str, user_id: str, top_k: int = 5
+        self,
+        query: str,
+        space_id: str,
+        user_id: Optional[str] = None,
+        top_k: int = 5,
     ) -> List[Dict[str, Any]]:
         """Search for journal sections relevant to the query.
 
         Uses grouped search to get journals with their best matching sections.
+
+        Args:
+            query: Search query
+            space_id: Space to search within
+            user_id: Optional user filter. If None, searches all users' journals.
+            top_k: Number of results
         """
         try:
             results = await self.journal_indexer.search_space_grouped(
@@ -370,6 +344,49 @@ class ChatService:
         except Exception as e:
             logger.error(f"Journal search failed: {e}")
             return []
+
+    async def _detect_mode_and_get_prompt(
+        self,
+        search_results: List[Dict[str, Any]],
+        current_user_id: str,
+    ) -> Tuple[ChatContext, str]:
+        """
+        Detect chat mode and return appropriate system prompt.
+
+        Args:
+            search_results: Journal search results with author info
+            current_user_id: ID of the user sending the message
+
+        Returns:
+            Tuple of (ChatContext, system_prompt_string)
+        """
+        # Detect mode based on journal authorship
+        chat_context = detect_chat_mode(
+            current_user_id=current_user_id,
+            journals=search_results,
+        )
+
+        # Get author name if in supporter mode
+        if chat_context.mode == ChatMode.SUPPORTER and chat_context.primary_author_id:
+            author_name = await get_author_display_name(
+                chat_context.primary_author_id,
+                self.table,
+            )
+            # Update context with name
+            chat_context = ChatContext(
+                mode=chat_context.mode,
+                primary_author_id=chat_context.primary_author_id,
+                primary_author_name=author_name,
+                author_percentage=chat_context.author_percentage,
+            )
+
+        # Get appropriate system prompt
+        system_prompt = get_system_prompt(
+            mode=chat_context.mode,
+            author_name=chat_context.primary_author_name,
+        )
+
+        return chat_context, system_prompt
 
     async def _retrieve_journal_content(
         self, journal_ids: List[str], space_id: str
@@ -423,17 +440,20 @@ class ChatService:
     def _build_journal_context(
         self,
         search_results: List[Dict[str, Any]],
-        journals: List[Dict[str, Any]]
+        journals: List[Dict[str, Any]],
+        author_name: Optional[str] = None,
     ) -> Tuple[str, List[JournalCitation]]:
         """
         Build context string and citations from search results.
 
         Uses section-level excerpts for precise context.
+        Groups results by recency for better temporal awareness.
         Enhances context with AI-generated synopses when available.
 
         Args:
             search_results: Grouped search results with section info
             journals: Full journal content from DynamoDB (optional)
+            author_name: Name of journal author (for supporter mode attribution)
 
         Returns:
             Tuple of (context_string, citations_list)
@@ -450,19 +470,53 @@ class ChatService:
         context_parts = []
         citations = []
 
-        context_parts.append("## Relevant Journal Entries\n")
+        # Group results by recency tier
+        tiers: Dict[str, List[Dict[str, Any]]] = {
+            "this_week": [],
+            "this_month": [],
+            "recent": [],
+            "older": [],
+        }
 
-        for i, result in enumerate(search_results, 1):
+        for result in search_results:
+            tier = get_recency_tier(result.get("createdAt"))
+            if tier in tiers:
+                tiers[tier].append(result)
+            else:
+                tiers["older"].append(result)
+
+        # Build header with author attribution (critical for supporter mode)
+        author_attribution = ""
+        if author_name:
+            author_attribution = f" by {author_name}"
+            context_parts.append(
+                f"*Note: These are {author_name}'s journal entries. "
+                "They have shared these with you.*\n"
+            )
+
+        dates = [
+            r.get("createdAt", "")[:10]
+            for r in search_results
+            if r.get("createdAt")
+        ]
+        if dates:
+            date_range = f"from {min(dates)} to {max(dates)}"
+            context_parts.append(f"## Journal Entries{author_attribution} ({date_range})\n")
+        else:
+            context_parts.append(f"## Relevant Journal Entries{author_attribution}\n")
+
+        def format_result(result: Dict[str, Any], index: int) -> None:
+            """Format a single result and add to context/citations."""
             journal_id = result["journalId"]
             journal_title = result.get("journalTitle", "Untitled")
             created_at = result.get("createdAt", "")
             sections = result.get("sections", [])
 
-            context_parts.append(f"### [{i}] {journal_title}")
+            context_parts.append(f"### [{index}] {journal_title}")
             if created_at:
                 context_parts.append(f"*Date: {created_at[:10]}*\n")
 
-            # Add AI synopsis if available (provides quick context)
+            # Add AI synopsis if available
             full_journal = journal_lookup.get(journal_id, {})
             ai_metadata = full_journal.get("ai_metadata")
             if ai_metadata:
@@ -470,23 +524,26 @@ class ChatService:
                 if synopsis:
                     context_parts.append(f"*Summary: {synopsis}*\n")
 
-                # Optionally add themes for additional context
                 themes = ai_metadata.get("themes", [])
                 if themes:
                     context_parts.append(f"*Themes: {', '.join(themes[:5])}*\n")
 
             # Add each relevant section
-            for section in sections[:2]:  # Limit to top 2 sections per journal
+            for section in sections[:2]:
                 section_title = section.get("sectionTitle", "")
                 excerpt = section.get("excerpt", "")
 
                 if section_title:
                     context_parts.append(f"**{section_title}:**")
                 if excerpt:
-                    context_parts.append(excerpt)
+                    # Truncate long excerpts
+                    display_excerpt = (
+                        excerpt[:300] + "..." if len(excerpt) > 300 else excerpt
+                    )
+                    context_parts.append(display_excerpt)
                 context_parts.append("")
 
-                # Build citation for each section
+                # Build citation
                 citations.append(
                     JournalCitation(
                         journalId=journal_id,
@@ -502,6 +559,26 @@ class ChatService:
                         createdAt=created_at[:10] if created_at else None,
                     )
                 )
+
+        # Format each tier with label
+        tier_labels = {
+            "this_week": "This Week",
+            "this_month": "Earlier This Month",
+            "recent": "Past Few Months",
+            "older": "Older Entries",
+        }
+
+        index = 1
+        for tier_key in ["this_week", "this_month", "recent", "older"]:
+            tier_results = tiers[tier_key]
+            if not tier_results:
+                continue
+
+            context_parts.append(f"#### {tier_labels[tier_key]}\n")
+
+            for result in tier_results:
+                format_result(result, index)
+                index += 1
 
         return "\n".join(context_parts), citations
 
@@ -551,12 +628,13 @@ User message: {new_message}"""
         """
         Send a message and get AI response (non-streaming).
 
-        Full RAG flow:
-        1. Search relevant journals
-        2. Retrieve content
-        3. Build context
-        4. Call Claude
-        5. Return response with citations
+        Full RAG flow with mode detection:
+        1. Search relevant journals (all users in space)
+        2. Detect author/supporter mode
+        3. Retrieve content
+        4. Build context
+        5. Call Claude with mode-appropriate prompt
+        6. Return response with citations
         """
         # Get conversation
         conversation = await self.get_conversation(space_id, conversation_id)
@@ -568,36 +646,50 @@ User message: {new_message}"""
 
         user_message = request.content
 
-        # 1. Search relevant journals
+        # 1. Search relevant journals (ALL users in space for mode detection)
         search_results = await self._search_relevant_journals(
             query=user_message,
             space_id=space_id,
-            user_id=user_id,
+            user_id=None,  # Don't filter - get all journals for mode detection
             top_k=self.settings.chat_max_journal_results,
         )
 
-        # 2. Retrieve full journal content (optional, for fallback)
+        # 2. Detect mode and get appropriate prompt
+        chat_context, system_prompt = await self._detect_mode_and_get_prompt(
+            search_results=search_results,
+            current_user_id=user_id,
+        )
+
+        logger.info(
+            f"[CHAT] Mode: {chat_context.mode.value}, "
+            f"Author: {chat_context.primary_author_name or 'self'}"
+        )
+
+        # 3. Retrieve full journal content
         journal_ids = [r["journalId"] for r in search_results if r.get("journalId")]
         journals = await self._retrieve_journal_content(journal_ids, space_id)
 
-        # 3. Build context from section-level search results
+        # 4. Build context from section-level search results
+        # Pass author_name for supporter mode attribution in context
         journal_context, citations = self._build_journal_context(
-            search_results, journals
+            search_results,
+            journals,
+            author_name=chat_context.primary_author_name if chat_context.mode == ChatMode.SUPPORTER else None,
         )
 
-        # 4. Build messages
+        # 5. Build messages
         messages = self._build_messages_for_claude(
             conversation=conversation,
             new_message=user_message,
             journal_context=journal_context,
         )
 
-        # 5. Call Claude
+        # 6. Call Claude with mode-appropriate system prompt
         try:
             response = self.client.messages.create(
                 model=self.settings.anthropic_model,
                 max_tokens=self.settings.chat_max_response_tokens,
-                system=ELLIE_SYSTEM_PROMPT,
+                system=system_prompt,
                 messages=messages,
             )
 
@@ -607,7 +699,7 @@ User message: {new_message}"""
             logger.error(f"Claude API error: {e}")
             raise ValueError(f"AI service error: {e}")
 
-        # 6. Create message objects
+        # 7. Create message objects
         now = datetime.now(timezone.utc)
 
         user_msg = ChatMessage(
@@ -626,7 +718,7 @@ User message: {new_message}"""
             createdAt=now,
         )
 
-        # 7. Update conversation
+        # 8. Update conversation
         conversation.messages.append(user_msg)
         conversation.messages.append(assistant_msg)
 
@@ -652,6 +744,7 @@ User message: {new_message}"""
 
         Yields:
             JSON strings with streaming data:
+            - {"type": "mode", "data": {"mode": "author"|"supporter", ...}}
             - {"type": "citations", "data": [...]}
             - {"type": "content", "data": "text chunk"}
             - {"type": "done", "messageId": "..."}
@@ -664,29 +757,63 @@ User message: {new_message}"""
             return
 
         if conversation.user_id != user_id:
-            yield json.dumps({"type": "error", "message": "Not authorized"})
+            logger.warning(
+                f"[CHAT] Authorization mismatch: conversation {conversation_id} "
+                f"owned by {conversation.user_id[:8]}..., "
+                f"but accessed by {user_id[:8]}..."
+            )
+            yield json.dumps({
+                "type": "error",
+                "message": "This conversation belongs to another user",
+                "code": "CONVERSATION_OWNERSHIP_MISMATCH",
+            })
             return
 
         user_message = request.content
 
-        # 1. Search relevant journals
+        # 1. Search relevant journals (ALL users in space)
         search_results = await self._search_relevant_journals(
             query=user_message,
             space_id=space_id,
-            user_id=user_id,
+            user_id=None,  # Don't filter - get all journals for mode detection
             top_k=self.settings.chat_max_journal_results,
         )
 
-        # 2. Retrieve full journal content (optional, for fallback)
+        # 2. Detect mode and get appropriate prompt
+        chat_context, system_prompt = await self._detect_mode_and_get_prompt(
+            search_results=search_results,
+            current_user_id=user_id,
+        )
+
+        logger.info(
+            f"[CHAT] Mode detected: {chat_context.mode.value}, "
+            f"author_name: {chat_context.primary_author_name}, "
+            f"prompt_type: {'SUPPORTER' if 'speaking to someone who CARES' in system_prompt else 'AUTHOR'}"
+        )
+
+        # Yield mode information first
+        yield json.dumps({
+            "type": "mode",
+            "data": {
+                "mode": chat_context.mode.value,
+                "authorName": chat_context.primary_author_name,
+                "authorPercentage": chat_context.author_percentage,
+            }
+        })
+
+        # 3. Retrieve full journal content
         journal_ids = [r["journalId"] for r in search_results if r.get("journalId")]
         journals = await self._retrieve_journal_content(journal_ids, space_id)
 
-        # 3. Build context from section-level search results
+        # 4. Build context from section-level search results
+        # Pass author_name for supporter mode attribution in context
         journal_context, citations = self._build_journal_context(
-            search_results, journals
+            search_results,
+            journals,
+            author_name=chat_context.primary_author_name if chat_context.mode == ChatMode.SUPPORTER else None,
         )
 
-        # Yield citations first
+        # Yield citations
         yield json.dumps(
             {
                 "type": "citations",
@@ -694,14 +821,14 @@ User message: {new_message}"""
             }
         )
 
-        # 4. Build messages
+        # 5. Build messages
         messages = self._build_messages_for_claude(
             conversation=conversation,
             new_message=user_message,
             journal_context=journal_context,
         )
 
-        # 5. Stream from Claude
+        # 6. Stream from Claude with mode-appropriate prompt
         full_response = []
         message_id = str(uuid4())
 
@@ -709,7 +836,7 @@ User message: {new_message}"""
             with self.client.messages.stream(
                 model=self.settings.anthropic_model,
                 max_tokens=self.settings.chat_max_response_tokens,
-                system=ELLIE_SYSTEM_PROMPT,
+                system=system_prompt,
                 messages=messages,
             ) as stream:
                 for text in stream.text_stream:
@@ -718,7 +845,7 @@ User message: {new_message}"""
 
             assistant_content = "".join(full_response)
 
-            # 6. Save to conversation
+            # 7. Save to conversation
             now = datetime.now(timezone.utc)
 
             user_msg = ChatMessage(

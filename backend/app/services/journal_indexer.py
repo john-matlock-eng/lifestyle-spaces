@@ -17,6 +17,8 @@ from app.services.vector_store import (
 )
 from app.services.vector_store.base import SectionSearchResult
 from app.services.section_parser import get_section_parser, ParsedSection
+from app.services.search_scoring import apply_recency_boost
+from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -302,11 +304,23 @@ class JournalIndexer:
         top_k: int = 5
     ) -> List[dict]:
         """
-        Search and group results by journal.
+        Search and group results by journal, with recency boosting.
 
-        Returns top N journals with their best matching sections.
+        Returns top N journals with their best matching sections,
+        re-ranked by a hybrid score combining semantic similarity and recency.
+
+        Args:
+            query: Search query text
+            space_id: Space to search within
+            user_id: Optional user filter
+            top_k: Number of journals to return
+
+        Returns:
+            List of journal results with sections, sorted by hybrid score
         """
-        # Get more section results to ensure we have enough journals
+        settings = get_settings()
+
+        # Get more section results to ensure we have enough journals after grouping
         section_results = await self.search_space(
             query=query,
             space_id=space_id,
@@ -327,6 +341,7 @@ class JournalIndexer:
                     "topScore": result.score,
                     "sections": [],
                     "createdAt": result.metadata.get("createdAt"),
+                    "userId": result.metadata.get("userId"),
                 }
 
             journal_map[jid]["sections"].append({
@@ -336,14 +351,25 @@ class JournalIndexer:
                 "excerpt": result.excerpt,
             })
 
-        # Sort by top score and limit
+        # Convert to list and sort by semantic score first
         grouped = sorted(
             journal_map.values(),
             key=lambda x: x["topScore"],
             reverse=True
-        )[:top_k]
+        )
 
-        return grouped
+        # Apply recency boost to re-rank results
+        grouped = apply_recency_boost(
+            results=grouped,
+            semantic_weight=settings.search_semantic_weight,
+            recency_weight=settings.search_recency_weight,
+            max_age_days=settings.search_max_age_days,
+            score_field="topScore",
+            date_field="createdAt",
+        )
+
+        # Limit to requested number
+        return grouped[:top_k]
 
     async def delete_space_index(self, space_id: str) -> bool:
         """Delete ALL indexed data for a space."""

@@ -12,7 +12,18 @@ import type {
   JournalCitation,
   SendMessageRequest,
   StreamChunk,
+  ChatMode,
+  Suggestion,
 } from './types';
+
+// Response type for chat context
+export interface ChatContextResponse {
+  mode: ChatMode;
+  authorName: string | null;
+  authorPercentage: number;
+  suggestions: Suggestion[];
+  welcomeMessage: string;
+}
 
 const CHAT_BASE = '/api/chat';
 
@@ -56,6 +67,15 @@ export const chatApi = {
   async deleteConversation(spaceId: string, conversationId: string): Promise<void> {
     await apiService.delete(
       `${CHAT_BASE}/spaces/${spaceId}/conversations/${conversationId}`
+    );
+  },
+
+  /**
+   * Get chat context including mode and suggestions
+   */
+  async getChatContext(spaceId: string): Promise<ChatContextResponse> {
+    return apiService.get<ChatContextResponse>(
+      `${CHAT_BASE}/spaces/${spaceId}/context`
     );
   },
 

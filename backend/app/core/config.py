@@ -159,6 +159,20 @@ class Settings(BaseSettings):
         description="Max journals to include in context",
     )
 
+    # Search scoring configuration
+    search_semantic_weight: float = Field(
+        default=0.7,
+        description="Weight for semantic similarity in hybrid search scoring (0-1)",
+    )
+    search_recency_weight: float = Field(
+        default=0.3,
+        description="Weight for recency in hybrid search scoring (0-1)",
+    )
+    search_max_age_days: int = Field(
+        default=365,
+        description="Maximum age in days for recency scoring (older entries get 0 recency)",
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env.test" if os.getenv("PYTEST_CURRENT_TEST") else ".env",
         env_file_encoding="utf-8",
