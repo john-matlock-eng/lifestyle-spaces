@@ -16,6 +16,7 @@ from app.models.common import SuccessResponse
 from pydantic import BaseModel
 from app.services.journal import JournalService, JournalNotFoundError
 from app.services.exceptions import SpaceNotFoundError, UnauthorizedError, ValidationError
+from app.services.section_parser import get_section_parser
 from app.core.dependencies import get_current_user
 import logging
 
@@ -357,14 +358,14 @@ def extract_sections_from_content(content: dict) -> list:
     """
     Extract sections from TipTap JSON content.
 
-    Sections are typically defined by heading nodes followed by content.
+    Handles two formats:
+    1. Single TipTap doc with headings (type: "doc" with content array)
+    2. Template section dict (keys like 'gratitude', 'reflection' with TipTap docs)
+
     Falls back to treating entire content as single section.
     """
     if not content or not isinstance(content, dict):
         return [{"title": "", "content": ""}]
-
-    sections = []
-    current_section = {"title": "", "content": ""}
 
     def extract_text(node: dict) -> str:
         """Recursively extract text from TipTap node."""
@@ -378,6 +379,89 @@ def extract_sections_from_content(content: dict) -> list:
             if isinstance(child, dict):
                 texts.append(extract_text(child))
         return " ".join(filter(None, texts))
+
+    def is_section_dict(c: dict) -> bool:
+        """Check if content is a dict of section TipTap docs (template format)."""
+        section_keys = [k for k in c.keys() if k != 'content' and k != 'type']
+        for key in section_keys:
+            value = c.get(key)
+            if isinstance(value, dict) and value.get('type') == 'doc':
+                return True
+        return False
+
+    # Section key display name mapping
+    SECTION_KEY_MAP = {
+        'raw_thoughts': 'Express',
+        'deep_dive': 'Examine',
+        'action_plan': 'Evolve',
+        'gratitude': 'Gratitude',
+        'reflection': 'Reflection',
+        'scene': 'The Scene',
+        'reaction': 'My Reaction',
+        'takeaway': 'The Takeaway',
+        'review': 'Review',
+        'lead_measures': 'Lead Measures',
+        'commitments': 'Commitments',
+        'identity': 'Identity',
+        'values': 'Values',
+        'mission': 'Mission',
+        'acknowledge': 'Acknowledge',
+        'understand': 'Understand',
+        'recommit': 'Recommit',
+        'focus_areas': 'Focus Areas',
+        'outcomes': 'Outcomes',
+    }
+
+    # Preferred section order
+    SECTION_ORDER = [
+        'raw_thoughts', 'deep_dive', 'action_plan',
+        'scene', 'reaction', 'takeaway',
+        'gratitude', 'reflection',
+        'identity', 'values', 'mission', 'commitments',
+        'review', 'lead_measures',
+        'acknowledge', 'understand', 'recommit',
+        'focus_areas', 'outcomes',
+    ]
+
+    # Check if it's a template section dict format
+    if is_section_dict(content):
+        sections = []
+        processed_keys = set()
+        keys_to_process = []
+
+        # Process keys in preferred order
+        for key in SECTION_ORDER:
+            if key in content:
+                keys_to_process.append(key)
+                processed_keys.add(key)
+
+        # Add any remaining keys not in the order list
+        for key in content.keys():
+            if key not in processed_keys and key not in ('content', 'type'):
+                keys_to_process.append(key)
+
+        for key in keys_to_process:
+            value = content.get(key)
+            if value is None:
+                continue
+
+            display_title = SECTION_KEY_MAP.get(key, key.replace('_', ' ').title())
+            text = ""
+
+            if isinstance(value, dict) and value.get('type') == 'doc':
+                text = extract_text(value)
+            elif isinstance(value, str):
+                text = value
+
+            if text:
+                sections.append({"title": display_title, "content": text.strip()})
+
+        if sections:
+            return sections
+
+    # Fall back to heading-based parsing for single TipTap doc
+    sections = []
+    current_section = {"title": "", "content": ""}
 
     def process_node(node: dict):
         nonlocal current_section
@@ -454,6 +538,8 @@ async def get_journal_section(
         )
 
         # Extract sections from TipTap content
+        # Uses extract_sections_from_content which handles both heading-based
+        # and template section dict formats without minimum length filtering
         content_tiptap = journal.get("content_tiptap") or journal.get("content", {})
         sections = extract_sections_from_content(content_tiptap)
 

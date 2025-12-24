@@ -252,6 +252,105 @@ class TestExtractSectionsFromContent:
         assert result[2]["title"] == "Evening Notes"
         assert "productive day" in result[2]["content"]
 
+    def test_template_section_dict_format(self):
+        """Should correctly extract sections from template section dict format."""
+        content = {
+            "gratitude": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [{"type": "text", "text": "I am grateful for my family."}],
+                    },
+                ],
+            },
+            "reflection": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [{"type": "text", "text": "Today I learned patience."}],
+                    },
+                ],
+            },
+        }
+
+        result = extract_sections_from_content(content)
+
+        assert len(result) == 2
+        # Check that sections are in the expected order (gratitude before reflection)
+        assert result[0]["title"] == "Gratitude"
+        assert "grateful for my family" in result[0]["content"]
+        assert result[1]["title"] == "Reflection"
+        assert "learned patience" in result[1]["content"]
+
+    def test_template_section_dict_with_three_e_format(self):
+        """Should correctly extract sections from Express/Examine/Evolve format."""
+        content = {
+            "raw_thoughts": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [{"type": "text", "text": "My raw thoughts about the day."}],
+                    },
+                ],
+            },
+            "deep_dive": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [{"type": "text", "text": "Looking deeper at my feelings."}],
+                    },
+                ],
+            },
+            "action_plan": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [{"type": "text", "text": "What I will do tomorrow."}],
+                    },
+                ],
+            },
+        }
+
+        result = extract_sections_from_content(content)
+
+        assert len(result) == 3
+        # Check proper display names
+        assert result[0]["title"] == "Express"
+        assert "raw thoughts" in result[0]["content"]
+        assert result[1]["title"] == "Examine"
+        assert "deeper at my feelings" in result[1]["content"]
+        assert result[2]["title"] == "Evolve"
+        assert "do tomorrow" in result[2]["content"]
+
+    def test_template_section_dict_with_empty_section(self):
+        """Should skip sections with no content."""
+        content = {
+            "gratitude": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [{"type": "text", "text": "I am grateful."}],
+                    },
+                ],
+            },
+            "reflection": {
+                "type": "doc",
+                "content": [],  # Empty section
+            },
+        }
+
+        result = extract_sections_from_content(content)
+
+        # Should only have the gratitude section
+        assert len(result) == 1
+        assert result[0]["title"] == "Gratitude"
+
 
 class TestGetJournalSectionEndpoint:
     """Integration tests for GET /journals/{id}/sections/{index} endpoint."""
