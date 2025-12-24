@@ -452,6 +452,33 @@
   color: var(--theme-primary-400);
 }
 
+.citationFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.citationViewLink {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  color: var(--theme-primary-500);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.citationCard:hover .citationViewLink,
+.citationCard:focus .citationViewLink {
+  opacity: 1;
+}
+
+.citationCard:focus {
+  outline: 2px solid var(--theme-primary-500);
+  outline-offset: 2px;
+}
+
 /* Suggestions */
 .suggestions {
   padding: 1rem;

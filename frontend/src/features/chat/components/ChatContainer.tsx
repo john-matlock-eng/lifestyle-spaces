@@ -127,7 +127,7 @@ export function ChatContainer({ spaceId, onClose }: ChatContainerProps) {
 
         {/* Message list */}
         {messages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
+          <ChatMessage key={message.id} message={message} spaceId={spaceId} />
         ))}
 
         {/* Streaming message */}
@@ -140,6 +140,7 @@ export function ChatContainer({ spaceId, onClose }: ChatContainerProps) {
               citations: streamingCitations,
               createdAt: new Date().toISOString(),
             }}
+            spaceId={spaceId}
             isStreaming
             streamingContent={streamingContent}
           />
