@@ -30,6 +30,18 @@ interface RichTextEditorProps {
 }
 
 /**
+ * Validate that content is a proper TipTap document
+ */
+const isValidTipTapDoc = (content: unknown): content is Record<string, unknown> => {
+  return (
+    content !== null &&
+    typeof content === 'object' &&
+    'type' in content &&
+    (content as Record<string, unknown>).type === 'doc'
+  )
+}
+
+/**
  * Rich text editor component using TipTap
  */
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({
@@ -45,9 +57,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   enableHighlights = true,
   onHighlightCreate
 }) => {
+  // Validate initialContentJson to prevent schema errors
+  const validInitialContent = isValidTipTapDoc(initialContentJson) ? initialContentJson : undefined
+
   const editor = useEditor({
     extensions: getEditorExtensions(placeholder, enableHighlights),
-    content: initialContentJson || content,
+    content: validInitialContent || content,
     editable: !disabled,
     onCreate: ({ editor }) => {
       // Initialize TipTap JSON on editor creation

@@ -95,6 +95,18 @@ const createHighlightDecorationPlugin = (
 }
 
 /**
+ * Validate that content is a proper TipTap document
+ */
+const isValidTipTapDoc = (content: unknown): content is Record<string, unknown> => {
+  return (
+    content !== null &&
+    typeof content === 'object' &&
+    'type' in content &&
+    (content as Record<string, unknown>).type === 'doc'
+  )
+}
+
+/**
  * Read-only TipTap viewer for journals with native TipTap highlighting
  */
 export const TipTapViewer: React.FC<TipTapViewerProps> = ({
@@ -105,9 +117,12 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
   onContentChange,
   minHeight = '300px',
 }) => {
+  // Ensure we have valid TipTap content to prevent schema errors
+  const validContent = isValidTipTapDoc(contentTiptap) ? contentTiptap : undefined
+
   const editor = useEditor({
     extensions: getEditorExtensions('', true),
-    content: contentTiptap,
+    content: validContent,
     editable: false, // Read-only by default
     editorProps: {
       attributes: {
@@ -118,7 +133,7 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
 
   // Update editor content when prop changes
   useEffect(() => {
-    if (editor && contentTiptap) {
+    if (editor && contentTiptap && isValidTipTapDoc(contentTiptap)) {
       const currentContent = editor.getJSON()
       if (JSON.stringify(currentContent) !== JSON.stringify(contentTiptap)) {
         editor.commands.setContent(contentTiptap)
