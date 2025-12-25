@@ -33,12 +33,19 @@ interface RichTextEditorProps {
  * Validate that content is a proper TipTap document
  */
 const isValidTipTapDoc = (content: unknown): content is Record<string, unknown> => {
-  return (
-    content !== null &&
-    typeof content === 'object' &&
-    'type' in content &&
-    (content as Record<string, unknown>).type === 'doc'
-  )
+  if (!content || typeof content !== 'object') {
+    console.warn('[RichTextEditor] Invalid content: not an object', { content, type: typeof content })
+    return false
+  }
+
+  // Check for type: 'doc' property
+  const hasType = 'type' in content && (content as Record<string, unknown>).type === 'doc'
+  if (!hasType) {
+    console.warn('[RichTextEditor] Invalid content: missing type=doc', { content, keys: Object.keys(content as object) })
+    return false
+  }
+
+  return true
 }
 
 /**
@@ -57,8 +64,19 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   enableHighlights = true,
   onHighlightCreate
 }) => {
+  // Log what we receive
+  console.log('[RichTextEditor] Received initialContentJson:', {
+    exists: !!initialContentJson,
+    type: typeof initialContentJson,
+    isNull: initialContentJson === null,
+    keys: initialContentJson && typeof initialContentJson === 'object' ? Object.keys(initialContentJson) : 'N/A',
+    hasTypeDoc: initialContentJson && typeof initialContentJson === 'object' && 'type' in initialContentJson && (initialContentJson as Record<string, unknown>).type === 'doc',
+    contentProp: content ? content.substring(0, 100) : 'empty'
+  })
+
   // Validate initialContentJson to prevent schema errors
   const validInitialContent = isValidTipTapDoc(initialContentJson) ? initialContentJson : undefined
+  console.log('[RichTextEditor] Valid content result:', !!validInitialContent, 'Will use content string:', !validInitialContent && !!content)
 
   const editor = useEditor({
     extensions: getEditorExtensions(placeholder, enableHighlights),

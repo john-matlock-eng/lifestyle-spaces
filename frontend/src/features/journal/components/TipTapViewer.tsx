@@ -98,12 +98,19 @@ const createHighlightDecorationPlugin = (
  * Validate that content is a proper TipTap document
  */
 const isValidTipTapDoc = (content: unknown): content is Record<string, unknown> => {
-  return (
-    content !== null &&
-    typeof content === 'object' &&
-    'type' in content &&
-    (content as Record<string, unknown>).type === 'doc'
-  )
+  if (!content || typeof content !== 'object') {
+    console.warn('[TipTapViewer] Invalid content: not an object', { content, type: typeof content })
+    return false
+  }
+
+  // Check for type: 'doc' property
+  const hasType = 'type' in content && (content as Record<string, unknown>).type === 'doc'
+  if (!hasType) {
+    console.warn('[TipTapViewer] Invalid content: missing type=doc', { content, keys: Object.keys(content as object) })
+    return false
+  }
+
+  return true
 }
 
 /**
@@ -117,8 +124,18 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
   onContentChange,
   minHeight = '300px',
 }) => {
+  // Log what we receive
+  console.log('[TipTapViewer] Received contentTiptap:', {
+    exists: !!contentTiptap,
+    type: typeof contentTiptap,
+    isNull: contentTiptap === null,
+    keys: contentTiptap && typeof contentTiptap === 'object' ? Object.keys(contentTiptap) : 'N/A',
+    hasTypeDoc: contentTiptap && typeof contentTiptap === 'object' && 'type' in contentTiptap && (contentTiptap as Record<string, unknown>).type === 'doc'
+  })
+
   // Ensure we have valid TipTap content to prevent schema errors
   const validContent = isValidTipTapDoc(contentTiptap) ? contentTiptap : undefined
+  console.log('[TipTapViewer] Valid content result:', !!validContent)
 
   const editor = useEditor({
     extensions: getEditorExtensions('', true),
