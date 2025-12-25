@@ -117,7 +117,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, [editor, onTipTapChange])
 
-  // Update editor content when prop changes
+  // Update editor content when string content prop changes
   useEffect(() => {
     if (editor && content !== undefined) {
       // @ts-expect-error - markdown storage is added by tiptap-markdown extension
@@ -127,6 +127,18 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       }
     }
   }, [content, editor])
+
+  // Update editor content when initialContentJson prop changes (handles race condition with setAllSections)
+  useEffect(() => {
+    if (editor && initialContentJson && isValidTipTapDoc(initialContentJson)) {
+      const currentContent = editor.getJSON()
+      // Only update if the content has actually changed
+      if (JSON.stringify(currentContent) !== JSON.stringify(initialContentJson)) {
+        console.log('[RichTextEditor] Updating editor with new initialContentJson')
+        editor.commands.setContent(initialContentJson)
+      }
+    }
+  }, [editor, initialContentJson])
 
   // Update editable state when disabled prop changes
   useEffect(() => {
