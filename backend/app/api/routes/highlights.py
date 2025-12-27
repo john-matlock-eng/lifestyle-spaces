@@ -11,6 +11,7 @@ from app.models.highlight import (
     CreateHighlightRequest,
     UpdateHighlightRequest,
     CreateCommentRequest,
+    UpdateCommentRequest,
 )
 from app.services.highlight_service import HighlightService, CommentService
 from app.core.dependencies import get_current_user
@@ -267,7 +268,7 @@ async def get_comments(
 async def update_comment(
     space_id: str,
     comment_id: str,
-    new_text: str,
+    request: UpdateCommentRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """Update a comment. Only the author can update their own comments."""
@@ -287,7 +288,7 @@ async def update_comment(
         space_id=space_id,
         comment_id=comment_id,
         user_id=user_id,
-        new_text=new_text,
+        new_text=request.text,
     )
 
     if not comment:

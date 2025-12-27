@@ -20,9 +20,12 @@
  * Renders inline within the page layout (not as a portal).
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { Highlight, Comment } from '../types/highlight.types';
 import { HIGHLIGHT_COLORS } from '../types/highlight.types';
+import { getInitials, getAvatarColor } from '../../../utils/initials';
+import { EmojiPicker } from '../../../components/EmojiPicker';
+import { useEmojiInput } from '../../../hooks/useEmojiInput';
 
 interface CommentThreadProps {
   highlight: Highlight;
@@ -30,32 +33,13 @@ interface CommentThreadProps {
   spaceMembers: Array<{ id: string; name: string }>;
   currentUserId: string;
   onAddComment: (text: string, parentId?: string) => void;
+  onEditComment?: (commentId: string, newText: string) => Promise<Comment | void>;
   onDeleteComment: (commentId: string) => void;
   onClose: () => void;
   // Navigation between highlights
   allHighlights?: Highlight[];
   onNavigateHighlight?: (highlight: Highlight) => void;
 }
-
-// Generate consistent color for user based on their ID (using theme colors)
-const getUserColor = (userId: string): string => {
-  const colors = [
-    '#14b8a6', // theme teal (primary-500)
-    '#a855f7', // theme purple (secondary-500)
-    '#ec4899', // theme pink (accent-500)
-    '#10b981', // theme green (status-success)
-    '#0ea5e9', // theme blue (status-info)
-    '#f59e0b', // theme yellow (status-warning)
-    '#0d9488', // theme teal dark (primary-600)
-    '#9333ea', // theme purple dark (secondary-600)
-  ];
-
-  let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    hash = userId.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-};
 
 // Format timestamp smartly (just now, 5m ago, 2h ago, etc.) - Timezone agnostic
 const formatTimestamp = (isoString: string): string => {
@@ -118,6 +102,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   spaceMembers,
   currentUserId,
   onAddComment,
+  onEditComment,
   onDeleteComment,
   onClose,
   allHighlights = [],
@@ -129,8 +114,74 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   const [mentionSearch, setMentionSearch] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [, setTimestampTick] = useState(0); // Forces re-render to update timestamps
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Emoji input handling for new comments
+  const handleInsertEmoji = useCallback((emoji: string) => {
+    setCommentText((prev) => prev + emoji);
+    textareaRef.current?.focus();
+  }, []);
+
+  const {
+    isPickerOpen,
+    openPicker,
+    closePicker,
+    handleKeyDown: handleEmojiKeyDown,
+    convertShortcodes,
+    insertEmoji,
+    pickerPosition,
+    setPickerPosition,
+  } = useEmojiInput({ onInsertEmoji: handleInsertEmoji });
+
+  // Emoji input handling for edit mode
+  const handleInsertEditEmoji = useCallback((emoji: string) => {
+    setEditText((prev) => prev + emoji);
+    editTextareaRef.current?.focus();
+  }, []);
+
+  const {
+    isPickerOpen: isEditPickerOpen,
+    openPicker: openEditPicker,
+    closePicker: closeEditPicker,
+    convertShortcodes: convertEditShortcodes,
+    insertEmoji: insertEditEmoji,
+    pickerPosition: editPickerPosition,
+    setPickerPosition: setEditPickerPosition,
+  } = useEmojiInput({ onInsertEmoji: handleInsertEditEmoji });
+
+  // Edit handlers
+  const handleStartEdit = useCallback((comment: Comment) => {
+    setEditingCommentId(comment.id);
+    setEditText(comment.text);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingCommentId(null);
+    setEditText('');
+  }, []);
+
+  const handleSaveEdit = useCallback(async (commentId: string, originalText: string) => {
+    if (!onEditComment || !editText.trim() || editText === originalText) {
+      handleCancelEdit();
+      return;
+    }
+
+    setIsEditSubmitting(true);
+    try {
+      await onEditComment(commentId, editText.trim());
+      setEditingCommentId(null);
+      setEditText('');
+    } catch (error) {
+      console.error('Failed to edit comment:', error);
+    } finally {
+      setIsEditSubmitting(false);
+    }
+  }, [editText, onEditComment, handleCancelEdit]);
 
   // Update timestamps every 30 seconds
   useEffect(() => {
@@ -169,9 +220,12 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
     }
   }, [commentText]);
 
-  // Handle @mention detection
+  // Handle @mention detection and emoji shortcode conversion
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const text = e.target.value;
+    let text = e.target.value;
+
+    // Convert emoji shortcodes
+    text = convertShortcodes(text);
     setCommentText(text);
 
     // Check for @ symbol at cursor position
@@ -190,6 +244,13 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
 
     setShowMentions(false);
     setMentionSearch('');
+  };
+
+  // Handle edit textarea change with emoji shortcode conversion
+  const handleEditTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    let text = e.target.value;
+    text = convertEditShortcodes(text);
+    setEditText(text);
   };
 
   // Handle mention selection
@@ -253,7 +314,9 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   const renderComment = (comment: Comment, depth: number = 0) => {
     const isAuthor = comment.author === currentUserId;
     const replies = getReplies(comment.id);
-    const userColor = getUserColor(comment.author);
+    const userColor = getAvatarColor(comment.author);
+    const initials = getInitials(comment.authorName);
+    const isEditing = editingCommentId === comment.id;
 
     return (
       <div
@@ -276,12 +339,13 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: 'white',
-                fontSize: '14px',
+                fontSize: initials.length > 1 ? '11px' : '14px',
                 fontWeight: '600',
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
               }}
+              title={comment.authorName}
             >
-              {comment.authorName.charAt(0).toUpperCase()}
+              {initials}
             </div>
           </div>
 
@@ -342,57 +406,146 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                   </span>
                 )}
               </div>
-              <p
-                style={{
-                  fontSize: '14px',
-                  color: isDarkMode ? '#e2e8f0' : 'var(--theme-text-primary)',
-                  lineHeight: '1.6',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  margin: 0,
-                }}
-              >
-                {highlightMentions(comment.text, isDarkMode)}
-              </p>
+              {/* Comment text or edit mode */}
+              {isEditing ? (
+                <div style={{ marginTop: '8px', position: 'relative' }}>
+                  <textarea
+                    ref={editTextareaRef}
+                    value={editText}
+                    onChange={handleEditTextChange}
+                    disabled={isEditSubmitting}
+                    autoFocus
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      backgroundColor: isDarkMode ? '#0f172a' : 'var(--theme-bg-base)',
+                      border: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.3)' : 'var(--theme-border-light)'}`,
+                      borderRadius: '8px',
+                      color: isDarkMode ? '#e2e8f0' : 'var(--theme-text-primary)',
+                      fontSize: '14px',
+                      lineHeight: '1.5',
+                      resize: 'vertical',
+                      minHeight: '60px',
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = isDarkMode ? '#6366f1' : 'var(--theme-primary-500)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = isDarkMode ? 'rgba(148, 163, 184, 0.3)' : 'var(--theme-border-light)';
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        handleCancelEdit();
+                      }
+                    }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                    <button
+                      onClick={() => {
+                        if (editTextareaRef.current) {
+                          const rect = editTextareaRef.current.getBoundingClientRect();
+                          setEditPickerPosition({ top: rect.bottom + 5, left: rect.left });
+                        }
+                        openEditPicker();
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: isDarkMode ? '#94a3b8' : 'var(--theme-text-secondary)',
+                        cursor: 'pointer',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '16px',
+                        transition: 'all 0.15s ease',
+                      }}
+                      title="Add emoji (type : for shortcodes)"
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      😊
+                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={handleCancelEdit}
+                        disabled={isEditSubmitting}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          background: 'transparent',
+                          border: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.3)' : 'var(--theme-border-light)'}`,
+                          color: isDarkMode ? '#94a3b8' : 'var(--theme-text-secondary)',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleSaveEdit(comment.id, comment.text)}
+                        disabled={isEditSubmitting || !editText.trim()}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          background: isDarkMode ? '#6366f1' : 'var(--theme-primary-500)',
+                          border: 'none',
+                          color: 'white',
+                          opacity: isEditSubmitting || !editText.trim() ? 0.5 : 1,
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {isEditSubmitting ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                  <EmojiPicker
+                    isOpen={isEditPickerOpen}
+                    onClose={closeEditPicker}
+                    onSelect={insertEditEmoji}
+                    position={editPickerPosition}
+                  />
+                </div>
+              ) : (
+                <p
+                  style={{
+                    fontSize: '14px',
+                    color: isDarkMode ? '#e2e8f0' : 'var(--theme-text-primary)',
+                    lineHeight: '1.6',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    margin: 0,
+                    textAlign: 'left',
+                  }}
+                >
+                  {highlightMentions(comment.text, isDarkMode)}
+                </p>
+              )}
             </div>
 
             {/* Comment actions - Dark mode compatible */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '16px',
-                marginTop: '12px',
-                marginLeft: '8px',
-              }}
-            >
-              <button
+            {!isEditing && (
+              <div
                 style={{
-                  fontSize: '13px',
-                  color: isDarkMode ? '#60a5fa' : 'var(--theme-primary-600)',
-                  fontWeight: '600',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '0',
-                  transition: 'all 0.15s ease',
-                }}
-                onClick={() => setReplyToId(comment.id)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.textDecoration = 'underline';
-                  e.currentTarget.style.color = isDarkMode ? '#93c5fd' : 'var(--theme-primary-700)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.textDecoration = 'none';
-                  e.currentTarget.style.color = isDarkMode ? '#60a5fa' : 'var(--theme-primary-600)';
+                  display: 'flex',
+                  gap: '16px',
+                  marginTop: '12px',
+                  marginLeft: '8px',
                 }}
               >
-                Reply
-              </button>
-              {isAuthor && (
                 <button
                   style={{
                     fontSize: '13px',
-                    color: isDarkMode ? '#f87171' : 'var(--theme-error-600)',
+                    color: isDarkMode ? '#60a5fa' : 'var(--theme-primary-600)',
                     fontWeight: '600',
                     background: 'none',
                     border: 'none',
@@ -400,20 +553,70 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                     padding: '0',
                     transition: 'all 0.15s ease',
                   }}
-                  onClick={() => onDeleteComment(comment.id)}
+                  onClick={() => setReplyToId(comment.id)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.textDecoration = 'underline';
-                    e.currentTarget.style.color = isDarkMode ? '#fca5a5' : 'var(--theme-error-700)';
+                    e.currentTarget.style.color = isDarkMode ? '#93c5fd' : 'var(--theme-primary-700)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.textDecoration = 'none';
-                    e.currentTarget.style.color = isDarkMode ? '#f87171' : 'var(--theme-error-600)';
+                    e.currentTarget.style.color = isDarkMode ? '#60a5fa' : 'var(--theme-primary-600)';
                   }}
                 >
-                  Delete
+                  Reply
                 </button>
-              )}
-            </div>
+                {isAuthor && onEditComment && (
+                  <button
+                    style={{
+                      fontSize: '13px',
+                      color: isDarkMode ? '#a78bfa' : 'var(--theme-secondary-600)',
+                      fontWeight: '600',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '0',
+                      transition: 'all 0.15s ease',
+                    }}
+                    onClick={() => handleStartEdit(comment)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.textDecoration = 'underline';
+                      e.currentTarget.style.color = isDarkMode ? '#c4b5fd' : 'var(--theme-secondary-700)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.textDecoration = 'none';
+                      e.currentTarget.style.color = isDarkMode ? '#a78bfa' : 'var(--theme-secondary-600)';
+                    }}
+                  >
+                    Edit
+                  </button>
+                )}
+                {isAuthor && (
+                  <button
+                    style={{
+                      fontSize: '13px',
+                      color: isDarkMode ? '#f87171' : 'var(--theme-error-600)',
+                      fontWeight: '600',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '0',
+                      transition: 'all 0.15s ease',
+                    }}
+                    onClick={() => onDeleteComment(comment.id)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.textDecoration = 'underline';
+                      e.currentTarget.style.color = isDarkMode ? '#fca5a5' : 'var(--theme-error-700)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.textDecoration = 'none';
+                      e.currentTarget.style.color = isDarkMode ? '#f87171' : 'var(--theme-error-600)';
+                    }}
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -767,16 +970,16 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                     width: '24px',
                     height: '24px',
                     borderRadius: '50%',
-                    background: `linear-gradient(135deg, ${getUserColor(member.id)} 0%, ${getUserColor(member.id)}dd 100%)`,
+                    background: `linear-gradient(135deg, ${getAvatarColor(member.id)} 0%, ${getAvatarColor(member.id)}dd 100%)`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'white',
-                    fontSize: '11px',
+                    fontSize: getInitials(member.name).length > 1 ? '9px' : '11px',
                     fontWeight: '600',
                   }}
                 >
-                  {member.name.charAt(0).toUpperCase()}
+                  {getInitials(member.name)}
                 </div>
                 {member.name}
               </button>
@@ -807,6 +1010,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           }}
           rows={1}
           onKeyDown={(e) => {
+            handleEmojiKeyDown(e);
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
               handleSubmit();
@@ -827,38 +1031,78 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
         <div
           style={{
             display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '8px',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             marginTop: '12px',
           }}
         >
+          {/* Emoji button */}
           <button
             onClick={() => {
-              setCommentText('');
-              setReplyToId(null);
+              if (textareaRef.current) {
+                const rect = textareaRef.current.getBoundingClientRect();
+                setPickerPosition({ top: rect.top - 410, left: rect.left });
+              }
+              openPicker();
             }}
-            className="button-secondary"
             style={{
-              padding: '8px 16px',
-              fontSize: '13px',
-              fontWeight: '500',
+              background: 'transparent',
+              border: 'none',
+              color: isDarkMode ? '#94a3b8' : 'var(--theme-text-secondary)',
+              cursor: 'pointer',
+              padding: '8px 12px',
+              borderRadius: '6px',
+              fontSize: '18px',
+              transition: 'all 0.15s ease',
+            }}
+            title="Add emoji (type :shortcode: for quick emoji)"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            Clear
+            😊
           </button>
-          <button
-            onClick={handleSubmit}
-            disabled={!commentText.trim()}
-            className="button-primary"
-            style={{
-              padding: '8px 20px',
-              fontSize: '13px',
-              fontWeight: '600',
-            }}
-          >
-            Post Comment
-          </button>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => {
+                setCommentText('');
+                setReplyToId(null);
+              }}
+              className="button-secondary"
+              style={{
+                padding: '8px 16px',
+                fontSize: '13px',
+                fontWeight: '500',
+              }}
+            >
+              Clear
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!commentText.trim()}
+              className="button-primary"
+              style={{
+                padding: '8px 20px',
+                fontSize: '13px',
+                fontWeight: '600',
+              }}
+            >
+              Post Comment
+            </button>
+          </div>
         </div>
+
+        {/* Emoji picker for new comments */}
+        <EmojiPicker
+          isOpen={isPickerOpen}
+          onClose={closePicker}
+          onSelect={insertEmoji}
+          position={pickerPosition}
+        />
       </div>
     </div>
   );

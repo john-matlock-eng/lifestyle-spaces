@@ -122,6 +122,16 @@ class CreateCommentRequest(BaseModel):
         by_alias = True
 
 
+class UpdateCommentRequest(BaseModel):
+    """Request to update a comment."""
+
+    text: str
+
+    class Config:
+        populate_by_name = True
+        by_alias = True
+
+
 # DynamoDB Item helpers
 def highlight_to_db_item(highlight: HighlightModel) -> dict:
     """Convert highlight model to DynamoDB item."""

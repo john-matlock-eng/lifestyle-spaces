@@ -68,6 +68,7 @@ export const JournalViewPage: React.FC = () => {
     updateHighlight,
     deleteHighlight,
     createComment,
+    editComment,
     deleteComment,
     fetchComments,
     reconnect
@@ -959,6 +960,7 @@ ${content}
           spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
           currentUserId={user?.userId || ''}
           onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
+          onEditComment={(commentId, newText) => editComment(selectedHighlight.id, commentId, newText)}
           onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
           onClose={() => setSelectedHighlight(null)}
           allHighlights={highlights}

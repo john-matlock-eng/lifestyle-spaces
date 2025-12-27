@@ -381,6 +381,64 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
     [spaceId]
   );
 
+  // Edit a comment
+  const editComment = useCallback(
+    async (highlightId: string, commentId: string, newText: string) => {
+      // Store original comment for rollback
+      let originalComment: Comment | null = null;
+
+      try {
+        // Optimistic update
+        setComments((prev) => ({
+          ...prev,
+          [highlightId]: (prev[highlightId] || []).map((c) => {
+            if (c.id === commentId) {
+              originalComment = c;
+              return {
+                ...c,
+                text: newText,
+                isEdited: true,
+                updatedAt: new Date().toISOString(),
+              };
+            }
+            return c;
+          }),
+        }));
+
+        const headers = await getAuthHeaders();
+        const response = await axios.put<Comment>(
+          `${API_BASE_URL}/api/highlights/spaces/${spaceId}/comments/${commentId}`,
+          { text: newText },
+          { headers }
+        );
+
+        // Replace optimistic with real data from server
+        setComments((prev) => ({
+          ...prev,
+          [highlightId]: (prev[highlightId] || []).map((c) =>
+            c.id === commentId ? response.data : c
+          ),
+        }));
+
+        return response.data;
+      } catch (err) {
+        console.error('Error editing comment:', err);
+        // Rollback optimistic update
+        if (originalComment) {
+          setComments((prev) => ({
+            ...prev,
+            [highlightId]: (prev[highlightId] || []).map((c) =>
+              c.id === commentId ? originalComment! : c
+            ),
+          }));
+        }
+        setError('Failed to edit comment');
+        throw err;
+      }
+    },
+    [spaceId]
+  );
+
   // Notify typing status (no-op without WebSocket)
   const notifyTyping = useCallback(() => {
     // No-op - WebSocket not enabled
@@ -404,6 +462,7 @@ export const useHighlightsRealtime = (spaceId: string, journalEntryId: string) =
     updateHighlight,
     deleteHighlight,
     createComment,
+    editComment,
     deleteComment,
     fetchComments,
     refreshHighlights: fetchHighlights,

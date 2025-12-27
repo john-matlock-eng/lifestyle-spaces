@@ -1,0 +1,39 @@
+.emoji-picker-container {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  animation: emojiPickerFadeIn 0.15s ease-out;
+}
+
+@keyframes emojiPickerFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Override emoji-picker-react styles for better dark mode */
+.emoji-picker-container .EmojiPickerReact {
+  --epr-bg-color: #1e293b !important;
+  --epr-category-label-bg-color: #1e293b !important;
+  --epr-search-input-bg-color: #0f172a !important;
+  --epr-search-input-text-color: #e2e8f0 !important;
+  --epr-text-color: #e2e8f0 !important;
+  --epr-hover-bg-color: rgba(99, 102, 241, 0.2) !important;
+  --epr-focus-bg-color: rgba(99, 102, 241, 0.3) !important;
+  --epr-category-icon-active-color: #6366f1 !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+}
+
+.emoji-picker-container .EmojiPickerReact input {
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+}
+
+.emoji-picker-container .EmojiPickerReact input:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
