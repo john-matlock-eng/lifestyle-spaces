@@ -25,7 +25,7 @@ import type { Highlight, Comment } from '../types/highlight.types';
 import { HIGHLIGHT_COLORS } from '../types/highlight.types';
 import { getInitials, getAvatarColor } from '../../../utils/initials';
 import { EmojiPicker } from '../../../components/EmojiPicker';
-import { useEmojiInput } from '../../../hooks/useEmojiInput';
+import { useEmojiInput, calculatePickerPosition } from '../../../hooks/useEmojiInput';
 
 interface CommentThreadProps {
   highlight: Highlight;
@@ -122,16 +122,13 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Emoji input handling for new comments
-  const handleInsertEmoji = useCallback((emoji: string, replaceColonTrigger?: boolean) => {
-    if (replaceColonTrigger) {
-      // Remove the trailing : that triggered the picker and add the emoji
+  const handleInsertEmoji = useCallback((emoji: string, colonPosition?: number) => {
+    if (colonPosition !== undefined) {
+      // Remove the : at the specified position and insert the emoji
       setCommentText((prev) => {
-        // Find the last : and remove it
-        const lastColonIndex = prev.lastIndexOf(':');
-        if (lastColonIndex !== -1) {
-          return prev.substring(0, lastColonIndex) + emoji;
-        }
-        return prev + emoji;
+        const before = prev.substring(0, colonPosition);
+        const after = prev.substring(colonPosition + 1); // Skip the ':'
+        return before + emoji + after;
       });
     } else {
       setCommentText((prev) => prev + emoji);
@@ -152,14 +149,12 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   } = useEmojiInput({ onInsertEmoji: handleInsertEmoji });
 
   // Emoji input handling for edit mode
-  const handleInsertEditEmoji = useCallback((emoji: string, replaceColonTrigger?: boolean) => {
-    if (replaceColonTrigger) {
+  const handleInsertEditEmoji = useCallback((emoji: string, colonPosition?: number) => {
+    if (colonPosition !== undefined) {
       setEditText((prev) => {
-        const lastColonIndex = prev.lastIndexOf(':');
-        if (lastColonIndex !== -1) {
-          return prev.substring(0, lastColonIndex) + emoji;
-        }
-        return prev + emoji;
+        const before = prev.substring(0, colonPosition);
+        const after = prev.substring(colonPosition + 1); // Skip the ':'
+        return before + emoji + after;
       });
     } else {
       setEditText((prev) => prev + emoji);
@@ -475,7 +470,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                       onClick={() => {
                         if (editTextareaRef.current) {
                           const rect = editTextareaRef.current.getBoundingClientRect();
-                          setEditPickerPosition({ top: rect.bottom + 5, left: rect.left });
+                          setEditPickerPosition(calculatePickerPosition(rect, false));
                         }
                         openEditPicker();
                       }}
@@ -1070,7 +1065,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
             onClick={() => {
               if (textareaRef.current) {
                 const rect = textareaRef.current.getBoundingClientRect();
-                setPickerPosition({ top: rect.top - 410, left: rect.left });
+                setPickerPosition(calculatePickerPosition(rect, true));
               }
               openPicker();
             }}

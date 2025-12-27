@@ -7,6 +7,60 @@
 
 import { useState, useCallback, useRef } from 'react'
 
+// Picker dimensions
+const PICKER_WIDTH = 320
+const PICKER_HEIGHT = 400
+
+/**
+ * Calculate picker position that stays within viewport bounds
+ */
+export function calculatePickerPosition(
+  anchorRect: DOMRect,
+  preferAbove: boolean = true
+): { top: number; left: number } {
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+  const scrollY = window.scrollY
+  const scrollX = window.scrollX
+  const padding = 10 // Minimum distance from viewport edge
+
+  let top: number
+  let left: number
+
+  // Calculate horizontal position - try to align with anchor, but keep within bounds
+  left = anchorRect.left + scrollX
+  if (left + PICKER_WIDTH > viewportWidth - padding) {
+    // Would overflow right, align to right edge
+    left = Math.max(padding, viewportWidth - PICKER_WIDTH - padding)
+  }
+  if (left < padding) {
+    left = padding
+  }
+
+  // Calculate vertical position
+  const spaceAbove = anchorRect.top
+  const spaceBelow = viewportHeight - anchorRect.bottom
+
+  if (preferAbove && spaceAbove >= PICKER_HEIGHT + padding) {
+    // Enough space above, position above the anchor
+    top = anchorRect.top + scrollY - PICKER_HEIGHT - padding
+  } else if (spaceBelow >= PICKER_HEIGHT + padding) {
+    // Position below the anchor
+    top = anchorRect.bottom + scrollY + padding
+  } else if (spaceAbove > spaceBelow) {
+    // Not enough space either way, but more above - position at top of viewport
+    top = scrollY + padding
+  } else {
+    // More space below - position to fit
+    top = scrollY + viewportHeight - PICKER_HEIGHT - padding
+  }
+
+  // Ensure top is not negative
+  top = Math.max(scrollY + padding, top)
+
+  return { top, left }
+}
+
 // Common emoji shortcodes mapping
 const EMOJI_SHORTCODES: Record<string, string> = {
   // Smileys
@@ -146,7 +200,8 @@ const EMOJI_SHORTCODES: Record<string, string> = {
 }
 
 interface UseEmojiInputOptions {
-  onInsertEmoji: (emoji: string, replaceColonTrigger?: boolean) => void
+  // colonPosition is the index of the ':' to replace, or undefined if just appending
+  onInsertEmoji: (emoji: string, colonPosition?: number) => void
 }
 
 interface UseEmojiInputReturn {
@@ -185,9 +240,9 @@ export function useEmojiInput({
 
   const insertEmoji = useCallback(
     (emoji: string) => {
-      // If picker was opened via colon trigger, tell the callback to replace the colon
-      const replaceColon = colonPosRef.current !== null
-      onInsertEmoji(emoji, replaceColon)
+      // If picker was opened via colon trigger, pass the position to replace
+      const colonPos = colonPosRef.current
+      onInsertEmoji(emoji, colonPos !== null ? colonPos : undefined)
       closePicker()
     },
     [onInsertEmoji, closePicker]
@@ -220,11 +275,9 @@ export function useEmojiInput({
           charBeforeColon === '\n'
         ) {
           colonPosRef.current = cursorPos - 1
-          // Position picker above the textarea
-          setPickerPosition({
-            top: textareaRect.top - 410,
-            left: textareaRect.left,
-          })
+          // Position picker with viewport bounds checking
+          const position = calculatePickerPosition(textareaRect, true)
+          setPickerPosition(position)
           openPicker()
         }
       }
