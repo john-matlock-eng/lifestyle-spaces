@@ -133,6 +133,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
     closePicker,
     handleKeyDown: handleEmojiKeyDown,
     convertShortcodes,
+    checkForColonTrigger,
     insertEmoji,
     pickerPosition,
     setPickerPosition,
@@ -222,14 +223,20 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
 
   // Handle @mention detection and emoji shortcode conversion
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    let text = e.target.value;
+    const originalText = e.target.value;
+    const cursorPos = e.target.selectionStart;
 
     // Convert emoji shortcodes
-    text = convertShortcodes(text);
+    const text = convertShortcodes(originalText);
     setCommentText(text);
 
+    // Check for : trigger to open emoji picker (only on new colon)
+    if (textareaRef.current && originalText.length > commentText.length) {
+      const rect = textareaRef.current.getBoundingClientRect();
+      checkForColonTrigger(originalText, cursorPos, rect);
+    }
+
     // Check for @ symbol at cursor position
-    const cursorPos = e.target.selectionStart;
     const textBeforeCursor = text.substring(0, cursorPos);
     const lastAtIndex = textBeforeCursor.lastIndexOf('@');
 

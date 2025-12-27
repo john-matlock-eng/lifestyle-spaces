@@ -155,6 +155,11 @@ interface UseEmojiInputReturn {
   closePicker: () => void
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
   convertShortcodes: (value: string) => string
+  checkForColonTrigger: (
+    text: string,
+    cursorPos: number,
+    textareaRect: DOMRect
+  ) => void
   insertEmoji: (emoji: string) => void
   pickerPosition: { top: number; left: number } | undefined
   setPickerPosition: (pos: { top: number; left: number } | undefined) => void
@@ -197,6 +202,34 @@ export function useEmojiInput({
     [isPickerOpen, closePicker]
   )
 
+  // Check if user just typed : to trigger emoji picker
+  const checkForColonTrigger = useCallback(
+    (text: string, cursorPos: number, textareaRect: DOMRect) => {
+      // Check if the character just typed was a colon
+      const charBeforeCursor = text.charAt(cursorPos - 1)
+
+      if (charBeforeCursor === ':') {
+        // Check if this is a standalone colon (not part of a shortcode being typed)
+        // Only trigger if it's at start or after a space/newline
+        const charBeforeColon = cursorPos > 1 ? text.charAt(cursorPos - 2) : ''
+        if (
+          charBeforeColon === '' ||
+          charBeforeColon === ' ' ||
+          charBeforeColon === '\n'
+        ) {
+          colonPosRef.current = cursorPos - 1
+          // Position picker above the textarea
+          setPickerPosition({
+            top: textareaRect.top - 410,
+            left: textareaRect.left,
+          })
+          openPicker()
+        }
+      }
+    },
+    [openPicker, setPickerPosition]
+  )
+
   // Convert :shortcode: to emoji
   const convertShortcodes = useCallback((value: string): string => {
     let result = value
@@ -208,8 +241,9 @@ export function useEmojiInput({
     if (matches) {
       matches.forEach((match) => {
         const lowerMatch = match.toLowerCase()
-        if (EMOJI_SHORTCODES[lowerMatch]) {
-          result = result.replace(match, EMOJI_SHORTCODES[lowerMatch])
+        const emoji = EMOJI_SHORTCODES[lowerMatch]
+        if (emoji) {
+          result = result.replace(match, emoji)
         }
       })
     }
@@ -223,6 +257,7 @@ export function useEmojiInput({
     closePicker,
     handleKeyDown,
     convertShortcodes,
+    checkForColonTrigger,
     insertEmoji,
     pickerPosition,
     setPickerPosition,
