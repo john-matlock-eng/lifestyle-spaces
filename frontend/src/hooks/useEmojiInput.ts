@@ -146,7 +146,7 @@ const EMOJI_SHORTCODES: Record<string, string> = {
 }
 
 interface UseEmojiInputOptions {
-  onInsertEmoji: (emoji: string) => void
+  onInsertEmoji: (emoji: string, replaceColonTrigger?: boolean) => void
 }
 
 interface UseEmojiInputReturn {
@@ -185,7 +185,9 @@ export function useEmojiInput({
 
   const insertEmoji = useCallback(
     (emoji: string) => {
-      onInsertEmoji(emoji)
+      // If picker was opened via colon trigger, tell the callback to replace the colon
+      const replaceColon = colonPosRef.current !== null
+      onInsertEmoji(emoji, replaceColon)
       closePicker()
     },
     [onInsertEmoji, closePicker]

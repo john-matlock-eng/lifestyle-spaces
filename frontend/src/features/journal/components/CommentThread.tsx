@@ -122,8 +122,20 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Emoji input handling for new comments
-  const handleInsertEmoji = useCallback((emoji: string) => {
-    setCommentText((prev) => prev + emoji);
+  const handleInsertEmoji = useCallback((emoji: string, replaceColonTrigger?: boolean) => {
+    if (replaceColonTrigger) {
+      // Remove the trailing : that triggered the picker and add the emoji
+      setCommentText((prev) => {
+        // Find the last : and remove it
+        const lastColonIndex = prev.lastIndexOf(':');
+        if (lastColonIndex !== -1) {
+          return prev.substring(0, lastColonIndex) + emoji;
+        }
+        return prev + emoji;
+      });
+    } else {
+      setCommentText((prev) => prev + emoji);
+    }
     textareaRef.current?.focus();
   }, []);
 
@@ -140,8 +152,18 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   } = useEmojiInput({ onInsertEmoji: handleInsertEmoji });
 
   // Emoji input handling for edit mode
-  const handleInsertEditEmoji = useCallback((emoji: string) => {
-    setEditText((prev) => prev + emoji);
+  const handleInsertEditEmoji = useCallback((emoji: string, replaceColonTrigger?: boolean) => {
+    if (replaceColonTrigger) {
+      setEditText((prev) => {
+        const lastColonIndex = prev.lastIndexOf(':');
+        if (lastColonIndex !== -1) {
+          return prev.substring(0, lastColonIndex) + emoji;
+        }
+        return prev + emoji;
+      });
+    } else {
+      setEditText((prev) => prev + emoji);
+    }
     editTextareaRef.current?.focus();
   }, []);
 
