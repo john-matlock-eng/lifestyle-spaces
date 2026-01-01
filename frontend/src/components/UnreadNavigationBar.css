@@ -5,10 +5,10 @@
 
 .unread-nav-bar {
   position: fixed;
-  top: 64px; /* Below the app header (64px height) */
+  top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 10000; /* Above everything including header */
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -179,12 +179,6 @@
   }
 }
 
-/* Smaller mobile - header is 56px */
-@media (max-width: 480px) {
-  .unread-nav-bar {
-    top: 56px; /* Smaller header on mobile */
-  }
-}
 
 /* Animation for highlight flash on first unread comment */
 @keyframes comment-highlight-flash {
