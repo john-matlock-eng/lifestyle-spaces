@@ -10,9 +10,10 @@
  * - Uses React Portal for overlay
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { useJournalComments } from '../hooks/useJournalComments';
+import { useCommentVisibility } from '../../../hooks/useCommentVisibility';
 import type { JournalComment } from '../types/journalComment.types';
 
 interface JournalCommentPanelProps {
@@ -23,6 +24,9 @@ interface JournalCommentPanelProps {
   spaceMembers?: Array<{ id: string; name: string }>;
   isOpen: boolean;
   onClose: () => void;
+  scrollToUnread?: boolean;
+  userLastSeen?: string | null;
+  onMarkAsRead?: () => void;
 }
 
 // Generate consistent color for user based on their ID
@@ -96,6 +100,9 @@ export const JournalCommentPanel: React.FC<JournalCommentPanelProps> = ({
   spaceMembers = [],
   isOpen,
   onClose,
+  scrollToUnread = false,
+  userLastSeen,
+  onMarkAsRead,
 }) => {
   const {
     comments,
@@ -113,8 +120,52 @@ export const JournalCommentPanel: React.FC<JournalCommentPanelProps> = ({
   const [prevCommentCount, setPrevCommentCount] = useState(0);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [didScrollToUnread, setDidScrollToUnread] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
+
+  // Comment visibility tracking for auto mark-as-read
+  const {
+    registerComment,
+    scrollToFirstUnread,
+  } = useCommentVisibility({
+    spaceId,
+    threadId: `journal-discussion-${journalId}`,
+    threadType: 'journal_discussion',
+    userLastSeen,
+    onMarkAsRead,
+    enabled: isOpen,
+  });
+
+  // Scroll to first unread when panel opens with scrollToUnread flag
+  useEffect(() => {
+    if (isOpen && scrollToUnread && !loading && comments.length > 0 && !didScrollToUnread) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        scrollToFirstUnread();
+        setDidScrollToUnread(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, scrollToUnread, loading, comments.length, didScrollToUnread, scrollToFirstUnread]);
+
+  // Reset scroll state when panel closes
+  useEffect(() => {
+    if (!isOpen) {
+      setDidScrollToUnread(false);
+    }
+  }, [isOpen]);
+
+  // Callback ref for registering comments
+  const commentRef = useCallback(
+    (commentId: string, createdAt: string) => (element: HTMLDivElement | null) => {
+      if (element) {
+        element.setAttribute('data-comment-time', createdAt);
+        registerComment(commentId, element);
+      }
+    },
+    [registerComment]
+  );
 
   // Detect dark mode
   useEffect(() => {
@@ -215,7 +266,12 @@ export const JournalCommentPanel: React.FC<JournalCommentPanelProps> = ({
     const userColor = getUserColor(comment.author);
 
     return (
-      <div key={comment.id} className={depth > 0 ? 'ml-8 mt-3' : 'mt-4'}>
+      <div
+        key={comment.id}
+        ref={commentRef(comment.id, comment.createdAt)}
+        data-comment-id={comment.id}
+        className={depth > 0 ? 'ml-8 mt-3' : 'mt-4'}
+      >
         <div className="flex gap-3">
           <div
             style={{

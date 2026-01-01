@@ -32,6 +32,8 @@ import { ChatSidebar, ChatBottomSheet } from '../../chat'
 import { JournalSynopsis } from '../../../components/journal/JournalSynopsis'
 import { JournalMetadataBadges } from '../../../components/journal/JournalMetadataBadges'
 import { BackToChat } from '../../../components/BackToChat'
+import { UnreadNavigationBar } from '../../../components/UnreadNavigationBar'
+import { useUnreadNavigation } from '../../../hooks/useUnreadNavigation'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -55,6 +57,11 @@ export const JournalViewPage: React.FC = () => {
   const [showJournalCommentPanel, setShowJournalCommentPanel] = useState(false)
   const [highlightedSectionIndex, setHighlightedSectionIndex] = useState<number | null>(null)
   const sectionRefs = useRef<Map<number, HTMLElement>>(new Map())
+
+  // Unread navigation state
+  const [showUnreadNavBar, setShowUnreadNavBar] = useState(false)
+  const [scrollToUnread, setScrollToUnread] = useState(false)
+  const [initialUnreadNavIndex, setInitialUnreadNavIndex] = useState(0)
 
   // Highlights and comments real-time feature
   const {
@@ -82,6 +89,14 @@ export const JournalViewPage: React.FC = () => {
 
   // Ellie customization
   const { customization } = useEllieCustomizationContext()
+
+  // Unread navigation hook for cross-journal navigation
+  const unreadNav = useUnreadNavigation({
+    spaceId: spaceId || '',
+    currentThreadId: selectedHighlight?.id || (showJournalCommentPanel ? `journal-discussion-${journalId}` : undefined),
+    initialIndex: initialUnreadNavIndex,
+    enabled: showUnreadNavBar && !!spaceId,
+  })
 
   // Handler to open highlight and load its comments
   const handleHighlightClick = useCallback((highlight: Highlight) => {
@@ -218,6 +233,25 @@ export const JournalViewPage: React.FC = () => {
   useEffect(() => {
     const highlightId = searchParams.get('highlightId')
     const openJournalComments = searchParams.get('openJournalComments')
+    const scrollToUnreadParam = searchParams.get('scrollToUnread')
+    const unreadNavIndexParam = searchParams.get('unreadNavIndex')
+    const fromConversations = searchParams.get('fromConversations')
+
+    // Handle unread navigation state
+    if (fromConversations === 'true') {
+      setShowUnreadNavBar(true)
+    }
+
+    if (scrollToUnreadParam === 'true') {
+      setScrollToUnread(true)
+    }
+
+    if (unreadNavIndexParam) {
+      const navIndex = parseInt(unreadNavIndexParam, 10)
+      if (!isNaN(navIndex)) {
+        setInitialUnreadNavIndex(navIndex)
+      }
+    }
 
     if (highlightId) {
       setPendingHighlightId(highlightId)
@@ -416,9 +450,35 @@ ${content}
   const highlightCommentCount = Object.values(comments).reduce((sum, arr) => sum + arr.length, 0)
   const totalComments = highlightCommentCount + journalCommentCount
 
+  // Handle dismissing unread nav bar
+  const handleDismissUnreadNav = useCallback(() => {
+    setShowUnreadNavBar(false)
+    unreadNav.dismiss()
+  }, [unreadNav])
+
+  // Handle marking current thread as read (called from comment panels)
+  const handleThreadMarkedAsRead = useCallback(() => {
+    unreadNav.markCurrentAsRead()
+  }, [unreadNav])
+
   return (
     <div className={`journal-view-page-wrapper ${selectedHighlight ? 'with-comment-panel' : ''}`}>
-    <div className={`journal-view-container compact density-${density} has-sticky-actions ${selectedHighlight ? 'shifted' : ''}`}>
+    {/* Unread Navigation Bar - floating at top */}
+    <UnreadNavigationBar
+      totalUnread={unreadNav.state.totalUnread}
+      currentIndex={unreadNav.state.currentIndex}
+      hasPrevious={unreadNav.hasPrevious}
+      hasNext={unreadNav.hasNext}
+      journalTitle={journal?.title}
+      currentThreadPreview={unreadNav.currentThread?.highlightText || undefined}
+      onPrevious={unreadNav.navigateToPrevious}
+      onNext={unreadNav.navigateToNext}
+      onClose={handleDismissUnreadNav}
+      isVisible={showUnreadNavBar && !unreadNav.isDismissed && unreadNav.state.totalUnread > 0}
+      isLoading={unreadNav.state.isLoading}
+    />
+
+    <div className={`journal-view-container compact density-${density} has-sticky-actions ${selectedHighlight ? 'shifted' : ''} ${showUnreadNavBar && !unreadNav.isDismissed && unreadNav.state.totalUnread > 0 ? 'with-unread-nav' : ''}`}>
       <button onClick={handleBack} className="button-secondary" style={{ marginBottom: '12px' }}>
         ← Back
       </button>
@@ -933,6 +993,8 @@ ${content}
           spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
           isOpen={showJournalCommentPanel}
           onClose={() => setShowJournalCommentPanel(false)}
+          scrollToUnread={scrollToUnread}
+          onMarkAsRead={handleThreadMarkedAsRead}
         />
       )}
 
@@ -965,6 +1027,9 @@ ${content}
           onClose={() => setSelectedHighlight(null)}
           allHighlights={highlights}
           onNavigateHighlight={handleNavigateHighlight}
+          spaceId={spaceId}
+          scrollToUnread={scrollToUnread}
+          onMarkAsRead={handleThreadMarkedAsRead}
         />
       </div>
     )}

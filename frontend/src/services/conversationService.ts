@@ -7,11 +7,20 @@ import type {
   UnreadCountResponse,
   MarkReadResponse,
   GetThreadsOptions,
+  ConversationThread,
   // Legacy
   ConversationsResponse,
   GetConversationsOptions,
 } from '../types/conversation';
 import { apiService } from './api';
+
+// Simple cache for unread threads
+interface UnreadThreadsCache {
+  threads: ConversationThread[];
+  timestamp: number;
+}
+const unreadThreadsCache: Map<string, UnreadThreadsCache> = new Map();
+const CACHE_TTL = 60000; // 1 minute cache
 
 export const conversationService = {
   /**
@@ -87,10 +96,61 @@ export const conversationService = {
    * Mark all threads in a space as read.
    */
   async markAllAsRead(spaceId: string): Promise<{ success: boolean; markedCount: number }> {
+    // Clear cache when marking all as read
+    unreadThreadsCache.delete(spaceId);
     return apiService.post<{ success: boolean; markedCount: number }>(
       `/api/spaces/${spaceId}/threads/mark-all-read`,
       {}
     );
+  },
+
+  /**
+   * Get only unread threads for navigation purposes.
+   * Uses a local cache to avoid repeated API calls during navigation.
+   */
+  async getUnreadThreads(
+    spaceId: string,
+    options: { forceRefresh?: boolean } = {}
+  ): Promise<ConversationThread[]> {
+    const cached = unreadThreadsCache.get(spaceId);
+    const now = Date.now();
+
+    // Return cached if valid and not forcing refresh
+    if (cached && !options.forceRefresh && now - cached.timestamp < CACHE_TTL) {
+      return cached.threads;
+    }
+
+    // Fetch fresh data
+    const response = await this.getThreads(spaceId, {
+      filter: 'unread',
+      sort: 'recent',
+      limit: 100, // Get all unread for navigation
+    });
+
+    // Update cache
+    unreadThreadsCache.set(spaceId, {
+      threads: response.threads,
+      timestamp: now,
+    });
+
+    return response.threads;
+  },
+
+  /**
+   * Remove a thread from the unread cache (called after marking as read).
+   */
+  removeFromUnreadCache(spaceId: string, threadId: string): void {
+    const cached = unreadThreadsCache.get(spaceId);
+    if (cached) {
+      cached.threads = cached.threads.filter((t) => t.threadId !== threadId);
+    }
+  },
+
+  /**
+   * Clear the unread cache for a space.
+   */
+  clearUnreadCache(spaceId: string): void {
+    unreadThreadsCache.delete(spaceId);
   },
 
   // ========== Legacy methods (deprecated) ==========

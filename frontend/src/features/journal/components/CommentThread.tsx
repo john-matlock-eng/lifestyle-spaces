@@ -26,6 +26,7 @@ import { HIGHLIGHT_COLORS } from '../types/highlight.types';
 import { getInitials, getAvatarColor } from '../../../utils/initials';
 import { EmojiPicker } from '../../../components/EmojiPicker';
 import { useEmojiInput, calculatePickerPosition } from '../../../hooks/useEmojiInput';
+import { useCommentVisibility } from '../../../hooks/useCommentVisibility';
 
 interface CommentThreadProps {
   highlight: Highlight;
@@ -39,6 +40,11 @@ interface CommentThreadProps {
   // Navigation between highlights
   allHighlights?: Highlight[];
   onNavigateHighlight?: (highlight: Highlight) => void;
+  // Unread navigation props
+  spaceId?: string;
+  scrollToUnread?: boolean;
+  userLastSeen?: string | null;
+  onMarkAsRead?: () => void;
 }
 
 // Format timestamp smartly (just now, 5m ago, 2h ago, etc.) - Timezone agnostic
@@ -107,6 +113,10 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   onClose,
   allHighlights = [],
   onNavigateHighlight,
+  spaceId,
+  scrollToUnread = false,
+  userLastSeen,
+  onMarkAsRead,
 }) => {
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
@@ -117,9 +127,45 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [didScrollToUnread, setDidScrollToUnread] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Comment visibility tracking for auto mark-as-read
+  const {
+    registerComment,
+    scrollToFirstUnread,
+  } = useCommentVisibility({
+    spaceId: spaceId || '',
+    threadId: highlight.id,
+    threadType: 'highlight',
+    userLastSeen,
+    onMarkAsRead,
+    enabled: !!spaceId,
+  });
+
+  // Scroll to first unread when panel opens with scrollToUnread flag
+  useEffect(() => {
+    if (scrollToUnread && comments.length > 0 && !didScrollToUnread) {
+      const timer = setTimeout(() => {
+        scrollToFirstUnread();
+        setDidScrollToUnread(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [scrollToUnread, comments.length, didScrollToUnread, scrollToFirstUnread]);
+
+  // Callback ref for registering comments
+  const commentRef = useCallback(
+    (commentId: string, createdAt: string) => (element: HTMLDivElement | null) => {
+      if (element && spaceId) {
+        element.setAttribute('data-comment-time', createdAt);
+        registerComment(commentId, element);
+      }
+    },
+    [registerComment, spaceId]
+  );
 
   // Emoji input handling for new comments
   const handleInsertEmoji = useCallback((emoji: string, colonPosition?: number) => {
@@ -345,6 +391,8 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
     return (
       <div
         key={comment.id}
+        ref={commentRef(comment.id, comment.createdAt)}
+        data-comment-id={comment.id}
         className={`comment-item ${depth > 0 ? 'ml-8 mt-3' : 'mt-4'}`}
         style={{
           animation: 'fadeIn 0.3s ease-out',

@@ -291,14 +291,32 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         });
     }
 
-    // Navigate to the appropriate location
+    // Navigate to the appropriate location with enhanced params
     const baseUrl = `/spaces/${spaceId}/journals/${thread.journalId}`;
+    const params = new URLSearchParams();
+
+    // Always include fromConversations to show the nav bar
+    params.set('fromConversations', 'true');
+
+    // If the thread was unread, enable scroll to unread
+    if (thread.isUnread) {
+      params.set('scrollToUnread', 'true');
+
+      // Calculate position in unread queue for navigation
+      const unreadThreads = threads.filter((t) => t.isUnread);
+      const unreadIndex = unreadThreads.findIndex((t) => t.threadId === thread.threadId);
+      if (unreadIndex >= 0) {
+        params.set('unreadNavIndex', unreadIndex.toString());
+      }
+    }
 
     if (thread.threadType === 'highlight') {
-      navigate(`${baseUrl}?highlightId=${thread.threadId}`);
+      params.set('highlightId', thread.threadId);
     } else {
-      navigate(`${baseUrl}?openJournalComments=true`);
+      params.set('openJournalComments', 'true');
     }
+
+    navigate(`${baseUrl}?${params.toString()}`);
   };
 
   const handleMarkAsRead = async (e: React.MouseEvent, thread: ConversationThread) => {
