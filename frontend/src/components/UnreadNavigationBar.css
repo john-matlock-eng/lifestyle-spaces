@@ -65,6 +65,23 @@
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
+.unread-nav-badge--loading {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+.unread-nav-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Right section - next button and close */
 .unread-nav-right {
   display: flex;

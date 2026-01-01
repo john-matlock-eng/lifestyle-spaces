@@ -420,9 +420,10 @@ ${content}
   }, [unreadNav])
 
   // Handle marking current thread as read (called from comment panels)
+  // This is now a no-op since the "Next" button handles state updates
   const handleThreadMarkedAsRead = useCallback(() => {
-    unreadNav.markCurrentAsRead()
-  }, [unreadNav])
+    // No action needed - navigateToNext removes thread from list
+  }, [])
 
   if (loading) {
     return (
