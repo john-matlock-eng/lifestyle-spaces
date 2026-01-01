@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import ReactDOM from 'react-dom'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
@@ -36,10 +36,11 @@ const highlightDecorationKey = new PluginKey('apiHighlights')
 
 /**
  * Create decoration plugin for API highlights
+ * Uses refs to always read the latest highlights without needing re-registration
  */
 const createHighlightDecorationPlugin = (
-  highlights: Highlight[],
-  onHighlightClicked?: (highlight: Highlight, event: MouseEvent) => void
+  highlightsRef: React.RefObject<Highlight[]>,
+  onHighlightClickedRef: React.RefObject<((highlight: Highlight, event: MouseEvent) => void) | undefined>
 ) => {
   return new Plugin({
     key: highlightDecorationKey,
@@ -48,6 +49,9 @@ const createHighlightDecorationPlugin = (
         return DecorationSet.empty
       },
       apply(_tr, _oldState, _oldEditorState, newEditorState) {
+        // Read from ref to get latest highlights
+        const highlights = highlightsRef.current || []
+
         // Create decorations from highlights
         const decorations: Decoration[] = []
         const docSize = newEditorState.doc.content.size
@@ -80,6 +84,8 @@ const createHighlightDecorationPlugin = (
       handleClick(_view, _pos, event) {
         const target = event.target as HTMLElement
         const highlightEl = target.closest('.api-highlight')
+        const highlights = highlightsRef.current || []
+        const onHighlightClicked = onHighlightClickedRef.current
 
         if (highlightEl && onHighlightClicked) {
           const highlightId = highlightEl.getAttribute('data-highlight-id')
@@ -132,6 +138,11 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
   // State for highlight menu
   const [clickedHighlight, setClickedHighlight] = useState<Highlight | null>(null)
   const [highlightMenuPosition, setHighlightMenuPosition] = useState<{ x: number; y: number } | null>(null)
+
+  // Refs for highlights and click handler - allows plugin to always read latest values
+  const highlightsRef = useRef<Highlight[]>(highlights)
+  const onHighlightClickedRef = useRef<((highlight: Highlight, event: MouseEvent) => void) | undefined>(undefined)
+  const pluginRegisteredRef = useRef(false)
 
   // Log what we receive
   console.log('[TipTapViewer] Received contentTiptap:', {
@@ -188,26 +199,25 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
     }
   }, [contentTiptap, editor])
 
-  // Register/update highlight decoration plugin when highlights change
+  // Keep refs updated with latest values
   useEffect(() => {
-    if (!editor) return
+    highlightsRef.current = highlights
+    onHighlightClickedRef.current = handleHighlightClicked
+  }, [highlights, handleHighlightClicked])
 
-    // Unregister existing plugin if any
-    const existingPlugin = editor.state.plugins.find(
-      p => p.spec.key === highlightDecorationKey
-    )
-    if (existingPlugin) {
-      editor.unregisterPlugin(highlightDecorationKey)
-    }
+  // Register plugin once when editor is ready
+  useEffect(() => {
+    if (!editor || editor.isDestroyed || pluginRegisteredRef.current) return
 
-    // Register new plugin with current highlights (even if empty, to clear decorations)
-    const plugin = createHighlightDecorationPlugin(highlights, handleHighlightClicked)
+    console.log('[TipTapViewer] Registering highlight plugin')
+
+    const plugin = createHighlightDecorationPlugin(highlightsRef, onHighlightClickedRef)
     editor.registerPlugin(plugin)
+    pluginRegisteredRef.current = true
 
-    // Force a state update to apply/clear decorations
-    // Using setMeta to ensure ProseMirror recognizes this as a state change
+    // Initial decoration render
     const { tr } = editor.state
-    tr.setMeta('highlightsUpdated', true)
+    tr.setMeta('highlightsUpdated', Date.now())
     editor.view.dispatch(tr)
 
     return () => {
@@ -219,9 +229,22 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
         if (plugin) {
           editor.unregisterPlugin(highlightDecorationKey)
         }
+        pluginRegisteredRef.current = false
       }
     }
-  }, [editor, highlights, handleHighlightClicked])
+  }, [editor])
+
+  // Force decoration update when highlights change
+  useEffect(() => {
+    if (!editor || editor.isDestroyed || !pluginRegisteredRef.current) return
+
+    console.log('[TipTapViewer] Highlights changed, forcing decoration update. Count:', highlights.length)
+
+    // Dispatch a transaction to trigger plugin's apply function
+    const { tr } = editor.state
+    tr.setMeta('highlightsUpdated', Date.now())
+    editor.view.dispatch(tr)
+  }, [editor, highlights])
 
   // Handle highlight creation
   const handleHighlightCreate = (highlight: HighlightData) => {
@@ -239,6 +262,7 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
   // Handle deleting a highlight
   const handleDeleteHighlight = useCallback(() => {
     if (clickedHighlight && onHighlightDelete) {
+      console.log('[TipTapViewer] Deleting highlight:', clickedHighlight.id)
       onHighlightDelete(clickedHighlight.id)
       setClickedHighlight(null)
       setHighlightMenuPosition(null)
