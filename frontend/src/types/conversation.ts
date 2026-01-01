@@ -97,6 +97,42 @@ export interface GroupedJournalConversations {
   threads: ConversationThread[];
 }
 
+// ========== Unread Navigation Types ==========
+
+/**
+ * State for cross-journal unread navigation.
+ * Used by useUnreadNavigation hook to track position in unread queue.
+ */
+export interface UnreadNavigationState {
+  threads: ConversationThread[];
+  currentIndex: number;
+  totalUnread: number;
+  isLoading: boolean;
+  lastFetched: string | null;
+}
+
+/**
+ * URL parameters for enhanced deep linking with unread support.
+ */
+export interface UnreadDeepLinkParams {
+  highlightId?: string;
+  openJournalComments?: boolean;
+  scrollToUnread?: boolean;
+  unreadNavIndex?: number;
+  fromConversations?: boolean;
+}
+
+/**
+ * Tracking state for individual comment visibility.
+ * Used by useCommentVisibility hook for auto mark-as-read.
+ */
+export interface CommentVisibilityState {
+  commentId: string;
+  isVisible: boolean;
+  enteredViewportAt: number | null;
+  markedAsRead: boolean;
+}
+
 // ========== Legacy types (deprecated) ==========
 
 export interface Conversation {

@@ -1365,6 +1365,11 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Main content container - add padding when unread nav bar is visible */
+.journal-view-container.with-unread-nav {
+  padding-top: 60px; /* Space for the fixed nav bar */
+}
+
 /* Comment thread side panel - Fixed on right side */
 .comment-thread-side-panel {
   width: 420px;

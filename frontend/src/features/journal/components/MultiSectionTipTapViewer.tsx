@@ -1,6 +1,6 @@
 import React from 'react'
 import { TipTapViewer } from './TipTapViewer'
-import type { Highlight } from '../types/highlight.types'
+import type { Highlight, HighlightSelection } from '../types/highlight.types'
 
 interface HighlightData {
   id: string;
@@ -20,6 +20,8 @@ interface MultiSectionTipTapViewerProps {
   onContentChange?: (contentTiptap: Record<string, unknown>) => void
   onHighlightCreate?: (highlight: HighlightData) => void
   onHighlightClick?: (highlight: Highlight) => void
+  onHighlightUpdate?: (highlightId: string, selection: HighlightSelection) => void
+  onHighlightDelete?: (highlightId: string) => void
   minHeight?: string
 }
 
@@ -32,6 +34,8 @@ export const MultiSectionTipTapViewer: React.FC<MultiSectionTipTapViewerProps> =
   onContentChange,
   onHighlightCreate,
   onHighlightClick,
+  onHighlightUpdate,
+  onHighlightDelete,
   minHeight = '200px',
 }) => {
   const handleSectionChange = (sectionId: string, updatedContent: Record<string, unknown>) => {
@@ -85,6 +89,8 @@ export const MultiSectionTipTapViewer: React.FC<MultiSectionTipTapViewerProps> =
               onContentChange={(updated) => handleSectionChange(sectionId, updated)}
               onHighlightCreate={(highlight) => handleHighlightCreate(sectionId, highlight)}
               onHighlightClick={onHighlightClick}
+              onHighlightUpdate={onHighlightUpdate}
+              onHighlightDelete={onHighlightDelete}
               minHeight={minHeight}
             />
           </div>
