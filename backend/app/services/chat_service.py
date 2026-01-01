@@ -494,6 +494,7 @@ class ChatService:
                 "They have shared these with you.*\n"
             )
 
+        # Build header with date range
         dates = [
             r.get("createdAt", "")[:10]
             for r in search_results

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useJournal } from '../hooks/useJournal'
 import { useAuth } from '../../../stores/authStore'
@@ -31,6 +31,7 @@ import { MomentBlocksSectionDisplay } from '../components/sections/MomentBlocksS
 import { ChatSidebar, ChatBottomSheet } from '../../chat'
 import { JournalSynopsis } from '../../../components/journal/JournalSynopsis'
 import { JournalMetadataBadges } from '../../../components/journal/JournalMetadataBadges'
+import { BackToChat } from '../../../components/BackToChat'
 import '../styles/journal.css'
 import '../styles/qa-section.css'
 import '../styles/dynamic-sections.css'
@@ -52,6 +53,8 @@ export const JournalViewPage: React.FC = () => {
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
   const [pendingHighlightId, setPendingHighlightId] = useState<string | null>(null)
   const [showJournalCommentPanel, setShowJournalCommentPanel] = useState(false)
+  const [highlightedSectionIndex, setHighlightedSectionIndex] = useState<number | null>(null)
+  const sectionRefs = useRef<Map<number, HTMLElement>>(new Map())
 
   // Highlights and comments real-time feature
   const {
@@ -65,6 +68,7 @@ export const JournalViewPage: React.FC = () => {
     updateHighlight,
     deleteHighlight,
     createComment,
+    editComment,
     deleteComment,
     fetchComments,
     reconnect
@@ -226,6 +230,58 @@ export const JournalViewPage: React.FC = () => {
       setSearchParams({}, { replace: true })
     }
   }, [searchParams, setSearchParams])
+
+  // Handle section deep linking from chat citations
+  useEffect(() => {
+    const sectionParam = searchParams.get('section')
+
+    if (sectionParam !== null && displaySections.length > 0) {
+      const sectionIndex = parseInt(sectionParam, 10)
+
+      if (!isNaN(sectionIndex)) {
+        // Small delay to ensure DOM is ready
+        const scrollTimer = setTimeout(() => {
+          const sectionElement = sectionRefs.current.get(sectionIndex)
+
+          if (sectionElement) {
+            // Scroll to section with offset for header
+            const headerOffset = 120
+            const elementPosition = sectionElement.getBoundingClientRect().top
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset
+
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            })
+
+            // Set highlight state
+            setHighlightedSectionIndex(sectionIndex)
+
+            // Remove highlight after animation completes
+            setTimeout(() => {
+              setHighlightedSectionIndex(null)
+
+              // Clean up URL parameter but keep fromChat for back button
+              const newParams = new URLSearchParams(searchParams)
+              newParams.delete('section')
+              setSearchParams(newParams, { replace: true })
+            }, 3000)
+          }
+        }, 300)
+
+        return () => clearTimeout(scrollTimer)
+      }
+    }
+  }, [searchParams, setSearchParams, displaySections])
+
+  // Register section ref callback
+  const registerSectionRef = useCallback((index: number, element: HTMLElement | null) => {
+    if (element) {
+      sectionRefs.current.set(index, element)
+    } else {
+      sectionRefs.current.delete(index)
+    }
+  }, [])
 
   // Open highlight when highlights are loaded and we have a pending highlight ID
   useEffect(() => {
@@ -537,11 +593,17 @@ ${content}
 
             return (
               <div className="template-content">
-                {displaySections.map((section) => {
+                {displaySections.map((section, sectionIndex) => {
                   const hasTiptap = tiptapSections.has(section.id)
+                  const isHighlighted = highlightedSectionIndex === sectionIndex
 
                   return (
-                    <div key={section.id} className="template-section template-section-compact">
+                    <div
+                      key={section.id}
+                      ref={(el) => registerSectionRef(sectionIndex, el)}
+                      className={`template-section template-section-compact${isHighlighted ? ' section-highlighted' : ''}`}
+                      data-section-index={sectionIndex}
+                    >
                       <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
                       <div className="template-section-content">
                         {hasTiptap && journal.contentTiptap ? (
@@ -699,8 +761,13 @@ ${content}
         ) : template && displaySections.length > 0 ? (
           // Render template sections with highlighting
           <div className="template-content">
-            {displaySections.map((section) => (
-              <div key={section.id} className="template-section template-section-compact">
+            {displaySections.map((section, sectionIndex) => (
+              <div
+                key={section.id}
+                ref={(el) => registerSectionRef(sectionIndex, el)}
+                className={`template-section template-section-compact${highlightedSectionIndex === sectionIndex ? ' section-highlighted' : ''}`}
+                data-section-index={sectionIndex}
+              >
                 <h3 className="template-section-title template-section-title-compact">{section.title}</h3>
                 <div className="template-section-content">
                   {section.type === 'q_and_a' ? (
@@ -893,6 +960,7 @@ ${content}
           spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
           currentUserId={user?.userId || ''}
           onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
+          onEditComment={(commentId, newText) => editComment(selectedHighlight.id, commentId, newText)}
           onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
           onClose={() => setSelectedHighlight(null)}
           allHighlights={highlights}
@@ -908,6 +976,9 @@ ${content}
         <ChatBottomSheet spaceId={spaceId} />
       </>
     )}
+
+    {/* Back to Chat button - only shows when navigated from chat citations */}
+    <BackToChat />
     </div>
   )
 }

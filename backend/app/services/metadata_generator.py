@@ -77,22 +77,50 @@ class MetadataGenerator:
 
     @property
     def client(self) -> anthropic.Anthropic:
-        """Lazy-load Anthropic client."""
-        if self._client is None:
-            # Try environment variable first (for testing/local dev)
-            api_key = os.environ.get("ANTHROPIC_API_KEY")
+        """Lazy-load Anthropic client.
 
+        Uses the same secret retrieval pattern as ChatService:
+        - Gets secret ARN from CLAUDE_API_KEY_SECRET_ARN environment variable
+        - Parses JSON and extracts 'api_key' field
+        - Falls back to ANTHROPIC_API_KEY env var for local dev
+        """
+        if self._client is None:
+            api_key = None
+
+            # Primary method: Use secret ARN (production)
+            secret_arn = os.environ.get("CLAUDE_API_KEY_SECRET_ARN")
+            if secret_arn:
+                try:
+                    secret_string = get_secret(secret_arn)
+                    try:
+                        secret_data = json.loads(secret_string)
+                        api_key = secret_data.get("api_key")
+                    except json.JSONDecodeError:
+                        # If not JSON, use raw string
+                        api_key = secret_string
+                    logger.info("[METADATA] Retrieved API key from secret ARN")
+                except Exception as e:
+                    logger.warning(f"[METADATA] Could not get secret from ARN: {e}")
+
+            # Fallback: Direct env var (local dev/testing)
+            if not api_key:
+                api_key = os.environ.get("ANTHROPIC_API_KEY")
+                if api_key:
+                    logger.info("[METADATA] Using ANTHROPIC_API_KEY env var")
+
+            # Legacy fallback: Secret name from settings
             if not api_key:
                 try:
                     api_key = get_secret(settings.anthropic_secret_name)
+                    logger.info("[METADATA] Using legacy secret name")
                 except Exception as e:
-                    logger.warning(f"Could not get Anthropic API key: {e}")
-                    raise ValueError("Anthropic API key not configured")
+                    logger.warning(f"[METADATA] Could not get Anthropic API key: {e}")
 
-            if not api_key:
-                raise ValueError("Claude API key not configured")
+            if not api_key or api_key == "PLACEHOLDER_UPDATE_MANUALLY":
+                raise ValueError("Anthropic API key not configured")
 
             self._client = anthropic.Anthropic(api_key=api_key)
+            logger.info("[METADATA] Anthropic client initialized successfully")
 
         return self._client
 

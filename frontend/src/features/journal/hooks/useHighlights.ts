@@ -248,6 +248,34 @@ export const useHighlights = (spaceId: string, journalEntryId: string) => {
     [spaceId]
   );
 
+  // Edit a comment
+  const editComment = useCallback(
+    async (highlightId: string, commentId: string, newText: string) => {
+      try {
+        const headers = await getAuthHeaders();
+        const response = await axios.put<Comment>(
+          `${API_BASE_URL}/api/highlights/spaces/${spaceId}/comments/${commentId}`,
+          { text: newText },
+          { headers }
+        );
+
+        setComments((prev) => ({
+          ...prev,
+          [highlightId]: (prev[highlightId] || []).map((c) =>
+            c.id === commentId ? response.data : c
+          ),
+        }));
+
+        return response.data;
+      } catch (err) {
+        console.error('Error editing comment:', err);
+        setError('Failed to edit comment');
+        throw err;
+      }
+    },
+    [spaceId]
+  );
+
   // Fetch highlights on mount
   useEffect(() => {
     fetchHighlights();
@@ -262,6 +290,7 @@ export const useHighlights = (spaceId: string, journalEntryId: string) => {
     updateHighlight,
     deleteHighlight,
     createComment,
+    editComment,
     deleteComment,
     fetchComments,
     refreshHighlights: fetchHighlights,

@@ -86,9 +86,26 @@ export const useSectionTipTap = (
   }, [])
 
   // Get content for a specific section
+  // Returns null if the content is not a valid TipTap document to prevent schema errors
   const getSectionContent = useCallback(
     (sectionId: string): Record<string, unknown> | null => {
-      return sectionContents[sectionId] || null
+      const content = sectionContents[sectionId]
+      if (!content) return null
+
+      // Validate that content is a proper TipTap document (has type: 'doc')
+      // This prevents schema errors when malformed content is passed to TipTap
+      if (
+        typeof content === 'object' &&
+        content !== null &&
+        'type' in content &&
+        content.type === 'doc'
+      ) {
+        return content
+      }
+
+      // Return null for malformed content to fall back to text-based editing
+      console.warn('[useSectionTipTap] Malformed section content for:', sectionId, content)
+      return null
     },
     [sectionContents]
   )
@@ -158,10 +175,39 @@ export const useSectionTipTap = (
   }, [initialContent])
 
   // Set all sections at once (useful for initialization after load)
-const setAllSections = useCallback((sections: SectionTipTapState) => {
-  setSectionContents(sections)
-  setHasChanges(false)
-}, [])
+  // Handles both single-doc and multi-section formats for backward compatibility
+  const setAllSections = useCallback((sections: SectionTipTapState | Record<string, unknown>) => {
+    if (!sections || typeof sections !== 'object') {
+      console.warn('[useSectionTipTap] setAllSections: Invalid sections, using empty state')
+      setSectionContents({})
+      setHasChanges(false)
+      return
+    }
+
+    // Check if it's single TipTap document format (has 'type' field at root)
+    if ('type' in sections && sections.type === 'doc') {
+      // Convert single format to multi-section with 'content' key
+      console.log('[useSectionTipTap] setAllSections: Converting single-doc format to multi-section')
+      setSectionContents({ content: sections as Record<string, unknown> })
+    } else {
+      // Multi-section format - validate each section
+      const validSections: SectionTipTapState = {}
+      for (const [key, value] of Object.entries(sections)) {
+        if (
+          value &&
+          typeof value === 'object' &&
+          'type' in value &&
+          (value as Record<string, unknown>).type === 'doc'
+        ) {
+          validSections[key] = value as Record<string, unknown>
+        } else {
+          console.warn('[useSectionTipTap] setAllSections: Skipping malformed section:', key, value)
+        }
+      }
+      setSectionContents(validSections)
+    }
+    setHasChanges(false)
+  }, [])
 
 return {
   sectionContents,

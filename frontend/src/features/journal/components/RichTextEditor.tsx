@@ -30,6 +30,25 @@ interface RichTextEditorProps {
 }
 
 /**
+ * Validate that content is a proper TipTap document
+ */
+const isValidTipTapDoc = (content: unknown): content is Record<string, unknown> => {
+  if (!content || typeof content !== 'object') {
+    console.warn('[RichTextEditor] Invalid content: not an object', { content, type: typeof content })
+    return false
+  }
+
+  // Check for type: 'doc' property
+  const hasType = 'type' in content && (content as Record<string, unknown>).type === 'doc'
+  if (!hasType) {
+    console.warn('[RichTextEditor] Invalid content: missing type=doc', { content, keys: Object.keys(content as object) })
+    return false
+  }
+
+  return true
+}
+
+/**
  * Rich text editor component using TipTap
  */
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({
@@ -45,9 +64,23 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   enableHighlights = true,
   onHighlightCreate
 }) => {
+  // Log what we receive
+  console.log('[RichTextEditor] Received initialContentJson:', {
+    exists: !!initialContentJson,
+    type: typeof initialContentJson,
+    isNull: initialContentJson === null,
+    keys: initialContentJson && typeof initialContentJson === 'object' ? Object.keys(initialContentJson) : 'N/A',
+    hasTypeDoc: initialContentJson && typeof initialContentJson === 'object' && 'type' in initialContentJson && (initialContentJson as Record<string, unknown>).type === 'doc',
+    contentProp: content ? content.substring(0, 100) : 'empty'
+  })
+
+  // Validate initialContentJson to prevent schema errors
+  const validInitialContent = isValidTipTapDoc(initialContentJson) ? initialContentJson : undefined
+  console.log('[RichTextEditor] Valid content result:', !!validInitialContent, 'Will use content string:', !validInitialContent && !!content)
+
   const editor = useEditor({
     extensions: getEditorExtensions(placeholder, enableHighlights),
-    content: initialContentJson || content,
+    content: validInitialContent || content,
     editable: !disabled,
     onCreate: ({ editor }) => {
       // Initialize TipTap JSON on editor creation
@@ -84,7 +117,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, [editor, onTipTapChange])
 
-  // Update editor content when prop changes
+  // Update editor content when string content prop changes
   useEffect(() => {
     if (editor && content !== undefined) {
       // @ts-expect-error - markdown storage is added by tiptap-markdown extension
@@ -94,6 +127,18 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       }
     }
   }, [content, editor])
+
+  // Update editor content when initialContentJson prop changes (handles race condition with setAllSections)
+  useEffect(() => {
+    if (editor && initialContentJson && isValidTipTapDoc(initialContentJson)) {
+      const currentContent = editor.getJSON()
+      // Only update if the content has actually changed
+      if (JSON.stringify(currentContent) !== JSON.stringify(initialContentJson)) {
+        console.log('[RichTextEditor] Updating editor with new initialContentJson')
+        editor.commands.setContent(initialContentJson)
+      }
+    }
+  }, [editor, initialContentJson])
 
   // Update editable state when disabled prop changes
   useEffect(() => {

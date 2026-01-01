@@ -424,7 +424,9 @@ class SectionParser:
             'deep_dive': 'Examine',
             'action_plan': 'Evolve',
             'gratitude': 'Gratitude',
+            'gratitude_list': 'Things I\'m grateful for',  # Daily Gratitude template
             'reflection': 'Reflection',
+            'tomorrow': 'Tomorrow\'s intention',  # Daily Gratitude template
             'scene': 'The Scene',
             'reaction': 'My Reaction',
             'takeaway': 'The Takeaway',
@@ -442,10 +444,11 @@ class SectionParser:
         }
 
         # Define preferred section order
+        # IMPORTANT: This order MUST match what Pinecone indexing uses
         SECTION_ORDER = [
             'raw_thoughts', 'deep_dive', 'action_plan',  # Express/Examine/Evolve
             'scene', 'reaction', 'takeaway',              # Daily Lens
-            'gratitude', 'reflection',                    # Gratitude
+            'gratitude', 'gratitude_list', 'reflection', 'tomorrow',  # Gratitude templates
             'identity', 'values', 'mission', 'commitments',  # Charter
             'review', 'lead_measures',                    # Scoreboard
             'acknowledge', 'understand', 'recommit',      # Reset Protocol
