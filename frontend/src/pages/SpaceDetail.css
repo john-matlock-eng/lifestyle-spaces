@@ -725,14 +725,24 @@
   }
 
   .tabs {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    gap: 0;
+    padding-bottom: 2px; /* Prevent cut-off of active border */
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
   }
 
   .tab {
-    flex: 1;
-    min-width: 0;
-    padding: 0.5rem 1rem;
+    flex-shrink: 0;
+    padding: 0.625rem 0.875rem;
     font-size: 0.8125rem;
+    white-space: nowrap;
   }
 
   .tab-panel {
@@ -796,8 +806,16 @@
   }
 
   .tab {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.75rem;
+    padding: 0.5rem 0.625rem;
+    font-size: 0.6875rem;
+  }
+
+  .tab-badge {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    margin-left: 4px;
+    font-size: 0.6rem;
   }
 }
 

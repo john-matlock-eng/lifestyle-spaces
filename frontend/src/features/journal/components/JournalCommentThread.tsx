@@ -610,7 +610,10 @@ export const JournalCommentThread: React.FC<JournalCommentThreadProps> = ({
               }}
               rows={1}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                // On mobile/touch devices, Enter creates new line; use button to submit
+                // On desktop, Ctrl/Cmd+Enter submits (Enter creates new line)
+                const isMobile = window.matchMedia('(max-width: 768px)').matches || 'ontouchstart' in window;
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !isMobile) {
                   e.preventDefault();
                   handleSubmit();
                 }
