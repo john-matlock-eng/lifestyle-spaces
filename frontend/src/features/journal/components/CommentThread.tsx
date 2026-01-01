@@ -27,6 +27,7 @@ import { getInitials, getAvatarColor } from '../../../utils/initials';
 import { EmojiPicker } from '../../../components/EmojiPicker';
 import { useEmojiInput, calculatePickerPosition } from '../../../hooks/useEmojiInput';
 import { useCommentVisibility } from '../../../hooks/useCommentVisibility';
+import { useMobileKeyboard } from '../../../hooks/useMobileKeyboard';
 
 interface CommentThreadProps {
   highlight: Highlight;
@@ -131,6 +132,9 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Handle mobile keyboard visibility
+  useMobileKeyboard({ inputRef: textareaRef });
 
   // Comment visibility tracking for auto mark-as-read
   const {
@@ -1083,13 +1087,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           rows={1}
           onKeyDown={(e) => {
             handleEmojiKeyDown(e);
-            // On mobile/touch devices, Enter creates new line; use button to submit
-            // On desktop, Ctrl/Cmd+Enter submits (Enter creates new line)
-            const isMobile = window.matchMedia('(max-width: 768px)').matches || 'ontouchstart' in window;
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !isMobile) {
-              e.preventDefault();
-              handleSubmit();
-            }
+            // Enter creates new line; use submit button to submit
           }}
           onFocus={(e) => {
             e.currentTarget.style.borderColor = isDarkMode ? '#3b82f6' : 'var(--theme-primary-500)';

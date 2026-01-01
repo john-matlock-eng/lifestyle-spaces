@@ -12,6 +12,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useJournalComments } from '../hooks/useJournalComments';
+import { useMobileKeyboard } from '../../../hooks/useMobileKeyboard';
 import type { JournalComment } from '../types/journalComment.types';
 
 interface JournalCommentThreadProps {
@@ -111,6 +112,9 @@ export const JournalCommentThread: React.FC<JournalCommentThreadProps> = ({
   const [editText, setEditText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
+
+  // Handle mobile keyboard visibility
+  useMobileKeyboard({ inputRef: textareaRef });
 
   // Detect dark mode
   useEffect(() => {
@@ -609,15 +613,6 @@ export const JournalCommentThread: React.FC<JournalCommentThreadProps> = ({
                 fontFamily: 'inherit',
               }}
               rows={1}
-              onKeyDown={(e) => {
-                // On mobile/touch devices, Enter creates new line; use button to submit
-                // On desktop, Ctrl/Cmd+Enter submits (Enter creates new line)
-                const isMobile = window.matchMedia('(max-width: 768px)').matches || 'ontouchstart' in window;
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !isMobile) {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
             />
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>

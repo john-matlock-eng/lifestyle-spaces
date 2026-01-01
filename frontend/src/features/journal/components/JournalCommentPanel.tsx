@@ -14,6 +14,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { useJournalComments } from '../hooks/useJournalComments';
 import { useCommentVisibility } from '../../../hooks/useCommentVisibility';
+import { useMobileKeyboard } from '../../../hooks/useMobileKeyboard';
 import type { JournalComment } from '../types/journalComment.types';
 
 interface JournalCommentPanelProps {
@@ -123,6 +124,9 @@ export const JournalCommentPanel: React.FC<JournalCommentPanelProps> = ({
   const [didScrollToUnread, setDidScrollToUnread] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
+
+  // Handle mobile keyboard visibility
+  useMobileKeyboard({ inputRef: textareaRef });
 
   // Comment visibility tracking for auto mark-as-read
   const {
@@ -729,15 +733,6 @@ export const JournalCommentPanel: React.FC<JournalCommentPanelProps> = ({
               lineHeight: '1.5',
             }}
             rows={1}
-            onKeyDown={(e) => {
-              // On mobile/touch devices, Enter creates new line; use button to submit
-              // On desktop, Ctrl/Cmd+Enter submits (Enter creates new line)
-              const isMobile = window.matchMedia('(max-width: 768px)').matches || 'ontouchstart' in window;
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !isMobile) {
-                e.preventDefault();
-                handleSubmit();
-              }
-            }}
           />
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
