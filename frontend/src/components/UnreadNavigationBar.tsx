@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, X, MessageSquare } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, MessageSquare, CheckCircle } from 'lucide-react'
 import './UnreadNavigationBar.css'
 
 interface UnreadNavigationBarProps {
@@ -55,11 +55,12 @@ export const UnreadNavigationBar: React.FC<UnreadNavigationBarProps> = ({
     return () => observer.disconnect()
   }, [])
 
-  if (!isVisible || totalUnread === 0) {
+  if (!isVisible) {
     return null
   }
 
-  const positionText = `${currentIndex + 1} of ${totalUnread}`
+  const hasUnread = totalUnread > 0
+  const positionText = hasUnread ? `${currentIndex + 1} of ${totalUnread}` : ''
 
   return (
     <div
@@ -68,10 +69,17 @@ export const UnreadNavigationBar: React.FC<UnreadNavigationBarProps> = ({
       aria-label="Unread message navigation"
     >
       <div className="unread-nav-left">
-        <div className="unread-nav-badge">
-          <MessageSquare size={14} />
-          <span>{totalUnread} unread</span>
-        </div>
+        {hasUnread ? (
+          <div className="unread-nav-badge">
+            <MessageSquare size={14} />
+            <span>{totalUnread} unread</span>
+          </div>
+        ) : (
+          <div className="unread-nav-badge unread-nav-badge--complete">
+            <CheckCircle size={14} />
+            <span>All caught up!</span>
+          </div>
+        )}
         {journalTitle && (
           <span className="unread-nav-journal" title={journalTitle}>
             {journalTitle}
@@ -84,29 +92,31 @@ export const UnreadNavigationBar: React.FC<UnreadNavigationBarProps> = ({
         )}
       </div>
 
-      <div className="unread-nav-center">
-        <button
-          className="unread-nav-btn"
-          onClick={onPrevious}
-          disabled={!hasPrevious || isLoading}
-          aria-label="Previous unread"
-          title="Previous unread (Shift + P)"
-        >
-          <ChevronLeft size={18} />
-        </button>
+      {hasUnread && (
+        <div className="unread-nav-center">
+          <button
+            className="unread-nav-btn"
+            onClick={onPrevious}
+            disabled={!hasPrevious || isLoading}
+            aria-label="Previous unread"
+            title="Previous unread (Shift + P)"
+          >
+            <ChevronLeft size={18} />
+          </button>
 
-        <span className="unread-nav-position">{positionText}</span>
+          <span className="unread-nav-position">{positionText}</span>
 
-        <button
-          className="unread-nav-btn"
-          onClick={onNext}
-          disabled={!hasNext || isLoading}
-          aria-label="Next unread"
-          title="Next unread (Shift + N)"
-        >
-          <ChevronRight size={18} />
-        </button>
-      </div>
+          <button
+            className="unread-nav-btn"
+            onClick={onNext}
+            disabled={!hasNext || isLoading}
+            aria-label="Next unread"
+            title="Next unread (Shift + N)"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
 
       <div className="unread-nav-right">
         <button

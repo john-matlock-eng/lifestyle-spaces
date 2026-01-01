@@ -316,7 +316,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       params.set('openJournalComments', 'true');
     }
 
-    navigate(`${baseUrl}?${params.toString()}`);
+    const finalUrl = `${baseUrl}?${params.toString()}`;
+    navigate(finalUrl);
   };
 
   const handleMarkAsRead = async (e: React.MouseEvent, thread: ConversationThread) => {

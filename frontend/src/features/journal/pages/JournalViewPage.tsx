@@ -474,11 +474,11 @@ ${content}
       onPrevious={unreadNav.navigateToPrevious}
       onNext={unreadNav.navigateToNext}
       onClose={handleDismissUnreadNav}
-      isVisible={showUnreadNavBar && !unreadNav.isDismissed && unreadNav.state.totalUnread > 0}
+      isVisible={showUnreadNavBar && !unreadNav.isDismissed}
       isLoading={unreadNav.state.isLoading}
     />
 
-    <div className={`journal-view-container compact density-${density} has-sticky-actions ${selectedHighlight ? 'shifted' : ''} ${showUnreadNavBar && !unreadNav.isDismissed && unreadNav.state.totalUnread > 0 ? 'with-unread-nav' : ''}`}>
+    <div className={`journal-view-container compact density-${density} has-sticky-actions ${selectedHighlight ? 'shifted' : ''} ${showUnreadNavBar && !unreadNav.isDismissed ? 'with-unread-nav' : ''}`}>
       <button onClick={handleBack} className="button-secondary" style={{ marginBottom: '12px' }}>
         ← Back
       </button>

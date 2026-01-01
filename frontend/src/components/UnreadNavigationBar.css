@@ -5,7 +5,7 @@
 
 .unread-nav-bar {
   position: fixed;
-  top: 0;
+  top: 64px; /* Below the app header (64px height) */
   left: 0;
   right: 0;
   z-index: 1000;
@@ -59,6 +59,10 @@
 
 .unread-nav-badge svg {
   opacity: 0.9;
+}
+
+.unread-nav-badge--complete {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
 .unread-nav-journal {
@@ -208,6 +212,13 @@
   .unread-nav-position {
     font-size: 12px;
     min-width: 50px;
+  }
+}
+
+/* Smaller mobile - header is 56px */
+@media (max-width: 480px) {
+  .unread-nav-bar {
+    top: 56px; /* Smaller header on mobile */
   }
 }
 
