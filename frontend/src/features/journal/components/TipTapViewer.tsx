@@ -200,15 +200,15 @@ export const TipTapViewer: React.FC<TipTapViewerProps> = ({
       editor.unregisterPlugin(highlightDecorationKey)
     }
 
-    // Register new plugin with current highlights
-    if (highlights.length > 0) {
-      const plugin = createHighlightDecorationPlugin(highlights, handleHighlightClicked)
-      editor.registerPlugin(plugin)
+    // Register new plugin with current highlights (even if empty, to clear decorations)
+    const plugin = createHighlightDecorationPlugin(highlights, handleHighlightClicked)
+    editor.registerPlugin(plugin)
 
-      // Force a state update to apply decorations
-      const { tr } = editor.state
-      editor.view.dispatch(tr)
-    }
+    // Force a state update to apply/clear decorations
+    // Using setMeta to ensure ProseMirror recognizes this as a state change
+    const { tr } = editor.state
+    tr.setMeta('highlightsUpdated', true)
+    editor.view.dispatch(tr)
 
     return () => {
       // Cleanup on unmount
