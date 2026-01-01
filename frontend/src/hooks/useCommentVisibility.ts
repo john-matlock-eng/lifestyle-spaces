@@ -119,15 +119,19 @@ export function useCommentVisibility({
       }
     )
 
+    // Capture ref values for cleanup
+    const currentComments = commentsRef.current
+    const currentObserver = observerRef.current
+
     return () => {
       // Cleanup: cancel all timers and disconnect observer
-      commentsRef.current.forEach((info) => {
+      currentComments.forEach((info) => {
         if (info.timerId) {
           clearTimeout(info.timerId)
         }
       })
-      commentsRef.current.clear()
-      observerRef.current?.disconnect()
+      currentComments.clear()
+      currentObserver?.disconnect()
     }
   }, [enabled, viewportThreshold, startReadTimer, cancelReadTimer])
 

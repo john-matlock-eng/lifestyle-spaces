@@ -414,6 +414,17 @@ ${content}
     return minutes === 1 ? '1 min' : `${minutes} min`
   }
 
+  // Handle dismissing unread nav bar
+  const handleDismissUnreadNav = useCallback(() => {
+    setShowUnreadNavBar(false)
+    unreadNav.dismiss()
+  }, [unreadNav])
+
+  // Handle marking current thread as read (called from comment panels)
+  const handleThreadMarkedAsRead = useCallback(() => {
+    unreadNav.markCurrentAsRead()
+  }, [unreadNav])
+
   if (loading) {
     return (
       <div className="journal-view-container">
@@ -449,17 +460,6 @@ ${content}
   const highlightCount = highlights.length
   const highlightCommentCount = Object.values(comments).reduce((sum, arr) => sum + arr.length, 0)
   const totalComments = highlightCommentCount + journalCommentCount
-
-  // Handle dismissing unread nav bar
-  const handleDismissUnreadNav = useCallback(() => {
-    setShowUnreadNavBar(false)
-    unreadNav.dismiss()
-  }, [unreadNav])
-
-  // Handle marking current thread as read (called from comment panels)
-  const handleThreadMarkedAsRead = useCallback(() => {
-    unreadNav.markCurrentAsRead()
-  }, [unreadNav])
 
   return (
     <div className={`journal-view-page-wrapper ${selectedHighlight ? 'with-comment-panel' : ''}`}>
