@@ -354,11 +354,9 @@ export const JournalViewPage: React.FC = () => {
   }
 
   const handleBack = () => {
-    if (journal?.spaceId) {
-      navigate(`/spaces/${journal.spaceId}/journals`)
-    } else {
-      navigate('/dashboard')
-    }
+    // Use browser history to go back to where user came from
+    // This maintains continuity from Content tab, Conversations tab, etc.
+    navigate(-1)
   }
 
   const formatDate = (dateString: string): string => {
@@ -682,6 +680,8 @@ ${content}
                               createHighlight(selection, highlightData.color);
                             }}
                             onHighlightClick={handleHighlightClick}
+                            onHighlightUpdate={updateHighlight}
+                            onHighlightDelete={deleteHighlight}
                           />
                         ) : section.type === 'q_and_a' ? (
                           // Fallback to markdown Q&A rendering
@@ -792,6 +792,8 @@ ${content}
                   createHighlight(selection, highlightData.color);
                 }}
                 onHighlightClick={handleHighlightClick}
+                onHighlightUpdate={updateHighlight}
+                onHighlightDelete={deleteHighlight}
               />
             ) : (
               <TipTapViewer
@@ -810,6 +812,8 @@ ${content}
                   createHighlight(selection, highlightData.color);
                 }}
                 onHighlightClick={handleHighlightClick}
+                onHighlightUpdate={updateHighlight}
+                onHighlightDelete={deleteHighlight}
               />
             )
           })()
