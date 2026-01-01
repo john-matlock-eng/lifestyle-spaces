@@ -93,7 +93,6 @@ export const JournalViewPage: React.FC = () => {
   // Unread navigation hook for cross-journal navigation
   const unreadNav = useUnreadNavigation({
     spaceId: spaceId || '',
-    currentThreadId: selectedHighlight?.id || (showJournalCommentPanel ? `journal-discussion-${journalId}` : undefined),
     initialIndex: initialUnreadNavIndex,
     enabled: showUnreadNavBar && !!spaceId,
   })
@@ -466,12 +465,7 @@ ${content}
     {/* Unread Navigation Bar - floating at top */}
     <UnreadNavigationBar
       totalUnread={unreadNav.state.totalUnread}
-      currentIndex={unreadNav.state.currentIndex}
-      hasPrevious={unreadNav.hasPrevious}
       hasNext={unreadNav.hasNext}
-      journalTitle={journal?.title}
-      currentThreadPreview={unreadNav.currentThread?.highlightText || undefined}
-      onPrevious={unreadNav.navigateToPrevious}
       onNext={unreadNav.navigateToNext}
       onClose={handleDismissUnreadNav}
       isVisible={showUnreadNavBar && !unreadNav.isDismissed}

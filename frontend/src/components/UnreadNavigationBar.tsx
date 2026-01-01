@@ -6,17 +6,11 @@
  */
 
 import React, { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, X, MessageSquare, CheckCircle } from 'lucide-react'
 import './UnreadNavigationBar.css'
 
 interface UnreadNavigationBarProps {
   totalUnread: number
-  currentIndex: number
-  hasPrevious: boolean
   hasNext: boolean
-  currentThreadPreview?: string
-  journalTitle?: string
-  onPrevious: () => void
   onNext: () => void
   onClose: () => void
   isVisible: boolean
@@ -25,12 +19,7 @@ interface UnreadNavigationBarProps {
 
 export const UnreadNavigationBar: React.FC<UnreadNavigationBarProps> = ({
   totalUnread,
-  currentIndex,
-  hasPrevious,
   hasNext,
-  currentThreadPreview,
-  journalTitle,
-  onPrevious,
   onNext,
   onClose,
   isVisible,
@@ -60,7 +49,6 @@ export const UnreadNavigationBar: React.FC<UnreadNavigationBarProps> = ({
   }
 
   const hasUnread = totalUnread > 0
-  const positionText = hasUnread ? `${currentIndex + 1} of ${totalUnread}` : ''
 
   return (
     <div
@@ -71,61 +59,46 @@ export const UnreadNavigationBar: React.FC<UnreadNavigationBarProps> = ({
       <div className="unread-nav-left">
         {hasUnread ? (
           <div className="unread-nav-badge">
-            <MessageSquare size={14} />
-            <span>{totalUnread} unread</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>{totalUnread} remaining</span>
           </div>
         ) : (
           <div className="unread-nav-badge unread-nav-badge--complete">
-            <CheckCircle size={14} />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
             <span>All caught up!</span>
           </div>
         )}
-        {journalTitle && (
-          <span className="unread-nav-journal" title={journalTitle}>
-            {journalTitle}
-          </span>
-        )}
-        {currentThreadPreview && (
-          <span className="unread-nav-preview" title={currentThreadPreview}>
-            {currentThreadPreview}
-          </span>
-        )}
       </div>
 
-      {hasUnread && (
-        <div className="unread-nav-center">
-          <button
-            className="unread-nav-btn"
-            onClick={onPrevious}
-            disabled={!hasPrevious || isLoading}
-            aria-label="Previous unread"
-            title="Previous unread (Shift + P)"
-          >
-            <ChevronLeft size={18} />
-          </button>
-
-          <span className="unread-nav-position">{positionText}</span>
-
-          <button
-            className="unread-nav-btn"
-            onClick={onNext}
-            disabled={!hasNext || isLoading}
-            aria-label="Next unread"
-            title="Next unread (Shift + N)"
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
-      )}
-
       <div className="unread-nav-right">
+        {hasNext && (
+          <button
+            className="unread-nav-next-btn"
+            onClick={onNext}
+            disabled={isLoading}
+            aria-label="Next unread thread"
+          >
+            <span>Next</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        )}
         <button
           className="unread-nav-close"
           onClick={onClose}
           aria-label="Close unread navigation"
-          title="Close (Esc)"
+          title="Close"
         >
-          <X size={16} />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
         </button>
       </div>
     </div>
