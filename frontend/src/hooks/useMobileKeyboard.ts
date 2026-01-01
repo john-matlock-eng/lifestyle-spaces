@@ -10,15 +10,12 @@ import { useEffect, useCallback, useRef } from 'react'
 interface UseMobileKeyboardOptions {
   /** Ref to the input/textarea element */
   inputRef: React.RefObject<HTMLElement | null>
-  /** Additional offset from bottom of viewport (default: 20) */
-  bottomOffset?: number
   /** Whether the hook is enabled (default: true) */
   enabled?: boolean
 }
 
 export function useMobileKeyboard({
   inputRef,
-  bottomOffset = 20,
   enabled = true,
 }: UseMobileKeyboardOptions) {
   const lastViewportHeight = useRef<number>(0)
