@@ -13,6 +13,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useJournalComments } from '../hooks/useJournalComments';
+import { conversationService } from '../../../services/conversationService';
 import type { JournalComment } from '../types/journalComment.types';
 
 interface JournalCommentPanelProps {
@@ -23,6 +24,8 @@ interface JournalCommentPanelProps {
   spaceMembers?: Array<{ id: string; name: string }>;
   isOpen: boolean;
   onClose: () => void;
+  /** When true, scroll to the end of comments when panel opens */
+  scrollToEnd?: boolean;
 }
 
 // Generate consistent color for user based on their ID
@@ -96,6 +99,7 @@ export const JournalCommentPanel: React.FC<JournalCommentPanelProps> = ({
   spaceMembers = [],
   isOpen,
   onClose,
+  scrollToEnd = false,
 }) => {
   const {
     comments,
@@ -113,6 +117,8 @@ export const JournalCommentPanel: React.FC<JournalCommentPanelProps> = ({
   const [prevCommentCount, setPrevCommentCount] = useState(0);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [hasMarkedAsRead, setHasMarkedAsRead] = useState(false);
+  const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
@@ -142,6 +148,34 @@ export const JournalCommentPanel: React.FC<JournalCommentPanelProps> = ({
     }
     setPrevCommentCount(comments.length);
   }, [comments.length, prevCommentCount]);
+
+  // Auto mark-as-read when panel opens (for viewing unread discussions)
+  useEffect(() => {
+    if (isOpen && !hasMarkedAsRead && spaceId && journalId) {
+      // Mark the journal discussion thread as read
+      conversationService
+        .markThreadAsRead(spaceId, journalId, 'journal_discussion')
+        .catch(err => console.error('Error marking discussion as read:', err));
+      setHasMarkedAsRead(true);
+    }
+
+    // Reset when panel closes
+    if (!isOpen) {
+      setHasMarkedAsRead(false);
+      setHasScrolledToEnd(false);
+    }
+  }, [isOpen, hasMarkedAsRead, spaceId, journalId]);
+
+  // Scroll to end when requested (for deep links from unread navigation)
+  useEffect(() => {
+    if (isOpen && scrollToEnd && !loading && comments.length > 0 && !hasScrolledToEnd && commentsEndRef.current) {
+      // Small delay to ensure DOM is rendered
+      setTimeout(() => {
+        commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        setHasScrolledToEnd(true);
+      }, 100);
+    }
+  }, [isOpen, scrollToEnd, loading, comments.length, hasScrolledToEnd]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;

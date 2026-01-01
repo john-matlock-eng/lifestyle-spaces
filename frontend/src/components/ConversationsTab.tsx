@@ -25,6 +25,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { conversationService } from '../services/conversationService';
+import { useUnreadNavigation } from '../contexts/UnreadNavigationContext';
 import type { ConversationThread, GetThreadsOptions } from '../types/conversation';
 import './ConversationsTab.css';
 
@@ -93,6 +94,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   onUnreadCountChange,
 }) => {
   const navigate = useNavigate();
+  const { enterUnreadNavigation } = useUnreadNavigation();
   const [threads, setThreads] = useState<ConversationThread[]>([]);
   const [totalUnread, setTotalUnread] = useState(0);
   const [threadsWithReplies, setThreadsWithReplies] = useState(0);
@@ -216,8 +218,19 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   }, [searchInput]);
 
   const handleThreadClick = async (thread: ConversationThread) => {
-    // Auto-mark as read (thread-level)
+    // If clicking an unread thread, enter unread navigation mode
     if (thread.isUnread) {
+      // Collect all unread threads in current view
+      const unreadThreads = threads.filter((t) => t.isUnread);
+      const clickedIndex = unreadThreads.findIndex((t) => t.threadId === thread.threadId);
+
+      // Enter navigation mode if there are multiple unread threads
+      if (unreadThreads.length > 1 && clickedIndex >= 0) {
+        enterUnreadNavigation(unreadThreads, spaceId, clickedIndex);
+        return; // Navigation is handled by the context
+      }
+
+      // Single unread or not found in unread list - update local state
       setThreads((prev) =>
         prev.map((t) =>
           t.threadId === thread.threadId
@@ -244,7 +257,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     if (thread.threadType === 'highlight') {
       navigate(`${baseUrl}?highlightId=${thread.threadId}`);
     } else {
-      navigate(`${baseUrl}?openJournalComments=true`);
+      // Include scrollToEnd for journal discussions to scroll to latest comments
+      navigate(`${baseUrl}?openJournalComments=true&scrollToEnd=true`);
     }
   };
 

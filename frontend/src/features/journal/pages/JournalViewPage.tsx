@@ -18,6 +18,7 @@ import { JournalCommentThread } from '../components/JournalCommentThread'
 import { JournalCommentPanel } from '../components/JournalCommentPanel'
 import { PresenceAvatars } from '../components/PresenceAvatars'
 import { ConnectionStatus } from '../components/ConnectionStatus'
+import { UnreadNavigationBar } from '../../../components/UnreadNavigationBar'
 import { useHighlightsRealtime } from '../hooks/useHighlightsRealtime'
 import { useJournalComments } from '../hooks/useJournalComments'
 import type { Highlight } from '../types/highlight.types'
@@ -50,6 +51,7 @@ export const JournalViewPage: React.FC = () => {
   const [density, setDensity] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable')
   const [pendingHighlightId, setPendingHighlightId] = useState<string | null>(null)
   const [showJournalCommentPanel, setShowJournalCommentPanel] = useState(false)
+  const [scrollToEndOnOpen, setScrollToEndOnOpen] = useState(false)
 
   // Highlights and comments real-time feature
   const {
@@ -119,6 +121,7 @@ export const JournalViewPage: React.FC = () => {
   useEffect(() => {
     const highlightId = searchParams.get('highlightId')
     const openJournalComments = searchParams.get('openJournalComments')
+    const scrollToEnd = searchParams.get('scrollToEnd')
 
     if (highlightId) {
       setPendingHighlightId(highlightId)
@@ -127,10 +130,21 @@ export const JournalViewPage: React.FC = () => {
     } else if (openJournalComments === 'true') {
       // Open the journal-level discussion panel
       setShowJournalCommentPanel(true)
+      // If scrollToEnd is specified, scroll to latest comments (for unread navigation)
+      if (scrollToEnd === 'true') {
+        setScrollToEndOnOpen(true)
+      }
       // Clear the URL params after capturing them
       setSearchParams({}, { replace: true })
     }
   }, [searchParams, setSearchParams])
+
+  // Reset scrollToEnd when panel closes
+  useEffect(() => {
+    if (!showJournalCommentPanel) {
+      setScrollToEndOnOpen(false)
+    }
+  }, [showJournalCommentPanel])
 
   // Open highlight when highlights are loaded and we have a pending highlight ID
   useEffect(() => {
@@ -763,6 +777,9 @@ ${content}
         />
       )}
 
+      {/* Unread Navigation Bar - appears when navigating through unread messages */}
+      <UnreadNavigationBar />
+
       {/* Comment Thread - Renders as sliding panel with its own backdrop */}
       {selectedHighlight && (
         <CommentThread
@@ -770,6 +787,7 @@ ${content}
           comments={comments[selectedHighlight.id] || []}
           spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
           currentUserId={user?.userId || ''}
+          spaceId={spaceId}
           onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
           onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
           onClose={() => setSelectedHighlight(null)}
@@ -786,6 +804,7 @@ ${content}
           spaceMembers={activeUsers.map(u => ({ id: u.userId, name: u.userName }))}
           isOpen={showJournalCommentPanel}
           onClose={() => setShowJournalCommentPanel(false)}
+          scrollToEnd={scrollToEndOnOpen}
         />
       )}
 

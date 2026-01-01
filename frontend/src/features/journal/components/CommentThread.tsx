@@ -23,12 +23,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import type { Highlight, Comment } from '../types/highlight.types';
 import { HIGHLIGHT_COLORS } from '../types/highlight.types';
+import { conversationService } from '../../../services/conversationService';
 
 interface CommentThreadProps {
   highlight: Highlight;
   comments: Comment[];
   spaceMembers: Array<{ id: string; name: string }>;
   currentUserId: string;
+  /** Space ID for marking thread as read */
+  spaceId?: string;
   onAddComment: (text: string, parentId?: string) => void;
   onDeleteComment: (commentId: string) => void;
   onClose: () => void;
@@ -114,6 +117,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   comments,
   spaceMembers,
   currentUserId,
+  spaceId,
   onAddComment,
   onDeleteComment,
   onClose,
@@ -135,6 +139,16 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
 
     return () => clearInterval(interval);
   }, []);
+
+  // Auto mark-as-read when panel opens (for viewing unread highlight comments)
+  useEffect(() => {
+    if (spaceId && highlight.id) {
+      // Mark the highlight thread as read
+      conversationService
+        .markThreadAsRead(spaceId, highlight.id, 'highlight')
+        .catch(err => console.error('Error marking highlight as read:', err));
+    }
+  }, [spaceId, highlight.id]);
 
   // Detect dark mode
   useEffect(() => {

@@ -5,6 +5,7 @@ import { SpaceProvider } from './stores/spaceStore';
 import { InvitationProvider } from './stores/invitationStore';
 import { EllieCustomizationProvider } from './contexts/EllieCustomizationContext';
 import { EllieProvider } from './contexts/EllieContext';
+import { UnreadNavigationProvider } from './contexts/UnreadNavigationContext';
 import { AuthenticatedLayout } from './components/layout/AuthenticatedLayout';
 import { Landing } from './pages/Landing';
 import { SignIn } from './pages/SignIn';
@@ -30,31 +31,33 @@ function App() {
             <EllieCustomizationProvider>
               <EllieProvider>
                 <Router>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Landing />} />
-                <Route path="/signin" element={<SignIn />} />
-                <Route path="/signup" element={<SignUp />} />
+                  <UnreadNavigationProvider>
+                    <Routes>
+                      {/* Public routes */}
+                      <Route path="/" element={<Landing />} />
+                      <Route path="/signin" element={<SignIn />} />
+                      <Route path="/signup" element={<SignUp />} />
 
-                {/* Protected routes with layout */}
-                <Route element={<AuthenticatedLayout />}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/space/:spaceId" element={<SpaceDetail />} />
-                  <Route path="/space/:spaceId/:tab" element={<SpaceDetail />} />
-                  <Route path="/join/:inviteCode" element={<JoinSpace />} />
+                      {/* Protected routes with layout */}
+                      <Route element={<AuthenticatedLayout />}>
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/space/:spaceId" element={<SpaceDetail />} />
+                        <Route path="/space/:spaceId/:tab" element={<SpaceDetail />} />
+                        <Route path="/join/:inviteCode" element={<JoinSpace />} />
 
-                  {/* Journal routes */}
-                  <Route path="/spaces/:spaceId/journals" element={<JournalListPage />} />
-                  <Route path="/spaces/:spaceId/journals/new" element={<JournalCreatePage />} />
-                  <Route path="/spaces/:spaceId/journals/:journalId" element={<JournalViewPage />} />
-                  <Route path="/spaces/:spaceId/journals/:journalId/edit" element={<JournalEditPage />} />
-                </Route>
+                        {/* Journal routes */}
+                        <Route path="/spaces/:spaceId/journals" element={<JournalListPage />} />
+                        <Route path="/spaces/:spaceId/journals/new" element={<JournalCreatePage />} />
+                        <Route path="/spaces/:spaceId/journals/:journalId" element={<JournalViewPage />} />
+                        <Route path="/spaces/:spaceId/journals/:journalId/edit" element={<JournalEditPage />} />
+                      </Route>
 
-                {/* Catch all - redirect to landing */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+                      {/* Catch all - redirect to landing */}
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                  </UnreadNavigationProvider>
                 </Router>
               </EllieProvider>
             </EllieCustomizationProvider>
