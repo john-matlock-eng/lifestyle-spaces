@@ -250,6 +250,7 @@ class ConversationService:
         latest_comment = comments[-1] if comments else None
 
         # Determine unread status using per-thread tracking
+        # IMPORTANT: Exclude user's own comments from unread count
         last_read_at = self._normalize_timestamp(
             read_status.last_read_at if read_status else None
         )
@@ -259,13 +260,18 @@ class ConversationService:
         if last_read_at:
             for c in comments:
                 comment_time = self._normalize_timestamp(c.get("createdAt", ""))
-                if comment_time > last_read_at:
+                author_id = c.get("authorId", c.get("author", c.get("userId", "")))
+                # Only count as unread if it's after last read AND not by current user
+                if comment_time > last_read_at and author_id != user_id:
                     unread_count += 1
                     is_unread = True
         else:
-            # Never read - all are unread
-            unread_count = len(comments)
-            is_unread = len(comments) > 0
+            # Never read - count only comments from others as unread
+            for c in comments:
+                author_id = c.get("authorId", c.get("author", c.get("userId", "")))
+                if author_id != user_id:
+                    unread_count += 1
+                    is_unread = True
 
         # Highlight creator info
         creator_id = highlight.get("createdBy", highlight.get("userId", ""))
@@ -354,6 +360,7 @@ class ConversationService:
         latest_comment = comments[-1] if comments else None
 
         # Determine unread status using per-thread tracking
+        # IMPORTANT: Exclude user's own comments from unread count
         last_read_at = self._normalize_timestamp(
             read_status.last_read_at if read_status else None
         )
@@ -363,12 +370,18 @@ class ConversationService:
         if last_read_at:
             for c in comments:
                 comment_time = self._normalize_timestamp(c.get("createdAt", ""))
-                if comment_time > last_read_at:
+                author_id = c.get("authorId", c.get("author", c.get("userId", "")))
+                # Only count as unread if it's after last read AND not by current user
+                if comment_time > last_read_at and author_id != user_id:
                     unread_count += 1
                     is_unread = True
         else:
-            unread_count = len(comments)
-            is_unread = len(comments) > 0
+            # Never read - count only comments from others as unread
+            for c in comments:
+                author_id = c.get("authorId", c.get("author", c.get("userId", "")))
+                if author_id != user_id:
+                    unread_count += 1
+                    is_unread = True
 
         # Journal author info
         journal_author_id = journal.get("user_id", "")
