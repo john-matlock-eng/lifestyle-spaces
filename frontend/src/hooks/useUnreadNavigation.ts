@@ -21,6 +21,7 @@ interface UseUnreadNavigationReturn {
   state: UnreadNavigationState
   hasNext: boolean
   navigateToNext: () => void
+  removeThread: (threadId: string) => void // BUG FIX #4: Allow removing threads when marked as read
   dismiss: () => void
   isDismissed: boolean
 }
@@ -126,6 +127,36 @@ export function useUnreadNavigation({
     })
   }, [navigate, buildThreadUrl])
 
+  // BUG FIX #4: Remove a specific thread from the navigation list
+  // Called when a thread is marked as read (e.g., via auto mark-as-read after 2s viewing)
+  // This keeps the navigation list in sync with actual unread state
+  const removeThread = useCallback((threadId: string) => {
+    setState((prev) => {
+      const threadIndex = prev.threads.findIndex((t) => t.threadId === threadId)
+      if (threadIndex === -1) return prev // Thread not in list
+
+      const newThreads = prev.threads.filter((t) => t.threadId !== threadId)
+
+      // Adjust currentIndex if we removed a thread before or at current position
+      let newIndex = prev.currentIndex
+      if (threadIndex < prev.currentIndex) {
+        newIndex = Math.max(0, prev.currentIndex - 1)
+      } else if (threadIndex === prev.currentIndex && newIndex >= newThreads.length) {
+        newIndex = Math.max(0, newThreads.length - 1)
+      }
+
+      return {
+        ...prev,
+        threads: newThreads,
+        currentIndex: newIndex,
+        totalUnread: newThreads.length,
+      }
+    })
+
+    // Also update the service cache
+    conversationService.removeFromUnreadCache(spaceId, threadId)
+  }, [spaceId])
+
   // Dismiss the navigation bar
   const dismiss = useCallback(() => {
     setIsDismissed(true)
@@ -135,6 +166,7 @@ export function useUnreadNavigation({
     state,
     hasNext: state.threads.length > 1, // More than just current thread
     navigateToNext,
+    removeThread,
     dismiss,
     isDismissed,
   }

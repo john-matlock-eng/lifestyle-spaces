@@ -13,7 +13,7 @@ interface CommentVisibilityOptions {
   threadId: string
   threadType: 'highlight' | 'journal_discussion'
   userLastSeen?: string | null
-  onMarkAsRead?: () => void
+  onMarkAsRead?: (threadId: string) => void // BUG FIX #4: Pass threadId so caller can update navigation state
   viewportThreshold?: number // 0-1, how much must be visible (default: 0.5)
   readDelay?: number // ms to wait before marking read (default: 2000)
   enabled?: boolean // allow disabling the observer
@@ -52,6 +52,25 @@ export function useCommentVisibility({
   // Parse userLastSeen to determine which comments are unread
   const userLastSeenTime = userLastSeen ? new Date(userLastSeen).getTime() : 0
 
+  // BUG FIX #1 & #3: Reset all tracking state when threadId changes
+  // This ensures refs don't persist stale data across different threads
+  useEffect(() => {
+    // Reset refs
+    hasMarkedAsReadRef.current = false
+    firstUnreadRef.current = null
+    setIsMarkedAsRead(false)
+
+    // Clear any existing timers and comment tracking
+    commentsRef.current.forEach((info) => {
+      if (info.timerId) clearTimeout(info.timerId)
+    })
+    commentsRef.current.clear()
+
+    // Disconnect existing observer (will be recreated by the other effect)
+    observerRef.current?.disconnect()
+    observerRef.current = null
+  }, [threadId, userLastSeen]) // Also reset when userLastSeen changes
+
   // Handle marking thread as read
   const markThreadAsRead = useCallback(async () => {
     if (hasMarkedAsReadRef.current) return
@@ -61,7 +80,8 @@ export function useCommentVisibility({
 
     try {
       await conversationService.markThreadAsRead(spaceId, threadId, threadType)
-      onMarkAsRead?.()
+      // BUG FIX #4: Pass threadId so caller can update navigation state
+      onMarkAsRead?.(threadId)
     } catch (error) {
       console.error('Failed to mark thread as read:', error)
       // Reset on error so user can retry
@@ -147,9 +167,20 @@ export function useCommentVisibility({
       const commentTime = element.getAttribute('data-comment-time')
       if (commentTime && userLastSeenTime > 0) {
         const commentTimestamp = new Date(commentTime).getTime()
-        if (commentTimestamp > userLastSeenTime && !firstUnreadRef.current) {
-          firstUnreadRef.current = element
+        if (commentTimestamp > userLastSeenTime) {
           element.classList.add('comment-unread')
+
+          // BUG FIX #2: Set firstUnreadRef to the EARLIEST unread (lowest timestamp)
+          // Previously we used !firstUnreadRef.current which picked the first to register,
+          // not necessarily the chronologically earliest
+          const currentFirstTime = firstUnreadRef.current?.getAttribute('data-comment-time')
+          const currentFirstTimestamp = currentFirstTime
+            ? new Date(currentFirstTime).getTime()
+            : Infinity
+
+          if (commentTimestamp < currentFirstTimestamp) {
+            firstUnreadRef.current = element
+          }
         }
       }
 
