@@ -3,17 +3,20 @@
  *
  * Uses IntersectionObserver to detect when comments scroll into view.
  * After a configurable delay (default 2s), marks the thread as read.
+ *
+ * MODERNIZED: Now uses React Query mutation for mark-as-read with optimistic updates.
  */
 
 import { useEffect, useRef, useCallback, useState } from 'react'
-import { conversationService } from '../services/conversationService'
+import { useMarkThreadAsRead } from './useConversations'
+import { useConversationStore } from '../stores/conversationStore'
 
 interface CommentVisibilityOptions {
   spaceId: string
   threadId: string
   threadType: 'highlight' | 'journal_discussion'
   userLastSeen?: string | null
-  onMarkAsRead?: (threadId: string) => void // BUG FIX #4: Pass threadId so caller can update navigation state
+  onMarkAsRead?: (threadId: string) => void
   viewportThreshold?: number // 0-1, how much must be visible (default: 0.5)
   readDelay?: number // ms to wait before marking read (default: 2000)
   enabled?: boolean // allow disabling the observer
@@ -49,6 +52,12 @@ export function useCommentVisibility({
   const hasMarkedAsReadRef = useRef(false)
   const firstUnreadRef = useRef<HTMLElement | null>(null)
 
+  // React Query mutation for marking as read
+  const markAsReadMutation = useMarkThreadAsRead()
+
+  // Zustand store for optimistic state
+  const isThreadReadOptimistic = useConversationStore((state) => state.isThreadReadOptimistic)
+
   // Parse userLastSeen to determine which comments are unread
   const userLastSeenTime = userLastSeen ? new Date(userLastSeen).getTime() : 0
 
@@ -71,15 +80,16 @@ export function useCommentVisibility({
     observerRef.current = null
   }, [threadId, userLastSeen]) // Also reset when userLastSeen changes
 
-  // Handle marking thread as read
+  // Handle marking thread as read using React Query mutation
   const markThreadAsRead = useCallback(async () => {
     if (hasMarkedAsReadRef.current) return
+    if (isThreadReadOptimistic(threadId)) return // Already marked optimistically
 
     hasMarkedAsReadRef.current = true
     setIsMarkedAsRead(true)
 
     try {
-      await conversationService.markThreadAsRead(spaceId, threadId, threadType)
+      await markAsReadMutation.mutateAsync({ spaceId, threadId, threadType })
       // BUG FIX #4: Pass threadId so caller can update navigation state
       onMarkAsRead?.(threadId)
     } catch (error) {
@@ -88,7 +98,7 @@ export function useCommentVisibility({
       hasMarkedAsReadRef.current = false
       setIsMarkedAsRead(false)
     }
-  }, [spaceId, threadId, threadType, onMarkAsRead])
+  }, [spaceId, threadId, threadType, onMarkAsRead, markAsReadMutation, isThreadReadOptimistic])
 
   // Start timer when comment becomes visible
   const startReadTimer = useCallback(

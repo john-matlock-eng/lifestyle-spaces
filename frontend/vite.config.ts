@@ -11,6 +11,51 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Group node_modules by package
+          if (id.includes('node_modules')) {
+            // React core
+            if (id.includes('react-dom') || (id.includes('/react/') && !id.includes('react-router'))) {
+              return 'vendor-react';
+            }
+            // React Router
+            if (id.includes('react-router')) {
+              return 'vendor-router';
+            }
+            // React Query and state management
+            if (id.includes('@tanstack/react-query') || id.includes('zustand')) {
+              return 'vendor-state';
+            }
+            // TipTap editor (heavy)
+            if (id.includes('@tiptap') || id.includes('prosemirror')) {
+              return 'vendor-tiptap';
+            }
+            // Framer Motion (animation library)
+            if (id.includes('framer-motion')) {
+              return 'vendor-motion';
+            }
+            // Emoji picker
+            if (id.includes('emoji-picker-react')) {
+              return 'vendor-emoji';
+            }
+            // AWS Amplify
+            if (id.includes('aws-amplify') || id.includes('@aws-sdk')) {
+              return 'vendor-aws';
+            }
+            // Lucide icons
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+          }
+        },
+      },
+    },
+    // Increase warning limit since we're optimizing
+    chunkSizeWarningLimit: 600,
+  },
   test: {
     globals: true,
     environment: 'jsdom',

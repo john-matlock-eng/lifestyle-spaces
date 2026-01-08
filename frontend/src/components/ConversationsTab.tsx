@@ -27,7 +27,12 @@ import {
   Clock,
   Filter,
 } from 'lucide-react';
-import { conversationService } from '../services/conversationService';
+import {
+  useThreads,
+  useUnreadCount,
+  useMarkThreadAsRead,
+  useMarkAllAsRead,
+} from '../hooks/useConversations';
 import type { ConversationThread, GetThreadsOptions, GroupedJournalConversations } from '../types/conversation';
 import { JournalConversationCard } from './JournalConversationCard';
 import './ConversationsTab.css';
@@ -37,7 +42,6 @@ interface ConversationsTabProps {
   onUnreadCountChange?: (count: number, repliesCount: number) => void;
 }
 
-const POLL_INTERVAL = 30000; // 30 seconds
 const PAGE_SIZE = 20;
 
 // Format timestamp smartly
@@ -137,26 +141,56 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   onUnreadCountChange,
 }) => {
   const navigate = useNavigate();
-  const [threads, setThreads] = useState<ConversationThread[]>([]);
-  const [totalUnread, setTotalUnread] = useState(0);
-  const [threadsWithReplies, setThreadsWithReplies] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // Filter/sort state
   const [sortBy, setSortBy] = useState<GetThreadsOptions['sort']>('recent');
   const [filterType, setFilterType] = useState<GetThreadsOptions['type']>(undefined);
   const [filterParticipation, setFilterParticipation] = useState<'all' | 'participated' | 'unread'>('all');
   const [timeFilter, setTimeFilter] = useState<GetThreadsOptions['timeFilter']>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<'grouped' | 'flat'>('grouped');
+  const [offset, setOffset] = useState(0);
 
   const listRef = useRef<HTMLDivElement>(null);
-  const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Build query options
+  const queryOptions: GetThreadsOptions = useMemo(() => ({
+    sort: sortBy,
+    type: filterType,
+    filter: filterParticipation,
+    timeFilter,
+    search: searchQuery || undefined,
+    limit: PAGE_SIZE,
+    offset,
+  }), [sortBy, filterType, filterParticipation, timeFilter, searchQuery, offset]);
+
+  // React Query hooks
+  const {
+    data: threadsData,
+    isLoading: loading,
+    isFetching,
+    error: queryError,
+    refetch,
+    dataUpdatedAt,
+  } = useThreads(spaceId, queryOptions);
+
+  const {
+    data: unreadCountData,
+  } = useUnreadCount(spaceId);
+
+  const markThreadAsReadMutation = useMarkThreadAsRead();
+  const markAllAsReadMutation = useMarkAllAsRead();
+
+  // Derived state from React Query
+  const threads = threadsData?.threads ?? [];
+  const totalUnread = unreadCountData?.totalUnread ?? threadsData?.totalUnread ?? 0;
+  const threadsWithReplies = unreadCountData?.threadsWithReplies ?? threadsData?.threadsWithReplies ?? 0;
+  const totalCount = threadsData?.totalCount ?? threads.length;
+  const hasMore = threadsData?.hasMore ?? false;
+  const error = queryError ? 'Failed to load conversations' : null;
+  const loadingMore = isFetching && offset > 0;
+  const lastRefresh = new Date(dataUpdatedAt);
 
   // Memoized grouped conversations
   const groupedConversations = useMemo(
@@ -169,96 +203,33 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     onUnreadCountChange?.(totalUnread, threadsWithReplies);
   }, [totalUnread, threadsWithReplies, onUnreadCountChange]);
 
-  // Fetch threads
-  const fetchThreads = useCallback(
-    async (append = false) => {
-      try {
-        if (!append) {
-          setLoading(true);
-        } else {
-          setLoadingMore(true);
-        }
-        setError(null);
-
-        const offset = append ? threads.length : 0;
-        const response = await conversationService.getThreads(spaceId, {
-          sort: sortBy,
-          type: filterType,
-          filter: filterParticipation,
-          timeFilter,
-          search: searchQuery || undefined,
-          limit: PAGE_SIZE,
-          offset,
-        });
-
-        if (append) {
-          setThreads((prev) => [...prev, ...response.threads]);
-        } else {
-          setThreads(response.threads);
-        }
-        setTotalUnread(response.totalUnread);
-        setThreadsWithReplies(response.threadsWithReplies);
-        setTotalCount(response.totalCount ?? response.threads.length);
-        setHasMore(response.hasMore ?? false);
-        setLastRefresh(new Date());
-      } catch (err) {
-        console.error('Error fetching threads:', err);
-        setError('Failed to load conversations');
-      } finally {
-        setLoading(false);
-        setLoadingMore(false);
-      }
-    },
-    [spaceId, sortBy, filterType, filterParticipation, timeFilter, searchQuery, threads.length]
-  );
-
-  // Initial fetch and refetch on filter/sort changes
+  // Reset offset when filters change
   useEffect(() => {
-    fetchThreads(false);
-  }, [spaceId, sortBy, filterType, filterParticipation, timeFilter, searchQuery, fetchThreads]);
+    setOffset(0);
+  }, [sortBy, filterType, filterParticipation, timeFilter, searchQuery]);
 
-  // Polling for updates
-  useEffect(() => {
-    const poll = () => {
-      pollTimeoutRef.current = setTimeout(async () => {
-        try {
-          // Just fetch unread counts for polling, not full threads
-          const response = await conversationService.getUnreadCount(spaceId);
-          if (response.totalUnread !== totalUnread || response.threadsWithReplies !== threadsWithReplies) {
-            // If counts changed, do a full refresh
-            fetchThreads(false);
-          }
-        } catch (err) {
-          console.error('Polling error:', err);
-        }
-        poll(); // Schedule next poll
-      }, POLL_INTERVAL);
-    };
+  // Infinite scroll - load more by incrementing offset
+  const loadMore = useCallback(() => {
+    if (!loadingMore && hasMore) {
+      setOffset((prev) => prev + PAGE_SIZE);
+    }
+  }, [loadingMore, hasMore]);
 
-    poll();
-
-    return () => {
-      if (pollTimeoutRef.current) {
-        clearTimeout(pollTimeoutRef.current);
-      }
-    };
-  }, [spaceId, totalUnread, threadsWithReplies, fetchThreads]);
-
-  // Infinite scroll
+  // Infinite scroll handler
   useEffect(() => {
     const handleScroll = () => {
       if (!listRef.current || loadingMore || !hasMore) return;
 
       const { scrollTop, scrollHeight, clientHeight } = listRef.current;
       if (scrollTop + clientHeight >= scrollHeight - 100) {
-        fetchThreads(true);
+        loadMore();
       }
     };
 
     const listElement = listRef.current;
     listElement?.addEventListener('scroll', handleScroll);
     return () => listElement?.removeEventListener('scroll', handleScroll);
-  }, [loadingMore, hasMore, fetchThreads]);
+  }, [loadingMore, hasMore, loadMore]);
 
   // Search debounce
   useEffect(() => {
@@ -269,26 +240,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   }, [searchInput]);
 
   const handleThreadClick = async (thread: ConversationThread) => {
-    // Auto-mark as read (thread-level)
+    // Auto-mark as read using mutation (optimistic updates handled by React Query)
     if (thread.isUnread) {
-      setThreads((prev) =>
-        prev.map((t) =>
-          t.threadId === thread.threadId
-            ? { ...t, isUnread: false, unreadCount: 0, hasReplyToUser: false }
-            : t
-        )
-      );
-      setTotalUnread((prev) => Math.max(0, prev - thread.unreadCount));
-      if (thread.hasReplyToUser) {
-        setThreadsWithReplies((prev) => Math.max(0, prev - 1));
-      }
-
-      // Use thread-level mark-as-read
-      conversationService
-        .markThreadAsRead(spaceId, thread.threadId, thread.threadType)
-        .catch((err) => {
-          console.error('Error marking thread as read:', err);
-        });
+      markThreadAsReadMutation.mutate({
+        spaceId,
+        threadId: thread.threadId,
+        threadType: thread.threadType,
+      });
     }
 
     // Navigate to the appropriate location with enhanced params
@@ -322,45 +280,20 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   const handleMarkAsRead = async (e: React.MouseEvent, thread: ConversationThread) => {
     e.stopPropagation();
-    setThreads((prev) =>
-      prev.map((t) =>
-        t.threadId === thread.threadId
-          ? { ...t, isUnread: false, unreadCount: 0, hasReplyToUser: false }
-          : t
-      )
-    );
-    setTotalUnread((prev) => Math.max(0, prev - thread.unreadCount));
-    if (thread.hasReplyToUser) {
-      setThreadsWithReplies((prev) => Math.max(0, prev - 1));
-    }
-
-    try {
-      await conversationService.markThreadAsRead(spaceId, thread.threadId, thread.threadType);
-    } catch (err) {
-      console.error('Error marking as read:', err);
-    }
+    markThreadAsReadMutation.mutate({
+      spaceId,
+      threadId: thread.threadId,
+      threadType: thread.threadType,
+    });
   };
 
   const handleMarkAllAsRead = async () => {
-    if (isMarkingAllRead || totalUnread === 0) return;
-
-    setIsMarkingAllRead(true);
-    try {
-      await conversationService.markAllAsRead(spaceId);
-      setThreads((prev) =>
-        prev.map((t) => ({ ...t, isUnread: false, unreadCount: 0, hasReplyToUser: false }))
-      );
-      setTotalUnread(0);
-      setThreadsWithReplies(0);
-    } catch (err) {
-      console.error('Error marking all as read:', err);
-    } finally {
-      setIsMarkingAllRead(false);
-    }
+    if (markAllAsReadMutation.isPending || totalUnread === 0) return;
+    markAllAsReadMutation.mutate(spaceId);
   };
 
   const handleRefresh = () => {
-    fetchThreads(false);
+    refetch();
   };
 
   const clearSearch = () => {
@@ -454,7 +387,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             <button
               className="conversations-mark-all-btn"
               onClick={handleMarkAllAsRead}
-              disabled={isMarkingAllRead}
+              disabled={markAllAsReadMutation.isPending}
               title="Mark all as read"
             >
               <CheckCheck size={16} />
