@@ -30,7 +30,7 @@ interface UseUnreadNavigationReturn {
 
 export function useUnreadNavigation({
   spaceId,
-  initialIndex: _initialIndex = 0, // Kept for API compatibility, Zustand store manages index
+  initialIndex: _initialIndex, // eslint-disable-line @typescript-eslint/no-unused-vars -- Kept for API compatibility
   enabled = true,
 }: UseUnreadNavigationOptions): UseUnreadNavigationReturn {
   const navigate = useNavigate()

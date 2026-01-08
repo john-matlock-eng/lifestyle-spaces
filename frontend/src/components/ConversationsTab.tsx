@@ -28,7 +28,7 @@ import {
   Filter,
 } from 'lucide-react';
 import {
-  useThreads,
+  useInfiniteThreads,
   useUnreadCount,
   useMarkThreadAsRead,
   useMarkAllAsRead,
@@ -150,30 +150,30 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [viewMode, setViewMode] = useState<'grouped' | 'flat'>('grouped');
-  const [offset, setOffset] = useState(0);
 
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Build query options
-  const queryOptions: GetThreadsOptions = useMemo(() => ({
+  // Build query options (without offset - handled by infinite query)
+  const queryOptions: Omit<GetThreadsOptions, 'offset'> = useMemo(() => ({
     sort: sortBy,
     type: filterType,
     filter: filterParticipation,
     timeFilter,
     search: searchQuery || undefined,
     limit: PAGE_SIZE,
-    offset,
-  }), [sortBy, filterType, filterParticipation, timeFilter, searchQuery, offset]);
+  }), [sortBy, filterType, filterParticipation, timeFilter, searchQuery]);
 
-  // React Query hooks
+  // React Query hooks - using infinite query for proper pagination accumulation
   const {
-    data: threadsData,
+    data: infiniteData,
     isLoading: loading,
-    isFetching,
+    isFetchingNextPage,
     error: queryError,
     refetch,
     dataUpdatedAt,
-  } = useThreads(spaceId, queryOptions);
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteThreads(spaceId, queryOptions);
 
   const {
     data: unreadCountData,
@@ -182,14 +182,18 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const markThreadAsReadMutation = useMarkThreadAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
 
-  // Derived state from React Query
-  const threads = threadsData?.threads ?? [];
-  const totalUnread = unreadCountData?.totalUnread ?? threadsData?.totalUnread ?? 0;
-  const threadsWithReplies = unreadCountData?.threadsWithReplies ?? threadsData?.threadsWithReplies ?? 0;
-  const totalCount = threadsData?.totalCount ?? threads.length;
-  const hasMore = threadsData?.hasMore ?? false;
+  // Derived state from React Query - flatten all pages into a single array
+  const threads = useMemo(() =>
+    infiniteData?.pages.flatMap(page => page.threads) ?? [],
+    [infiniteData]
+  );
+  const firstPage = infiniteData?.pages[0];
+  const totalUnread = unreadCountData?.totalUnread ?? firstPage?.totalUnread ?? 0;
+  const threadsWithReplies = unreadCountData?.threadsWithReplies ?? firstPage?.threadsWithReplies ?? 0;
+  const totalCount = firstPage?.totalCount ?? threads.length;
+  const hasMore = hasNextPage ?? false;
   const error = queryError ? 'Failed to load conversations' : null;
-  const loadingMore = isFetching && offset > 0;
+  const loadingMore = isFetchingNextPage;
   const lastRefresh = new Date(dataUpdatedAt);
 
   // Memoized grouped conversations
@@ -203,17 +207,15 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     onUnreadCountChange?.(totalUnread, threadsWithReplies);
   }, [totalUnread, threadsWithReplies, onUnreadCountChange]);
 
-  // Reset offset when filters change
-  useEffect(() => {
-    setOffset(0);
-  }, [sortBy, filterType, filterParticipation, timeFilter, searchQuery]);
+  // Note: No need to reset offset when filters change - useInfiniteQuery
+  // automatically resets when query key changes (which includes queryOptions)
 
-  // Infinite scroll - load more by incrementing offset
+  // Infinite scroll - load more using fetchNextPage from useInfiniteQuery
   const loadMore = useCallback(() => {
     if (!loadingMore && hasMore) {
-      setOffset((prev) => prev + PAGE_SIZE);
+      fetchNextPage();
     }
-  }, [loadingMore, hasMore]);
+  }, [loadingMore, hasMore, fetchNextPage]);
 
   // Infinite scroll handler
   useEffect(() => {

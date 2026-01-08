@@ -53,7 +53,8 @@ export function useCommentVisibility({
   const firstUnreadRef = useRef<HTMLElement | null>(null)
 
   // React Query mutation for marking as read
-  const markAsReadMutation = useMarkThreadAsRead()
+  // Extract mutateAsync separately - it's stable and won't cause callback recreation
+  const { mutateAsync: markAsReadAsync } = useMarkThreadAsRead()
 
   // Zustand store for optimistic state
   const isThreadReadOptimistic = useConversationStore((state) => state.isThreadReadOptimistic)
@@ -89,7 +90,7 @@ export function useCommentVisibility({
     setIsMarkedAsRead(true)
 
     try {
-      await markAsReadMutation.mutateAsync({ spaceId, threadId, threadType })
+      await markAsReadAsync({ spaceId, threadId, threadType })
       // BUG FIX #4: Pass threadId so caller can update navigation state
       onMarkAsRead?.(threadId)
     } catch (error) {
@@ -98,7 +99,7 @@ export function useCommentVisibility({
       hasMarkedAsReadRef.current = false
       setIsMarkedAsRead(false)
     }
-  }, [spaceId, threadId, threadType, onMarkAsRead, markAsReadMutation, isThreadReadOptimistic])
+  }, [spaceId, threadId, threadType, onMarkAsRead, markAsReadAsync, isThreadReadOptimistic])
 
   // Start timer when comment becomes visible
   const startReadTimer = useCallback(

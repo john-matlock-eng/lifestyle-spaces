@@ -8,7 +8,7 @@
  * - Type-safe query keys
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { conversationService } from '../services/conversationService'
 import { useConversationStore } from '../stores/conversationStore'
 import type {
@@ -27,6 +27,8 @@ export const conversationKeys = {
   threads: (spaceId: string) => [...conversationKeys.all, 'threads', spaceId] as const,
   threadsList: (spaceId: string, options?: GetThreadsOptions) =>
     [...conversationKeys.threads(spaceId), 'list', options] as const,
+  threadsInfinite: (spaceId: string, options?: Omit<GetThreadsOptions, 'offset'>) =>
+    [...conversationKeys.threads(spaceId), 'infinite', options] as const,
   unreadCount: (spaceId: string) => [...conversationKeys.all, 'unreadCount', spaceId] as const,
   unreadThreads: (spaceId: string) => [...conversationKeys.threads(spaceId), 'unread'] as const,
 }
@@ -42,6 +44,36 @@ export function useThreads(spaceId: string, options: GetThreadsOptions = {}, ena
   return useQuery({
     queryKey: conversationKeys.threadsList(spaceId, options),
     queryFn: () => conversationService.getThreads(spaceId, options),
+    enabled: enabled && !!spaceId,
+    staleTime: 1000 * 30, // 30 seconds
+  })
+}
+
+/**
+ * Fetch conversation threads with infinite scrolling support.
+ * Accumulates pages as user scrolls, unlike useThreads which replaces data.
+ */
+export function useInfiniteThreads(
+  spaceId: string,
+  options: Omit<GetThreadsOptions, 'offset'> = {},
+  enabled = true
+) {
+  const pageSize = options.limit ?? 20
+
+  return useInfiniteQuery({
+    queryKey: conversationKeys.threadsInfinite(spaceId, options),
+    queryFn: async ({ pageParam = 0 }) => {
+      return conversationService.getThreads(spaceId, {
+        ...options,
+        offset: pageParam,
+        limit: pageSize,
+      })
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage.hasMore) return undefined
+      return allPages.length * pageSize
+    },
     enabled: enabled && !!spaceId,
     staleTime: 1000 * 30, // 30 seconds
   })
@@ -103,6 +135,7 @@ export function useMarkThreadAsRead() {
     markThreadAsReadOptimistic,
     clearOptimisticRead,
     removeUnreadThread,
+    setUnreadThreads,
   } = useConversationStore()
 
   return useMutation({
@@ -114,13 +147,18 @@ export function useMarkThreadAsRead() {
       await queryClient.cancelQueries({ queryKey: conversationKeys.threads(spaceId) })
       await queryClient.cancelQueries({ queryKey: conversationKeys.unreadCount(spaceId) })
 
-      // Snapshot previous values
+      // Snapshot previous values - React Query cache
       const previousThreads = queryClient.getQueryData<ConversationThread[]>(
         conversationKeys.unreadThreads(spaceId)
       )
       const previousUnreadCount = queryClient.getQueryData<UnreadCountResponse>(
         conversationKeys.unreadCount(spaceId)
       )
+
+      // Snapshot previous Zustand state for rollback
+      const zustandState = useConversationStore.getState()
+      const previousZustandThreads = [...zustandState.unreadNav.threads]
+      const previousZustandSpaceId = zustandState.unreadNav.spaceId
 
       // Optimistically update Zustand store
       markThreadAsReadOptimistic(threadId)
@@ -160,12 +198,13 @@ export function useMarkThreadAsRead() {
         }
       )
 
-      return { previousThreads, previousUnreadCount }
+      return { previousThreads, previousUnreadCount, previousZustandThreads, previousZustandSpaceId }
     },
     onError: (_err, { spaceId, threadId }, context) => {
       // Rollback optimistic updates
       clearOptimisticRead(threadId)
 
+      // Rollback React Query cache
       if (context?.previousThreads) {
         queryClient.setQueryData(
           conversationKeys.unreadThreads(spaceId),
@@ -178,6 +217,11 @@ export function useMarkThreadAsRead() {
           conversationKeys.unreadCount(spaceId),
           context.previousUnreadCount
         )
+      }
+
+      // Rollback Zustand navigation state
+      if (context?.previousZustandThreads && context?.previousZustandSpaceId) {
+        setUnreadThreads(context.previousZustandSpaceId, context.previousZustandThreads)
       }
     },
     onSuccess: (_data, { threadId }) => {
@@ -256,7 +300,7 @@ export function useUnreadNavigationV2(spaceId: string, enabled = true) {
 
   const {
     isLoading,
-    error,
+    error: queryError,
     refetch,
   } = useUnreadThreads(spaceId, enabled)
 
@@ -264,6 +308,9 @@ export function useUnreadNavigationV2(spaceId: string, enabled = true) {
 
   const currentThread = unreadNav.threads[unreadNav.currentIndex] ?? null
   const hasNext = unreadNav.threads.length > 1
+
+  // Transform React Query error to a user-friendly message
+  const error = queryError ? (queryError instanceof Error ? queryError.message : 'Failed to load unread threads') : null
 
   return {
     // Data

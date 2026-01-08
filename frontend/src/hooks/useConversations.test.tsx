@@ -316,7 +316,7 @@ describe('useConversations hooks', () => {
             threadId: 'thread-1',
             threadType: 'highlight',
           })
-        } catch (e) {
+        } catch {
           // Expected error
         }
       })
