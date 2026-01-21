@@ -27,7 +27,7 @@ interface JournalCommentPanelProps {
   onClose: () => void;
   scrollToUnread?: boolean;
   userLastSeen?: string | null;
-  onMarkAsRead?: () => void;
+  onMarkAsRead?: (threadId: string) => void; // BUG FIX #4: Receives threadId for navigation sync
 }
 
 // Generate consistent color for user based on their ID

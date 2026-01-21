@@ -1231,8 +1231,9 @@ class TestConversationThreads:
             assert result.user_participated is True
             assert result.user_started is True
             assert result.has_reply_to_user is True  # user-456 replied after user-123
-            assert result.is_unread is True  # No read status means unread
-            assert result.unread_count == 2
+            assert result.is_unread is True  # Has unread comment from other user
+            # Only count 1 unread: user's own comment (user-123) is NOT counted as unread
+            assert result.unread_count == 1
 
     def test_build_journal_discussion_thread_no_comments(self):
         """Test _build_journal_discussion_thread returns None when no comments."""

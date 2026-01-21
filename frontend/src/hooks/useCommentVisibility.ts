@@ -3,17 +3,20 @@
  *
  * Uses IntersectionObserver to detect when comments scroll into view.
  * After a configurable delay (default 2s), marks the thread as read.
+ *
+ * MODERNIZED: Now uses React Query mutation for mark-as-read with optimistic updates.
  */
 
 import { useEffect, useRef, useCallback, useState } from 'react'
-import { conversationService } from '../services/conversationService'
+import { useMarkThreadAsRead } from './useConversations'
+import { useConversationStore } from '../stores/conversationStore'
 
 interface CommentVisibilityOptions {
   spaceId: string
   threadId: string
   threadType: 'highlight' | 'journal_discussion'
   userLastSeen?: string | null
-  onMarkAsRead?: () => void
+  onMarkAsRead?: (threadId: string) => void
   viewportThreshold?: number // 0-1, how much must be visible (default: 0.5)
   readDelay?: number // ms to wait before marking read (default: 2000)
   enabled?: boolean // allow disabling the observer
@@ -49,26 +52,54 @@ export function useCommentVisibility({
   const hasMarkedAsReadRef = useRef(false)
   const firstUnreadRef = useRef<HTMLElement | null>(null)
 
+  // React Query mutation for marking as read
+  // Extract mutateAsync separately - it's stable and won't cause callback recreation
+  const { mutateAsync: markAsReadAsync } = useMarkThreadAsRead()
+
+  // Zustand store for optimistic state
+  const isThreadReadOptimistic = useConversationStore((state) => state.isThreadReadOptimistic)
+
   // Parse userLastSeen to determine which comments are unread
   const userLastSeenTime = userLastSeen ? new Date(userLastSeen).getTime() : 0
 
-  // Handle marking thread as read
+  // BUG FIX #1 & #3: Reset all tracking state when threadId changes
+  // This ensures refs don't persist stale data across different threads
+  useEffect(() => {
+    // Reset refs
+    hasMarkedAsReadRef.current = false
+    firstUnreadRef.current = null
+    setIsMarkedAsRead(false)
+
+    // Clear any existing timers and comment tracking
+    commentsRef.current.forEach((info) => {
+      if (info.timerId) clearTimeout(info.timerId)
+    })
+    commentsRef.current.clear()
+
+    // Disconnect existing observer (will be recreated by the other effect)
+    observerRef.current?.disconnect()
+    observerRef.current = null
+  }, [threadId, userLastSeen]) // Also reset when userLastSeen changes
+
+  // Handle marking thread as read using React Query mutation
   const markThreadAsRead = useCallback(async () => {
     if (hasMarkedAsReadRef.current) return
+    if (isThreadReadOptimistic(threadId)) return // Already marked optimistically
 
     hasMarkedAsReadRef.current = true
     setIsMarkedAsRead(true)
 
     try {
-      await conversationService.markThreadAsRead(spaceId, threadId, threadType)
-      onMarkAsRead?.()
+      await markAsReadAsync({ spaceId, threadId, threadType })
+      // BUG FIX #4: Pass threadId so caller can update navigation state
+      onMarkAsRead?.(threadId)
     } catch (error) {
       console.error('Failed to mark thread as read:', error)
       // Reset on error so user can retry
       hasMarkedAsReadRef.current = false
       setIsMarkedAsRead(false)
     }
-  }, [spaceId, threadId, threadType, onMarkAsRead])
+  }, [spaceId, threadId, threadType, onMarkAsRead, markAsReadAsync, isThreadReadOptimistic])
 
   // Start timer when comment becomes visible
   const startReadTimer = useCallback(
@@ -147,9 +178,20 @@ export function useCommentVisibility({
       const commentTime = element.getAttribute('data-comment-time')
       if (commentTime && userLastSeenTime > 0) {
         const commentTimestamp = new Date(commentTime).getTime()
-        if (commentTimestamp > userLastSeenTime && !firstUnreadRef.current) {
-          firstUnreadRef.current = element
+        if (commentTimestamp > userLastSeenTime) {
           element.classList.add('comment-unread')
+
+          // BUG FIX #2: Set firstUnreadRef to the EARLIEST unread (lowest timestamp)
+          // Previously we used !firstUnreadRef.current which picked the first to register,
+          // not necessarily the chronologically earliest
+          const currentFirstTime = firstUnreadRef.current?.getAttribute('data-comment-time')
+          const currentFirstTimestamp = currentFirstTime
+            ? new Date(currentFirstTime).getTime()
+            : Infinity
+
+          if (commentTimestamp < currentFirstTimestamp) {
+            firstUnreadRef.current = element
+          }
         }
       }
 

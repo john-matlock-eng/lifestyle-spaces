@@ -3,12 +3,14 @@
  *
  * Fetches all unread threads for a space once on mount and provides
  * navigation between them without returning to the ConversationsTab.
- * Uses a stable cached list that only updates when explicitly navigating.
+ *
+ * MODERNIZED: Now uses Zustand for client state and React Query for server data.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { conversationService } from '../services/conversationService'
+import { useConversationStore, selectHasMoreUnread } from '../stores/conversationStore'
+import { useUnreadThreads } from './useConversations'
 import type { ConversationThread, UnreadNavigationState } from '../types/conversation'
 
 interface UseUnreadNavigationOptions {
@@ -21,59 +23,35 @@ interface UseUnreadNavigationReturn {
   state: UnreadNavigationState
   hasNext: boolean
   navigateToNext: () => void
+  removeThread: (threadId: string) => void
   dismiss: () => void
   isDismissed: boolean
 }
 
 export function useUnreadNavigation({
   spaceId,
-  initialIndex = 0,
+  initialIndex: _initialIndex, // eslint-disable-line @typescript-eslint/no-unused-vars -- Kept for API compatibility
   enabled = true,
 }: UseUnreadNavigationOptions): UseUnreadNavigationReturn {
   const navigate = useNavigate()
-  const [isDismissed, setIsDismissed] = useState(false)
-  const [state, setState] = useState<UnreadNavigationState>({
-    threads: [],
-    currentIndex: initialIndex,
-    totalUnread: 0,
-    isLoading: true,
-    lastFetched: null,
-  })
 
-  // Track if we've already fetched to prevent refetching
-  const hasFetchedRef = useRef(false)
+  // Zustand store selectors
+  const unreadNav = useConversationStore((state) => state.unreadNav)
+  const hasNext = useConversationStore(selectHasMoreUnread)
+  const navigateToNextUnread = useConversationStore((state) => state.navigateToNextUnread)
+  const dismissNavigation = useConversationStore((state) => state.dismissNavigation)
+  const removeUnreadThread = useConversationStore((state) => state.removeUnreadThread)
+  const resetNavigation = useConversationStore((state) => state.resetNavigation)
 
-  // Fetch unread threads once on mount
+  // React Query for fetching unread threads
+  const { isLoading } = useUnreadThreads(spaceId, enabled)
+
+  // Reset navigation when spaceId changes
   useEffect(() => {
-    if (!enabled || !spaceId || hasFetchedRef.current) return
-
-    const fetchUnreadThreads = async () => {
-      setState((prev) => ({ ...prev, isLoading: true }))
-
-      try {
-        const response = await conversationService.getThreads(spaceId, {
-          filter: 'unread',
-          sort: 'recent',
-          limit: 100,
-        })
-
-        hasFetchedRef.current = true
-
-        setState({
-          threads: response.threads,
-          currentIndex: Math.min(initialIndex, Math.max(0, response.threads.length - 1)),
-          totalUnread: response.threads.length,
-          isLoading: false,
-          lastFetched: new Date().toISOString(),
-        })
-      } catch (error) {
-        console.error('Failed to fetch unread threads:', error)
-        setState((prev) => ({ ...prev, isLoading: false }))
-      }
+    if (spaceId && unreadNav.spaceId !== spaceId) {
+      resetNavigation(spaceId)
     }
-
-    fetchUnreadThreads()
-  }, [spaceId, enabled, initialIndex])
+  }, [spaceId, unreadNav.spaceId, resetNavigation])
 
   // Build navigation URL for a thread
   const buildThreadUrl = useCallback(
@@ -93,49 +71,42 @@ export function useUnreadNavigation({
     [spaceId]
   )
 
-  // Navigate to next unread thread and remove current from list
-  const navigateToNext = useCallback(() => {
-    setState((prev) => {
-      // Remove the current thread from the list (we're done with it)
-      const remainingThreads = prev.threads.slice(prev.currentIndex + 1)
-
-      if (remainingThreads.length === 0) {
-        // No more threads, just update state
-        return {
-          ...prev,
-          threads: [],
-          currentIndex: 0,
-          totalUnread: 0,
-        }
-      }
-
-      // Navigate to the next thread (now at index 0 of remaining)
-      const nextThread = remainingThreads[0]
-
+  // Navigate to next unread thread
+  const handleNavigateToNext = useCallback(() => {
+    const nextThread = navigateToNextUnread()
+    if (nextThread) {
       // Use setTimeout to navigate after state update
       setTimeout(() => {
         navigate(buildThreadUrl(nextThread))
       }, 0)
+    }
+  }, [navigateToNextUnread, navigate, buildThreadUrl])
 
-      return {
-        ...prev,
-        threads: remainingThreads,
-        currentIndex: 0,
-        totalUnread: remainingThreads.length,
-      }
-    })
-  }, [navigate, buildThreadUrl])
+  // Remove thread and update service cache
+  const handleRemoveThread = useCallback(
+    (threadId: string) => {
+      removeUnreadThread(threadId)
+      // Note: React Query cache is updated via useMarkThreadAsRead mutation
+      // which should be called alongside this when marking as read
+    },
+    [removeUnreadThread]
+  )
 
-  // Dismiss the navigation bar
-  const dismiss = useCallback(() => {
-    setIsDismissed(true)
-  }, [])
+  // Build backward-compatible state object
+  const state: UnreadNavigationState = {
+    threads: unreadNav.threads,
+    currentIndex: unreadNav.currentIndex,
+    totalUnread: unreadNav.threads.length,
+    isLoading,
+    lastFetched: unreadNav.lastFetched,
+  }
 
   return {
     state,
-    hasNext: state.threads.length > 1, // More than just current thread
-    navigateToNext,
-    dismiss,
-    isDismissed,
+    hasNext,
+    navigateToNext: handleNavigateToNext,
+    removeThread: handleRemoveThread,
+    dismiss: dismissNavigation,
+    isDismissed: unreadNav.isDismissed,
   }
 }

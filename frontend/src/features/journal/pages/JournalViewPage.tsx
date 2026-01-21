@@ -418,10 +418,11 @@ ${content}
   }, [unreadNav])
 
   // Handle marking current thread as read (called from comment panels)
-  // This is now a no-op since the "Next" button handles state updates
-  const handleThreadMarkedAsRead = useCallback(() => {
-    // No action needed - navigateToNext removes thread from list
-  }, [])
+  // BUG FIX #4: Actually remove the thread from navigation when auto-marked as read
+  const handleThreadMarkedAsRead = useCallback((threadId: string) => {
+    // Remove from unread navigation list so it doesn't appear in "next unread" navigation
+    unreadNav.removeThread(threadId)
+  }, [unreadNav])
 
   if (loading) {
     return (

@@ -45,7 +45,7 @@ interface CommentThreadProps {
   spaceId?: string;
   scrollToUnread?: boolean;
   userLastSeen?: string | null;
-  onMarkAsRead?: () => void;
+  onMarkAsRead?: (threadId: string) => void; // BUG FIX #4: Receives threadId for navigation sync
 }
 
 // Format timestamp smartly (just now, 5m ago, 2h ago, etc.) - Timezone agnostic
