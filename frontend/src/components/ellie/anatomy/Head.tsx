@@ -8,8 +8,9 @@ export interface HeadProps extends BodyPartProps {
 }
 
 export const Head = React.forwardRef<SVGGElement, HeadProps>(
-  ({ furColor, mood, onNoseBoop, className = '' }, ref) => {
-    const { head, muzzle } = ELLIE_COORDINATES;
+  ({ furColor, furPattern = 'parti', accentColor = '#000000', mood, onNoseBoop, className = '' }, ref) => {
+    const { head, muzzle, face } = ELLIE_COORDINATES;
+    const showPartiPatches = furPattern === 'parti';
 
     return (
       <g className={`ellie-head ${className}`} ref={ref}>
@@ -30,6 +31,32 @@ export const Head = React.forwardRef<SVGGElement, HeadProps>(
         {/* Ears (behind head) */}
         <Ears furColor={furColor} mood={mood} />
 
+        {/* Parti pattern ear patches (black on ears) */}
+        {showPartiPatches && (
+          <g className="ellie-parti-ear-patches">
+            {/* Left ear patch */}
+            <ellipse
+              cx={face.leftEar.cx}
+              cy={face.leftEar.cy + 5}
+              rx={face.leftEar.rx - 3}
+              ry={face.leftEar.ry - 5}
+              fill={accentColor}
+              transform={`rotate(${face.leftEar.rotation} ${face.leftEar.cx} ${face.leftEar.cy + 5})`}
+              opacity={0.95}
+            />
+            {/* Right ear patch */}
+            <ellipse
+              cx={face.rightEar.cx}
+              cy={face.rightEar.cy + 5}
+              rx={face.rightEar.rx - 3}
+              ry={face.rightEar.ry - 5}
+              fill={accentColor}
+              transform={`rotate(${face.rightEar.rotation} ${face.rightEar.cx} ${face.rightEar.cy + 5})`}
+              opacity={0.95}
+            />
+          </g>
+        )}
+
         {/* Main head circle with gradient */}
         <circle
           cx={head.cx}
@@ -37,6 +64,21 @@ export const Head = React.forwardRef<SVGGElement, HeadProps>(
           r={head.radius}
           fill="url(#headFurGradient)"
         />
+
+        {/* Parti pattern face patch (around left eye area) */}
+        {showPartiPatches && (
+          <g className="ellie-parti-face-patches">
+            {/* Left eye area patch - asymmetric for natural look */}
+            <ellipse
+              cx={head.cx - 12}
+              cy={head.cy - 5}
+              rx={14}
+              ry={18}
+              fill={accentColor}
+              opacity={0.9}
+            />
+          </g>
+        )}
 
         {/* Upper muzzle with gradient */}
         <ellipse

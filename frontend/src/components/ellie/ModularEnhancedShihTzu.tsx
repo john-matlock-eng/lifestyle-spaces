@@ -24,6 +24,8 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
   position: _position = { x: 0, y: 0 },
   size = 'md',
   furColor,
+  furPattern = 'parti',
+  accentColor = '#000000',
   collarStyle = DEFAULT_COLLAR_STYLE,
   collarColor = DEFAULT_COLLAR_COLOR,
   collarTag = false,
@@ -359,7 +361,7 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
         <Tail furColor={effectiveFurColor} mood={mood} ref={animRefs.tail} />
 
         {/* 2. Body */}
-        <Body furColor={effectiveFurColor} mood={mood} ref={animRefs.body} />
+        <Body furColor={effectiveFurColor} furPattern={furPattern} accentColor={accentColor} mood={mood} ref={animRefs.body} />
 
         {/* 3. Legs (in front of body) */}
         <Legs furColor={effectiveFurColor} mood={mood} />
@@ -379,6 +381,8 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
         {/* 6. Head (with all facial features) */}
         <Head
           furColor={effectiveFurColor}
+          furPattern={furPattern}
+          accentColor={accentColor}
           mood={mood}
           onNoseBoop={handleNoseBoop}
           ref={animRefs.head}
