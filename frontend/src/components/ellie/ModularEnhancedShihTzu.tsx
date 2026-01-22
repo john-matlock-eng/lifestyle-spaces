@@ -358,7 +358,7 @@ export const ModularEnhancedShihTzu: React.FC<EllieProps> = ({
         {/* Render in proper layering order - back to front */}
 
         {/* 1. Tail (furthest back) */}
-        <Tail furColor={effectiveFurColor} mood={mood} ref={animRefs.tail} />
+        <Tail furColor={effectiveFurColor} furPattern={furPattern} accentColor={accentColor} mood={mood} ref={animRefs.tail} />
 
         {/* 2. Body */}
         <Body furColor={effectiveFurColor} furPattern={furPattern} accentColor={accentColor} mood={mood} ref={animRefs.body} />
