@@ -36,75 +36,33 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-      
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Build Lambda Package
+        working-directory: backend
+        run: |
+          pip install -r requirements.txt
+          python build_lambda_package.py
+
+      - name: Verify Lambda Package
+        working-directory: backend
+        run: |
+          if [ ! -f lambda-deployment.zip ]; then
+            echo "ERROR: lambda-deployment.zip not found"
+            exit 1
+          fi
+          echo "Lambda package size: $(ls -lh lambda-deployment.zip | awk '{print $5}')"
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
-      
-      - name: Create Lambda placeholder
-        run: |
-          mkdir -p backend
-          cat > backend/lambda_handler.py << 'EOF'
-          """
-          Placeholder Lambda handler for API Gateway proxy integration.
-          This is a temporary handler until the FastAPI application is deployed.
-          """
-          import json
-          
-          def handler(event, context):
-              """AWS Lambda handler function for API Gateway proxy integration."""
-              path = event.get('path', '/')
-              http_method = event.get('httpMethod', 'GET')
-              
-              # Health check endpoint
-              if path == '/health' or path == '/prod/health':
-                  return {
-                      'statusCode': 200,
-                      'headers': {
-                          'Content-Type': 'application/json',
-                          'Access-Control-Allow-Origin': '*',
-                          'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-                          'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
-                      },
-                      'body': json.dumps({
-                          'status': 'healthy',
-                          'message': 'API is running (placeholder)',
-                          'environment': 'prod'
-                      })
-                  }
-              
-              # Handle OPTIONS requests for CORS
-              if http_method == 'OPTIONS':
-                  return {
-                      'statusCode': 200,
-                      'headers': {
-                          'Access-Control-Allow-Origin': '*',
-                          'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-                          'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
-                      },
-                      'body': ''
-                  }
-              
-              # Default response for all other endpoints
-              return {
-                  'statusCode': 200,
-                  'headers': {
-                      'Content-Type': 'application/json',
-                      'Access-Control-Allow-Origin': '*',
-                      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-                      'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
-                  },
-                  'body': json.dumps({
-                      'message': 'Placeholder Lambda function is working',
-                      'path': path,
-                      'method': http_method
-                  })
-              }
-          EOF
-          cd backend && zip lambda-placeholder.zip lambda_handler.py
-      
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
