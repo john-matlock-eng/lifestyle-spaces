@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../theme/useTheme'
+import { useEllieCustomizationContext } from '../hooks/useEllieCustomizationContext'
 import '../styles/settings.css'
 
 export const Settings: React.FC = () => {
   const navigate = useNavigate()
   const { darkMode, setDarkMode } = useTheme()
+  const { customization, updateCustomization, resetCustomization } = useEllieCustomizationContext()
 
   const [notifications, setNotifications] = useState({
     email: true,
@@ -55,6 +57,12 @@ export const Settings: React.FC = () => {
             onClick={() => setActiveSection('appearance')}
           >
             <span className="icon">🎨</span> Appearance
+          </button>
+          <button
+            className={`settings-nav-item ${activeSection === 'companion' ? 'active' : ''}`}
+            onClick={() => setActiveSection('companion')}
+          >
+            <span className="icon">🐕</span> Companion
           </button>
           <button
             className={`settings-nav-item ${activeSection === 'notifications' ? 'active' : ''}`}
@@ -131,6 +139,150 @@ export const Settings: React.FC = () => {
                     <span className="toggle-slider"></span>
                   </label>
                 </div>
+              </div>
+            </section>
+          )}
+
+          {/* Companion Settings */}
+          {activeSection === 'companion' && (
+            <section className="settings-section">
+              <h2><span className="icon">🐕</span> Your Companion</h2>
+
+              <div className="setting-group">
+                <div className="setting-item">
+                  <div className="setting-info">
+                    <span className="icon">📛</span>
+                    <div>
+                      <h3>Name</h3>
+                      <p>What would you like to call your companion?</p>
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    value={customization.petName}
+                    onChange={(e) => updateCustomization({ petName: e.target.value })}
+                    maxLength={20}
+                    className="setting-input"
+                    placeholder="Lily"
+                  />
+                </div>
+
+                <div className="setting-item">
+                  <div className="setting-info">
+                    <span className="icon">🎨</span>
+                    <div>
+                      <h3>Fur Pattern</h3>
+                      <p>Choose your companion's coat pattern</p>
+                    </div>
+                  </div>
+                  <select
+                    value={customization.furPattern}
+                    onChange={(e) => updateCustomization({ furPattern: e.target.value as 'solid' | 'parti' })}
+                    className="setting-select"
+                  >
+                    <option value="parti">Parti (Black & White)</option>
+                    <option value="solid">Solid Color</option>
+                  </select>
+                </div>
+
+                <div className="setting-item">
+                  <div className="setting-info">
+                    <span className="icon">🖌️</span>
+                    <div>
+                      <h3>Base Fur Color</h3>
+                      <p>Main coat color</p>
+                    </div>
+                  </div>
+                  <input
+                    type="color"
+                    value={customization.furColor}
+                    onChange={(e) => updateCustomization({ furColor: e.target.value })}
+                    className="setting-color-input"
+                  />
+                </div>
+
+                {customization.furPattern === 'parti' && (
+                  <div className="setting-item">
+                    <div className="setting-info">
+                      <span className="icon">🖤</span>
+                      <div>
+                        <h3>Patch Color</h3>
+                        <p>Color of the spots/patches</p>
+                      </div>
+                    </div>
+                    <input
+                      type="color"
+                      value={customization.accentColor}
+                      onChange={(e) => updateCustomization({ accentColor: e.target.value })}
+                      className="setting-color-input"
+                    />
+                  </div>
+                )}
+
+                <div className="setting-item">
+                  <div className="setting-info">
+                    <span className="icon">🎀</span>
+                    <div>
+                      <h3>Collar Style</h3>
+                      <p>Choose an accessory</p>
+                    </div>
+                  </div>
+                  <select
+                    value={customization.collarStyle}
+                    onChange={(e) => updateCustomization({ collarStyle: e.target.value as 'none' | 'leather' | 'fabric' | 'bowtie' | 'bandana' })}
+                    className="setting-select"
+                  >
+                    <option value="none">None</option>
+                    <option value="leather">Leather Collar</option>
+                    <option value="fabric">Fabric Collar</option>
+                    <option value="bowtie">Bowtie</option>
+                    <option value="bandana">Bandana</option>
+                  </select>
+                </div>
+
+                {customization.collarStyle !== 'none' && (
+                  <>
+                    <div className="setting-item">
+                      <div className="setting-info">
+                        <span className="icon">🎨</span>
+                        <div>
+                          <h3>Collar Color</h3>
+                          <p>Choose the collar color</p>
+                        </div>
+                      </div>
+                      <input
+                        type="color"
+                        value={customization.collarColor}
+                        onChange={(e) => updateCustomization({ collarColor: e.target.value })}
+                        className="setting-color-input"
+                      />
+                    </div>
+
+                    <div className="setting-item">
+                      <div className="setting-info">
+                        <div>
+                          <h3>Name Tag</h3>
+                          <p>Show a name tag on the collar</p>
+                        </div>
+                      </div>
+                      <label className="toggle-switch">
+                        <input
+                          type="checkbox"
+                          checked={customization.collarTag}
+                          onChange={(e) => updateCustomization({ collarTag: e.target.checked })}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                    </div>
+                  </>
+                )}
+
+                <button
+                  onClick={resetCustomization}
+                  className="button-secondary settings-action-btn"
+                >
+                  Reset to Defaults
+                </button>
               </div>
             </section>
           )}

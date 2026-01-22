@@ -1,10 +1,16 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ElliePerch } from '../../../components/ellie/ElliePerch';
 import { EllieProvider } from '../../../contexts/EllieContext';
+import { EllieCustomizationProvider } from '../../../contexts/EllieCustomizationContext';
+import { AuthProvider } from '../../../stores/authStore';
 
 describe('ElliePerch', () => {
   const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <EllieProvider>{children}</EllieProvider>
+    <AuthProvider>
+      <EllieCustomizationProvider>
+        <EllieProvider>{children}</EllieProvider>
+      </EllieCustomizationProvider>
+    </AuthProvider>
   );
 
   it('should render at default perch', () => {
@@ -16,7 +22,8 @@ describe('ElliePerch', () => {
 
   it('should show cycle button', () => {
     render(<ElliePerch showPerchControl={true} />, { wrapper });
-    expect(screen.getByLabelText('Move Ellie')).toBeInTheDocument();
+    // Button uses pet name from context (default: Lily)
+    expect(screen.getByLabelText('Move Lily')).toBeInTheDocument();
   });
 
   it('should cycle perch on click', () => {
@@ -24,13 +31,13 @@ describe('ElliePerch', () => {
     const perch = screen.getByTestId('ellie-perch');
     expect(perch).toHaveClass('perch-position-1');
 
-    fireEvent.click(screen.getByLabelText('Move Ellie'));
+    fireEvent.click(screen.getByLabelText('Move Lily'));
     expect(perch).toHaveClass('perch-position-2');
   });
 
   it('should hide cycle button when disabled', () => {
     render(<ElliePerch showPerchControl={false} />, { wrapper });
-    expect(screen.queryByLabelText('Move Ellie')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Move Lily')).not.toBeInTheDocument();
   });
 
   it('should apply typing class', () => {

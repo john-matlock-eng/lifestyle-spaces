@@ -27,6 +27,36 @@ class PrivacySettings(BaseModel):
     model_config = ConfigDict(populate_by_alias=True)
 
 
+class PetSettings(BaseModel):
+    """Pet companion customization settings."""
+
+    pet_name: str = Field(default="Lily", max_length=20)
+    fur_color: str = Field(default="#FFFFFF")  # White base for parti
+    fur_pattern: str = Field(default="parti", pattern="^(solid|parti)$")
+    accent_color: str = Field(default="#000000")  # Black spots for parti
+    collar_style: str = Field(default="none", pattern="^(none|leather|fabric|bowtie|bandana)$")
+    collar_color: str = Field(default="#8B4513")
+    collar_tag: bool = Field(default=False)
+
+    @field_validator("pet_name")
+    @classmethod
+    def validate_pet_name(cls, v):
+        if v:
+            v = v.strip()
+            # Remove any HTML/script tags for safety
+            v = re.sub(r"<[^>]+>", "", v)
+        return v if v else "Lily"
+
+    @field_validator("fur_color", "accent_color", "collar_color")
+    @classmethod
+    def validate_color(cls, v):
+        if v and not re.match(r"^#[0-9A-Fa-f]{6}$", v):
+            raise ValueError("Invalid hex color format")
+        return v
+
+    model_config = ConfigDict(populate_by_alias=True)
+
+
 class UserProfileBase(BaseModel):
     """Base model for user profile."""
 
@@ -40,6 +70,7 @@ class UserProfileBase(BaseModel):
     language: Optional[str] = None
     notification_preferences: Optional[NotificationPreferences] = None
     privacy_settings: Optional[PrivacySettings] = None
+    pet_settings: Optional[PetSettings] = None
 
     @field_validator("phone_number")
     @classmethod
@@ -98,6 +129,7 @@ class UserProfileResponse(BaseModel):
     onboarding_step: int = 0
     notification_preferences: Optional[NotificationPreferences] = None
     privacy_settings: Optional[PrivacySettings] = None
+    pet_settings: Optional[PetSettings] = None
     created_at: str
     updated_at: str
     last_login: Optional[str] = None

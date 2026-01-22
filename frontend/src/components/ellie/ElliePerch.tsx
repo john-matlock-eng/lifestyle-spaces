@@ -2,6 +2,7 @@ import React from 'react';
 import { ModularEnhancedShihTzu } from './ModularEnhancedShihTzu';
 import { EllieControlPanel } from './EllieControlPanel';
 import { useEllie } from '../../contexts/EllieContext';
+import { useEllieCustomizationContext } from '../../hooks/useEllieCustomizationContext';
 import './styles/ellie-perch.css';
 
 export interface ElliePerchProps {
@@ -11,6 +12,8 @@ export interface ElliePerchProps {
   variant?: 'default' | 'winter' | 'party' | 'workout' | 'balloon';
   size?: 'sm' | 'md' | 'lg';
   furColor?: string;
+  furPattern?: 'solid' | 'parti';
+  accentColor?: string;
   collarStyle?: 'none' | 'leather' | 'fabric' | 'bowtie' | 'bandana';
   collarColor?: string;
   collarTag?: boolean;
@@ -28,6 +31,8 @@ export const ElliePerch: React.FC<ElliePerchProps> = ({
   variant = 'default',
   size = 'md',
   furColor,
+  furPattern,
+  accentColor,
   collarStyle = 'none',
   collarColor = '#8B4513',
   collarTag = false,
@@ -38,6 +43,12 @@ export const ElliePerch: React.FC<ElliePerchProps> = ({
   onNoseBoop,
 }) => {
   const { mood, perchIndex, cyclePerch, isTyping } = useEllie();
+  const { customization } = useEllieCustomizationContext();
+
+  // Get effective values from context or props
+  const petName = customization.petName ?? 'Lily';
+  const effectiveFurPattern = furPattern ?? customization.furPattern ?? 'parti';
+  const effectiveAccentColor = accentColor ?? customization.accentColor ?? '#000000';
 
   return (
     <div
@@ -63,8 +74,8 @@ export const ElliePerch: React.FC<ElliePerchProps> = ({
         <button
           onClick={cyclePerch}
           className="ellie-perch__cycle-button"
-          title="Move Ellie to different position"
-          aria-label="Move Ellie"
+          title={`Move ${petName} to different position`}
+          aria-label={`Move ${petName}`}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
             <path d="M4 8l4 4 4-4M16 12l-4-4-4 4" />
@@ -85,6 +96,8 @@ export const ElliePerch: React.FC<ElliePerchProps> = ({
         particleEffect={particleEffect}
         variant={variant}
         furColor={furColor}
+        furPattern={effectiveFurPattern}
+        accentColor={effectiveAccentColor}
         collarStyle={collarStyle}
         collarColor={collarColor}
         collarTag={collarTag}

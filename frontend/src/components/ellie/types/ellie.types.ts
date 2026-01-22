@@ -17,6 +17,8 @@ export type ParticleEffect = 'hearts' | 'sparkles' | 'treats' | 'zzz' | null;
 
 export type CollarStyle = 'none' | 'leather' | 'fabric' | 'bowtie' | 'bandana';
 
+export type FurPattern = 'solid' | 'parti';
+
 export type EllieVariant = 'default' | 'winter' | 'party' | 'workout' | 'balloon';
 
 export interface ElliePosition {
@@ -28,7 +30,10 @@ export interface EllieProps {
   mood?: EllieMood;
   position?: ElliePosition;
   size?: EllieSize;
+  name?: string;
   furColor?: string;
+  furPattern?: FurPattern;
+  accentColor?: string;
   collarStyle?: CollarStyle;
   collarColor?: string;
   collarTag?: boolean;
@@ -44,6 +49,8 @@ export interface EllieProps {
 
 export interface BodyPartProps {
   furColor: string;
+  furPattern?: FurPattern;
+  accentColor?: string;
   mood: EllieMood;
   className?: string;
 }

@@ -1,5 +1,6 @@
 import React from 'react'
 import { ModularEnhancedShihTzu } from './ModularEnhancedShihTzu'
+import { useEllieCustomizationContext } from '../../hooks/useEllieCustomizationContext'
 
 export interface EllieProps {
   mood?: 'idle' | 'happy' | 'excited' | 'curious' | 'playful' | 'sleeping' | 'walking' | 'concerned' | 'proud' | 'zen' | 'celebrating'
@@ -15,7 +16,10 @@ export interface EllieProps {
   className?: string
   tabIndex?: number
   // Customization props
+  name?: string
   furColor?: string
+  furPattern?: 'solid' | 'parti'
+  accentColor?: string
   collarStyle?: 'none' | 'leather' | 'fabric' | 'bowtie' | 'bandana'
   collarColor?: string
   collarTag?: boolean
@@ -34,17 +38,28 @@ export const Ellie: React.FC<EllieProps> = ({
   variant = 'default',
   className,
   tabIndex,
+  name,
   furColor,
+  furPattern,
+  accentColor,
   collarStyle = 'none',
   collarColor = '#8B4513',
   collarTag = false
 }) => {
+  // Get customization from context
+  const { customization } = useEllieCustomizationContext()
+
+  // Use props if provided, otherwise fall back to context values
+  const petName = name ?? customization.petName ?? 'Lily'
+  const effectiveFurPattern = furPattern ?? customization.furPattern ?? 'parti'
+  const effectiveAccentColor = accentColor ?? customization.accentColor ?? '#000000'
+
   // Generate ARIA label based on mood
   const getAriaLabel = () => {
     if (mood && mood !== 'idle') {
-      return `Ellie the wellness companion is ${mood}`
+      return `${petName} the wellness companion is ${mood}`
     }
-    return 'Ellie the wellness companion'
+    return `${petName} the wellness companion`
   }
 
   return (
@@ -77,6 +92,8 @@ export const Ellie: React.FC<EllieProps> = ({
         particleEffect={particleEffect}
         variant={variant}
         furColor={furColor}
+        furPattern={effectiveFurPattern}
+        accentColor={effectiveAccentColor}
         collarStyle={collarStyle}
         collarColor={collarColor}
         collarTag={collarTag}
