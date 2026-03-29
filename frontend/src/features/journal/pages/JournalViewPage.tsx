@@ -98,28 +98,47 @@ export const JournalViewPage: React.FC = () => {
   })
 
   // Handler to open highlight and load its comments
+  // Preserves scroll position when opening the comment panel
   const handleHighlightClick = useCallback((highlight: Highlight) => {
+    // Capture current scroll position before any DOM changes
+    const scrollY = window.scrollY
+
     setSelectedHighlight(highlight)
     // Fetch comments for this highlight
     fetchComments(highlight.id)
 
-    // Scroll to the highlight element and flash it to draw attention
-    setTimeout(() => {
-      const highlightElement = document.querySelector(`mark[data-highlight-id="${highlight.id}"]`)
-      if (highlightElement) {
-        highlightElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        })
+    // Restore scroll position after layout shift, then scroll to highlight
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollY)
 
-        // Add flash animation to draw attention
-        highlightElement.classList.add('highlight-flash')
-        setTimeout(() => {
-          highlightElement.classList.remove('highlight-flash')
-        }, 2000) // Remove after animation completes (3 cycles × 0.6s = 1.8s)
-      }
-    }, 100)
+      // After restoring position, scroll to the highlight element and flash it
+      setTimeout(() => {
+        const highlightElement = document.querySelector(`mark[data-highlight-id="${highlight.id}"]`)
+        if (highlightElement) {
+          highlightElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          })
+
+          // Add flash animation to draw attention
+          highlightElement.classList.add('highlight-flash')
+          setTimeout(() => {
+            highlightElement.classList.remove('highlight-flash')
+          }, 2000) // Remove after animation completes (3 cycles × 0.6s = 1.8s)
+        }
+      }, 100)
+    })
   }, [fetchComments])
+
+  // Handler for closing the comment panel - preserves scroll position
+  const handleCloseCommentPanel = useCallback(() => {
+    const scrollY = window.scrollY
+    setSelectedHighlight(null)
+    // Restore scroll position after layout shift
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollY)
+    })
+  }, [])
 
   // Handler for navigating between highlights - scrolls to the highlight in the document
   const handleNavigateHighlight = useCallback((highlight: Highlight) => {
@@ -1024,7 +1043,7 @@ ${content}
           onAddComment={(text, parentId) => createComment(selectedHighlight.id, text, parentId)}
           onEditComment={(commentId, newText) => editComment(selectedHighlight.id, commentId, newText)}
           onDeleteComment={(commentId) => deleteComment(selectedHighlight.id, commentId)}
-          onClose={() => setSelectedHighlight(null)}
+          onClose={handleCloseCommentPanel}
           allHighlights={highlights}
           onNavigateHighlight={handleNavigateHighlight}
           spaceId={spaceId}

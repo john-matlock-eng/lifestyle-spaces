@@ -1344,24 +1344,20 @@
 
 /* Wrapper for the entire journal view page */
 .journal-view-page-wrapper {
-  display: flex;
+  display: block;
   width: 100%;
   max-width: 100%;
-  gap: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* When comment panel is open - add right padding to make room for fixed panel */
 .journal-view-page-wrapper.with-comment-panel {
-  gap: 24px;
-  padding-right: calc(420px + 48px); /* panel width + margins */
+  padding-right: 444px; /* panel width (420px) + gap (24px) */
 }
 
-/* Main content container - shifts left when panel is open */
+/* Main content container - no special shift needed, wrapper padding handles it */
 .journal-view-container.shifted {
-  max-width: 900px; /* Comfortable reading width */
-  margin: 0;
-  margin-left: 24px;
+  /* Container stays centered within available space via margin: 0 auto from base styles */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1382,6 +1378,9 @@
   flex-shrink: 0;
   animation: slideInPanel 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
+  background: var(--theme-bg-surface);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 @keyframes slideInPanel {
@@ -1397,9 +1396,8 @@
 
 /* Responsive adjustments for side panel layout */
 @media (max-width: 1200px) {
-  .journal-view-container.shifted {
-    max-width: 800px;
-    margin-left: 20px;
+  .journal-view-page-wrapper.with-comment-panel {
+    padding-right: 400px; /* panel (380px) + gap (20px) */
   }
 
   .comment-thread-side-panel {
@@ -1408,17 +1406,11 @@
     max-width: 380px;
     right: 20px;
   }
-
-  .journal-view-page-wrapper.with-comment-panel {
-    gap: 20px;
-    padding-right: calc(380px + 40px);
-  }
 }
 
 @media (max-width: 1024px) {
-  .journal-view-container.shifted {
-    max-width: 100%;
-    margin-left: 16px;
+  .journal-view-page-wrapper.with-comment-panel {
+    padding-right: 366px; /* panel (350px) + gap (16px) */
   }
 
   .comment-thread-side-panel {
@@ -1426,11 +1418,8 @@
     min-width: 350px;
     max-width: 350px;
     right: 16px;
-  }
-
-  .journal-view-page-wrapper.with-comment-panel {
-    gap: 16px;
-    padding-right: calc(350px + 32px);
+    top: 16px;
+    height: calc(100vh - 32px);
   }
 }
 
@@ -1445,10 +1434,30 @@
     padding-right: 0; /* No padding needed for overlay mode */
   }
 
+  /* Add backdrop overlay on mobile when comment panel is open */
+  .journal-view-page-wrapper.with-comment-panel::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9998;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .dark .journal-view-page-wrapper.with-comment-panel::before {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
   .journal-view-container.shifted {
-    max-width: 100%;
-    margin: 0 auto;
-    margin-left: 0;
+    /* No special styling needed on mobile - overlay mode */
   }
 
   .comment-thread-side-panel {
